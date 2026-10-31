@@ -1,0 +1,30 @@
+[
+  {
+    "id": "IT-0231", "vehiculoId": "AMA-V01", "fecha": "2026-10-28", "proposito": "Acompañamiento a cita de salud",
+    "destinos": ["CAR", "Centro de salud (ficticio)", "CAR"],
+    "previsto": { "salida": "09:00", "llegada": "11:00", "km": 12 },
+    "realizado": { "salida": "09:10", "llegada": "11:25", "km": 12 },
+    "consumoDeclaradoL": 1.5
+  },
+  {
+    "id": "IT-0232", "vehiculoId": "AMA-V01", "fecha": "2026-10-29", "proposito": "Gestión documentaria",
+    "destinos": ["CAR", "Sede central (ficticia)", "CAR"],
+    "previsto": { "salida": "08:30", "llegada": "12:00", "km": 34 },
+    "realizado": null,
+    "consumoDeclaradoL": null
+  },
+  {
+    "id": "IT-0233", "vehiculoId": "AMA-V01", "fecha": "2026-10-24", "proposito": "Traslado de materiales",
+    "destinos": ["CAR", "Almacén (ficticio)", "CAR"],
+    "previsto": null,
+    "realizado": { "salida": "14:00", "llegada": "16:30", "km": null },
+    "consumoDeclaradoL": 4
+  },
+  {
+    "id": "IT-0240", "vehiculoId": "HOR-V01", "fecha": "2026-10-27", "proposito": "Traslado a actividad recreativa",
+    "destinos": ["CAR", "Parque zonal (ficticio)", "CAR"],
+    "previsto": { "salida": "10:00", "llegada": "13:00", "km": 20 },
+    "realizado": { "salida": "10:05", "llegada": "13:10", "km": 20 },
+    "consumoDeclaradoL": 3
+  }
+]

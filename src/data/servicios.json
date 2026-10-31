@@ -1,0 +1,84 @@
+[
+  {
+    "id": "SRV-AMA-LUZ", "localId": "LOC-AMA-01", "tipo": "luz", "periodicidad": "mensual",
+    "proveedor": "Proveedor eléctrico demo", "suministro": "DEMO-LUZ-0011", "contratacion": "Suministro a nombre del arrendador; pago por el CAR",
+    "observaciones": "Tablero general en el patio techado.",
+    "periodos": { "2026": { "pagados": [1, 2, 3, 4, 5, 6, 7, 8, 9], "pendientes": [{ "numero": 10, "vence": "2026-11-18" }] } },
+    "hechos": []
+  },
+  {
+    "id": "SRV-AMA-AGUA", "localId": "LOC-AMA-01", "tipo": "agua", "periodicidad": "mensual",
+    "proveedor": "Proveedor de agua demo", "suministro": "DEMO-AGU-0021", "contratacion": "Suministro a nombre del arrendador",
+    "observaciones": "Cisterna de 5 m³ con bomba.",
+    "periodos": { "2026": { "pagados": [1, 2, 3, 6, 7, 8, 9], "pendientes": [] } },
+    "hechos": []
+  },
+  {
+    "id": "SRV-AMA-INT", "localId": "LOC-AMA-01", "tipo": "internet", "periodicidad": "mensual",
+    "proveedor": "Proveedor de internet demo", "suministro": "DEMO-INT-0042", "contratacion": "Plan mensual contratado por el CAR",
+    "observaciones": "Cableado expuesto en el pasadizo del 2.º piso; router en la Sala de estudio.",
+    "periodos": { "2026": { "pagados": [1, 2, 3, 4, 5, 6, 7, 8, 9], "pendientes": [] } },
+    "hechos": [
+      { "fecha": "2026-04-02", "tipo": "interrupcion", "detalle": "Corte del servicio durante un día." },
+      { "fecha": "2026-04-03", "tipo": "restablecimiento", "detalle": "Servicio normal." },
+      { "fecha": "2026-10-22", "tipo": "interrupcion", "detalle": "Sin conexión en todo el local. Causa no informada." },
+      { "fecha": "2026-10-25", "tipo": "pago", "detalle": "Pago informado del período setiembre 2026 · S/ 159." }
+    ]
+  },
+  {
+    "id": "SRV-AMA-CABLE", "localId": "LOC-AMA-01", "tipo": "cable", "periodicidad": "mensual",
+    "proveedor": "Proveedor de cable demo", "suministro": "DEMO-CAB-0007", "contratacion": "Plan mensual contratado por el CAR",
+    "observaciones": null,
+    "periodos": { "2026": { "pagados": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pendientes": [] } },
+    "hechos": []
+  },
+  {
+    "id": "SRV-AMA-ARB", "localId": "LOC-AMA-01", "tipo": "arbitrios", "periodicidad": "trimestral",
+    "proveedor": "Municipalidad de demostración", "suministro": "DEMO-ARB-1998", "contratacion": "Obligación municipal del predio",
+    "observaciones": "Por definir si corresponde al arrendador o al CAR.",
+    "periodos": { "2026": { "pagados": [1, 2], "pendientes": [{ "numero": 3, "vence": null }] } },
+    "hechos": []
+  },
+  {
+    "id": "SRV-HOR-LUZ", "localId": "LOC-HOR-01", "tipo": "luz", "periodicidad": "mensual",
+    "proveedor": "Proveedor eléctrico demo", "suministro": "DEMO-LUZ-0031", "contratacion": "Suministro a nombre del INABIF",
+    "observaciones": "Instalaciones de la cocina en evaluación tras el incendio.",
+    "periodos": { "2026": { "pagados": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pendientes": [] } },
+    "hechos": []
+  },
+  {
+    "id": "SRV-HOR-AGUA", "localId": "LOC-HOR-01", "tipo": "agua", "periodicidad": "mensual",
+    "proveedor": "Proveedor de agua demo", "suministro": "DEMO-AGU-0032", "contratacion": "Suministro a nombre del INABIF",
+    "observaciones": null,
+    "periodos": { "2026": { "pagados": [1, 2, 3, 4, 5, 6, 7, 8], "pendientes": [] } },
+    "hechos": []
+  },
+  {
+    "id": "SRV-HOR-INT", "localId": "LOC-HOR-01", "tipo": "internet", "periodicidad": "mensual",
+    "proveedor": "Proveedor de internet demo", "suministro": "DEMO-INT-0055", "contratacion": "Plan mensual contratado por la sede central",
+    "observaciones": null,
+    "periodos": { "2026": { "pagados": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pendientes": [] } },
+    "hechos": []
+  },
+  {
+    "id": "SRV-ESP-LUZ", "localId": "LOC-ESP-01", "tipo": "luz", "periodicidad": "mensual",
+    "proveedor": "Proveedor eléctrico demo", "suministro": "DEMO-LUZ-0051", "contratacion": "Suministro a nombre del INABIF",
+    "observaciones": null,
+    "periodos": { "2026": { "pagados": [1, 2, 3, 4, 5, 6, 7, 8], "pendientes": [] } },
+    "hechos": []
+  },
+  {
+    "id": "SRV-ESP-AGUA", "localId": "LOC-ESP-01", "tipo": "agua", "periodicidad": "mensual",
+    "proveedor": "Proveedor de agua demo", "suministro": "DEMO-AGU-0052", "contratacion": "Suministro a nombre del INABIF",
+    "observaciones": null,
+    "periodos": { "2026": { "pagados": [1, 2, 3, 4, 5, 6, 7, 8, 9], "pendientes": [] } },
+    "hechos": []
+  },
+  {
+    "id": "SRV-ESP-INT", "localId": "LOC-ESP-01", "tipo": "internet", "periodicidad": "mensual",
+    "proveedor": "Proveedor de internet demo", "suministro": "DEMO-INT-0071", "contratacion": "Plan mensual contratado por la sede central",
+    "observaciones": null,
+    "periodos": { "2026": { "pagados": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pendientes": [] } },
+    "hechos": []
+  }
+]

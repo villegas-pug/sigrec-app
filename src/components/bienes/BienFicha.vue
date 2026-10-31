@@ -1,0 +1,148 @@
+<template>
+  <div class="column q-gutter-y-md">
+    <section-card :titulo="`${bien.nombre} · ${bien.id}`" :subtitulo="textoUbicacion(ubicacion) + cadenaAsociacion">
+      <template #acciones>
+        <q-btn outline color="secondary" icon="fact_check" label="Informar verificación" @click="$emit('accion', 'verificacion')" />
+        <q-btn v-if="activo" outline color="secondary" icon="report" label="Registrar incidente" @click="$emit('accion', 'incidente')" />
+        <q-btn v-if="activo" outline color="negative" icon="remove_circle" label="Dar de baja" @click="$emit('accion', 'baja')" />
+        <q-btn v-if="!activo && !reposicion" unelevated color="primary" icon="swap_horiz" label="Registrar reposición" @click="$emit('accion', 'reposicion')" />
+      </template>
+
+      <div class="sg-chips q-mb-md">
+        <status-chip tono="ne" :label="CATEGORIAS[bien.categoria]" />
+        <status-chip v-bind="condicionBien" :label="`Condición: ${condicionBien.label}`" />
+        <status-chip v-bind="SITUACIONES[bien.situacion]" />
+        <status-chip v-if="bien.verificacion" :tono="bien.verificacion.resultado === 'coincide' ? 'ok' : 'wa'" :label="`Verificado el ${fecha(bien.verificacion.fecha)}`" />
+        <status-chip v-else tono="si" label="Pendiente de verificación" />
+        <status-chip v-if="bien.revisionPendiente" tono="wa" label="Situación por revisar" />
+      </div>
+
+      <div class="sg-kv-grid">
+        <key-value etiqueta="Rótulo SIGREC">{{ bien.id }}</key-value>
+        <key-value etiqueta="Código patrimonial" :nota="bien.codigoPatrimonial ? '' : 'Sin código patrimonial'">{{ bien.codigoPatrimonial ?? 'No aplica' }}</key-value>
+        <key-value v-if="(bien.cantidad ?? 1) > 1" etiqueta="Cantidad">{{ bien.cantidad }} unidades</key-value>
+        <key-value etiqueta="Descripción">{{ bien.descripcion || '—' }}</key-value>
+        <key-value v-if="bien.marcaModelo" etiqueta="Marca y modelo" :nota="bien.serie ? `Serie ${bien.serie}` : ''">{{ bien.marcaModelo }}</key-value>
+        <key-value etiqueta="Deterioro observado">{{ bien.deterioro || 'Sin deterioro informado' }}</key-value>
+        <key-value etiqueta="Fecha de adquisición">
+          <template v-if="bien.adquisicion?.fecha">{{ fecha(bien.adquisicion.fecha) }}</template>
+          <status-chip v-else tono="si" label="No informada" />
+        </key-value>
+        <key-value etiqueta="Costo de adquisición" nota="Costo original; no se usa para estimar la reposición">
+          <template v-if="bien.adquisicion?.costo != null">{{ soles(bien.adquisicion.costo) }}</template>
+          <status-chip v-else tono="si" label="No informado" />
+        </key-value>
+        <key-value etiqueta="Vida útil" nota="Valor de demostración, no es tabla oficial">
+          <template v-if="bien.vidaUtilAnios != null">
+            {{ plural(bien.vidaUtilAnios, 'año', 'años') }}<template v-if="fin"> · se cumple en {{ fin }}</template>
+          </template>
+          <status-chip v-else tono="si" label="Pendiente de definir" />
+        </key-value>
+        <key-value etiqueta="Precio referencial" :nota="tipo?.procedencia ? `${tipo.nombre} · ${tipo.procedencia}` : tipo?.nombre">
+          <template v-if="tipo?.precio != null">{{ soles(tipo.precio) }}</template>
+          <status-chip v-else tono="wa" label="Sin precio referencial" />
+        </key-value>
+      </div>
+
+      <note-banner v-if="faltantes.length" tono="ne" icono="help" class="q-mt-md">
+        Antecedentes insuficientes: falta {{ faltantes.join(' y ') }}. No se calcula una renovación por vida útil.
+      </note-banner>
+      <note-banner v-if="necesidad" tono="wa" icono="event_repeat" class="q-mt-md">
+        <strong>Necesidad para revisión en {{ ANIO_REVISION }}:</strong> {{ necesidad.motivos.map((m) => m.texto).join(' · ') }}.
+        No constituye autorización de baja ni de compra.
+        <router-link :to="{ name: 'necesidades' }" class="text-weight-bold">Ver necesidades</router-link>
+      </note-banner>
+      <note-banner v-if="reposicion" tono="ok" icono="swap_horiz" class="q-mt-md">
+        Repuesto por
+        <button type="button" class="sg-row-btn" @click="$emit('seleccionar', reposicion.bienNuevoId)">{{ reposicion.bienNuevoId }}</button>
+        el {{ fecha(reposicion.fecha) }}. La necesidad quedó atendida.
+      </note-banner>
+      <note-banner v-if="reemplazaA" tono="in" icono="swap_horiz" class="q-mt-md">
+        Alta por reposición de
+        <button type="button" class="sg-row-btn" @click="$emit('seleccionar', reemplazaA.bienAnteriorId)">{{ reemplazaA.bienAnteriorId }}</button>.
+        Este bien tiene antecedentes y vida útil propios.
+      </note-banner>
+    </section-card>
+
+    <section-card titulo="Asociaciones" subtitulo="Permiten localizar el objeto concreto, por ejemplo el colchón de una cama">
+      <div class="sg-kv-grid">
+        <div v-if="asociaciones.padre" class="sg-box">
+          <span class="sg-kv__label">Pertenece a</span>
+          <button type="button" class="sg-row-btn" @click="$emit('seleccionar', asociaciones.padre.id)">{{ asociaciones.padre.nombre }} {{ asociaciones.padre.id }}</button>
+          <span class="sg-muted">Posición: {{ bien.asociadoA.posicion }} · {{ SITUACIONES[asociaciones.padre.situacion].label }}</span>
+        </div>
+        <div v-for="h in asociaciones.hermanos" :key="h.id" class="sg-box">
+          <span class="sg-kv__label">Asociado al mismo bien</span>
+          <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)">{{ h.nombre }} {{ h.id }}</button>
+          <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
+        </div>
+        <div v-for="h in asociaciones.hijos" :key="h.id" class="sg-box" :class="{ 'sg-box--dashed': h.revisionPendiente }">
+          <span class="sg-kv__label">Bien asociado</span>
+          <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)">{{ h.nombre }} {{ h.id }}</button>
+          <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
+          <status-chip v-if="h.revisionPendiente" tono="wa" label="Situación por revisar" />
+        </div>
+      </div>
+      <p v-if="!asociaciones.padre && !asociaciones.hijos.length" class="sg-muted q-mb-none">Sin asociaciones registradas.</p>
+      <div v-if="bien.revisionPendiente" class="row q-gutter-sm q-mt-md">
+        <span class="self-center">El bien al que estaba asociado fue dado de baja. Revise su situación:</span>
+        <q-btn outline color="secondary" label="Mantener activo" @click="$emit('mantener')" />
+        <q-btn outline color="negative" label="Dar de baja" @click="$emit('accion', 'baja')" />
+      </div>
+    </section-card>
+
+    <section-card titulo="Antecedentes">
+      <ul class="sg-timeline">
+        <li v-for="ev in antecedentes" :key="ev.id" class="sg-timeline__item">
+          <span class="sg-timeline__date">{{ fecha(ev.fecha) }}</span>
+          <div class="column">
+            <span><status-chip v-bind="TIPOS_EVENTO[ev.tipo]" /> {{ ev.titulo }}</span>
+            <span v-if="ev.detalle" class="sg-muted">{{ ev.detalle }}</span>
+            <span v-if="ev.informadoPor" class="sg-muted">{{ ev.informadoPor }}</span>
+          </div>
+        </li>
+      </ul>
+    </section-card>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+import SectionCard from 'components/common/SectionCard.vue'
+import StatusChip from 'components/common/StatusChip.vue'
+import KeyValue from 'components/common/KeyValue.vue'
+import NoteBanner from 'components/common/NoteBanner.vue'
+import { db, bienPorId, tipoPorId, textoUbicacion, ubicacionDeBien } from 'src/services/datos'
+import { antecedentesDeBien, asociacionesDeBien } from 'src/services/bienes'
+import { antecedentesFaltantes, calcularNecesidades, finVidaUtil } from 'src/services/necesidades'
+import { reposicionDe } from 'src/services/acciones'
+import { CATEGORIAS, SITUACIONES, TIPOS_EVENTO, condicion } from 'src/config/catalogos'
+import { ANIO_REVISION } from 'src/config/demo'
+import { fecha, plural, soles } from 'src/utils/formato'
+
+const props = defineProps({
+  bien: { type: Object, required: true }
+})
+
+defineEmits(['accion', 'seleccionar', 'mantener'])
+
+const ubicacion = computed(() => ubicacionDeBien(props.bien))
+const tipo = computed(() => tipoPorId(props.bien.tipoId))
+const activo = computed(() => props.bien.situacion === 'activo')
+const condicionBien = computed(() => condicion(props.bien.condicion))
+const fin = computed(() => finVidaUtil(props.bien))
+const faltantes = computed(() => antecedentesFaltantes(props.bien))
+const asociaciones = computed(() => asociacionesDeBien(props.bien))
+const antecedentes = computed(() => antecedentesDeBien(props.bien))
+const reposicion = computed(() => reposicionDe(props.bien.id))
+const reemplazaA = computed(() => db.eventos.find((e) => e.tipo === 'reposicion' && e.bienNuevoId === props.bien.id) ?? null)
+
+const cadenaAsociacion = computed(() => {
+  const padre = props.bien.asociadoA ? bienPorId(props.bien.asociadoA.bienId) : null
+  return padre ? ` › ${padre.nombre} ${padre.id}` : ''
+})
+
+const necesidad = computed(() =>
+  calcularNecesidades({ anio: ANIO_REVISION, carIds: [ubicacion.value.car.id] }).pendientes.find((n) => n.id === props.bien.id) ?? null
+)
+</script>

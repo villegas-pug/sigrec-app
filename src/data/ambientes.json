@@ -1,0 +1,78 @@
+[
+  {
+    "id": "AMA-D1", "localId": "LOC-AMA-01", "nombre": "Dormitorio 1", "piso": 1, "areaM2": 18, "puertas": 1, "ventanas": 2,
+    "condicion": "regular", "ultimoPintado": "2023-03",
+    "intervenciones": [
+      { "descripcion": "Pintado de muros y techo", "fecha": "2023-03" },
+      { "descripcion": "Cambio de chapa de la puerta", "fecha": null }
+    ],
+    "novedades": [
+      {
+        "id": "NOV-001", "fecha": "2026-10-14", "tipo": "dano", "titulo": "Ventana lateral dañada",
+        "detalle": "Vidrio rajado y marco suelto.", "ubicacion": "Muro lateral, junto al Camarote AMA-D1-C02",
+        "requiereEvaluacion": true, "atendida": false, "informadoPor": "Personal del CAR"
+      }
+    ]
+  },
+  {
+    "id": "AMA-D2", "localId": "LOC-AMA-01", "nombre": "Dormitorio 2", "piso": 2, "areaM2": 20, "puertas": 1, "ventanas": 2,
+    "condicion": "bueno", "ultimoPintado": null, "intervenciones": [], "novedades": []
+  },
+  {
+    "id": "AMA-COM", "localId": "LOC-AMA-01", "nombre": "Comedor", "piso": 1, "areaM2": 35, "puertas": 2, "ventanas": 3,
+    "condicion": "bueno", "ultimoPintado": "2024-08",
+    "intervenciones": [{ "descripcion": "Pintado de muros", "fecha": "2024-08" }], "novedades": []
+  },
+  {
+    "id": "AMA-COC", "localId": "LOC-AMA-01", "nombre": "Cocina", "piso": 1, "areaM2": 16, "puertas": 1, "ventanas": 1,
+    "condicion": "regular", "ultimoPintado": null, "intervenciones": [],
+    "novedades": [
+      {
+        "id": "NOV-002", "fecha": "2026-09-18", "tipo": "dano", "titulo": "Puerta con bisagra floja",
+        "detalle": "La puerta no cierra por completo.", "ubicacion": "Puerta de acceso",
+        "requiereEvaluacion": false, "atendida": false, "informadoPor": "Personal del CAR"
+      }
+    ]
+  },
+  {
+    "id": "AMA-SES", "localId": "LOC-AMA-01", "nombre": "Sala de estudio", "piso": 2, "areaM2": 24, "puertas": 1, "ventanas": 2,
+    "condicion": "bueno", "ultimoPintado": "2025-01",
+    "intervenciones": [{ "descripcion": "Pintado de muros", "fecha": "2025-01" }], "novedades": []
+  },
+  {
+    "id": "AMA-SEA", "localId": "LOC-AMA-01", "nombre": "Sala de estar", "piso": 1, "areaM2": 28, "puertas": 1, "ventanas": 2,
+    "condicion": "bueno", "ultimoPintado": "2024-08",
+    "intervenciones": [{ "descripcion": "Pintado de muros", "fecha": "2024-08" }], "novedades": []
+  },
+  {
+    "id": "HOR-D1", "localId": "LOC-HOR-01", "nombre": "Dormitorio 1", "piso": 1, "areaM2": 22, "puertas": 1, "ventanas": 2,
+    "condicion": "bueno", "ultimoPintado": "2025-06", "intervenciones": [{ "descripcion": "Pintado de muros", "fecha": "2025-06" }], "novedades": []
+  },
+  {
+    "id": "HOR-COC", "localId": "LOC-HOR-01", "nombre": "Cocina", "piso": 1, "areaM2": 20, "puertas": 1, "ventanas": 1,
+    "condicion": "malo", "ultimoPintado": null, "intervenciones": [],
+    "novedades": [
+      {
+        "id": "NOV-003", "fecha": "2026-09-02", "tipo": "incendio", "titulo": "Instalaciones eléctricas afectadas por incendio",
+        "detalle": "Cableado y tomacorrientes de la zona de cocción dañados.", "ubicacion": "Zona de cocción",
+        "requiereEvaluacion": true, "atendida": false, "informadoPor": "Dirección del CAR"
+      }
+    ]
+  },
+  {
+    "id": "HOR-COM", "localId": "LOC-HOR-01", "nombre": "Comedor", "piso": 1, "areaM2": 30, "puertas": 2, "ventanas": 2,
+    "condicion": "bueno", "ultimoPintado": "2025-06", "intervenciones": [], "novedades": []
+  },
+  {
+    "id": "ESP-D1", "localId": "LOC-ESP-01", "nombre": "Dormitorio 1", "piso": 2, "areaM2": 24, "puertas": 1, "ventanas": 2,
+    "condicion": "bueno", "ultimoPintado": "2024-02", "intervenciones": [{ "descripcion": "Pintado de muros", "fecha": "2024-02" }], "novedades": []
+  },
+  {
+    "id": "ESP-COM", "localId": "LOC-ESP-01", "nombre": "Comedor", "piso": 1, "areaM2": 32, "puertas": 2, "ventanas": 3,
+    "condicion": "bueno", "ultimoPintado": null, "intervenciones": [], "novedades": []
+  },
+  {
+    "id": "ESP-LAV", "localId": "LOC-ESP-01", "nombre": "Lavandería", "piso": 1, "areaM2": 12, "puertas": 1, "ventanas": 1,
+    "condicion": "regular", "ultimoPintado": null, "intervenciones": [], "novedades": []
+  }
+]

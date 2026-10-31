@@ -1,0 +1,7 @@
+[
+  { "id": "CB-001", "vehiculoId": "AMA-V01", "fecha": "2026-10-06", "tipo": "carga", "cantidad": 20, "unidad": "L", "itinerarioId": null, "sustento": "Vale DEMO-5398" },
+  { "id": "CB-002", "vehiculoId": "AMA-V01", "fecha": "2026-10-24", "tipo": "consumo", "cantidad": 4, "unidad": "L", "itinerarioId": "IT-0233", "sustento": "Declaración del chofer" },
+  { "id": "CB-003", "vehiculoId": "AMA-V01", "fecha": "2026-10-27", "tipo": "carga", "cantidad": 20, "unidad": "L", "itinerarioId": null, "sustento": "Vale DEMO-5521" },
+  { "id": "CB-004", "vehiculoId": "AMA-V01", "fecha": "2026-10-28", "tipo": "consumo", "cantidad": 1.5, "unidad": "L", "itinerarioId": "IT-0231", "sustento": "Declaración del chofer" },
+  { "id": "CB-005", "vehiculoId": "HOR-V01", "fecha": "2026-10-27", "tipo": "consumo", "cantidad": 3, "unidad": "L", "itinerarioId": "IT-0240", "sustento": "Declaración del chofer" }
+]
