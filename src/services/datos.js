@@ -52,8 +52,9 @@ export function ubicacionDeAmbiente (ambienteId) {
 
 export const ubicacionDeBien = (bien) => ubicacionDeAmbiente(bien.ambienteId)
 
-export function textoUbicacion ({ car, local, ambiente }) {
-  return `${car.nombre} › ${local.id} › ${ambiente.nombre}`
+// Jerarquía Centro › Ambiente: el local se consulta como ficha del inmueble, no como nivel de ubicación.
+export function textoUbicacion ({ car, ambiente }) {
+  return `${car.nombre} › ${ambiente.nombre}`
 }
 
 let contador = 0

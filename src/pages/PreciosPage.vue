@@ -45,7 +45,7 @@
                   <span v-else class="sg-muted">—</span>
                 </td>
                 <td class="text-right">
-                  <q-btn flat dense color="secondary" icon="edit" label="Informar precio" @click="abrir(fila.tipo)" />
+                  <q-btn v-if="puedeHacer('precio.informar')" flat dense color="secondary" icon="edit" label="Informar precio" @click="abrir(fila.tipo)" />
                 </td>
               </tr>
             </tbody>
@@ -97,7 +97,7 @@ const OPCIONES_FILTRO = [
 ]
 
 const $q = useQuasar()
-const { perfil, carIdsEnAmbito } = usePerfil()
+const { perfil, carIdsEnAmbito, puedeHacer } = usePerfil()
 
 const texto = ref('')
 const filtro = ref('todos')

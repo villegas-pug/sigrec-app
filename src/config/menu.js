@@ -1,21 +1,15 @@
 // Menú lateral. Cada `key` de una entrada navegable coincide con el nombre de su ruta y con los accesos de perfiles.js.
+// El grupo «Centros» sigue la jerarquía Centro › Ambiente › Bien › Componente.
 export const MENU = [
   { key: 'inicio', label: 'Inicio', icon: 'home' },
   {
-    key: 'grupo-locales',
-    label: 'Locales e infraestructura',
+    key: 'grupo-centros',
+    label: 'Centros',
     icon: 'home_work',
     items: [
       { key: 'locales', label: 'Centros y locales', icon: 'domain' },
-      { key: 'ambientes', label: 'Ambientes', icon: 'meeting_room' }
-    ]
-  },
-  {
-    key: 'grupo-bienes',
-    label: 'Bienes',
-    icon: 'inventory_2',
-    items: [
-      { key: 'bienes', label: 'Bienes del CAR', icon: 'account_tree' },
+      { key: 'ambientes', label: 'Ambientes', icon: 'meeting_room' },
+      { key: 'bienes', label: 'Bienes y componentes', icon: 'account_tree' },
       { key: 'registro', label: 'Registro y verificación', icon: 'fact_check' }
     ]
   },
@@ -35,7 +29,8 @@ export const MENU = [
     label: 'Movilidad',
     icon: 'directions_car',
     items: [
-      { key: 'movilidad', label: 'Vehículos e itinerarios', icon: 'route' },
+      { key: 'vehiculos', label: 'Vehículos', icon: 'directions_car' },
+      { key: 'movilidad', label: 'Itinerarios', icon: 'route' },
       { key: 'combustible', label: 'Combustible', icon: 'local_gas_station' }
     ]
   }

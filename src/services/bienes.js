@@ -1,5 +1,5 @@
-// Consultas de bienes: árbol de ubicación, asociaciones y antecedentes (RF-01, RF-04, RF-08, RF-20).
-import { db, bienPorId, localesDeCar, ambientesDeLocal, bienesDeAmbiente } from './datos'
+// Consultas de bienes: árbol de ubicación, componentes y antecedentes (RF-01, RF-04, RF-08, RF-20).
+import { db, bienPorId, carPorId, localesDeCar, ambientesDeCar, bienesDeAmbiente } from './datos'
 
 const coincide = (bien, texto) => {
   if (!texto) return true
@@ -21,42 +21,57 @@ function nodoBien (bien, hijos) {
   }
 }
 
+// Prefijos de nodo para que centros y ambientes no compartan clave con los bienes en el árbol.
+export const nodoCentroId = (carId) => `car:${carId}`
+export const nodoAmbienteId = (ambienteId) => `amb:${ambienteId}`
+
+function nodoAmbiente (ambiente, filtros) {
+  const delAmbiente = bienesDeAmbiente(ambiente.id)
+  const construir = (padreId) =>
+    delAmbiente
+      .filter((b) => (b.asociadoA?.bienId ?? null) === padreId)
+      .map((bien) => {
+        const componentes = construir(bien.id)
+        const visible = cumpleSituacion(bien, filtros.situacion) && coincide(bien, filtros.texto)
+        return visible || componentes.length ? nodoBien(bien, componentes) : null
+      })
+      .filter(Boolean)
+  return {
+    id: nodoAmbienteId(ambiente.id),
+    tipo: 'ambiente',
+    label: ambiente.nombre,
+    codigo: `${delAmbiente.filter((b) => b.situacion === 'activo').length} bienes activos`,
+    icono: 'meeting_room',
+    selectable: false,
+    children: construir(null)
+  }
+}
+
 /**
- * Árbol local › ambiente › bien › bien asociado.
+ * Árbol centro › ambiente › bien › componente (RF-01, RF-08).
+ * El local no es un nivel: se muestra como dato del centro.
  * Con filtro, conserva los bienes que coinciden y sus antecesores para no perder la ubicación.
  */
-export function arbolDelCar (carId, { texto = '', situacion = 'activo' } = {}) {
-  return localesDeCar(carId).map((local) => ({
-    id: local.id,
-    tipo: 'local',
-    label: `${local.id} · ${local.nombre}`,
-    icono: 'apartment',
-    selectable: false,
-    children: ambientesDeLocal(local.id)
-      .map((ambiente) => {
-        const delAmbiente = bienesDeAmbiente(ambiente.id)
-        const construir = (padreId) =>
-          delAmbiente
-            .filter((b) => (b.asociadoA?.bienId ?? null) === padreId)
-            .map((bien) => {
-              const hijos = construir(bien.id)
-              const visible = cumpleSituacion(bien, situacion) && coincide(bien, texto)
-              return visible || hijos.length ? nodoBien(bien, hijos) : null
-            })
-            .filter(Boolean)
-        const children = construir(null)
-        return {
-          id: ambiente.id,
-          tipo: 'ambiente',
-          label: ambiente.nombre,
-          codigo: `${delAmbiente.filter((b) => b.situacion === 'activo').length} bienes activos`,
-          icono: 'meeting_room',
-          selectable: false,
-          children
-        }
-      })
-      .filter((nodo) => nodo.children.length || !texto)
-  }))
+export function arbolDeCentros (carIds, { texto = '', situacion = 'activo' } = {}) {
+  const filtros = { texto, situacion }
+  return carIds
+    .map((carId) => {
+      const car = carPorId(carId)
+      const local = localesDeCar(carId)[0]
+      const children = ambientesDeCar(carId)
+        .map((ambiente) => nodoAmbiente(ambiente, filtros))
+        .filter((nodo) => nodo.children.length || !texto)
+      return {
+        id: nodoCentroId(carId),
+        tipo: 'centro',
+        label: car.nombre,
+        codigo: local ? `${local.id} · ${local.condicion === 'alquilado' ? 'Alquilado' : 'Propio'}` : 'Sin local registrado',
+        icono: 'home_work',
+        selectable: false,
+        children
+      }
+    })
+    .filter((nodo) => nodo.children.length || !texto)
 }
 
 export function asociacionesDeBien (bien) {
@@ -74,5 +89,6 @@ export function antecedentesDeBien (bien) {
   const alta = bien.adquisicion?.fecha
     ? [{ id: `ALTA-${bien.id}`, fecha: bien.adquisicion.fecha, tipo: 'alta', titulo: 'Adquisición', detalle: 'Fecha de adquisición registrada.', informadoPor: null }]
     : []
-  return [...eventos, ...alta].sort((a, b) => b.fecha.localeCompare(a.fecha))
+  // Se invierte antes de ordenar para que, en una misma fecha, el hecho registrado después aparezca primero.
+  return [...eventos.reverse(), ...alta].sort((a, b) => b.fecha.localeCompare(a.fecha))
 }

@@ -29,6 +29,8 @@ const perfil = computed(() => PERFILES.find((p) => p.id === perfilId.value) ?? P
 
 const puedeAcceder = (ruta) => perfil.value.accesos.includes(ruta)
 
+const puedeHacer = (accion) => perfil.value.acciones.includes(accion)
+
 // Solo un CAR existente puede estar en el ámbito; evita aceptar valores vacíos (p. ej. un ?car= ausente).
 const enAmbitoCar = (carId) =>
   db.cars.some((c) => c.id === carId) && (perfil.value.ambito.carIds === null || perfil.value.ambito.carIds.includes(carId))
@@ -50,6 +52,7 @@ export function usePerfil () {
     perfilId,
     perfil,
     puedeAcceder,
+    puedeHacer,
     enAmbitoCar,
     carsEnAmbito,
     carIdsEnAmbito,

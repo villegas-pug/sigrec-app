@@ -53,7 +53,7 @@
             </div>
 
             <div class="row q-col-gutter-md">
-              <q-select v-model="form.asociadoA" class="col-12 col-sm-7" :options="opcionesAsociar" emit-value map-options clearable outlined dense label="Asociar con" hint="Opcional: ayuda a localizar el bien concreto" />
+              <q-select v-model="form.asociadoA" class="col-12 col-sm-7" :options="opcionesAsociar" emit-value map-options clearable outlined dense label="Componente de" hint="Opcional: bien del que forma parte (p. ej. la cama de un colchón)" />
               <q-input v-model="form.posicion" class="col-12 col-sm-5" outlined dense label="Posición" :disable="!form.asociadoA" placeholder="Ej.: Cama inferior" />
             </div>
 
@@ -137,7 +137,7 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
@@ -157,15 +157,21 @@ const RESULTADOS = {
 
 const $q = useQuasar()
 const router = useRouter()
-const { carsEnAmbito, puedeAcceder } = usePerfil()
+const route = useRoute()
+const { carsEnAmbito, enAmbitoCar, puedeAcceder } = usePerfil()
 
 const requerido = (v) => (v !== null && v !== undefined && v !== '') || 'Campo obligatorio'
 const rotuloLibre = (v) => !bienPorId(v) || 'Ya existe un bien con ese rótulo'
 
+// El contexto puede llegar desde la URL (?car=, ?ambiente=, ?asociar=) y solo se acepta dentro del ámbito.
 const opcionesCar = computed(() => carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id })))
-const carId = ref(carsEnAmbito.value[0]?.id)
+const carId = ref(enAmbitoCar(route.query.car) ? route.query.car : carsEnAmbito.value[0]?.id)
 const opcionesAmbiente = computed(() => (carId.value ? ambientesDeCar(carId.value) : []).map((a) => ({ label: a.nombre, value: a.id })))
-const ambienteId = ref(opcionesAmbiente.value.find((o) => o.label === 'Sala de estudio')?.value ?? opcionesAmbiente.value[0]?.value)
+const ambienteId = ref(
+  opcionesAmbiente.value.find((o) => o.value === route.query.ambiente)?.value ??
+  opcionesAmbiente.value.find((o) => o.label === 'Sala de estudio')?.value ??
+  opcionesAmbiente.value[0]?.value
+)
 const ambiente = computed(() => (ambienteId.value ? ambientePorId(ambienteId.value) : null))
 
 watch(carsEnAmbito, (cars) => {
@@ -204,6 +210,7 @@ const vacio = () => ({
   posicion: ''
 })
 const form = reactive(vacio())
+if (opcionesAsociar.value.some((o) => o.value === route.query.asociar)) form.asociadoA = route.query.asociar
 
 function alCambiarTipo (tipoId) {
   const tipo = tipoPorId(tipoId)

@@ -3,8 +3,9 @@
     <div class="sg-page__inner">
       <page-header>
         <template #acciones>
-          <q-btn outline color="secondary" icon="edit" label="Actualizar ficha" :disable="!local" @click="abrirEdicion" />
-          <q-btn unelevated color="primary" icon="add_a_photo" label="Incorporar fotografía" :disable="!local" @click="avisarFoto" />
+          <q-btn v-if="puedeHacer('centro.registrar')" outline color="secondary" icon="add_business" label="Registrar centro" @click="dialogos.centro = true" />
+          <q-btn v-if="puedeHacer('local.actualizar')" outline color="secondary" icon="edit" label="Actualizar ficha" :disable="!local" @click="dialogos.ficha = true" />
+          <q-btn v-if="puedeHacer('local.foto')" unelevated color="primary" icon="add_a_photo" label="Incorporar fotografía" :disable="!local" @click="dialogos.foto = true" />
         </template>
       </page-header>
 
@@ -30,6 +31,7 @@
                 :tono="l.condicion === 'alquilado' ? 'in' : 'ne'"
                 :label="l.condicion === 'alquilado' ? 'Alquilado' : 'Propio'"
               />
+              <status-chip tono="ne" :label="plural(ambientesDeCar(car.id).length, 'ambiente', 'ambientes')" />
             </span>
           </button>
           <p v-if="!carsFiltrados.length" class="q-pa-md sg-muted">Sin resultados.</p>
@@ -42,7 +44,10 @@
               <status-chip tono="pv" label="1 local por CAR · Por validar" />
             </template>
             <div class="sg-kv-grid">
-              <key-value etiqueta="Dirección">{{ local.direccion }}</key-value>
+              <key-value etiqueta="Dirección">
+                <template v-if="local.direccion">{{ local.direccion }}</template>
+                <status-chip v-else tono="si" label="No informada" />
+              </key-value>
               <key-value etiqueta="Referencia de fundación" :nota="local.fundacion.nota || ''">
                 <template v-if="local.fundacion.referencia">{{ local.fundacion.referencia }}</template>
                 <status-chip v-else tono="si" label="No informada" />
@@ -67,77 +72,60 @@
 
           <section-card titulo="Construcción e infraestructura">
             <div class="sg-kv-grid">
-              <key-value etiqueta="Material de construcción">{{ local.construccion.material }}</key-value>
-              <key-value etiqueta="Antigüedad" :nota="local.construccion.antiguedadNota || ''">{{ local.construccion.antiguedad }}</key-value>
-              <key-value etiqueta="Pisos">{{ local.construccion.pisos }}</key-value>
-              <key-value etiqueta="Área construida">
-                <template v-if="local.construccion.areaM2">{{ local.construccion.areaM2 }} m²</template>
-                <status-chip v-else tono="si" label="No informada" />
+              <key-value v-for="campo in camposConstruccion" :key="campo.etiqueta" :etiqueta="campo.etiqueta" :nota="campo.nota || ''">
+                <template v-if="campo.valor != null && campo.valor !== ''">{{ campo.valor }}</template>
+                <status-chip v-else tono="si" label="No informado" />
               </key-value>
               <key-value etiqueta="Estado general">
                 <status-chip v-bind="condicion(local.construccion.estado)" />
               </key-value>
               <key-value etiqueta="Última actualización" :nota="local.actualizado.por">{{ fecha(local.actualizado.fecha) }}</key-value>
-              <key-value etiqueta="Características">{{ local.construccion.caracteristicas }}</key-value>
             </div>
             <h3 class="sg-kv__label q-mt-lg q-mb-sm">Fotografías ({{ local.fotos.length }})</h3>
             <div v-if="local.fotos.length" class="sg-kv-grid">
-              <div v-for="foto in local.fotos" :key="foto.titulo" class="sg-photo">
-                <q-icon name="image" size="28px" aria-hidden="true" />
-                <span>[Foto: {{ foto.titulo }}]</span>
-                <span class="sg-muted">{{ fecha(foto.fecha) }}<template v-if="foto.nota"> · {{ foto.nota }}</template></span>
-              </div>
+              <figure v-for="(foto, i) in local.fotos" :key="i" class="sg-photo q-ma-none">
+                <img v-if="foto.url" :src="foto.url" :alt="foto.titulo" style="max-width: 100%; max-height: 160px; object-fit: cover; border-radius: 4px">
+                <template v-else>
+                  <q-icon name="image" size="28px" aria-hidden="true" />
+                  <span>[Foto: {{ foto.titulo }}]</span>
+                </template>
+                <figcaption class="sg-muted text-center">
+                  <template v-if="foto.url">{{ foto.titulo }} · </template>{{ fecha(foto.fecha) }}<template v-if="foto.nota"> · {{ foto.nota }}</template>
+                </figcaption>
+              </figure>
             </div>
             <p v-else class="sg-muted">No hay fotografías registradas.</p>
             <p class="q-mt-md q-mb-none">
-              <router-link :to="{ name: 'ambientes', query: { car: carId } }" class="text-weight-bold">Ver ambientes del local</router-link>
+              <router-link :to="{ name: 'ambientes', query: { car: carId } }" class="text-weight-bold">Ver ambientes del centro</router-link>
             </p>
           </section-card>
         </div>
       </div>
     </div>
 
-    <q-dialog v-model="edicion.abierta">
-      <q-card style="width: 560px; max-width: 92vw">
-        <q-card-section>
-          <h2 class="text-h6 text-weight-bold q-my-none">Actualizar ficha del local</h2>
-          <p class="sg-muted q-mb-none">{{ local?.id }} · los campos vacíos quedan como información pendiente.</p>
-        </q-card-section>
-        <q-card-section class="column q-gutter-y-md">
-          <q-option-group v-model="edicion.condicion" inline :options="[{ label: 'Propio', value: 'propio' }, { label: 'Alquilado', value: 'alquilado' }]" />
-          <template v-if="edicion.condicion === 'alquilado'">
-            <q-input v-model="edicion.arrendador" outlined dense label="Arrendador" />
-            <q-input v-model="edicion.contratoHasta" outlined dense type="date" label="Contrato vigente hasta" stack-label />
-          </template>
-          <q-input v-model="edicion.litigios" outlined dense label="Litigios conocidos" />
-          <q-input v-model.number="edicion.areaM2" outlined dense type="number" min="0" label="Área construida (m²)" />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat color="secondary" label="Cancelar" v-close-popup />
-          <q-btn unelevated color="primary" label="Guardar cambios" @click="guardarEdicion" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <centro-dialog v-model="dialogos.centro" @hecho="(id) => (carId = id)" />
+    <local-ficha-dialog v-if="local" v-model="dialogos.ficha" :local="local" />
+    <foto-dialog v-if="local" v-model="dialogos.foto" :local="local" />
   </q-page>
 </template>
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import KeyValue from 'components/common/KeyValue.vue'
+import CentroDialog from 'components/centros/CentroDialog.vue'
+import LocalFichaDialog from 'components/centros/LocalFichaDialog.vue'
+import FotoDialog from 'components/centros/FotoDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { carPorId, localesDeCar } from 'src/services/datos'
-import { actualizarLocal } from 'src/services/acciones'
+import { ambientesDeCar, carPorId, localesDeCar } from 'src/services/datos'
 import { condicion } from 'src/config/catalogos'
-import { fecha } from 'src/utils/formato'
+import { fecha, plural } from 'src/utils/formato'
 
-const $q = useQuasar()
 const route = useRoute()
-const { perfil, carsEnAmbito, enAmbitoCar } = usePerfil()
+const { perfil, carsEnAmbito, enAmbitoCar, puedeHacer } = usePerfil()
 
 const busqueda = ref('')
 const carId = ref(enAmbitoCar(route.query.car) ? route.query.car : carsEnAmbito.value[0]?.id)
@@ -156,33 +144,16 @@ const carsFiltrados = computed(() => {
 const car = computed(() => carPorId(carId.value))
 const local = computed(() => (carId.value ? localesDeCar(carId.value)[0] ?? null : null))
 
-const edicion = reactive({ abierta: false, condicion: 'propio', arrendador: '', contratoHasta: '', litigios: '', areaM2: null })
+const camposConstruccion = computed(() => {
+  const c = local.value.construccion
+  return [
+    { etiqueta: 'Material de construcción', valor: c.material },
+    { etiqueta: 'Antigüedad', valor: c.antiguedad, nota: c.antiguedadNota },
+    { etiqueta: 'Pisos', valor: c.pisos },
+    { etiqueta: 'Área construida', valor: c.areaM2 ? `${c.areaM2} m²` : null },
+    { etiqueta: 'Características', valor: c.caracteristicas }
+  ]
+})
 
-function abrirEdicion () {
-  Object.assign(edicion, {
-    abierta: true,
-    condicion: local.value.condicion,
-    arrendador: local.value.arrendador ?? '',
-    contratoHasta: local.value.contratoHasta ?? '',
-    litigios: local.value.litigios ?? '',
-    areaM2: local.value.construccion.areaM2
-  })
-}
-
-function guardarEdicion () {
-  const alquilado = edicion.condicion === 'alquilado'
-  actualizarLocal(local.value, {
-    condicion: edicion.condicion,
-    arrendador: alquilado ? edicion.arrendador || null : null,
-    contratoHasta: alquilado ? edicion.contratoHasta || null : null,
-    litigios: edicion.litigios || null,
-    construccion: { ...local.value.construccion, areaM2: edicion.areaM2 || null }
-  })
-  edicion.abierta = false
-  $q.notify({ type: 'positive', message: 'Ficha del local actualizada.' })
-}
-
-function avisarFoto () {
-  $q.notify({ type: 'info', message: 'Prototipo: la carga de fotografías se implementará con el almacenamiento definitivo.' })
-}
+const dialogos = reactive({ centro: false, ficha: false, foto: false })
 </script>

@@ -36,6 +36,7 @@ export const TIPOS_EVENTO = {
   reposicion: { label: 'Reposición', tono: 'in', icono: 'swap_horiz' },
   verificacion: { label: 'Verificación física', tono: 'ok', icono: 'fact_check' },
   condicion: { label: 'Condición actualizada', tono: 'wa', icono: 'update' },
+  asociacion: { label: 'Componente actualizado', tono: 'ne', icono: 'account_tree' },
   alta: { label: 'Alta', tono: 'in', icono: 'add_circle' }
 }
 

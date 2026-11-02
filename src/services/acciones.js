@@ -1,7 +1,8 @@
 // Acciones de la interfaz sobre el almacén en memoria. Registrar una necesidad o un hecho no aprueba compras ni pagos.
-import { db, nuevoId, bienPorId, itinerarioPorId } from './datos'
+import { db, nuevoId, ambientePorId, bienPorId, itinerarioPorId, vehiculoPorId } from './datos'
 import { nombrePeriodo } from './servicios'
 import { FECHA_CORTE } from 'src/config/demo'
+import { condicion } from 'src/config/catalogos'
 
 const AUTOR = 'Usuario de demostración'
 
@@ -14,12 +15,15 @@ function registrarEvento (evento) {
   return nuevo
 }
 
-export function rotuloSugerido (ambienteId, tipoId) {
-  const base = `${ambienteId}-${tipoId.slice(0, 2).toUpperCase()}`
+// Primer código libre de la forma `${base}NN`; `existe` indica si un código ya está en uso.
+export function siguienteCodigo (base, existe) {
   let n = 1
-  while (bienPorId(`${base}${String(n).padStart(2, '0')}`)) n += 1
+  while (existe(`${base}${String(n).padStart(2, '0')}`)) n += 1
   return `${base}${String(n).padStart(2, '0')}`
 }
+
+export const rotuloSugerido = (ambienteId, tipoId) =>
+  siguienteCodigo(`${ambienteId}-${tipoId.slice(0, 2).toUpperCase()}`, bienPorId)
 
 export function registrarBien (datos) {
   const bien = { situacion: 'activo', asociadoA: null, verificacion: null, cantidad: 1, ...datos }
@@ -54,6 +58,58 @@ export function darDeBaja (bien, { motivo, detalle }) {
     hijo.revisionPendiente = true
   }
   return registrarEvento({ tipo: 'baja', titulo: `Baja: ${motivo}`, detalle, ambienteId: bien.ambienteId, bienIds: [bien.id] })
+}
+
+// Cambiar la condición deja un antecedente; el resto de datos se corrige sin generar un hecho.
+export function actualizarBien (bien, cambios) {
+  const condicionAnterior = bien.condicion
+  Object.assign(bien, cambios)
+  if (cambios.condicion && cambios.condicion !== condicionAnterior) {
+    registrarEvento({
+      tipo: 'condicion',
+      titulo: `Condición: ${condicion(condicionAnterior).label} → ${condicion(cambios.condicion).label}`,
+      detalle: cambios.deterioro || '',
+      ambienteId: bien.ambienteId,
+      bienIds: [bien.id]
+    })
+  }
+}
+
+const componentesDe = (bienId) => db.bienes.filter((b) => b.asociadoA?.bienId === bienId)
+
+function esDescendiente (candidatoId, bienId) {
+  return componentesDe(bienId).some((c) => c.id === candidatoId || esDescendiente(candidatoId, c.id))
+}
+
+// Un componente solo se asocia a un bien activo del mismo ambiente, sin crear ciclos.
+export const puedeAsociar = (bien, padre) =>
+  padre.id !== bien.id && padre.situacion === 'activo' && padre.ambienteId === bien.ambienteId && !esDescendiente(padre.id, bien.id)
+
+export function asociarBien (bien, padreId, posicion) {
+  const padre = bienPorId(padreId)
+  if (!padre || !puedeAsociar(bien, padre)) throw new Error('Asociación no permitida')
+  bien.asociadoA = { bienId: padreId, posicion: posicion || 'No informada' }
+  bien.revisionPendiente = false
+  return registrarEvento({
+    tipo: 'asociacion',
+    titulo: `Componente de ${padre.nombre} ${padre.id}`,
+    detalle: `Posición: ${bien.asociadoA.posicion}.`,
+    ambienteId: bien.ambienteId,
+    bienIds: [bien.id, padreId]
+  })
+}
+
+export function desasociarBien (bien) {
+  const anterior = bien.asociadoA?.bienId
+  bien.asociadoA = null
+  bien.revisionPendiente = false
+  return registrarEvento({
+    tipo: 'asociacion',
+    titulo: `Deja de ser componente de ${anterior}`,
+    detalle: 'La relación anterior se conserva como antecedente.',
+    ambienteId: bien.ambienteId,
+    bienIds: [bien.id]
+  })
 }
 
 export function cerrarRevision (bien) {
@@ -108,8 +164,81 @@ export function informarHechoServicio (servicio, { tipo, fecha, detalle }) {
   servicio.hechos.push({ fecha: fecha || FECHA_CORTE, tipo, detalle })
 }
 
+export function registrarServicio (local, datos) {
+  const servicio = { id: `SRV-${local.carId}-${datos.tipo.toUpperCase()}`, localId: local.id, periodos: {}, hechos: [], ...datos }
+  db.servicios.push(servicio)
+  return servicio
+}
+
+export function actualizarServicio (servicio, cambios) {
+  Object.assign(servicio, cambios)
+}
+
 export function registrarNovedad (ambiente, datos) {
   ambiente.novedades.push({ id: nuevoId('NOV'), fecha: FECHA_CORTE, atendida: false, informadoPor: AUTOR, ...datos })
+}
+
+// Una novedad atendida deja de generar necesidad de infraestructura.
+export function atenderNovedad (novedad, { detalle }) {
+  Object.assign(novedad, { atendida: true, atencion: { fecha: FECHA_CORTE, detalle: detalle || null, por: AUTOR } })
+}
+
+// Un pintado actualiza el último pintado solo si es más reciente que el registrado.
+export function registrarIntervencion (ambiente, { descripcion, fecha, esPintado }) {
+  ambiente.intervenciones.unshift({ descripcion, fecha: fecha || null })
+  if (esPintado && fecha && (!ambiente.ultimoPintado || fecha > ambiente.ultimoPintado)) ambiente.ultimoPintado = fecha
+}
+
+export function registrarAmbiente (local, datos) {
+  const ambiente = {
+    id: siguienteCodigo(`${local.carId}-A`, ambientePorId),
+    localId: local.id,
+    intervenciones: [],
+    novedades: [],
+    ...datos
+  }
+  db.ambientes.push(ambiente)
+  return ambiente
+}
+
+export function actualizarAmbiente (ambiente, cambios) {
+  Object.assign(ambiente, cambios)
+}
+
+// El centro y su inmueble se registran juntos: la demostración asume un local por CAR.
+export function registrarCentro ({ id, nombre }, local) {
+  const car = { id, nombre }
+  db.cars.push(car)
+  db.locales.push({
+    id: `LOC-${id}-01`,
+    carId: id,
+    nombre: 'Local principal',
+    fundacion: { referencia: null, nota: null },
+    arrendador: null,
+    contratoHasta: null,
+    litigios: null,
+    construccion: { material: null, antiguedad: null, antiguedadNota: null, pisos: null, areaM2: null, estado: null, caracteristicas: null },
+    fotos: [],
+    ...local,
+    actualizado: { fecha: FECHA_CORTE, por: AUTOR }
+  })
+  return car
+}
+
+export function registrarFoto (local, { titulo, nota, url }) {
+  local.fotos.push({ titulo, fecha: FECHA_CORTE, nota: nota || null, url })
+}
+
+export const vehiculoSugerido = (carId) => siguienteCodigo(`${carId}-V`, vehiculoPorId)
+
+export function registrarVehiculo (datos) {
+  const vehiculo = { unidad: 'L', ...datos }
+  db.vehiculos.push(vehiculo)
+  return vehiculo
+}
+
+export function actualizarVehiculo (vehiculo, cambios) {
+  Object.assign(vehiculo, cambios)
 }
 
 export function informarPrecio (tipo, { precio, fechaPrecio, procedencia }) {

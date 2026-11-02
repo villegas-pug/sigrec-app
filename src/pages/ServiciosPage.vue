@@ -1,7 +1,11 @@
 <template>
   <q-page class="sg-page">
     <div class="sg-page__inner">
-      <page-header />
+      <page-header>
+        <template #acciones>
+          <q-btn v-if="puedeHacer('servicio.registrar')" unelevated color="primary" icon="add" label="Registrar servicio" :disable="!local || !noRegistrados.length" @click="abrirServicio(null)" />
+        </template>
+      </page-header>
 
       <div class="sg-filters">
         <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Establecimiento (CAR)" />
@@ -11,7 +15,8 @@
 
       <note-banner tono="in">
         Informar un pago registra su situación para el control del servicio; no ejecuta el pago.
-        Un período sin información no equivale a un pendiente confirmado. Seleccione una celda para informar su situación.
+        Un período sin información no equivale a un pendiente confirmado.
+        <template v-if="puedeHacer('servicio.periodo')">Seleccione una celda para informar su situación.</template>
       </note-banner>
 
       <section-card :titulo="`Períodos de pago · ${anio}`" sin-relleno>
@@ -43,6 +48,7 @@
                     class="sg-celda"
                     :class="`sg-celda--${celda.estado}`"
                     :aria-label="`${TIPOS_SERVICIO[fila.servicio.tipo]}, ${celda.etiqueta}: ${ESTADOS_PERIODO[celda.estado].label}`"
+                    :disabled="!puedeHacer('servicio.periodo')"
                     @click="abrirPeriodo(fila.servicio, celda)"
                   >
                     <span>{{ celda.span > 1 ? `${celda.etiqueta} · ` : '' }}{{ ESTADOS_PERIODO[celda.estado].label }}</span>
@@ -50,9 +56,14 @@
                   </button>
                 </td>
               </tr>
-              <tr v-if="noRegistrados.length">
-                <th scope="row">{{ noRegistrados.map((t) => TIPOS_SERVICIO[t]).join(', ') }}</th>
-                <td colspan="12"><span class="sg-celda sg-celda--sin_info" style="cursor: default">Sin servicio registrado para este local</span></td>
+              <tr v-for="tipo in noRegistrados" :key="tipo">
+                <th scope="row">{{ TIPOS_SERVICIO[tipo] }}</th>
+                <td colspan="12">
+                  <button v-if="puedeHacer('servicio.registrar')" type="button" class="sg-celda sg-celda--sin_info" @click="abrirServicio(null, tipo)">
+                    Sin servicio registrado para este local · Registrar
+                  </button>
+                  <span v-else class="sg-celda sg-celda--sin_info" style="cursor: default">Sin servicio registrado para este local</span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -79,8 +90,11 @@
 
         <section-card v-if="servicio" :titulo="`Ficha del servicio · ${TIPOS_SERVICIO[servicio.tipo]}`" :subtitulo="`${local.id} · ${local.nombre}`">
           <template #acciones>
-            <q-btn outline color="secondary" label="Informar restablecimiento" @click="abrirHecho('restablecimiento')" />
-            <q-btn outline color="secondary" label="Informar interrupción" @click="abrirHecho('interrupcion')" />
+            <q-btn v-if="puedeHacer('servicio.actualizar')" outline color="secondary" icon="edit" label="Actualizar ficha" @click="abrirServicio(servicio)" />
+            <template v-if="puedeHacer('servicio.hecho')">
+              <q-btn outline color="secondary" label="Informar restablecimiento" @click="abrirHecho('restablecimiento')" />
+              <q-btn outline color="secondary" label="Informar interrupción" @click="abrirHecho('interrupcion')" />
+            </template>
           </template>
           <div class="sg-kv-grid">
             <key-value etiqueta="Proveedor">{{ servicio.proveedor }}</key-value>
@@ -106,6 +120,16 @@
         </section-card>
       </div>
     </div>
+
+    <servicio-dialog
+      v-if="local"
+      v-model="dialogoServicio.abierto"
+      :local="local"
+      :servicio="dialogoServicio.servicio"
+      :tipos-disponibles="noRegistrados"
+      :tipo-inicial="dialogoServicio.tipo"
+      @hecho="(id) => (servicioId = id)"
+    />
 
     <q-dialog v-model="periodo.abierto">
       <q-card style="width: 460px; max-width: 92vw">
@@ -152,6 +176,7 @@ import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import KeyValue from 'components/common/KeyValue.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
+import ServicioDialog from 'components/servicios/ServicioDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { localesDeCar, servicioPorId } from 'src/services/datos'
 import { avisosDeServicios, celdasDelServicio, interrupcionAbierta, serviciosDeCar, tiposNoRegistrados } from 'src/services/servicios'
@@ -179,7 +204,13 @@ const OPCIONES_ESTADO = [
 
 const $q = useQuasar()
 const route = useRoute()
-const { carsEnAmbito, enAmbitoCar } = usePerfil()
+const { carsEnAmbito, enAmbitoCar, puedeHacer } = usePerfil()
+
+const dialogoServicio = reactive({ abierto: false, servicio: null, tipo: null })
+
+function abrirServicio (srv, tipo = null) {
+  Object.assign(dialogoServicio, { abierto: true, servicio: srv, tipo })
+}
 
 const opcionesCar = computed(() => carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id })))
 const carId = ref(enAmbitoCar(route.query.car) ? route.query.car : carsEnAmbito.value[0]?.id)

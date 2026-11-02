@@ -3,6 +3,7 @@
 - **Estado:** en implementación
 - **Fecha:** 2026-10-30
 - **Origen:** brief «SIGREC — Sistema Integrado de Gestión de Recursos de Centros» y lienzo de diseño aprobado para implementación (`https://claude.ai/artifact/XFmGXDQS6jyyPaPXFFMVfS`).
+- **Ampliado por:** [`002-acciones-y-jerarquia.md`](002-acciones-y-jerarquia.md) (altas y ediciones faltantes, permisos por acción, jerarquía Centro › Ambiente › Bien › Componente, pantalla Vehículos).
 - **Observaciones incorporadas:** (1) los perfiles deben tener accesos distintos; (2) cabecera, menú y submenús con el diseño de la referencia `https://rcgv-services-dev.duckdns.org/uspnna/#/inicio`; (3) pendientes del diseño: filtrar datos por ámbito del perfil y alinear título, migas y botones con la referencia.
 
 ## 1. Objetivo

@@ -3,7 +3,7 @@
     <div class="sg-page__inner">
       <page-header>
         <template #acciones>
-          <q-btn v-if="puedeAcceder('bienes')" unelevated color="primary" icon="report" label="Registrar desde la ficha del bien" :to="{ name: 'bienes' }" />
+          <q-btn v-if="puedeAcceder('bienes') && puedeHacer('bien.incidente')" unelevated color="primary" icon="report" label="Registrar desde la ficha del bien" :to="{ name: 'bienes' }" />
         </template>
       </page-header>
 
@@ -122,13 +122,17 @@ import { fecha, plural, soles } from 'src/utils/formato'
 const CLASES = { renovacion: 'Renovación', reposicion: 'Reposición' }
 const TIPOS_HISTORIAL = ['dano', 'robo', 'incendio', 'baja', 'reposicion']
 
-const { carsEnAmbito, enAmbitoCar, carIdsEnAmbito, puedeAcceder } = usePerfil()
+const { carsEnAmbito, enAmbitoCar, carIdsEnAmbito, puedeAcceder, puedeHacer } = usePerfil()
 
 // 'todos' en lugar de null: QSelect no muestra la etiqueta de una opción con valor null.
 const TODOS = 'todos'
 const opcionesCar = computed(() => [{ label: 'Todos los CAR del ámbito', value: TODOS }, ...carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id }))])
 const opcionesTipo = [{ label: 'Todos', value: TODOS }, ...TIPOS_HISTORIAL.map((t) => ({ label: TIPOS_EVENTO[t].label, value: t }))]
-const opcionesAnio = [{ label: 'Todos los períodos', value: TODOS }, { label: '2026', value: '2026' }, { label: '2025', value: '2025' }]
+// Los años del filtro salen de los hechos registrados, del más reciente al más antiguo.
+const opcionesAnio = computed(() => [
+  { label: 'Todos los períodos', value: TODOS },
+  ...[...new Set(db.eventos.map((ev) => ev.fecha.slice(0, 4)))].sort().reverse().map((a) => ({ label: a, value: a }))
+])
 
 const filtros = reactive({ carId: TODOS, texto: '', tipo: TODOS, anio: TODOS })
 

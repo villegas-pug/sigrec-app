@@ -3,8 +3,9 @@
     <div class="sg-page__inner">
       <page-header>
         <template #acciones>
-          <q-btn outline color="secondary" icon="local_gas_station" label="Combustible" :to="{ name: 'combustible' }" />
-          <q-btn unelevated color="primary" icon="add_road" label="Registrar itinerario" :disable="!vehiculo" @click="abrirItinerario" />
+          <q-btn outline color="secondary" icon="directions_car" label="Vehículos" :to="{ name: 'vehiculos' }" />
+          <q-btn outline color="secondary" icon="local_gas_station" label="Combustible" :to="{ name: 'combustible', query: vehiculoId ? { vehiculo: vehiculoId } : {} }" />
+          <q-btn v-if="puedeHacer('itinerario.registrar')" unelevated color="primary" icon="add_road" label="Registrar itinerario" :disable="!vehiculo" @click="abrirItinerario" />
         </template>
       </page-header>
 
@@ -52,7 +53,7 @@
       </section-card>
 
       <section-card v-if="seleccion" :titulo="`Estimación explicada · ${seleccion.it.id}`" :subtitulo="seleccion.it.proposito">
-        <template v-if="!seleccion.it.realizado" #acciones>
+        <template v-if="!seleccion.it.realizado && puedeHacer('itinerario.ejecucion')" #acciones>
           <q-btn unelevated color="primary" icon="flag" label="Informar ejecución" @click="abrirEjecucion" />
         </template>
 
@@ -131,7 +132,9 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { usePerfil } from 'src/composables/usePerfil'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
@@ -146,7 +149,9 @@ import { FECHA_CORTE } from 'src/config/demo'
 import { fecha, litros } from 'src/utils/formato'
 
 const $q = useQuasar()
-const { vehiculoId, vehiculosEnAmbito } = useVehiculoSeleccionado()
+const route = useRoute()
+const { puedeHacer } = usePerfil()
+const { vehiculoId, vehiculosEnAmbito } = useVehiculoSeleccionado(route.query.vehiculo)
 const vehiculo = computed(() => (vehiculoId.value ? vehiculoPorId(vehiculoId.value) : null))
 
 const requerido = (v) => !!v || 'Campo obligatorio'

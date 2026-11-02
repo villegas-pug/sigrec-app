@@ -3,8 +3,8 @@
     <div class="sg-page__inner">
       <page-header>
         <template #acciones>
-          <q-btn outline color="secondary" icon="route" label="Itinerarios" :to="{ name: 'movilidad' }" />
-          <q-btn unelevated color="primary" icon="local_gas_station" label="Informar combustible" :disable="!vehiculo" @click="abrir" />
+          <q-btn outline color="secondary" icon="route" label="Itinerarios" :to="{ name: 'movilidad', query: vehiculoId ? { vehiculo: vehiculoId } : {} }" />
+          <q-btn v-if="puedeHacer('combustible.informar')" unelevated color="primary" icon="local_gas_station" label="Informar combustible" :disable="!vehiculo" @click="abrir" />
         </template>
       </page-header>
 
@@ -112,7 +112,9 @@
 
 <script setup>
 import { computed, reactive } from 'vue'
+import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { usePerfil } from 'src/composables/usePerfil'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
@@ -127,7 +129,9 @@ import { FECHA_CORTE } from 'src/config/demo'
 import { fecha, litros } from 'src/utils/formato'
 
 const $q = useQuasar()
-const { vehiculoId, vehiculosEnAmbito } = useVehiculoSeleccionado()
+const route = useRoute()
+const { puedeHacer } = usePerfil()
+const { vehiculoId, vehiculosEnAmbito } = useVehiculoSeleccionado(route.query.vehiculo)
 const vehiculo = computed(() => (vehiculoId.value ? vehiculoPorId(vehiculoId.value) : null))
 
 const registros = computed(() => (vehiculo.value ? registrosDeVehiculo(vehiculo.value.id) : []))
