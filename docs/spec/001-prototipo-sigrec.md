@@ -1,6 +1,7 @@
 # SPEC 001 — Prototipo funcional de SIGREC
 
 - **Estado:** en implementación
+- **Actualizada por:** [`003-centros-mantenedores-y-ux.md`](003-centros-mantenedores-y-ux.md) (centros sin «Local», mantenedores completos, permisos y UI adaptable). Donde difieran, prevalece la SPEC 003.
 - **Fecha:** 2026-10-30
 - **Origen:** brief «SIGREC — Sistema Integrado de Gestión de Recursos de Centros» y lienzo de diseño aprobado para implementación (`https://claude.ai/artifact/XFmGXDQS6jyyPaPXFFMVfS`).
 - **Ampliado por:** [`002-acciones-y-jerarquia.md`](002-acciones-y-jerarquia.md) (altas y ediciones faltantes, permisos por acción, jerarquía Centro › Ambiente › Bien › Componente, pantalla Vehículos).
@@ -14,7 +15,7 @@ Construir un prototipo navegable en Vue 3 + Quasar que permita al jefe de proyec
 
 | Incluye | No incluye |
 | --- | --- |
-| 12 pantallas: Inicio, Centros y locales, Ambientes, Bienes y componentes, Registro y verificación, Incidencias, Necesidades, Precios referenciales, Servicios básicos y pagos, Vehículos, Itinerarios, Combustible (Vehículos se añadió en la SPEC 002). | Backend, autenticación real, persistencia (los cambios viven en memoria hasta recargar). |
+| 12 pantallas: Inicio, Centros, Ambientes, Bienes y componentes, Registro de bienes, Incidencias, Necesidades, Tipos de bien y precios, Servicios básicos y pagos, Vehículos, Itinerarios, Combustible (Vehículos se añadió en la SPEC 002). | Backend, autenticación real, persistencia (los cambios viven en memoria hasta recargar). |
 | Perfiles de demostración con accesos y ámbitos de datos distintos. | Expedientes de NNA, control patrimonial formal, ejecución de pagos o compras. |
 | Reglas de negocio calculadas sobre los datos (necesidades, períodos, combustible). | Priorización presupuestal (se muestra como ampliación posterior). |
 | Acciones en memoria: registrar bien, verificación, incidente, baja, reposición, novedad, precio, pago/pendiente, interrupción/restablecimiento, itinerario, combustible. | Mapas o seguimiento vehicular. |
@@ -35,14 +36,14 @@ Construir un prototipo navegable en Vue 3 + Quasar que permita al jefe de proyec
 
 | Perfil | Rutas | Ámbito de datos |
 | --- | --- | --- |
-| Equipo central USPNNA | Todas salvo «Registro y verificación» | Todos los CAR |
-| Personal del CAR | Todas salvo «Precios referenciales» | CAR Demo Amanecer |
-| Verificación física | Bienes y componentes, Registro y verificación, Incidencias | CAR Demo Amanecer |
+| Equipo central USPNNA | Todas | Todos los CAR |
+| Personal del CAR | Todas salvo «Tipos de bien y precios» | CAR Demo Amanecer |
+| Verificación física | Bienes y componentes, Incidencias | CAR Demo Amanecer |
 | Chofer | Itinerarios, Vehículos (consulta), Combustible | Vehículo AMA-V01 |
 
 ## 5. Modelo de datos (`src/data/*.json`)
 
-`cars`, `locales`, `ambientes` (con `novedades` e `intervenciones`), `bienes` (con `asociadoA`, `adquisicion`, `vidaUtilAnios`, `verificacion`), `tipos-bien` (precio referencial), `eventos` (daño, robo, incendio, baja, reposición, verificación, condición), `servicios` (períodos pagados y pendientes, hechos de suministro), `vehiculos`, `itinerarios`, `combustible`, `inventario-previo`.
+`cars` (con la ficha del `inmueble`), `ambientes` (con `novedades` e `intervenciones`), `bienes` (con `asociadoA`, `adquisicion`, `vidaUtilAnios`, `verificacion`), `tipos-bien` (precio referencial), `eventos` (daño, robo, incendio, baja, reposición, verificación, condición), `servicios` (períodos pagados y pendientes, hechos de suministro), `vehiculos`, `itinerarios`, `combustible`, `inventario-previo`.
 
 ## 6. Reglas implementadas
 
@@ -64,9 +65,9 @@ Construir un prototipo navegable en Vue 3 + Quasar que permita al jefe de proyec
 | RF | Pantalla |
 | --- | --- |
 | RF-01, RF-08, RF-09 | Bienes y componentes (árbol Centro › Ambiente › Bien › Componente, verificación; SPEC 002) |
-| RF-02, RF-03, RF-04, RF-07 | Registro y verificación; ficha del bien |
-| RF-05, RF-06, RF-21 | Necesidades; Precios referenciales; Inicio |
-| RF-10, RF-11 | Centros y locales |
+| RF-02, RF-03, RF-04, RF-07 | Registro de bienes; ficha del bien |
+| RF-05, RF-06, RF-21 | Necesidades; Tipos de bien y precios; Inicio |
+| RF-10, RF-11 | Centros (ficha del centro e inmueble) |
 | RF-12 | Ambientes |
 | RF-13, RF-14, RF-15 | Servicios básicos y pagos |
 | RF-16, RF-17, RF-18 | Vehículos (SPEC 002); Itinerarios; Combustible |

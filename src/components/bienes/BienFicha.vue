@@ -3,11 +3,17 @@
     <section-card :titulo="`${bien.nombre} · ${bien.id}`" :subtitulo="textoUbicacion(ubicacion) + cadenaAsociacion">
       <template #acciones>
         <q-btn v-if="activo && puedeHacer('bien.actualizar')" outline color="secondary" icon="edit" label="Actualizar información" @click="$emit('accion', 'datos')" />
-        <q-btn v-if="puedeHacer('bien.verificar')" outline color="secondary" icon="fact_check" label="Informar verificación" @click="$emit('accion', 'verificacion')" />
+        <q-btn v-if="!anulado && puedeHacer('bien.verificar')" outline color="secondary" icon="fact_check" label="Informar verificación" @click="$emit('accion', 'verificacion')" />
         <q-btn v-if="activo && puedeHacer('bien.incidente')" outline color="secondary" icon="report" label="Registrar incidente" @click="$emit('accion', 'incidente')" />
         <q-btn v-if="activo && puedeHacer('bien.baja')" outline color="negative" icon="remove_circle" label="Dar de baja" @click="$emit('accion', 'baja')" />
-        <q-btn v-if="!activo && !reposicion && puedeHacer('bien.reposicion')" unelevated color="primary" icon="swap_horiz" label="Registrar reposición" @click="$emit('accion', 'reposicion')" />
+        <q-btn v-if="!activo && !anulado && !reposicion && puedeHacer('bien.reposicion')" unelevated color="primary" icon="swap_horiz" label="Registrar reposición" @click="$emit('accion', 'reposicion')" />
+        <menu-acciones :items="accionesMenu" :etiqueta="`Más acciones de ${bien.nombre}`" />
       </template>
+
+      <note-banner v-if="anulado" tono="ne" icono="block" class="q-mb-md">
+        Registro anulado el {{ fecha(bien.anulacion.fecha) }} por {{ bien.anulacion.por }}. Motivo: {{ bien.anulacion.motivo }}
+        No cuenta en las necesidades ni en los avisos.
+      </note-banner>
 
       <div class="sg-chips q-mb-md">
         <status-chip tono="ne" :label="CATEGORIAS[bien.categoria]" />
@@ -51,7 +57,7 @@
       <note-banner v-if="necesidad" tono="wa" icono="event_repeat" class="q-mt-md">
         <strong>Necesidad para revisión en {{ ANIO_REVISION }}:</strong> {{ necesidad.motivos.map((m) => m.texto).join(' · ') }}.
         No constituye autorización de baja ni de compra.
-        <router-link :to="{ name: 'necesidades' }" class="text-weight-bold">Ver necesidades</router-link>
+        <router-link v-if="puedeAcceder('necesidades')" :to="{ name: 'necesidades' }" class="text-weight-bold">Ver necesidades</router-link>
       </note-banner>
       <note-banner v-if="reposicion" tono="ok" icono="swap_horiz" class="q-mt-md">
         Repuesto por
@@ -128,6 +134,7 @@ import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import KeyValue from 'components/common/KeyValue.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
+import MenuAcciones from 'components/common/MenuAcciones.vue'
 import { db, bienPorId, tipoPorId, textoUbicacion, ubicacionDeBien } from 'src/services/datos'
 import { antecedentesDeBien, asociacionesDeBien } from 'src/services/bienes'
 import { antecedentesFaltantes, calcularNecesidades, finVidaUtil } from 'src/services/necesidades'
@@ -140,20 +147,21 @@ const props = defineProps({
   bien: { type: Object, required: true }
 })
 
-defineEmits(['accion', 'seleccionar', 'mantener'])
+const emit = defineEmits(['accion', 'seleccionar', 'mantener'])
 
 const { puedeAcceder, puedeHacer } = usePerfil()
 
 const ubicacion = computed(() => ubicacionDeBien(props.bien))
 const tipo = computed(() => tipoPorId(props.bien.tipoId))
 const activo = computed(() => props.bien.situacion === 'activo')
+const anulado = computed(() => props.bien.situacion === 'anulado')
 const condicionBien = computed(() => condicion(props.bien.condicion))
 const fin = computed(() => finVidaUtil(props.bien))
 const faltantes = computed(() => antecedentesFaltantes(props.bien))
 const asociaciones = computed(() => asociacionesDeBien(props.bien))
 const antecedentes = computed(() => antecedentesDeBien(props.bien))
 const reposicion = computed(() => reposicionDe(props.bien.id))
-const reemplazaA = computed(() => db.eventos.find((e) => e.tipo === 'reposicion' && e.bienNuevoId === props.bien.id) ?? null)
+const reemplazaA = computed(() => db.eventos.find((e) => !e.anulacion && e.tipo === 'reposicion' && e.bienNuevoId === props.bien.id) ?? null)
 
 const cadenaAsociacion = computed(() => {
   const padre = props.bien.asociadoA ? bienPorId(props.bien.asociadoA.bienId) : null
@@ -161,6 +169,15 @@ const cadenaAsociacion = computed(() => {
 })
 
 const necesidad = computed(() =>
-  calcularNecesidades({ anio: ANIO_REVISION, carIds: [ubicacion.value.car.id] }).pendientes.find((n) => n.id === props.bien.id) ?? null
+  activo.value
+    ? calcularNecesidades({ anio: ANIO_REVISION, carIds: [ubicacion.value.car.id] }).pendientes.find((n) => n.id === props.bien.id) ?? null
+    : null
 )
+
+// Acciones menos frecuentes en el menú «⋮».
+const accionesMenu = computed(() => [
+  { label: 'Trasladar a otro ambiente', icono: 'moving', visible: activo.value && puedeHacer('bien.trasladar'), accion: () => emit('accion', 'trasladar') },
+  { label: 'Anular registro', icono: 'block', peligro: true, visible: !anulado.value && puedeHacer('bien.anular'), accion: () => emit('accion', 'anular') },
+  { label: 'Reactivar registro', icono: 'restore', visible: anulado.value && puedeHacer('bien.anular'), accion: () => emit('accion', 'reactivar') }
+])
 </script>

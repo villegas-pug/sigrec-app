@@ -1,9 +1,10 @@
 # SIGREC — Sistema Integrado de Gestión de Recursos de Centros
 
-Prototipo funcional para la USPNNA – INABIF. Permite revisar locales, ambientes, bienes, necesidades y presupuesto, servicios básicos, movilidad y combustible de los CAR con **datos ficticios**. No contiene información de NNA ni de personal del INABIF.
+Prototipo funcional para la USPNNA – INABIF. Permite administrar y revisar centros, ambientes, bienes, necesidades y presupuesto, servicios básicos, movilidad y combustible de los CAR con **datos ficticios**. No contiene información de NNA ni de personal del INABIF.
 
-- Especificación (SDD): [`docs/spec/001-prototipo-sigrec.md`](docs/spec/001-prototipo-sigrec.md) y [`docs/spec/002-acciones-y-jerarquia.md`](docs/spec/002-acciones-y-jerarquia.md)
-- Jerarquía: Centro › Ambiente › Bien › Componente (bien asociado a otro, p. ej. el colchón de una cama).
+- Especificación (SDD): [`001`](docs/spec/001-prototipo-sigrec.md), [`002`](docs/spec/002-acciones-y-jerarquia.md) y [`003`](docs/spec/003-centros-mantenedores-y-ux.md) (centros sin «Local», mantenedores completos y UI adaptable)
+- Jerarquía: Centro › Ambiente › Bien › Componente (bien asociado a otro, p. ej. el colchón de una cama). El inmueble donde funciona el centro es parte de su ficha; no existe el nivel «Local».
+- Mantenedores: cada módulo permite registrar, actualizar y anular (baja lógica con motivo, reversible con «Mostrar inactivos»).
 - Stack: Vue 3.5 + Quasar 2.35 (`@quasar/app-vite` 2.4.1 + Vite 7, compatible con Node 22.12 o superior). Las versiones 2.5+ de `@quasar/app-vite` exigen Node 22.22.
 
 ## Ejecución
@@ -19,7 +20,7 @@ npm run build   # quasar build → dist/spa
 ```
 src/
   config/        menú, perfiles y accesos, catálogos, fecha de corte de la demo
-  data/          JSON ficticios (CAR, locales, ambientes, bienes, eventos, servicios, movilidad)
+  data/          JSON ficticios (centros con la ficha de su inmueble, ambientes, bienes, eventos, servicios, movilidad)
   services/      reglas de negocio puras y acciones sobre el almacén en memoria
   composables/   perfil activo y vehículo seleccionado
   components/    armazón (cabecera, menú), comunes y específicos de bienes y movilidad
@@ -28,13 +29,13 @@ src/
 
 ## Perfiles de demostración
 
-El perfil se elige al pie del menú lateral y se recuerda en el navegador. Los accesos, acciones y ámbitos son **provisionales** y deben validarse con el jefe de proyecto. La matriz completa de acciones está en la SPEC 002 §3.
+El perfil se elige al pie del menú lateral y se recuerda en el navegador. Los accesos, acciones y ámbitos son **provisionales** y deben validarse con el jefe de proyecto. La matriz completa de acciones está en la [SPEC 003](docs/spec/003-centros-mantenedores-y-ux.md) §4.
 
 | Perfil | Accede a | Puede registrar o actualizar | Ámbito |
 | --- | --- | --- | --- |
-| Equipo central USPNNA | Todo salvo «Registro y verificación» | Centros, ficha y fotos del local, precios referenciales | Todos los CAR |
-| Personal del CAR | Todo salvo «Precios referenciales» | Ficha del local, ambientes, bienes y componentes, servicios, vehículos, itinerarios, combustible | CAR Demo Amanecer |
-| Verificación física | Bienes, Registro y verificación, Incidencias | Verificaciones e incidentes | CAR Demo Amanecer |
+| Equipo central USPNNA | Todo | Todos los mantenimientos (altas, ediciones y bajas lógicas); además registra y anula centros y administra los tipos de bien y sus precios | Todos los CAR |
+| Personal del CAR | Todo salvo «Tipos de bien y precios» | Los mismos mantenimientos, sobre su centro | CAR Demo Amanecer |
+| Verificación física | Bienes, Incidencias | Verificaciones e incidentes desde la ficha del bien | CAR Demo Amanecer |
 | Chofer | Itinerarios, Vehículos (consulta), Combustible | Itinerarios y combustible | Vehículo AMA-V01 |
 
 ## Limitaciones

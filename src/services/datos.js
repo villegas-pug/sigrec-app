@@ -1,8 +1,8 @@
 // Almacén en memoria con los datos ficticios de la demostración.
 // Los cambios realizados desde la interfaz se pierden al recargar: el prototipo no tiene persistencia.
+// Jerarquía: Centro › Ambiente › Bien › Componente. El inmueble del centro es parte de su ficha (`car.inmueble`).
 import { reactive } from 'vue'
 import cars from 'src/data/cars.json'
-import locales from 'src/data/locales.json'
 import ambientes from 'src/data/ambientes.json'
 import bienes from 'src/data/bienes.json'
 import tiposBien from 'src/data/tipos-bien.json'
@@ -15,7 +15,6 @@ import inventarioPrevio from 'src/data/inventario-previo.json'
 
 export const db = reactive({
   cars,
-  locales,
   ambientes,
   bienes,
   tiposBien,
@@ -30,7 +29,6 @@ export const db = reactive({
 const porId = (lista, id) => lista.find((item) => item.id === id) ?? null
 
 export const carPorId = (id) => porId(db.cars, id)
-export const localPorId = (id) => porId(db.locales, id)
 export const ambientePorId = (id) => porId(db.ambientes, id)
 export const bienPorId = (id) => porId(db.bienes, id)
 export const tipoPorId = (id) => porId(db.tiposBien, id)
@@ -38,21 +36,23 @@ export const vehiculoPorId = (id) => porId(db.vehiculos, id)
 export const servicioPorId = (id) => porId(db.servicios, id)
 export const itinerarioPorId = (id) => porId(db.itinerarios, id)
 
-export const localesDeCar = (carId) => db.locales.filter((l) => l.carId === carId)
-export const ambientesDeLocal = (localId) => db.ambientes.filter((a) => a.localId === localId)
-export const ambientesDeCar = (carId) => db.ambientes.filter((a) => localPorId(a.localId)?.carId === carId)
+// Baja lógica: un registro anulado lleva `anulacion` y deja de contar en los cálculos.
+export const vigente = (registro) => !registro.anulacion
+export const vigentes = (lista) => lista.filter(vigente)
+
+export const ambientesDeCar = (carId, { inactivos = false } = {}) =>
+  db.ambientes.filter((a) => a.carId === carId && (inactivos || vigente(a)))
 export const bienesDeAmbiente = (ambienteId) => db.bienes.filter((b) => b.ambienteId === ambienteId)
 
 export function ubicacionDeAmbiente (ambienteId) {
   const ambiente = ambientePorId(ambienteId)
-  const local = localPorId(ambiente.localId)
-  const car = carPorId(local.carId)
-  return { car, local, ambiente }
+  const car = carPorId(ambiente.carId)
+  return { car, ambiente }
 }
 
 export const ubicacionDeBien = (bien) => ubicacionDeAmbiente(bien.ambienteId)
 
-// Jerarquía Centro › Ambiente: el local se consulta como ficha del inmueble, no como nivel de ubicación.
+// Jerarquía Centro › Ambiente.
 export function textoUbicacion ({ car, ambiente }) {
   return `${car.nombre} › ${ambiente.nombre}`
 }

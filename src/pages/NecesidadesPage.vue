@@ -3,19 +3,19 @@
     <div class="sg-page__inner">
       <page-header>
         <template #acciones>
-          <q-btn outline color="secondary" icon="low_priority" label="Priorizar · ampliación posterior" disable>
-            <q-tooltip>Criterios, responsables y procedimiento por definir.</q-tooltip>
-          </q-btn>
           <q-btn outline color="secondary" icon="download" label="Exportar CSV" :disable="!pendientes.length" @click="exportar" />
-          <q-btn v-if="puedeAcceder('precios')" unelevated color="primary" icon="sell" label="Precios referenciales" :to="{ name: 'precios' }" />
+          <q-btn v-if="puedeAcceder('precios')" unelevated color="primary" icon="sell" label="Tipos de bien y precios" :to="{ name: 'precios' }" />
         </template>
       </page-header>
 
       <div class="sg-filters">
         <q-select v-model="anio" :options="ANIOS_REVISION" outlined dense label="Año a revisar" />
-        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Ámbito" />
+        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
         <q-select v-model="clase" :options="OPCIONES_CLASE" emit-value map-options outlined dense label="Tipo de necesidad" />
-        <div class="row items-center"><status-chip tono="pv" label="Regla de vida útil · Por validar" /></div>
+        <div class="row items-center sg-chips">
+          <status-chip tono="pv" label="Regla de vida útil · Por validar" />
+          <status-chip tono="pv" label="Priorización · ampliación posterior" />
+        </div>
       </div>
 
       <div class="sg-kpi-panel">
@@ -33,12 +33,12 @@
         Registrar una necesidad no equivale a aprobar una compra.
       </note-banner>
 
-      <section-card v-if="carsVisibles.length > 1" :titulo="`Consolidado por CAR · ${anio}`" subtitulo="Seleccione un CAR para ver las necesidades que sustentan la cifra" sin-relleno>
+      <section-card v-if="carsVisibles.length > 1" :titulo="`Consolidado por centro · ${anio}`" subtitulo="Seleccione un centro para ver las necesidades que sustentan la cifra" sin-relleno>
         <div class="sg-table-wrap">
           <table class="sg-table">
             <thead>
               <tr>
-                <th scope="col">CAR</th>
+                <th scope="col">Centro</th>
                 <th scope="col" class="sg-num">Renovación</th>
                 <th scope="col" class="sg-num">Reposición</th>
                 <th scope="col" class="sg-num">Importe conocido</th>
@@ -157,7 +157,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { exportFile, useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
@@ -166,13 +166,13 @@ import StatusChip from 'components/common/StatusChip.vue'
 import KpiCard from 'components/common/KpiCard.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { usePerfil } from 'src/composables/usePerfil'
+import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { carPorId, textoUbicacion } from 'src/services/datos'
 import { calcularNecesidades, consolidarPorCar, totalizar } from 'src/services/necesidades'
-import { condicion } from 'src/config/catalogos'
+import { TODOS, condicion } from 'src/config/catalogos'
 import { ANIO_REVISION, ANIOS_REVISION } from 'src/config/demo'
 import { fecha, plural, soles } from 'src/utils/formato'
 
-const TODOS = 'todos'
 const OPCIONES_CLASE = [
   { label: 'Todas', value: TODOS },
   { label: 'Renovación por vida útil', value: 'renovacion' },
@@ -181,22 +181,13 @@ const OPCIONES_CLASE = [
 
 const $q = useQuasar()
 const route = useRoute()
-const { perfil, carsEnAmbito, enAmbitoCar, puedeAcceder } = usePerfil()
+const { perfil, puedeAcceder } = usePerfil()
+const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(route.query.car, { todos: true })
 
 const anio = ref(ANIO_REVISION)
-const carId = ref(enAmbitoCar(route.query.car) ? route.query.car : TODOS)
 const clase = ref(TODOS)
 
-const opcionesCar = computed(() => [
-  { label: `Todos los CAR del ámbito (${carsEnAmbito.value.length})`, value: TODOS },
-  ...carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id }))
-])
-
-watch(carsEnAmbito, () => {
-  if (carId.value !== TODOS && !enAmbitoCar(carId.value)) carId.value = TODOS
-})
-
-const carsVisibles = computed(() => (carId.value === TODOS ? carsEnAmbito.value : carsEnAmbito.value.filter((c) => c.id === carId.value)))
+const carsVisibles = computed(() => carIdsVisibles.value.map(carPorId))
 const tituloAmbito = computed(() => (carId.value === TODOS ? perfil.value.ambito.descripcion : carPorId(carId.value).nombre))
 
 const resultado = computed(() => calcularNecesidades({ anio: anio.value, carIds: carsVisibles.value.map((c) => c.id) }))

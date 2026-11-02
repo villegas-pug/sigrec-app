@@ -16,7 +16,10 @@
         <span class="sg-logo" role="img" aria-label="Logo INABIF (archivo oficial pendiente)">Logo INABIF</span>
       </router-link>
       <div class="sg-header__identity">
-        <span class="sg-header__name">SIGREC · Sistema Integrado de Gestión de Recursos de Centros</span>
+        <span class="sg-header__name">
+          <span class="gt-xs">SIGREC · Sistema Integrado de Gestión de Recursos de Centros</span>
+          <span class="lt-sm">SIGREC</span>
+        </span>
         <span class="sg-header__unit">USPNNA – INABIF</span>
       </div>
     </q-toolbar>

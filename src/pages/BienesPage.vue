@@ -36,11 +36,12 @@
             no-selection-unset
           >
             <template #default-header="{ node }">
-              <div class="row items-center no-wrap q-gutter-x-sm">
+              <div class="row items-center q-gutter-x-sm q-gutter-y-xs">
                 <q-icon :name="node.icono" size="18px" aria-hidden="true" />
                 <span :class="{ 'text-weight-bold': node.id === seleccionado || node.tipo === 'centro' || node.id === ambienteDestacado }">{{ node.label }}</span>
                 <span v-if="node.codigo" class="sg-muted">{{ node.codigo }}</span>
                 <status-chip v-if="node.bien && node.bien.situacion === 'baja'" tono="ne" label="Baja" />
+                <status-chip v-else-if="node.bien && node.bien.situacion === 'anulado'" v-bind="CHIP_ANULADO" />
                 <status-chip v-else-if="node.bien && ['malo', 'inservible'].includes(node.bien.condicion)" v-bind="condicion(node.bien.condicion)" />
                 <status-chip v-if="node.bien?.revisionPendiente" tono="wa" label="Revisar" />
               </div>
@@ -49,73 +50,75 @@
           <p v-else class="sg-muted">No hay bienes que coincidan con los filtros.</p>
         </section-card>
 
-        <bien-ficha
-          v-if="bien"
-          :bien="bien"
-          @accion="abrirAccion"
-          @seleccionar="seleccionar"
-          @mantener="mantener"
-        />
-        <section-card v-else titulo="Ficha del bien">
-          <p class="sg-muted q-mb-none">Seleccione un bien en el árbol para ver su ficha, componentes y antecedentes.</p>
-        </section-card>
+        <div ref="fichaRef">
+          <bien-ficha
+            v-if="bien"
+            :bien="bien"
+            @accion="abrirAccion"
+            @seleccionar="seleccionar"
+            @mantener="mantener"
+          />
+          <section-card v-else titulo="Ficha del bien">
+            <p class="sg-muted q-mb-none">Seleccione un bien en el árbol para ver su ficha, componentes y antecedentes.</p>
+          </section-card>
+        </div>
       </div>
     </div>
 
-    <bien-accion-dialog v-if="bien" v-model="accion.abierta" :modo="accion.modo" :bien="bien" @hecho="alTerminar" />
-    <bien-edicion-dialog v-if="bien" v-model="edicion.abierta" :modo="edicion.modo" :bien="bien" />
+    <bien-accion-dialog v-if="bien" v-model="accion.abierta" :modo="accion.modo" :bien="bien" @hecho="seleccionar" />
+    <bien-edicion-dialog v-if="bien" v-model="edicion.abierta" :modo="edicion.modo" :bien="bien" @hecho="seleccionar" />
+    <incidente-dialog v-model="incidente.abierto" :bien="bien" />
+    <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
+import AnularDialog from 'components/common/AnularDialog.vue'
 import BienFicha from 'components/bienes/BienFicha.vue'
 import BienAccionDialog from 'components/bienes/BienAccionDialog.vue'
 import BienEdicionDialog from 'components/bienes/BienEdicionDialog.vue'
+import IncidenteDialog from 'components/bienes/IncidenteDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
+import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useAnulacion } from 'src/composables/useAnulacion'
 import { ambientePorId, bienPorId, ubicacionDeAmbiente, ubicacionDeBien } from 'src/services/datos'
 import { arbolDeCentros, nodoAmbienteId, nodoCentroId } from 'src/services/bienes'
-import { cerrarRevision, desasociarBien } from 'src/services/acciones'
-import { condicion } from 'src/config/catalogos'
+import { anularBien, cerrarRevision, dependenciasDeBien, desasociarBien, reactivarBien } from 'src/services/acciones'
+import { CHIP_ANULADO, TODOS, condicion } from 'src/config/catalogos'
+import { BIEN_INICIAL_DEMO } from 'src/config/demo'
 
 const OPCIONES_SITUACION = [
   { label: 'Activos', value: 'activo' },
   { label: 'Dados de baja', value: 'baja' },
-  { label: 'Todos', value: 'todos' }
+  { label: 'Activos y dados de baja', value: TODOS },
+  { label: 'Anulados (registro erróneo)', value: 'anulado' }
 ]
-const TODOS = 'todos'
 
 const $q = useQuasar()
 const route = useRoute()
-const { carsEnAmbito, enAmbitoCar, puedeAcceder, puedeHacer } = usePerfil()
+const { enAmbitoCar, puedeAcceder, puedeHacer } = usePerfil()
+const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
 const centroDe = (b) => ubicacionDeBien(b).car.id
 
 const ambienteRuta = ambientePorId(route.query.ambiente)
-const bienInicial = bienPorId(route.query.bien) ?? (ambienteRuta ? null : bienPorId('AMA-D1-C01-I'))
+const bienInicial = bienPorId(route.query.bien) ?? (ambienteRuta ? null : bienPorId(BIEN_INICIAL_DEMO))
 const bienValido = bienInicial && enAmbitoCar(centroDe(bienInicial)) ? bienInicial : null
 
-const opcionesCar = computed(() => [
-  ...(carsEnAmbito.value.length > 1 ? [{ label: `Todos los centros del ámbito (${carsEnAmbito.value.length})`, value: TODOS }] : []),
-  ...carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id }))
-])
 // Sin centro en la URL se muestran todos los centros del ámbito; el bien inicial queda seleccionado igualmente.
-const valorInicialCar = () => {
-  if (enAmbitoCar(route.query.car)) return route.query.car
-  return carsEnAmbito.value.length > 1 ? TODOS : carsEnAmbito.value[0]?.id
-}
-const carId = ref(valorInicialCar())
+const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(route.query.car, { todos: true })
 const texto = ref('')
-const situacion = ref('todos')
+const situacion = ref(TODOS)
 const seleccionado = ref(bienValido?.id ?? null)
 const ambienteDestacado = ambienteRuta ? nodoAmbienteId(ambienteRuta.id) : null
+const fichaRef = ref(null)
 
-const carIdsVisibles = computed(() => (carId.value === TODOS ? carsEnAmbito.value.map((c) => c.id) : carId.value ? [carId.value] : []))
 const arbol = computed(() => arbolDeCentros(carIdsVisibles.value, { texto: texto.value ?? '', situacion: situacion.value }))
 
 // Ids de un nodo y de todos sus descendientes con hijos.
@@ -145,12 +148,16 @@ watch(arbol, (nodos) => {
   expandidos.value = [...new Set([...nodos.map((n) => n.id), ...ruta, ...ambiente])]
 }, { immediate: true })
 
-watch(carsEnAmbito, (cars) => {
-  if (carId.value !== TODOS && !cars.some((c) => c.id === carId.value)) carId.value = cars.length > 1 ? TODOS : cars[0]?.id
-})
 const bien = computed(() => {
   const candidato = seleccionado.value ? bienPorId(seleccionado.value) : null
   return candidato && carIdsVisibles.value.includes(centroDe(candidato)) ? candidato : null
+})
+
+// En pantallas pequeñas la ficha queda debajo del árbol: se baja hasta ella al elegir un bien.
+watch(seleccionado, async (id) => {
+  if (!id || !$q.screen.lt.md) return
+  await nextTick()
+  fichaRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 })
 
 // El registro conserva el centro y el ambiente del bien seleccionado (o del centro filtrado).
@@ -162,6 +169,7 @@ const contextoRegistro = computed(() => {
 })
 
 function seleccionar (id) {
+  if (!id) return
   seleccionado.value = id
   const b = bienPorId(id)
   if (b) {
@@ -172,24 +180,49 @@ function seleccionar (id) {
 
 const accion = reactive({ abierta: false, modo: 'verificacion' })
 const edicion = reactive({ abierta: false, modo: 'datos' })
+const incidente = reactive({ abierto: false })
 
 function abrirAccion (modo) {
+  const actual = bien.value
   if (modo === 'desasociar') {
-    desasociarBien(bien.value)
-    $q.notify({ type: 'positive', message: 'El bien deja de ser componente. La relación queda en sus antecedentes.' })
+    $q.dialog({
+      title: 'Quitar asociación',
+      message: `${actual.nombre} ${actual.id} dejará de ser componente. La relación anterior queda en sus antecedentes.`,
+      persistent: true,
+      cancel: { flat: true, label: 'Cancelar', color: 'secondary' },
+      ok: { unelevated: true, label: 'Quitar asociación', color: 'primary' }
+    }).onOk(() => {
+      desasociarBien(actual)
+      $q.notify({ type: 'positive', message: 'El bien deja de ser componente. La relación queda en sus antecedentes.' })
+    })
     return
   }
-  if (modo === 'datos' || modo === 'componente') {
-    edicion.modo = modo
+  if (modo === 'incidente') {
+    incidente.abierto = true
+    return
+  }
+  if (modo === 'anular') {
+    pedirAnulacion({
+      titulo: 'Anular registro del bien',
+      subtitulo: `${actual.nombre} · ${actual.id}`,
+      dependencias: dependenciasDeBien(actual),
+      aviso: 'Anular corrige un registro erróneo: el bien deja de contar en necesidades y avisos. Para retirar un bien que existió, use «Dar de baja».',
+      mensaje: 'Registro del bien anulado.',
+      ejecutar: (datos) => anularBien(actual, datos)
+    })
+    return
+  }
+  if (modo === 'reactivar') {
+    pedirReactivacion({ entidad: 'bien', registro: actual, nombre: 'Bien', accion: reactivarBien })
+    return
+  }
+  if (modo === 'datos' || modo === 'componente' || modo === 'trasladar') {
+    edicion.modo = modo === 'trasladar' ? 'traslado' : modo
     edicion.abierta = true
     return
   }
   accion.modo = modo
   accion.abierta = true
-}
-
-function alTerminar (nuevoId) {
-  if (nuevoId) seleccionar(nuevoId)
 }
 
 function mantener () {

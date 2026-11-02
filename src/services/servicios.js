@@ -1,14 +1,19 @@
 // Reglas de servicios básicos y pagos (RF-13, RF-14, RF-15).
-import { db, localPorId } from './datos'
+import { db, vigente, vigentes } from './datos'
 import { MESES_CORTOS, ORDINALES_TRIMESTRE, TIPOS_SERVICIO } from 'src/config/catalogos'
 
 const PERIODOS_POR_ANIO = { mensual: 12, trimestral: 4 }
 
-export const serviciosDeCar = (carId) => db.servicios.filter((s) => localPorId(s.localId)?.carId === carId)
+export const serviciosDeCar = (carId, { inactivos = false } = {}) =>
+  db.servicios.filter((s) => s.carId === carId && (inactivos || vigente(s)))
 
 export function nombrePeriodo (servicio, numero) {
   return servicio.periodicidad === 'mensual' ? MESES_CORTOS[numero - 1] : `${ORDINALES_TRIMESTRE[numero - 1]} trimestre`
 }
+
+// Una periodicidad solo puede cambiarse mientras el servicio no tenga períodos informados.
+export const tienePeriodosInformados = (servicio) =>
+  Object.values(servicio.periodos ?? {}).some((p) => p.pagados?.length || p.pendientes?.length)
 
 /**
  * Celdas de un servicio en un año.
@@ -34,9 +39,9 @@ export function celdasDelServicio (servicio, anio, fechaCorte) {
   })
 }
 
-// Una interrupción sigue abierta si es el último hecho de suministro; un pago no la cierra.
+// Una interrupción sigue abierta si es el último hecho de suministro vigente; un pago no la cierra.
 export function interrupcionAbierta (servicio) {
-  const suministro = (servicio.hechos ?? [])
+  const suministro = vigentes(servicio.hechos ?? [])
     .filter((h) => h.tipo === 'interrupcion' || h.tipo === 'restablecimiento')
     .sort((a, b) => a.fecha.localeCompare(b.fecha))
   const ultimo = suministro.at(-1)
@@ -67,5 +72,6 @@ export function resumirAvisos (avisos) {
   }
 }
 
+// Tipos de servicio sin un servicio vigente en el centro (los anulados pueden registrarse de nuevo).
 export const tiposNoRegistrados = (servicios) =>
-  Object.keys(TIPOS_SERVICIO).filter((tipo) => !servicios.some((s) => s.tipo === tipo))
+  Object.keys(TIPOS_SERVICIO).filter((tipo) => !vigentes(servicios).some((s) => s.tipo === tipo))

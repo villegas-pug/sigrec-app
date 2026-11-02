@@ -801,3 +801,128 @@ a {
   font-size: 22px;
   font-weight: 700;
 }
+
+.sg-calc__term--resultado {
+  border-color: var(--sg-blue);
+}
+
+// ---------- Utilidades de presentación ----------
+.sg-aviso-texto {
+  color: var(--sg-warning);
+}
+
+.sg-borde-superior {
+  border-top: 1px solid var(--sg-border-soft);
+}
+
+.sg-photo__img {
+  max-width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+// ---------- Diálogos ----------
+// El ancho de cada diálogo lo fija FormDialog; en pantallas pequeñas se maximiza.
+.sg-dialog {
+  max-width: 94vw;
+}
+
+.q-dialog__inner--maximized > .sg-dialog {
+  width: 100% !important;
+  max-width: 100vw;
+}
+
+// ---------- Servicios: períodos en lista (móvil) ----------
+.sg-periodos .sg-periodos__servicio {
+  text-align: left;
+}
+
+.sg-periodos-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 6px;
+}
+
+.sg-celda--inerte {
+  cursor: default;
+}
+
+// ---------- Accesibilidad ----------
+// Foco visible para los controles propios (los de Quasar ya lo traen).
+.sg-row-btn:focus-visible,
+.sg-list-btn:focus-visible,
+.sg-celda:focus-visible,
+.sg-kpi:focus-visible,
+.sg-header__home:focus-visible,
+.sg-crumbs__link:focus-visible {
+  outline: 3px solid var(--sg-blue);
+  outline-offset: 2px;
+}
+
+.sg-celda:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+// ---------- Pantallas pequeñas (< 600 px) ----------
+@media (max-width: 599.98px) {
+  .sg-logo {
+    width: 88px;
+    height: 36px;
+    font-size: 10px;
+  }
+
+  .sg-hero {
+    font-size: 22px;
+    line-height: 28px;
+    letter-spacing: 0.25px;
+  }
+
+  .sg-kpi-panel {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .sg-kpi {
+    min-height: 0;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .sg-kpi__icon {
+    flex-basis: 52px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .sg-kpi__value {
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  // La primera columna de las tablas queda fija al recorrerlas en horizontal.
+  .sg-table {
+    th:first-child,
+    td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      max-width: 46vw;
+      background: var(--sg-surface);
+      box-shadow: 1px 0 0 var(--sg-border-soft);
+    }
+
+    thead th:first-child {
+      background: var(--sg-table-head);
+    }
+
+    td:first-child {
+      white-space: normal;
+    }
+  }
+
+  .sg-timeline__date {
+    flex-basis: 72px;
+  }
+}

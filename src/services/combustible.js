@@ -1,5 +1,5 @@
 // Reglas de movilidad y combustible (RF-16, RF-17, RF-18).
-import { db } from './datos'
+import { db, vigente } from './datos'
 
 /**
  * Evalúa un itinerario sin concluir irregularidades.
@@ -39,8 +39,12 @@ export function evaluarItinerario (itinerario, vehiculo) {
   }
 }
 
-export const itinerariosDeVehiculo = (vehiculoId) =>
-  db.itinerarios.filter((i) => i.vehiculoId === vehiculoId).sort((a, b) => b.fecha.localeCompare(a.fecha))
+export const itinerariosDeVehiculo = (vehiculoId, { inactivos = false } = {}) =>
+  db.itinerarios
+    .filter((i) => i.vehiculoId === vehiculoId && (inactivos || vigente(i)))
+    .sort((a, b) => b.fecha.localeCompare(a.fecha))
 
-export const registrosDeVehiculo = (vehiculoId) =>
-  db.combustible.filter((r) => r.vehiculoId === vehiculoId).sort((a, b) => b.fecha.localeCompare(a.fecha))
+export const registrosDeVehiculo = (vehiculoId, { inactivos = false } = {}) =>
+  db.combustible
+    .filter((r) => r.vehiculoId === vehiculoId && (inactivos || vigente(r)))
+    .sort((a, b) => b.fecha.localeCompare(a.fecha))

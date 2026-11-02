@@ -27,7 +27,7 @@ export default defineConfig(() => {
       config: {},
       lang: 'es',
       iconSet: 'material-icons',
-      plugins: ['Notify']
+      plugins: ['Notify', 'Dialog']
     },
 
     animations: []

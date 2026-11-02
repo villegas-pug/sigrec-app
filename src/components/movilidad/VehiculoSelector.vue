@@ -9,14 +9,17 @@
         outlined
         dense
         label="Vehículo"
-        style="min-width: 260px"
+        style="min-width: min(260px, 100%)"
         @update:model-value="$emit('update:modelValue', $event)"
       />
     </template>
     <div v-if="vehiculo" class="sg-kv-grid">
       <key-value etiqueta="Placa">{{ vehiculo.placa }}</key-value>
-      <key-value etiqueta="Chofer relacionado">{{ vehiculo.chofer }}</key-value>
-      <key-value etiqueta="Combustible · unidad">{{ vehiculo.combustible }} · litros</key-value>
+      <key-value etiqueta="Chofer relacionado">
+        <template v-if="vehiculo.chofer">{{ vehiculo.chofer }}</template>
+        <status-chip v-else tono="si" label="No asignado" />
+      </key-value>
+      <key-value etiqueta="Combustible · unidad">{{ vehiculo.combustible }} · {{ unidad }}</key-value>
       <key-value etiqueta="Rendimiento de referencia" nota="Orientativo; no es norma de consumo">
         <template v-if="vehiculo.rendimientoKmL">{{ vehiculo.rendimientoKmL }} km/L</template>
         <status-chip v-else tono="si" label="No informado" />
@@ -42,4 +45,5 @@ const props = defineProps({
 defineEmits(['update:modelValue'])
 
 const vehiculo = computed(() => (props.modelValue ? vehiculoPorId(props.modelValue) : null))
+const unidad = computed(() => (vehiculo.value?.unidad === 'L' ? 'litros' : vehiculo.value?.unidad))
 </script>

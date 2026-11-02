@@ -49,7 +49,7 @@
             <table class="sg-table">
               <thead>
                 <tr>
-                  <th scope="col">CAR · local</th>
+                  <th scope="col">Centro</th>
                   <th scope="col" class="sg-num">Necesidades</th>
                   <th scope="col" class="sg-num">Importe conocido</th>
                   <th scope="col">Sin valorar</th>
@@ -60,8 +60,8 @@
               <tbody>
                 <tr v-for="fila in filasCar" :key="fila.car.id">
                   <td>
-                    <router-link :to="{ name: 'locales', query: { car: fila.car.id } }" class="text-weight-bold">{{ fila.car.nombre }}</router-link>
-                    <div class="sg-muted">{{ fila.local }}</div>
+                    <router-link :to="{ name: 'centros', query: { car: fila.car.id } }" class="text-weight-bold">{{ fila.car.nombre }}</router-link>
+                    <div class="sg-muted">{{ fila.inmueble }}</div>
                   </td>
                   <td class="sg-num">
                     <router-link :to="{ name: 'necesidades', query: { car: fila.car.id } }">{{ fila.cantidad }}</router-link>
@@ -96,12 +96,12 @@ import NoteBanner from 'components/common/NoteBanner.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { db, carPorId, localPorId, localesDeCar, ubicacionDeBien } from 'src/services/datos'
+import { db, carPorId, ubicacionDeBien, vigente } from 'src/services/datos'
 import { calcularNecesidades, consolidarPorCar, totalizar } from 'src/services/necesidades'
 import { avisosDeServicios, resumirAvisos, serviciosDeCar } from 'src/services/servicios'
 import { evaluarItinerario, itinerariosDeVehiculo } from 'src/services/combustible'
 import { ANIO_REVISION, FECHA_CORTE } from 'src/config/demo'
-import { INCIDENTES, TIPOS_EVENTO } from 'src/config/catalogos'
+import { INCIDENTES, TIPOS_EVENTO, condicionInmueble } from 'src/config/catalogos'
 import { fecha, plural, porcentaje, soles } from 'src/utils/formato'
 
 const { perfil, carsEnAmbito, carIdsEnAmbito, vehiculosEnAmbito, enAmbitoCar, puedeAcceder } = usePerfil()
@@ -128,12 +128,12 @@ const noComparables = computed(() => evaluaciones.value.filter((e) => e.ev.estad
 const kpis = computed(() => {
   const lista = [
     {
-      ruta: 'locales',
+      ruta: 'centros',
       icono: 'home_work',
       tono: 'azul',
       valor: carsEnAmbito.value.length,
       etiqueta: carsEnAmbito.value.length === 1 ? 'Centro de Acogida Residencial' : 'Centros de Acogida Residencial',
-      nota: plural(db.locales.filter((l) => enAmbitoCar(l.carId)).length, 'local registrado', 'locales registrados')
+      nota: plural(db.ambientes.filter((a) => vigente(a) && enAmbitoCar(a.carId)).length, 'ambiente registrado', 'ambientes registrados')
     },
     {
       ruta: 'necesidades',
@@ -168,7 +168,7 @@ const kpis = computed(() => {
       nota: `${porcentaje(verificados.value, bienesActivos.value.length)} % de los bienes activos`
     },
     {
-      ruta: 'movilidad',
+      ruta: 'itinerarios',
       icono: 'local_gas_station',
       tono: 'ambar',
       valor: evaluaciones.value.length,
@@ -179,19 +179,19 @@ const kpis = computed(() => {
   return lista.filter((k) => puedeAcceder(k.ruta)).map((k) => ({ ...k, to: { name: k.ruta } }))
 })
 
-const contextoServicio = (servicio, nombre) => `${carPorId(localPorId(servicio.localId).carId).nombre} · ${nombre}`
+const contextoServicio = (servicio, nombre) => `${carPorId(servicio.carId).nombre} · ${nombre}`
 
 const avisos = computed(() => {
   const lista = []
   for (const a of avisosServicios.value) {
-    const base = { id: `${a.servicio.id}-${a.clase}-${a.celdas[0]?.numero ?? 0}`, contexto: contextoServicio(a.servicio, a.nombre), to: { name: 'servicios', query: { car: localPorId(a.servicio.localId).carId } }, enlace: 'Revisar servicio' }
+    const base = { id: `${a.servicio.id}-${a.clase}-${a.celdas[0]?.numero ?? 0}`, contexto: contextoServicio(a.servicio, a.nombre), to: puedeAcceder('servicios') ? { name: 'servicios', query: { car: a.servicio.carId } } : null, enlace: 'Revisar servicio' }
     if (a.clase === 'pendiente_vence') lista.push({ ...base, tono: 'da', etiqueta: 'Pendiente con vencimiento', texto: `${a.celdas[0].etiqueta} ${anioServicios} pendiente de pago. Vence el ${fecha(a.celdas[0].vence)}.` })
     if (a.clase === 'pendiente_sin_fecha') lista.push({ ...base, tono: 'wa', etiqueta: 'Pendiente sin fecha', texto: `${a.celdas[0].etiqueta} pendiente. Sin fecha aplicable no se señala vencimiento.` })
     if (a.clase === 'interrupcion') lista.push({ ...base, tono: 'wa', etiqueta: 'Interrupción abierta', texto: `Interrupción informada el ${fecha(a.interrupcion.fecha)}. Restablecimiento no informado.` })
     if (a.clase === 'sin_info') lista.push({ ...base, tono: 'si', etiqueta: 'Sin información', texto: `${a.celdas.map((c) => c.etiqueta).join(', ')} sin información de pago. No equivale a un pendiente confirmado.` })
   }
 
-  const incidentes = db.eventos.filter((e) => INCIDENTES.includes(e.tipo) && e.reportaNecesidad)
+  const incidentes = db.eventos.filter((e) => vigente(e) && INCIDENTES.includes(e.tipo) && e.reportaNecesidad)
   for (const evento of incidentes) {
     const abiertas = necesidades.value.pendientes.filter((n) => evento.bienIds.includes(n.id))
     if (!abiertas.length) continue
@@ -214,7 +214,7 @@ const avisos = computed(() => {
       etiqueta: 'Infraestructura en evaluación',
       contexto: `${item.ubicacion.car.nombre} · ${item.ubicacion.ambiente.nombre}`,
       texto: `${item.novedad.titulo}. Sin costo estimado hasta su evaluación.`,
-      to: { name: 'ambientes', query: { car: item.ubicacion.car.id } },
+      to: puedeAcceder('ambientes') ? { name: 'ambientes', query: { car: item.ubicacion.car.id, ambiente: item.ubicacion.ambiente.id } } : null,
       enlace: 'Ver ambiente'
     })
   }
@@ -226,7 +226,7 @@ const avisos = computed(() => {
       etiqueta: 'Datos insuficientes',
       contexto: `Movilidad ${v.id}`,
       texto: `Recorrido ${it.id}: falta ${ev.faltantes.join(' y ')}. No se puede comparar su combustible.`,
-      to: { name: 'movilidad' },
+      to: puedeAcceder('itinerarios') ? { name: 'itinerarios', query: { vehiculo: v.id } } : null,
       enlace: 'Ver recorrido'
     })
   }
@@ -235,11 +235,10 @@ const avisos = computed(() => {
 
 const filasCar = computed(() =>
   consolidado.value.map((fila) => {
-    const local = localesDeCar(fila.car.id)[0]
     const activos = bienesActivos.value.filter((b) => ubicacionDeBien(b).car.id === fila.car.id)
     return {
       ...fila,
-      local: local ? `${local.nombre} · ${local.condicion === 'alquilado' ? 'Alquilado' : 'Propio'}` : 'Sin local registrado',
+      inmueble: fila.car.inmueble ? `Inmueble ${condicionInmueble(fila.car.inmueble.condicion).label.toLowerCase()}` : 'Sin datos del inmueble',
       servicios: resumirAvisos(avisosDeServicios(serviciosDeCar(fila.car.id), anioServicios, FECHA_CORTE)),
       activos: activos.length,
       verificados: activos.filter((b) => b.verificacion).length

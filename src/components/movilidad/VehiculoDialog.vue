@@ -1,36 +1,35 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)">
-    <q-card style="width: 560px; max-width: 94vw">
-      <q-card-section>
-        <h2 class="text-h6 text-weight-bold q-my-none">{{ vehiculo ? 'Actualizar vehículo' : 'Registrar vehículo' }}</h2>
-        <p class="sg-muted q-mb-none">{{ vehiculo ? vehiculo.id : 'Los campos con * son obligatorios' }}</p>
-      </q-card-section>
-      <q-card-section>
-        <q-form class="column q-gutter-y-md" @submit="guardar">
-          <div class="row q-col-gutter-md">
-            <q-select v-if="!vehiculo" v-model="form.carId" class="col-12 col-sm-6" :options="opcionesCar" emit-value map-options outlined dense label="Centro *" :rules="[requerido]" />
-            <q-input v-model="form.tipo" class="col-12 col-sm-6" outlined dense label="Tipo *" hint="Ej.: Camioneta, Minivan" :rules="[requerido]" />
-            <q-input v-model="form.placa" class="col-12 col-sm-6" outlined dense label="Placa *" :rules="[requerido, placaLibre]" />
-            <q-input v-model="form.chofer" class="col-12 col-sm-6" outlined dense label="Chofer relacionado" hint="Vacío si no está asignado" />
-            <q-input v-model="form.combustible" class="col-12 col-sm-6" outlined dense label="Combustible *" hint="Ej.: Gasohol 90, Diésel B5" :rules="[requerido]" />
-            <q-input v-model.number="form.rendimientoKmL" class="col-12 col-sm-6" outlined dense type="number" min="0" step="0.1" label="Rendimiento de referencia (km/L)" hint="Vacío si no se conoce" />
-          </div>
-          <div class="row justify-end q-gutter-sm">
-            <q-btn flat color="secondary" label="Cancelar" v-close-popup />
-            <q-btn unelevated color="primary" type="submit" :label="vehiculo ? 'Guardar cambios' : 'Registrar vehículo'" />
-          </div>
-        </q-form>
-      </q-card-section>
-    </q-card>
-  </q-dialog>
+  <form-dialog
+    :model-value="modelValue"
+    :titulo="vehiculo ? 'Actualizar vehículo' : 'Registrar vehículo'"
+    :subtitulo="vehiculo ? vehiculo.id : 'Los campos con * son obligatorios'"
+    :etiqueta-enviar="vehiculo ? 'Guardar cambios' : 'Registrar vehículo'"
+    @update:model-value="$emit('update:modelValue', $event)"
+    @enviar="guardar"
+  >
+    <div class="row q-col-gutter-md">
+      <q-select v-model="form.carId" class="col-12 col-sm-6" :options="opcionesCar" emit-value map-options outlined dense label="Centro *" :rules="[requerido]" />
+      <q-input v-model="form.tipo" class="col-12 col-sm-6" outlined dense label="Tipo *" hint="Ej.: Camioneta, Minivan" :rules="[requerido]" />
+      <q-input v-model="form.placa" class="col-12 col-sm-6" outlined dense label="Placa *" :rules="[requerido, placaLibre]" />
+      <q-input v-model="form.chofer" class="col-12 col-sm-6" outlined dense label="Chofer relacionado" hint="Vacío si no está asignado" />
+      <q-input v-model="form.combustible" class="col-12 col-sm-6" outlined dense label="Combustible *" hint="Ej.: Gasohol 90, Diésel B5" :rules="[requerido]" />
+      <q-input v-model.number="form.rendimientoKmL" class="col-12 col-sm-6" outlined dense type="number" min="0" step="0.1" label="Rendimiento de referencia (km/L)" hint="Vacío si no se conoce" />
+    </div>
+    <note-banner v-if="vehiculo && form.carId !== vehiculo.carId" tono="in">
+      Al cambiar de centro el vehículo conserva su código ({{ vehiculo.id }}) y sus itinerarios.
+    </note-banner>
+  </form-dialog>
 </template>
 
 <script setup>
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
+import FormDialog from 'components/common/FormDialog.vue'
+import NoteBanner from 'components/common/NoteBanner.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { db } from 'src/services/datos'
 import { actualizarVehiculo, numeroONulo, registrarVehiculo, vehiculoSugerido } from 'src/services/acciones'
+import { requerido } from 'src/utils/validaciones'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -43,10 +42,9 @@ const $q = useQuasar()
 const { carsEnAmbito } = usePerfil()
 
 const opcionesCar = computed(() => carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id })))
-const requerido = (v) => !!v || 'Campo obligatorio'
 const normalizarPlaca = (v) => String(v ?? '').trim().toUpperCase()
 const placaLibre = (v) =>
-  !db.vehiculos.some((x) => x.id !== props.vehiculo?.id && normalizarPlaca(x.placa) === normalizarPlaca(v)) || 'Ya existe un vehículo con esa placa'
+  !db.vehiculos.some((x) => x.id !== props.vehiculo?.id && !x.anulacion && normalizarPlaca(x.placa) === normalizarPlaca(v)) || 'Ya existe un vehículo con esa placa'
 
 const form = reactive({})
 
@@ -65,6 +63,7 @@ watch(() => props.modelValue, (abierto) => {
 
 function guardar () {
   const datos = {
+    carId: form.carId,
     tipo: form.tipo,
     placa: normalizarPlaca(form.placa),
     chofer: form.chofer || null,
@@ -76,7 +75,7 @@ function guardar () {
     actualizarVehiculo(props.vehiculo, datos)
     id = props.vehiculo.id
   } else {
-    id = registrarVehiculo({ id: vehiculoSugerido(form.carId), carId: form.carId, ...datos }).id
+    id = registrarVehiculo({ id: vehiculoSugerido(form.carId), ...datos }).id
   }
   $q.notify({ type: 'positive', message: props.vehiculo ? `Vehículo ${id} actualizado.` : `Vehículo ${id} registrado.` })
   emit('update:modelValue', false)

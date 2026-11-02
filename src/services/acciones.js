@@ -1,16 +1,29 @@
 // Acciones de la interfaz sobre el almacén en memoria. Registrar una necesidad o un hecho no aprueba compras ni pagos.
-import { db, nuevoId, ambientePorId, bienPorId, itinerarioPorId, vehiculoPorId } from './datos'
+// El autor de cada registro es el perfil activo (services/autor.js). La baja es lógica: `anular` / `reactivar`.
+import {
+  db, nuevoId, ambientePorId, ambientesDeCar, bienPorId, bienesDeAmbiente, carPorId, itinerarioPorId, servicioPorId, vehiculoPorId, vigentes
+} from './datos'
 import { nombrePeriodo } from './servicios'
+import { autorActual } from './autor'
 import { FECHA_CORTE } from 'src/config/demo'
-import { condicion } from 'src/config/catalogos'
+import { ESTADOS_PERIODO, TIPOS_SERVICIO, condicion } from 'src/config/catalogos'
 
-const AUTOR = 'Usuario de demostración'
+// ---------- Utilidades ----------
 
 // Los campos numéricos vacíos de un formulario llegan como '' o null: se guardan como dato no informado.
 export const numeroONulo = (valor) => (Number.isFinite(valor) ? valor : null)
 
+const sello = () => ({ fecha: FECHA_CORTE, por: autorActual() })
+
 function registrarEvento (evento) {
-  const nuevo = { id: nuevoId('EV'), fecha: FECHA_CORTE, reportaNecesidad: false, informadoPor: AUTOR, ...evento }
+  const nuevo = {
+    id: nuevoId('EV'),
+    reportaNecesidad: false,
+    informadoPor: autorActual(),
+    ...evento,
+    fecha: evento.fecha || FECHA_CORTE,
+    registradoEl: FECHA_CORTE
+  }
   db.eventos.push(nuevo)
   return nuevo
 }
@@ -22,6 +35,164 @@ export function siguienteCodigo (base, existe) {
   return `${base}${String(n).padStart(2, '0')}`
 }
 
+// `base` si está libre; si no, `base-2`, `base-3`…
+function idUnico (base, existe) {
+  if (!existe(base)) return base
+  let n = 2
+  while (existe(`${base}-${n}`)) n += 1
+  return `${base}-${n}`
+}
+
+const identificador = (texto) =>
+  texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+// ---------- Baja lógica ----------
+
+// Cualquier registro puede anularse con un motivo; deja de contar en los cálculos y se conserva como antecedente.
+export function anular (registro, { motivo }) {
+  registro.anulacion = { ...sello(), motivo }
+}
+
+export function reactivar (registro) {
+  registro.anulacion = null
+}
+
+const activos = (lista) => lista.filter((b) => b.situacion === 'activo')
+const rotuloBien = (b) => `${b.nombre} ${b.id}`
+
+// Dependencias que impiden anular un registro (lista vacía = se puede anular).
+export const dependenciasDeCentro = (car) => [
+  ...ambientesDeCar(car.id).map((a) => `Ambiente ${a.nombre}`),
+  ...vigentes(db.vehiculos).filter((v) => v.carId === car.id).map((v) => `Vehículo ${v.id}`),
+  ...vigentes(db.servicios).filter((s) => s.carId === car.id).map((s) => `Servicio de ${TIPOS_SERVICIO[s.tipo]}`)
+]
+
+export const dependenciasDeAmbiente = (ambiente) => activos(bienesDeAmbiente(ambiente.id)).map(rotuloBien)
+
+export const dependenciasDeTipoBien = (tipo) => activos(db.bienes).filter((b) => b.tipoId === tipo.id).map(rotuloBien)
+
+export const dependenciasDeBien = (bien) => activos(db.bienes).filter((b) => b.asociadoA?.bienId === bien.id).map((b) => `Componente ${rotuloBien(b)}`)
+
+export const dependenciasDeItinerario = (itinerario) =>
+  vigentes(db.combustible).filter((r) => r.itinerarioId === itinerario.id).map((r) => `Consumo declarado ${r.id} (${r.cantidad} L)`)
+
+// Motivo por el que un registro anulado no puede reactivarse todavía (null = se puede reactivar).
+export function bloqueoDeReactivacion (entidad, registro) {
+  const centroAnulado = (carId) => !!carPorId(carId)?.anulacion
+  const AVISO_CENTRO = 'El centro está anulado: reactívelo primero.'
+  switch (entidad) {
+    case 'ambiente':
+    case 'vehiculo':
+      return centroAnulado(registro.carId) ? AVISO_CENTRO : null
+    case 'servicio':
+      if (centroAnulado(registro.carId)) return AVISO_CENTRO
+      return vigentes(db.servicios).some((s) => s.carId === registro.carId && s.tipo === registro.tipo)
+        ? 'Ya existe un servicio vigente de este tipo en el centro.'
+        : null
+    case 'bien':
+      return ambientePorId(registro.ambienteId)?.anulacion ? 'El ambiente está anulado: reactívelo primero.' : null
+    case 'itinerario':
+      return vehiculoPorId(registro.vehiculoId)?.anulacion ? 'El vehículo está anulado: reactívelo primero.' : null
+    case 'combustible':
+      return registro.tipo === 'consumo' && registro.itinerarioId && itinerarioPorId(registro.itinerarioId)?.consumoDeclaradoL != null
+        ? 'El recorrido ya tiene otro consumo declarado.'
+        : null
+    default:
+      return null
+  }
+}
+
+// ---------- Centros y su ficha ----------
+
+const INMUEBLE_VACIO = () => ({
+  direccion: null,
+  fundacion: { referencia: null, nota: null },
+  condicion: 'propio',
+  arrendador: null,
+  contratoHasta: null,
+  litigios: null,
+  construccion: { material: null, antiguedad: null, antiguedadNota: null, pisos: null, areaM2: null, estado: null, caracteristicas: null },
+  fotos: []
+})
+
+// El inmueble donde funciona el centro es parte de su ficha: se registra junto con el centro.
+export function registrarCentro ({ id, nombre }, inmueble) {
+  const car = { id, nombre, inmueble: { ...INMUEBLE_VACIO(), ...inmueble, actualizado: sello() } }
+  db.cars.push(car)
+  return car
+}
+
+// El código del centro es su identificador y no cambia; el nombre y la ficha sí.
+export function actualizarCentro (car, { nombre, inmueble }) {
+  if (nombre) car.nombre = nombre
+  if (inmueble) car.inmueble = { ...car.inmueble, ...inmueble, actualizado: sello() }
+}
+
+export function registrarFoto (car, { titulo, nota, url }) {
+  car.inmueble.fotos.push({ titulo, fecha: FECHA_CORTE, nota: nota || null, url, registradoPor: autorActual() })
+}
+
+const liberarUrl = (url) => {
+  if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+}
+
+// Sin imagen nueva se conserva la anterior; con ella se libera la URL en memoria de la anterior.
+export function actualizarFoto (foto, { titulo, nota, url }) {
+  if (url) {
+    liberarUrl(foto.url)
+    foto.url = url
+  }
+  Object.assign(foto, { titulo, nota: nota || null })
+}
+
+// ---------- Ambientes, novedades e intervenciones ----------
+
+export function registrarAmbiente (car, datos) {
+  const ambiente = {
+    id: siguienteCodigo(`${car.id}-A`, ambientePorId),
+    carId: car.id,
+    intervenciones: [],
+    novedades: [],
+    ...datos
+  }
+  db.ambientes.push(ambiente)
+  return ambiente
+}
+
+export function actualizarAmbiente (ambiente, cambios) {
+  Object.assign(ambiente, cambios)
+}
+
+export function registrarNovedad (ambiente, datos) {
+  ambiente.novedades.push({ id: nuevoId('NOV'), fecha: FECHA_CORTE, atendida: false, informadoPor: autorActual(), ...datos })
+}
+
+export function actualizarNovedad (novedad, cambios) {
+  Object.assign(novedad, cambios)
+}
+
+// Una novedad atendida deja de generar necesidad de infraestructura.
+export function atenderNovedad (novedad, { detalle, fecha }) {
+  Object.assign(novedad, { atendida: true, atencion: { fecha: fecha || FECHA_CORTE, detalle: detalle || null, por: autorActual() } })
+}
+
+// Un pintado actualiza el último pintado solo si es más reciente que el registrado.
+function actualizarUltimoPintado (ambiente, { esPintado, fecha }) {
+  if (esPintado && fecha && (!ambiente.ultimoPintado || fecha > ambiente.ultimoPintado)) ambiente.ultimoPintado = fecha
+}
+
+export function registrarIntervencion (ambiente, { descripcion, fecha, esPintado }) {
+  ambiente.intervenciones.unshift({ descripcion, fecha: fecha || null, esPintado: !!esPintado, informadoPor: autorActual() })
+  actualizarUltimoPintado(ambiente, { esPintado, fecha })
+}
+
+export function actualizarIntervencion (ambiente, intervencion, { descripcion, fecha, esPintado }) {
+  Object.assign(intervencion, { descripcion, fecha: fecha || null, esPintado: !!esPintado })
+  actualizarUltimoPintado(ambiente, { esPintado, fecha })
+}
+
+// ---------- Bienes y componentes ----------
+
 export const rotuloSugerido = (ambienteId, tipoId) =>
   siguienteCodigo(`${ambienteId}-${tipoId.slice(0, 2).toUpperCase()}`, bienPorId)
 
@@ -31,55 +202,94 @@ export function registrarBien (datos) {
   return bien
 }
 
-export function informarVerificacion (bien, { resultado, nota }) {
-  bien.verificacion = { fecha: FECHA_CORTE, resultado, nota: nota || null }
+export function informarVerificacion (bien, { resultado, nota, fecha }) {
+  bien.verificacion = { fecha: fecha || FECHA_CORTE, resultado, nota: nota || null }
   return registrarEvento({
     tipo: 'verificacion',
     titulo: resultado === 'coincide' ? 'Coincide con lo informado' : 'Se informan diferencias',
     detalle: nota || '',
+    fecha,
     ambienteId: bien.ambienteId,
-    bienIds: [bien.id],
-    informadoPor: 'Persona que verifica'
+    bienIds: [bien.id]
+  })
+}
+
+// Cambiar la condición siempre deja un antecedente «Condición actualizada» (SPEC 002 §4).
+export function cambiarCondicion (bien, nueva, { fecha, detalle = '' } = {}) {
+  const anterior = bien.condicion
+  if (!nueva || nueva === anterior) return null
+  bien.condicion = nueva
+  return registrarEvento({
+    tipo: 'condicion',
+    titulo: `Condición: ${condicion(anterior).label} → ${condicion(nueva).label}`,
+    detalle,
+    fecha,
+    ambienteId: bien.ambienteId,
+    bienIds: [bien.id]
   })
 }
 
 // Solo los bienes indicados quedan afectados; el resto del ambiente no cambia por inferencia (CA-11).
-export function registrarIncidente ({ tipo, titulo, detalle, ambienteId, bienIds, reportaNecesidad, condicion }) {
-  if (condicion) {
-    for (const id of bienIds) bienPorId(id).condicion = condicion
+// `unidades` solo aplica a un único bien de un lote: las unidades afectadas (regla por validar).
+export function registrarIncidente ({ tipo, titulo, detalle, fecha, ambienteId, bienIds, reportaNecesidad, condicion: nueva, unidades }) {
+  if (nueva) {
+    for (const id of bienIds) cambiarCondicion(bienPorId(id), nueva, { fecha, detalle: titulo })
   }
-  return registrarEvento({ tipo, titulo, detalle, ambienteId, bienIds, reportaNecesidad })
+  return registrarEvento({
+    tipo,
+    titulo,
+    detalle,
+    fecha,
+    ambienteId,
+    bienIds,
+    reportaNecesidad,
+    unidades: bienIds.length === 1 ? numeroONulo(unidades) : null
+  })
 }
+
+export function actualizarIncidente (evento, { tipo, titulo, detalle, fecha, bienIds, reportaNecesidad, unidades }) {
+  Object.assign(evento, {
+    tipo,
+    titulo,
+    detalle,
+    fecha: fecha || evento.fecha,
+    bienIds,
+    reportaNecesidad,
+    unidades: bienIds.length === 1 ? numeroONulo(unidades) : null,
+    modificado: sello()
+  })
+}
+
+const componentesDe = (bienId) => db.bienes.filter((b) => b.asociadoA?.bienId === bienId && b.situacion !== 'anulado')
 
 // La baja no se propaga: los bienes asociados quedan marcados para revisión individual (CA-12).
-export function darDeBaja (bien, { motivo, detalle }) {
+// Se guardan los componentes de ese momento porque la relación puede cambiar después.
+export function darDeBaja (bien, { motivo, detalle, fecha }) {
+  const hijos = activos(componentesDe(bien.id))
   bien.situacion = 'baja'
-  for (const hijo of db.bienes.filter((b) => b.asociadoA?.bienId === bien.id && b.situacion === 'activo')) {
-    hijo.revisionPendiente = true
-  }
-  return registrarEvento({ tipo: 'baja', titulo: `Baja: ${motivo}`, detalle, ambienteId: bien.ambienteId, bienIds: [bien.id] })
+  for (const hijo of hijos) hijo.revisionPendiente = true
+  return registrarEvento({
+    tipo: 'baja',
+    titulo: `Baja: ${motivo}`,
+    detalle,
+    fecha,
+    ambienteId: bien.ambienteId,
+    bienIds: [bien.id],
+    componentes: hijos.map((h) => ({ bienId: h.id, posicion: h.asociadoA.posicion }))
+  })
 }
 
-// Cambiar la condición deja un antecedente; el resto de datos se corrige sin generar un hecho.
 export function actualizarBien (bien, cambios) {
-  const condicionAnterior = bien.condicion
-  Object.assign(bien, cambios)
-  if (cambios.condicion && cambios.condicion !== condicionAnterior) {
-    registrarEvento({
-      tipo: 'condicion',
-      titulo: `Condición: ${condicion(condicionAnterior).label} → ${condicion(cambios.condicion).label}`,
-      detalle: cambios.deterioro || '',
-      ambienteId: bien.ambienteId,
-      bienIds: [bien.id]
-    })
-  }
+  const { condicion: nueva, ...resto } = cambios
+  Object.assign(bien, resto)
+  cambiarCondicion(bien, nueva, { detalle: resto.deterioro || '' })
 }
-
-const componentesDe = (bienId) => db.bienes.filter((b) => b.asociadoA?.bienId === bienId)
 
 function esDescendiente (candidatoId, bienId) {
   return componentesDe(bienId).some((c) => c.id === candidatoId || esDescendiente(candidatoId, c.id))
 }
+
+const descendientesDe = (bienId) => componentesDe(bienId).flatMap((c) => [c, ...descendientesDe(c.id)])
 
 // Un componente solo se asocia a un bien activo del mismo ambiente, sin crear ciclos.
 export const puedeAsociar = (bien, padre) =>
@@ -116,10 +326,51 @@ export function cerrarRevision (bien) {
   bien.revisionPendiente = false
 }
 
-export const reposicionDe = (bienId) =>
-  db.eventos.find((e) => e.tipo === 'reposicion' && e.bienAnteriorId === bienId) ?? null
+// El traslado lleva consigo a los componentes. Un componente trasladado por separado deja de serlo
+// porque un componente solo se asocia a un bien del mismo ambiente.
+export function trasladarBien (bien, ambienteDestinoId, { fecha } = {}) {
+  const origen = ambientePorId(bien.ambienteId)
+  const destino = ambientePorId(ambienteDestinoId)
+  if (!destino || destino.anulacion || destino.carId !== origen.carId || destino.id === origen.id) throw new Error('Traslado no permitido')
 
-export function registrarReposicion (anterior, { rotulo, nombre, codigoPatrimonial, fechaAdquisicion, costo, vidaUtilAnios }) {
+  const padreAnterior = bien.asociadoA?.bienId
+  if (padreAnterior) {
+    bien.asociadoA = null
+    bien.revisionPendiente = false
+  }
+  const movidos = [bien, ...descendientesDe(bien.id)]
+  for (const b of movidos) b.ambienteId = destino.id
+
+  const detalle = padreAnterior
+    ? `Deja de ser componente de ${padreAnterior}.`
+    : movidos.length > 1 ? `Se trasladan también ${movidos.length - 1} componente(s).` : ''
+  return registrarEvento({
+    tipo: 'traslado',
+    titulo: `Traslado: ${origen.nombre} → ${destino.nombre}`,
+    detalle,
+    fecha,
+    ambienteId: destino.id,
+    bienIds: movidos.map((b) => b.id)
+  })
+}
+
+// Anular un bien corrige un registro erróneo; no es la baja patrimonial (`darDeBaja`).
+export function anularBien (bien, { motivo }) {
+  const situacionPrevia = bien.situacion
+  anular(bien, { motivo })
+  bien.anulacion.situacionPrevia = situacionPrevia
+  bien.situacion = 'anulado'
+}
+
+export function reactivarBien (bien) {
+  bien.situacion = bien.anulacion?.situacionPrevia ?? 'activo'
+  reactivar(bien)
+}
+
+export const reposicionDe = (bienId) =>
+  db.eventos.find((e) => !e.anulacion && e.tipo === 'reposicion' && e.bienAnteriorId === bienId) ?? null
+
+export function registrarReposicion (anterior, { rotulo, nombre, codigoPatrimonial, fechaAdquisicion, costo, vidaUtilAnios, fecha, trasladarComponentes }) {
   const nuevo = registrarBien({
     id: rotulo,
     ambienteId: anterior.ambienteId,
@@ -135,10 +386,16 @@ export function registrarReposicion (anterior, { rotulo, nombre, codigoPatrimoni
     cantidad: anterior.cantidad ?? 1,
     asociadoA: anterior.asociadoA ? { ...anterior.asociadoA } : null
   })
+  const trasladados = trasladarComponentes ? activos(componentesDe(anterior.id)) : []
+  for (const hijo of trasladados) {
+    hijo.asociadoA = { ...hijo.asociadoA, bienId: nuevo.id }
+    hijo.revisionPendiente = false
+  }
   registrarEvento({
     tipo: 'reposicion',
     titulo: `Reposición de ${anterior.id}`,
-    detalle: 'Alta por reposición.',
+    detalle: trasladados.length ? `Alta por reposición. Se trasladan ${trasladados.length} componente(s) al bien nuevo.` : 'Alta por reposición.',
+    fecha,
     ambienteId: anterior.ambienteId,
     bienIds: [anterior.id, nuevo.id],
     bienAnteriorId: anterior.id,
@@ -147,25 +404,43 @@ export function registrarReposicion (anterior, { rotulo, nombre, codigoPatrimoni
   return nuevo
 }
 
-// Informar un pago registra su situación para el control del servicio; no ejecuta el pago.
-export function informarPeriodo (servicio, anio, numero, { estado, vence }) {
-  servicio.periodos[anio] ??= { pagados: [], pendientes: [] }
-  const periodo = servicio.periodos[anio]
-  periodo.pagados = periodo.pagados.filter((n) => n !== numero)
-  periodo.pendientes = periodo.pendientes.filter((p) => p.numero !== numero)
-  if (estado === 'pagado') {
-    periodo.pagados.push(numero)
-    servicio.hechos.push({ fecha: FECHA_CORTE, tipo: 'pago', detalle: `Pago informado del período ${nombrePeriodo(servicio, numero)} ${anio}.` })
+// ---------- Tipos de bien y precios referenciales ----------
+
+export function registrarTipoBien ({ nombre, categoria, vidaUtilSugerida }) {
+  const tipo = {
+    id: idUnico(identificador(nombre), (id) => db.tiposBien.some((t) => t.id === id)),
+    nombre,
+    categoria,
+    precio: null,
+    fechaPrecio: null,
+    procedencia: null,
+    vidaUtilSugerida: numeroONulo(vidaUtilSugerida),
+    historial: []
   }
-  if (estado === 'pendiente') periodo.pendientes.push({ numero, vence: vence || null })
+  db.tiposBien.push(tipo)
+  return tipo
 }
 
-export function informarHechoServicio (servicio, { tipo, fecha, detalle }) {
-  servicio.hechos.push({ fecha: fecha || FECHA_CORTE, tipo, detalle })
+export function actualizarTipoBien (tipo, { nombre, categoria, vidaUtilSugerida }) {
+  Object.assign(tipo, { nombre, categoria, vidaUtilSugerida: numeroONulo(vidaUtilSugerida) })
 }
 
-export function registrarServicio (local, datos) {
-  const servicio = { id: `SRV-${local.carId}-${datos.tipo.toUpperCase()}`, localId: local.id, periodos: {}, hechos: [], ...datos }
+// El precio reemplazado se conserva en el historial del tipo.
+export function informarPrecio (tipo, { precio, fechaPrecio, procedencia }) {
+  const nuevo = { precio, fechaPrecio: fechaPrecio || null, procedencia: procedencia || null }
+  const cambia = nuevo.precio !== tipo.precio || nuevo.fechaPrecio !== tipo.fechaPrecio || nuevo.procedencia !== tipo.procedencia
+  if (cambia && tipo.precio != null) {
+    tipo.historial ??= []
+    tipo.historial.unshift({ precio: tipo.precio, fechaPrecio: tipo.fechaPrecio, procedencia: tipo.procedencia, reemplazadoEl: FECHA_CORTE, por: autorActual() })
+  }
+  Object.assign(tipo, nuevo)
+}
+
+// ---------- Servicios básicos ----------
+
+export function registrarServicio (car, datos) {
+  const id = idUnico(`SRV-${car.id}-${datos.tipo.toUpperCase()}`, servicioPorId)
+  const servicio = { id, carId: car.id, periodos: {}, hechos: [], ...datos }
   db.servicios.push(servicio)
   return servicio
 }
@@ -174,60 +449,44 @@ export function actualizarServicio (servicio, cambios) {
   Object.assign(servicio, cambios)
 }
 
-export function registrarNovedad (ambiente, datos) {
-  ambiente.novedades.push({ id: nuevoId('NOV'), fecha: FECHA_CORTE, atendida: false, informadoPor: AUTOR, ...datos })
-}
+// Informar un pago registra su situación para el control del servicio; no ejecuta el pago.
+// Retroceder un período (de pagado a otro estado, o de pendiente a sin información) deja una corrección.
+export function informarPeriodo (servicio, anio, numero, { estado, vence }) {
+  servicio.periodos[anio] ??= { pagados: [], pendientes: [] }
+  const periodo = servicio.periodos[anio]
+  let anterior = 'sin_info'
+  if (periodo.pagados.includes(numero)) anterior = 'pagado'
+  else if (periodo.pendientes.some((p) => p.numero === numero)) anterior = 'pendiente'
 
-// Una novedad atendida deja de generar necesidad de infraestructura.
-export function atenderNovedad (novedad, { detalle }) {
-  Object.assign(novedad, { atendida: true, atencion: { fecha: FECHA_CORTE, detalle: detalle || null, por: AUTOR } })
-}
+  periodo.pagados = periodo.pagados.filter((n) => n !== numero)
+  periodo.pendientes = periodo.pendientes.filter((p) => p.numero !== numero)
+  if (estado === 'pagado') periodo.pagados.push(numero)
+  if (estado === 'pendiente') periodo.pendientes.push({ numero, vence: vence || null })
 
-// Un pintado actualiza el último pintado solo si es más reciente que el registrado.
-export function registrarIntervencion (ambiente, { descripcion, fecha, esPintado }) {
-  ambiente.intervenciones.unshift({ descripcion, fecha: fecha || null })
-  if (esPintado && fecha && (!ambiente.ultimoPintado || fecha > ambiente.ultimoPintado)) ambiente.ultimoPintado = fecha
-}
-
-export function registrarAmbiente (local, datos) {
-  const ambiente = {
-    id: siguienteCodigo(`${local.carId}-A`, ambientePorId),
-    localId: local.id,
-    intervenciones: [],
-    novedades: [],
-    ...datos
+  const etiqueta = `${nombrePeriodo(servicio, numero)} ${anio}`
+  if (estado === 'pagado' && anterior !== 'pagado') {
+    informarHechoServicio(servicio, { tipo: 'pago', detalle: `Pago informado del período ${etiqueta}.` })
   }
-  db.ambientes.push(ambiente)
-  return ambiente
+  const retrocede = (anterior === 'pagado' && estado !== 'pagado') || (anterior === 'pendiente' && estado === 'sin_info')
+  if (retrocede) {
+    informarHechoServicio(servicio, {
+      tipo: 'correccion',
+      detalle: `Corrección del período ${etiqueta}: de ${ESTADOS_PERIODO[anterior].label} a ${ESTADOS_PERIODO[estado].label}.`
+    })
+  }
 }
 
-export function actualizarAmbiente (ambiente, cambios) {
-  Object.assign(ambiente, cambios)
+export function informarHechoServicio (servicio, { tipo, fecha, detalle }) {
+  const hecho = { id: nuevoId('HS'), fecha: fecha || FECHA_CORTE, tipo, detalle, informadoPor: autorActual() }
+  servicio.hechos.push(hecho)
+  return hecho
 }
 
-// El centro y su inmueble se registran juntos: la demostración asume un local por CAR.
-export function registrarCentro ({ id, nombre }, local) {
-  const car = { id, nombre }
-  db.cars.push(car)
-  db.locales.push({
-    id: `LOC-${id}-01`,
-    carId: id,
-    nombre: 'Local principal',
-    fundacion: { referencia: null, nota: null },
-    arrendador: null,
-    contratoHasta: null,
-    litigios: null,
-    construccion: { material: null, antiguedad: null, antiguedadNota: null, pisos: null, areaM2: null, estado: null, caracteristicas: null },
-    fotos: [],
-    ...local,
-    actualizado: { fecha: FECHA_CORTE, por: AUTOR }
-  })
-  return car
+export function actualizarHechoServicio (hecho, { tipo, fecha, detalle }) {
+  Object.assign(hecho, { tipo, fecha: fecha || hecho.fecha, detalle })
 }
 
-export function registrarFoto (local, { titulo, nota, url }) {
-  local.fotos.push({ titulo, fecha: FECHA_CORTE, nota: nota || null, url })
-}
+// ---------- Movilidad ----------
 
 export const vehiculoSugerido = (carId) => siguienteCodigo(`${carId}-V`, vehiculoPorId)
 
@@ -241,18 +500,14 @@ export function actualizarVehiculo (vehiculo, cambios) {
   Object.assign(vehiculo, cambios)
 }
 
-export function informarPrecio (tipo, { precio, fechaPrecio, procedencia }) {
-  Object.assign(tipo, { precio, fechaPrecio: fechaPrecio || null, procedencia: procedencia || null })
-}
-
-export function actualizarLocal (local, cambios) {
-  Object.assign(local, cambios, { actualizado: { fecha: FECHA_CORTE, por: AUTOR } })
-}
-
 export function registrarItinerario (datos) {
   const itinerario = { id: nuevoId('IT'), consumoDeclaradoL: null, ...datos }
   db.itinerarios.push(itinerario)
   return itinerario
+}
+
+export function actualizarItinerario (itinerario, { fecha, proposito, destinos, previsto, realizado }) {
+  Object.assign(itinerario, { fecha, proposito, destinos, previsto, realizado })
 }
 
 // Lo realizado se registra aparte de lo previsto para poder distinguirlos (CA-15).
@@ -261,11 +516,34 @@ export function informarEjecucion (itinerario, { salida, llegada, km }) {
 }
 
 // Un consumo se asocia a un solo recorrido para no contarlo dos veces.
+const vincularConsumo = (registro) => {
+  if (registro.tipo === 'consumo' && registro.itinerarioId) itinerarioPorId(registro.itinerarioId).consumoDeclaradoL = registro.cantidad
+}
+
+const desvincularConsumo = (registro) => {
+  if (registro.tipo === 'consumo' && registro.itinerarioId) itinerarioPorId(registro.itinerarioId).consumoDeclaradoL = null
+}
+
 export function registrarCombustible (datos) {
   const registro = { id: nuevoId('CB'), unidad: 'L', ...datos }
   db.combustible.push(registro)
-  if (registro.tipo === 'consumo' && registro.itinerarioId) {
-    itinerarioPorId(registro.itinerarioId).consumoDeclaradoL = registro.cantidad
-  }
+  vincularConsumo(registro)
   return registro
+}
+
+export function actualizarCombustible (registro, cambios) {
+  desvincularConsumo(registro)
+  Object.assign(registro, cambios)
+  vincularConsumo(registro)
+}
+
+// Anular un consumo libera el recorrido para declarar otro.
+export function anularCombustible (registro, datos) {
+  desvincularConsumo(registro)
+  anular(registro, datos)
+}
+
+export function reactivarCombustible (registro) {
+  reactivar(registro)
+  vincularConsumo(registro)
 }

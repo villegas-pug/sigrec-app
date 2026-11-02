@@ -3,14 +3,14 @@
     <div class="sg-page__inner">
       <page-header>
         <template #acciones>
-          <q-btn v-if="puedeHacer('servicio.registrar')" unelevated color="primary" icon="add" label="Registrar servicio" :disable="!local || !noRegistrados.length" @click="abrirServicio(null)" />
+          <q-btn v-if="puedeHacer('servicio.registrar')" unelevated color="primary" icon="add" label="Registrar servicio" :disable="!car || !noRegistrados.length" @click="abrirServicio(null)" />
         </template>
       </page-header>
 
       <div class="sg-filters">
-        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Establecimiento (CAR)" />
-        <q-input :model-value="local ? `${local.id} · ${local.nombre}` : '—'" outlined dense readonly label="Local" />
+        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
         <q-select v-model="anio" :options="ANIOS_SERVICIOS" outlined dense label="Año" />
+        <div class="row items-center"><filtro-inactivos v-model="mostrarInactivos" /></div>
       </div>
 
       <note-banner tono="in">
@@ -25,49 +25,78 @@
             <status-chip v-for="(e, clave) in ESTADOS_PERIODO" :key="clave" :tono="e.tono" :label="e.label" />
           </div>
         </template>
-        <div class="sg-table-wrap q-px-sm">
+
+        <!-- Pantallas amplias: calendario anual. -->
+        <div v-if="!$q.screen.lt.sm" class="sg-table-wrap q-px-sm">
           <table class="sg-periodos">
             <thead>
               <tr>
-                <th scope="col" style="text-align: left">Servicio</th>
+                <th scope="col" class="sg-periodos__servicio">Servicio</th>
                 <th v-for="m in MESES_CORTOS" :key="m" scope="col">{{ m }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="fila in filas" :key="fila.servicio.id">
-                <th scope="row">
+                <th scope="row" class="sg-periodos__servicio">
                   <button type="button" class="sg-row-btn" @click="servicioId = fila.servicio.id">{{ TIPOS_SERVICIO[fila.servicio.tipo] }}</button>
                   <div class="sg-muted">
-                    {{ fila.servicio.periodicidad === 'mensual' ? 'Mensual' : 'Trimestral' }}
-                    <span v-if="fila.interrupcion" class="text-weight-bold" style="color: var(--sg-warning)"> · interrupción abierta</span>
+                    {{ PERIODICIDADES[fila.servicio.periodicidad] }}
+                    <span v-if="fila.interrupcion" class="text-weight-bold sg-aviso-texto"> · interrupción abierta</span>
+                    <status-chip v-if="fila.servicio.anulacion" v-bind="CHIP_ANULADO" />
                   </div>
                 </th>
                 <td v-for="celda in fila.celdas" :key="celda.numero" :colspan="celda.span">
-                  <button
-                    type="button"
-                    class="sg-celda"
-                    :class="`sg-celda--${celda.estado}`"
-                    :aria-label="`${TIPOS_SERVICIO[fila.servicio.tipo]}, ${celda.etiqueta}: ${ESTADOS_PERIODO[celda.estado].label}`"
-                    :disabled="!puedeHacer('servicio.periodo')"
-                    @click="abrirPeriodo(fila.servicio, celda)"
-                  >
-                    <span>{{ celda.span > 1 ? `${celda.etiqueta} · ` : '' }}{{ ESTADOS_PERIODO[celda.estado].label }}</span>
-                    <span v-if="celda.estado === 'pendiente'" class="sg-celda__sub">{{ celda.vence ? `vence ${fecha(celda.vence)}` : 'vencimiento no informado' }}</span>
-                  </button>
+                  <celda-periodo
+                    :nombre="TIPOS_SERVICIO[fila.servicio.tipo]"
+                    :celda="celda"
+                    :disabled="!puedeHacer('servicio.periodo') || !!fila.servicio.anulacion"
+                    @abrir="abrirPeriodo(fila.servicio, celda)"
+                  />
                 </td>
               </tr>
               <tr v-for="tipo in noRegistrados" :key="tipo">
-                <th scope="row">{{ TIPOS_SERVICIO[tipo] }}</th>
+                <th scope="row" class="sg-periodos__servicio">{{ TIPOS_SERVICIO[tipo] }}</th>
                 <td colspan="12">
                   <button v-if="puedeHacer('servicio.registrar')" type="button" class="sg-celda sg-celda--sin_info" @click="abrirServicio(null, tipo)">
-                    Sin servicio registrado para este local · Registrar
+                    Sin servicio registrado para este centro · Registrar
                   </button>
-                  <span v-else class="sg-celda sg-celda--sin_info" style="cursor: default">Sin servicio registrado para este local</span>
+                  <span v-else class="sg-celda sg-celda--sin_info sg-celda--inerte">Sin servicio registrado para este centro</span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        <!-- Móvil: una tarjeta por servicio con sus períodos. -->
+        <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
+          <div v-for="fila in filas" :key="fila.servicio.id" class="sg-box">
+            <div class="row items-center justify-between no-wrap">
+              <button type="button" class="sg-row-btn" @click="servicioId = fila.servicio.id">{{ TIPOS_SERVICIO[fila.servicio.tipo] }}</button>
+              <span class="sg-muted">{{ PERIODICIDADES[fila.servicio.periodicidad] }}</span>
+            </div>
+            <div v-if="fila.interrupcion || fila.servicio.anulacion" class="sg-chips">
+              <status-chip v-if="fila.interrupcion" tono="wa" label="Interrupción abierta" />
+              <status-chip v-if="fila.servicio.anulacion" v-bind="CHIP_ANULADO" />
+            </div>
+            <div class="sg-periodos-lista">
+              <celda-periodo
+                v-for="celda in fila.celdas"
+                :key="celda.numero"
+                :nombre="TIPOS_SERVICIO[fila.servicio.tipo]"
+                :celda="celda"
+                con-etiqueta
+                :disabled="!puedeHacer('servicio.periodo') || !!fila.servicio.anulacion"
+                @abrir="abrirPeriodo(fila.servicio, celda)"
+              />
+            </div>
+          </div>
+          <div v-for="tipo in noRegistrados" :key="tipo" class="sg-box sg-box--dashed">
+            <span class="text-weight-bold">{{ TIPOS_SERVICIO[tipo] }}</span>
+            <span class="sg-muted">Sin servicio registrado para este centro</span>
+            <q-btn v-if="puedeHacer('servicio.registrar')" flat dense color="secondary" icon="add" label="Registrar" class="self-start" @click="abrirServicio(null, tipo)" />
+          </div>
+        </div>
+
         <div v-for="aviso in avisosContinuidad" :key="aviso.servicio.id" class="q-px-md q-pb-md">
           <note-banner tono="wa" icono="warning">
             {{ aviso.nombre }}: el último período pagado no demuestra continuidad. {{ aviso.celdas.map((c) => c.etiqueta).join(', ') }} siguen sin información.
@@ -88,18 +117,23 @@
           </ul>
         </section-card>
 
-        <section-card v-if="servicio" :titulo="`Ficha del servicio · ${TIPOS_SERVICIO[servicio.tipo]}`" :subtitulo="`${local.id} · ${local.nombre}`">
+        <section-card v-if="servicio" ref="fichaRef" :titulo="`Ficha del servicio · ${TIPOS_SERVICIO[servicio.tipo]}`" :subtitulo="car.nombre">
           <template #acciones>
-            <q-btn v-if="puedeHacer('servicio.actualizar')" outline color="secondary" icon="edit" label="Actualizar ficha" @click="abrirServicio(servicio)" />
-            <template v-if="puedeHacer('servicio.hecho')">
-              <q-btn outline color="secondary" label="Informar restablecimiento" @click="abrirHecho('restablecimiento')" />
-              <q-btn outline color="secondary" label="Informar interrupción" @click="abrirHecho('interrupcion')" />
+            <q-btn v-if="puedeHacer('servicio.actualizar')" outline color="secondary" icon="edit" label="Actualizar ficha" :disable="!!servicio.anulacion" @click="abrirServicio(servicio)" />
+            <template v-if="puedeHacer('hecho.registrar')">
+              <q-btn outline color="secondary" label="Informar restablecimiento" :disable="!!servicio.anulacion" @click="abrirHecho(null, 'restablecimiento')" />
+              <q-btn outline color="secondary" label="Informar interrupción" :disable="!!servicio.anulacion" @click="abrirHecho(null, 'interrupcion')" />
             </template>
+            <menu-acciones :items="accionesServicio" :etiqueta="`Acciones del servicio de ${TIPOS_SERVICIO[servicio.tipo]}`" />
           </template>
+          <note-banner v-if="servicio.anulacion" tono="ne" icono="block" class="q-mb-md">
+            Servicio anulado el {{ fecha(servicio.anulacion.fecha) }} por {{ servicio.anulacion.por }}. Motivo: {{ servicio.anulacion.motivo }}
+          </note-banner>
           <div class="sg-kv-grid">
             <key-value etiqueta="Proveedor">{{ servicio.proveedor }}</key-value>
             <key-value etiqueta="N.º de suministro">{{ servicio.suministro }}</key-value>
             <key-value etiqueta="Contratación">{{ servicio.contratacion }}</key-value>
+            <key-value etiqueta="Periodicidad">{{ PERIODICIDADES[servicio.periodicidad] }}</key-value>
             <key-value etiqueta="Situación del suministro">
               <status-chip v-if="interrupcionAbierta(servicio)" tono="wa" label="Interrumpido · restablecimiento no informado" />
               <status-chip v-else tono="ok" label="Sin interrupción abierta" />
@@ -108,12 +142,18 @@
           </div>
           <h3 class="sg-kv__label q-mt-lg q-mb-sm">Hechos informados</h3>
           <ul class="sg-timeline">
-            <li v-for="(h, i) in hechosOrdenados" :key="i" class="sg-timeline__item">
+            <li v-for="h in hechosOrdenados" :key="h.id ?? `${h.fecha}-${h.detalle}`" class="sg-timeline__item">
               <span class="sg-timeline__date">{{ fecha(h.fecha) }}</span>
-              <div class="column">
-                <span><status-chip v-bind="HECHOS[h.tipo]" /> {{ h.detalle }}</span>
+              <div class="column col">
+                <span>
+                  <status-chip v-bind="HECHOS_SERVICIO[h.tipo]" />
+                  <status-chip v-if="h.anulacion" v-bind="CHIP_ANULADO" class="q-ml-xs" />
+                  {{ h.detalle }}
+                </span>
                 <span v-if="h.tipo === 'pago'" class="sg-muted">El pago no registra restablecimiento del servicio.</span>
+                <span v-if="h.anulacion" class="sg-muted">Anulado el {{ fecha(h.anulacion.fecha) }}: {{ h.anulacion.motivo }}</span>
               </div>
+              <menu-acciones :items="accionesHecho(h)" :etiqueta="`Acciones del hecho del ${fecha(h.fecha)}`" />
             </li>
             <li v-if="!hechosOrdenados.length" class="sg-timeline__item sg-muted">Sin hechos informados.</li>
           </ul>
@@ -122,66 +162,42 @@
     </div>
 
     <servicio-dialog
-      v-if="local"
+      v-if="car"
       v-model="dialogoServicio.abierto"
-      :local="local"
+      :centro="car"
       :servicio="dialogoServicio.servicio"
       :tipos-disponibles="noRegistrados"
       :tipo-inicial="dialogoServicio.tipo"
       @hecho="(id) => (servicioId = id)"
     />
-
-    <q-dialog v-model="periodo.abierto">
-      <q-card style="width: 460px; max-width: 92vw">
-        <q-card-section>
-          <h2 class="text-h6 text-weight-bold q-my-none">Informar situación del período</h2>
-          <p class="sg-muted q-mb-none">{{ periodo.servicio && TIPOS_SERVICIO[periodo.servicio.tipo] }} · {{ periodo.celda?.etiqueta }} {{ anio }}</p>
-        </q-card-section>
-        <q-card-section class="column q-gutter-y-md">
-          <q-option-group v-model="periodo.estado" :options="OPCIONES_ESTADO" />
-          <q-input v-if="periodo.estado === 'pendiente'" v-model="periodo.vence" outlined dense type="date" stack-label label="Fecha de vencimiento (si se conoce)" />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat color="secondary" label="Cancelar" v-close-popup />
-          <q-btn unelevated color="primary" label="Guardar" @click="guardarPeriodo" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <q-dialog v-model="hecho.abierto">
-      <q-card style="width: 460px; max-width: 92vw">
-        <q-card-section>
-          <h2 class="text-h6 text-weight-bold q-my-none">Informar {{ hecho.tipo === 'interrupcion' ? 'interrupción' : 'restablecimiento' }}</h2>
-          <p class="sg-muted q-mb-none">{{ servicio && TIPOS_SERVICIO[servicio.tipo] }}</p>
-        </q-card-section>
-        <q-card-section class="column q-gutter-y-md">
-          <q-input v-model="hecho.fecha" outlined dense type="date" stack-label label="Fecha" />
-          <q-input v-model="hecho.detalle" outlined dense type="textarea" autogrow label="Detalle" />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat color="secondary" label="Cancelar" v-close-popup />
-          <q-btn unelevated color="primary" label="Registrar" @click="guardarHecho" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <periodo-dialog v-if="periodo.servicio" v-model="periodo.abierto" :servicio="periodo.servicio" :celda="periodo.celda" :anio="anio" />
+    <hecho-servicio-dialog v-if="servicio" v-model="dialogoHecho.abierto" :servicio="servicio" :hecho="dialogoHecho.hecho" :tipo-inicial="dialogoHecho.tipo" />
+    <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
 </template>
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import KeyValue from 'components/common/KeyValue.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
+import MenuAcciones from 'components/common/MenuAcciones.vue'
+import FiltroInactivos from 'components/common/FiltroInactivos.vue'
+import AnularDialog from 'components/common/AnularDialog.vue'
 import ServicioDialog from 'components/servicios/ServicioDialog.vue'
+import PeriodoDialog from 'components/servicios/PeriodoDialog.vue'
+import HechoServicioDialog from 'components/servicios/HechoServicioDialog.vue'
+import CeldaPeriodo from 'components/servicios/CeldaPeriodo.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { localesDeCar, servicioPorId } from 'src/services/datos'
+import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useAnulacion } from 'src/composables/useAnulacion'
+import { servicioPorId, vigente } from 'src/services/datos'
 import { avisosDeServicios, celdasDelServicio, interrupcionAbierta, serviciosDeCar, tiposNoRegistrados } from 'src/services/servicios'
-import { informarHechoServicio, informarPeriodo } from 'src/services/acciones'
-import { ESTADOS_PERIODO, MESES_CORTOS, TIPOS_SERVICIO } from 'src/config/catalogos'
+import { anular } from 'src/services/acciones'
+import { CHIP_ANULADO, ESTADOS_PERIODO, HECHOS_SERVICIO, MESES_CORTOS, PERIODICIDADES, TIPOS_SERVICIO } from 'src/config/catalogos'
 import { ANIOS_SERVICIOS, FECHA_CORTE } from 'src/config/demo'
 import { fecha } from 'src/utils/formato'
 
@@ -191,37 +207,20 @@ const ETIQUETAS_AVISO = {
   interrupcion: { tono: 'wa', label: 'Interrupción abierta' },
   sin_info: { tono: 'si', label: 'Sin información' }
 }
-const HECHOS = {
-  interrupcion: { tono: 'wa', label: 'Interrupción informada' },
-  restablecimiento: { tono: 'ok', label: 'Restablecimiento informado' },
-  pago: { tono: 'in', label: 'Pago informado' }
-}
-const OPCIONES_ESTADO = [
-  { label: 'Pagado', value: 'pagado' },
-  { label: 'Pendiente conocido', value: 'pendiente' },
-  { label: 'Sin información', value: 'sin_info' }
-]
 
-const $q = useQuasar()
 const route = useRoute()
-const { carsEnAmbito, enAmbitoCar, puedeHacer } = usePerfil()
+const { puedeHacer } = usePerfil()
+const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
+const { carId, car, opcionesCar } = useCentroSeleccionado(route.query.car)
 
-const dialogoServicio = reactive({ abierto: false, servicio: null, tipo: null })
-
-function abrirServicio (srv, tipo = null) {
-  Object.assign(dialogoServicio, { abierto: true, servicio: srv, tipo })
-}
-
-const opcionesCar = computed(() => carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id })))
-const carId = ref(enAmbitoCar(route.query.car) ? route.query.car : carsEnAmbito.value[0]?.id)
 const anio = ref(ANIOS_SERVICIOS.at(-1))
-const local = computed(() => (carId.value ? localesDeCar(carId.value)[0] : null))
-const servicios = computed(() => (carId.value ? serviciosDeCar(carId.value) : []))
-const noRegistrados = computed(() => tiposNoRegistrados(servicios.value))
+const mostrarInactivos = ref(false)
+const fichaRef = ref(null)
 
-watch(carsEnAmbito, (cars) => {
-  if (!cars.some((c) => c.id === carId.value)) carId.value = cars[0]?.id
-})
+// Los servicios anulados solo se listan con «Mostrar inactivos»; los avisos y cálculos usan los vigentes.
+const servicios = computed(() => (carId.value ? serviciosDeCar(carId.value, { inactivos: mostrarInactivos.value }) : []))
+const serviciosVigentes = computed(() => servicios.value.filter(vigente))
+const noRegistrados = computed(() => tiposNoRegistrados(servicios.value))
 
 const filas = computed(() =>
   servicios.value.map((servicio) => ({
@@ -231,7 +230,7 @@ const filas = computed(() =>
   }))
 )
 
-const avisos = computed(() => avisosDeServicios(servicios.value, anio.value, FECHA_CORTE))
+const avisos = computed(() => avisosDeServicios(serviciosVigentes.value, anio.value, FECHA_CORTE))
 
 // Un período pagado posterior a huecos sin información no prueba continuidad (regla provisional 12).
 const avisosContinuidad = computed(() =>
@@ -257,35 +256,71 @@ watch(servicios, (lista) => {
   }
 }, { immediate: true })
 const servicio = computed(() => (servicioId.value ? servicioPorId(servicioId.value) : null))
-const hechosOrdenados = computed(() => [...(servicio.value?.hechos ?? [])].sort((a, b) => b.fecha.localeCompare(a.fecha)))
+const hechosOrdenados = computed(() =>
+  [...(servicio.value?.hechos ?? [])].filter((h) => mostrarInactivos.value || vigente(h)).sort((a, b) => b.fecha.localeCompare(a.fecha))
+)
 
-const periodo = reactive({ abierto: false, servicio: null, celda: null, estado: 'pagado', vence: '' })
+const dialogoServicio = reactive({ abierto: false, servicio: null, tipo: null })
+const periodo = reactive({ abierto: false, servicio: null, celda: null })
+const dialogoHecho = reactive({ abierto: false, hecho: null, tipo: 'interrupcion' })
 
-function abrirPeriodo (srv, celda) {
-  Object.assign(periodo, {
-    abierto: true,
-    servicio: srv,
-    celda,
-    estado: celda.estado === 'por_venir' ? 'pagado' : celda.estado,
-    vence: celda.vence ?? ''
-  })
-}
+const abrirServicio = (srv, tipo = null) => Object.assign(dialogoServicio, { abierto: true, servicio: srv, tipo })
+const abrirPeriodo = (srv, celda) => Object.assign(periodo, { abierto: true, servicio: srv, celda })
+const abrirHecho = (hecho, tipo = 'interrupcion') => Object.assign(dialogoHecho, { abierto: true, hecho, tipo })
 
-function guardarPeriodo () {
-  informarPeriodo(periodo.servicio, anio.value, periodo.celda.numero, periodo)
-  periodo.abierto = false
-  $q.notify({ type: 'positive', message: 'Situación del período registrada.' })
-}
+const accionesServicio = computed(() => {
+  const s = servicio.value
+  if (!s) return []
+  return [
+    {
+      label: 'Anular servicio',
+      icono: 'block',
+      peligro: true,
+      visible: puedeHacer('servicio.anular') && vigente(s),
+      accion: () => pedirAnulacion({
+        titulo: 'Anular servicio',
+        subtitulo: `${TIPOS_SERVICIO[s.tipo]} · ${car.value.nombre}`,
+        aviso: 'Sus períodos y hechos se conservan como antecedente. Podrá registrarse de nuevo un servicio del mismo tipo.',
+        mensaje: 'Servicio anulado.',
+        ejecutar: (datos) => anular(s, datos)
+      })
+    },
+    {
+      label: 'Reactivar servicio',
+      icono: 'restore',
+      visible: puedeHacer('servicio.anular') && !vigente(s),
+      accion: () => pedirReactivacion({ entidad: 'servicio', registro: s, nombre: 'Servicio' })
+    }
+  ]
+})
 
-const hecho = reactive({ abierto: false, tipo: 'interrupcion', fecha: FECHA_CORTE, detalle: '' })
-
-function abrirHecho (tipo) {
-  Object.assign(hecho, { abierto: true, tipo, fecha: FECHA_CORTE, detalle: '' })
-}
-
-function guardarHecho () {
-  informarHechoServicio(servicio.value, { tipo: hecho.tipo, fecha: hecho.fecha, detalle: hecho.detalle || 'Sin detalle informado.' })
-  hecho.abierto = false
-  $q.notify({ type: 'positive', message: 'Hecho del servicio registrado.' })
-}
+const accionesHecho = (h) => [
+  {
+    label: 'Actualizar hecho',
+    icono: 'edit',
+    visible: puedeHacer('hecho.actualizar') && vigente(h) && !servicio.value.anulacion,
+    accion: () => abrirHecho(h)
+  },
+  {
+    label: 'Anular hecho',
+    icono: 'block',
+    peligro: true,
+    visible: puedeHacer('hecho.anular') && vigente(h),
+    accion: () => pedirAnulacion({
+      titulo: 'Anular hecho del servicio',
+      subtitulo: `${HECHOS_SERVICIO[h.tipo]?.label ?? h.tipo} · ${fecha(h.fecha)}`,
+      aviso: h.tipo === 'interrupcion' || h.tipo === 'restablecimiento'
+        ? 'La situación del suministro se recalcula con los hechos vigentes.'
+        : 'El hecho se conserva como antecedente. La situación del período no cambia: corríjala desde la celda.',
+      mensaje: 'Hecho anulado.',
+      ejecutar: (datos) => anular(h, datos)
+    })
+  },
+  {
+    label: 'Reactivar hecho',
+    icono: 'restore',
+    visible: puedeHacer('hecho.anular') && !vigente(h),
+    accion: () => pedirReactivacion({ entidad: 'hecho', registro: h, nombre: 'Hecho' })
+  }
+]
 </script>
