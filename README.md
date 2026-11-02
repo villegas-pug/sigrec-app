@@ -33,7 +33,7 @@ El perfil se elige al pie del menú lateral y se recuerda en el navegador. Los a
 
 | Perfil | Accede a | Puede registrar o actualizar | Ámbito |
 | --- | --- | --- | --- |
-| Equipo central USPNNA (acceso total) | Todo (rutas y acciones derivadas del menú y del catálogo `TODAS_LAS_ACCIONES`) | Todos los mantenimientos (altas, ediciones y bajas lógicas); además registra y anula centros y administra los tipos de bien y sus precios | Todos los CAR |
+| Equipo central USPNNA (acceso total) | Todo (rutas y acciones derivadas del menú y del catálogo `TODAS_LAS_ACCIONES`) | Todos los mantenimientos (altas, ediciones y bajas lógicas); además registra y anula centros, administra los tipos de bien y sus precios y anula bajas y reposiciones registradas por error | Todos los CAR |
 | Personal del CAR | Todo salvo «Tipos de bien y precios» | Los mismos mantenimientos, sobre su centro | CAR Demo Amanecer |
 | Verificación física | Bienes, Incidencias | Verificaciones e incidentes desde la ficha del bien | CAR Demo Amanecer |
 | Chofer | Itinerarios, Vehículos (consulta), Combustible | Itinerarios y combustible | Vehículo AMA-V01 |

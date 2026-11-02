@@ -20,10 +20,12 @@ const ACCIONES_MANTENIMIENTO = [
 ]
 
 // Catálogo completo de acciones del sistema: toda acción nueva se añade aquí (o en ACCIONES_MANTENIMIENTO).
-// Las exclusivas de administración (alta de centros, catálogo de tipos de bien y precios) solo las tiene el perfil de acceso total.
+// Las exclusivas de administración (alta de centros, catálogo de tipos de bien y precios, reversión de bajas y reposiciones)
+// solo las tiene el perfil de acceso total: quien informa un hecho patrimonial no lo corrige.
 export const TODAS_LAS_ACCIONES = [
   ...ACCIONES_MANTENIMIENTO,
   'centro.registrar', 'centro.anular',
+  'baja.anular', 'reposicion.anular',
   'tipoBien.registrar', 'tipoBien.actualizar', 'tipoBien.anular', 'precio.informar'
 ]
 

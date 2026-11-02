@@ -47,6 +47,7 @@ Convención `entidad.registrar | actualizar | anular`. Central y CAR comparten e
 | `bien.verificar`, `bien.incidente` | ✓ | ✓ | ✓ | |
 | `incidente.actualizar`, `incidente.anular` | ✓ | ✓ | | |
 | `tipoBien.*`, `precio.informar` | ✓ | | | |
+| `baja.anular`, `reposicion.anular` | ✓ | | | |
 | `servicio.*`, `hecho.*` | ✓ | ✓ | | |
 | `vehiculo.*` | ✓ | ✓ | | |
 | `itinerario.registrar`, `itinerario.ejecucion` | ✓ | ✓ | | ✓ |
@@ -68,6 +69,8 @@ Accesos: Verificación física deja de tener la pantalla «Registro de bienes» 
 | Novedad / intervención | ✓ | ✓ | ✓ | — |
 | Bien / componente | ✓ | ✓ + traslado | ✓ (registro erróneo) | componentes activos |
 | Incidente | ✓ (desde Incidencias o ficha) | ✓ | ✓ | — |
+| Baja de un bien | ✓ (desde Incidencias o ficha) | — | ✓ (solo Central; registro erróneo) | reposición vigente del bien |
+| Reposición | ✓ (desde Incidencias o ficha) | — | ✓ (solo Central; registro erróneo) | componentes propios, hechos posteriores o bien nuevo inactivo |
 | Tipo de bien y precio | ✓ | ✓ | ✓ | bienes activos de ese tipo |
 | Servicio | ✓ | ✓ (periodicidad sin períodos informados) | ✓ | — |
 | Hecho del servicio | ✓ | ✓ | ✓ | — |
@@ -87,6 +90,7 @@ Accesos: Verificación física deja de tener la pantalla «Registro de bienes» 
 | Un incidente sobre parte de un lote cuenta solo las unidades afectadas (regla por validar). | `necesidades.js › unidadesNecesarias` |
 | Los incidentes y reposiciones cuentan desde el año en que ocurren. | `calcularNecesidades` |
 | La baja de un bien guarda los componentes de ese momento; al reponer se pueden trasladar al bien nuevo. | `darDeBaja`, `registrarReposicion` |
+| Anular una baja devuelve el bien a activo; anular una reposición anula el bien nuevo y devuelve sus componentes trasladados al bien anterior. Se revierte en orden inverso: primero la reposición y después la baja. Quien registra el hecho (CAR) no lo revierte: lo hace Equipo central. | `anularBaja`, `anularReposicion`, `dependenciasDeBaja`, `dependenciasDeReposicion` |
 | Trasladar un bien lleva a sus componentes; un componente trasladado deja de serlo. | `trasladarBien` |
 | Un bien nuevo no hereda la fecha de adquisición del inventario previo. | `RegistroBienPage` |
 

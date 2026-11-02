@@ -2,13 +2,30 @@
   <form-dialog
     :model-value="modelValue"
     :titulo="TITULOS[modo]"
-    :subtitulo="`${bien.nombre} · ${bien.id}`"
+    :subtitulo="bienActivo ? `${bienActivo.nombre} · ${bienActivo.id}` : 'Los campos con * son obligatorios'"
     :ancho="600"
     :etiqueta-enviar="TITULOS[modo]"
     :color-enviar="modo === 'baja' ? 'negative' : 'primary'"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
+    <q-select
+      v-if="!bien"
+      v-model="form.bienId"
+      :options="opcionesBien"
+      emit-value
+      map-options
+      use-input
+      input-debounce="0"
+      outlined
+      dense
+      label="Bien *"
+      :hint="candidatos.length ? '' : SIN_CANDIDATOS[modo]"
+      :rules="[requerido]"
+      @filter="filtrarBien"
+      @update:model-value="aplicarBien"
+    />
+
     <template v-if="modo === 'verificacion'">
       <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la verificación *" :rules="[requerido, noFutura]" />
       <q-option-group v-model="form.resultado" :options="OPCIONES_RESULTADO" />
@@ -44,7 +61,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
@@ -57,7 +74,9 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   // verificacion | baja | reposicion (los incidentes se registran con IncidenteDialog).
   modo: { type: String, required: true },
-  bien: { type: Object, required: true }
+  // Bien desde cuya ficha se actúa. Sin él, el diálogo pide elegirlo entre los `candidatos`.
+  bien: { type: Object, default: null },
+  candidatos: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['update:modelValue', 'hecho'])
@@ -73,28 +92,61 @@ const OPCIONES_RESULTADO = [
   { label: 'Se encontraron diferencias', value: 'diferencias' }
 ]
 
+const SIN_CANDIDATOS = {
+  verificacion: 'No hay bienes para verificar.',
+  baja: 'No hay bienes activos para dar de baja.',
+  reposicion: 'No hay bienes dados de baja pendientes de reposición.'
+}
+
 const rotuloLibre = (v) => !bienPorId(v) || 'Ya existe un bien con ese rótulo'
 
 const form = reactive({})
 
-const hijosActivos = computed(() => db.bienes.filter((b) => b.asociadoA?.bienId === props.bien.id && b.situacion === 'activo'))
+// Bien sobre el que se actúa: el de la ficha o, desde Incidencias, el elegido en el selector.
+const bienActivo = computed(() => props.bien ?? bienPorId(form.bienId) ?? null)
+
+const hijosActivos = computed(() =>
+  bienActivo.value ? db.bienes.filter((b) => b.asociadoA?.bienId === bienActivo.value.id && b.situacion === 'activo') : []
+)
+
+const textoFiltro = ref('')
+const opcionesBien = computed(() => {
+  const t = textoFiltro.value.toLowerCase()
+  return props.candidatos
+    .map((b) => ({ label: `${b.nombre} · ${b.id}`, value: b.id }))
+    .filter((o) => o.label.toLowerCase().includes(t))
+})
+
+function filtrarBien (texto, update) {
+  update(() => { textoFiltro.value = texto })
+}
+
+// Los valores sugeridos de la reposición dependen del bien elegido.
+function aplicarBien () {
+  const bien = bienActivo.value
+  Object.assign(form, {
+    rotulo: bien ? rotuloSugerido(bien.ambienteId, bien.tipoId) : '',
+    nombre: bien?.nombre ?? '',
+    vidaUtilAnios: bien ? bien.vidaUtilAnios ?? tipoPorId(bien.tipoId)?.vidaUtilSugerida ?? null : null,
+    trasladarComponentes: false
+  })
+}
 
 function reiniciar () {
   Object.keys(form).forEach((k) => delete form[k])
+  textoFiltro.value = ''
   Object.assign(form, {
+    bienId: props.bien?.id ?? null,
     fecha: FECHA_CORTE,
     resultado: 'coincide',
     nota: '',
     motivo: '',
     detalle: '',
-    rotulo: rotuloSugerido(props.bien.ambienteId, props.bien.tipoId),
-    nombre: props.bien.nombre,
     codigoPatrimonial: '',
     fechaAdquisicion: FECHA_CORTE.slice(0, 7),
-    costo: null,
-    vidaUtilAnios: props.bien.vidaUtilAnios ?? tipoPorId(props.bien.tipoId)?.vidaUtilSugerida ?? null,
-    trasladarComponentes: false
+    costo: null
   })
+  aplicarBien()
 }
 
 watch(() => props.modelValue, (abierto) => {
@@ -102,16 +154,17 @@ watch(() => props.modelValue, (abierto) => {
 })
 
 function guardar () {
+  const bien = bienActivo.value
   let mensaje = ''
   let nuevoId = null
   if (props.modo === 'verificacion') {
-    informarVerificacion(props.bien, form)
+    informarVerificacion(bien, form)
     mensaje = 'Verificación registrada.'
   } else if (props.modo === 'baja') {
-    darDeBaja(props.bien, form)
+    darDeBaja(bien, form)
     mensaje = hijosActivos.value.length ? 'Baja registrada. Revise los bienes asociados.' : 'Baja registrada.'
   } else if (props.modo === 'reposicion') {
-    nuevoId = registrarReposicion(props.bien, form).id
+    nuevoId = registrarReposicion(bien, form).id
     mensaje = `Reposición registrada: ${nuevoId}.`
   }
   $q.notify({ type: 'positive', message: mensaje })

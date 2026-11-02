@@ -6,7 +6,7 @@ import {
 import { nombrePeriodo } from './servicios'
 import { autorActual } from './autor'
 import { FECHA_CORTE } from 'src/config/demo'
-import { ESTADOS_PERIODO, TIPOS_SERVICIO, condicion } from 'src/config/catalogos'
+import { ESTADOS_PERIODO, TIPOS_EVENTO, TIPOS_SERVICIO, condicion } from 'src/config/catalogos'
 
 // ---------- Utilidades ----------
 
@@ -391,6 +391,7 @@ export function registrarReposicion (anterior, { rotulo, nombre, codigoPatrimoni
     hijo.asociadoA = { ...hijo.asociadoA, bienId: nuevo.id }
     hijo.revisionPendiente = false
   }
+  // Se guardan los componentes trasladados para poder devolverlos si la reposición se anula.
   registrarEvento({
     tipo: 'reposicion',
     titulo: `Reposición de ${anterior.id}`,
@@ -399,9 +400,61 @@ export function registrarReposicion (anterior, { rotulo, nombre, codigoPatrimoni
     ambienteId: anterior.ambienteId,
     bienIds: [anterior.id, nuevo.id],
     bienAnteriorId: anterior.id,
-    bienNuevoId: nuevo.id
+    bienNuevoId: nuevo.id,
+    trasladados: trasladados.map((h) => h.id)
   })
   return nuevo
+}
+
+// ---------- Reversión de bajas y reposiciones registradas por error ----------
+// Distinta de la baja patrimonial: corrige el registro y devuelve el bien a su estado anterior.
+// Se revierte en orden inverso al de registro: primero la reposición y después la baja.
+
+// Impide anular una baja con una reposición vigente o cuyo bien ya no figura dado de baja.
+export function dependenciasDeBaja (evento) {
+  const bien = bienPorId(evento.bienIds[0])
+  const reposicion = bien ? reposicionDe(bien.id) : null
+  return [
+    ...(reposicion ? [`Reposición ${reposicion.bienNuevoId}: anúlela primero`] : []),
+    ...(bien?.situacion !== 'baja' ? ['El bien ya no figura dado de baja'] : [])
+  ]
+}
+
+// El bien vuelve a estar activo y sus componentes dejan de estar pendientes de revisión por esta baja.
+export function anularBaja (evento, { motivo }) {
+  const bien = bienPorId(evento.bienIds[0])
+  bien.situacion = 'activo'
+  for (const { bienId } of evento.componentes ?? []) {
+    const hijo = bienPorId(bienId)
+    if (hijo) hijo.revisionPendiente = false
+  }
+  anular(evento, { motivo })
+}
+
+// Impide anular una reposición si el bien nuevo ya tiene componentes propios, hechos posteriores o dejó de estar activo.
+export function dependenciasDeReposicion (evento) {
+  const nuevo = bienPorId(evento.bienNuevoId)
+  const trasladados = evento.trasladados ?? []
+  return [
+    ...(nuevo.situacion !== 'activo' ? ['El bien nuevo ya no está activo'] : []),
+    ...activos(componentesDe(nuevo.id)).filter((c) => !trasladados.includes(c.id)).map((c) => `Componente ${rotuloBien(c)}`),
+    ...vigentes(db.eventos)
+      .filter((e) => e.id !== evento.id && e.bienIds?.includes(nuevo.id))
+      .map((e) => `${TIPOS_EVENTO[e.tipo].label}: ${e.titulo}`)
+  ]
+}
+
+// El bien nuevo se anula y los componentes trasladados regresan al bien anterior, que sigue dado de baja.
+export function anularReposicion (evento, { motivo }) {
+  const nuevo = bienPorId(evento.bienNuevoId)
+  for (const id of evento.trasladados ?? []) {
+    const hijo = bienPorId(id)
+    if (!hijo) continue
+    hijo.asociadoA = { ...hijo.asociadoA, bienId: evento.bienAnteriorId }
+    hijo.revisionPendiente = true
+  }
+  anularBien(nuevo, { motivo })
+  anular(evento, { motivo })
 }
 
 // ---------- Tipos de bien y precios referenciales ----------

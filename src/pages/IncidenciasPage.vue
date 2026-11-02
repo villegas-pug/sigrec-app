@@ -4,6 +4,8 @@
       <page-header>
         <template #acciones>
           <q-btn v-if="puedeHacer('bien.incidente')" unelevated color="primary" icon="report" label="Registrar incidente" @click="dialogoIncidente.abierto = true; dialogoIncidente.evento = null" />
+          <q-btn v-if="puedeHacer('bien.baja')" outline color="negative" icon="remove_circle" label="Dar de baja" @click="abrirAccion('baja')" />
+          <q-btn v-if="puedeHacer('bien.reposicion')" outline color="primary" icon="swap_horiz" label="Registrar reposición" @click="abrirAccion('reposicion')" />
         </template>
       </page-header>
 
@@ -121,12 +123,14 @@
     </div>
 
     <incidente-dialog v-model="dialogoIncidente.abierto" :evento="dialogoIncidente.evento" />
+    <bien-accion-dialog v-model="dialogoAccion.abierto" :modo="dialogoAccion.modo" :candidatos="candidatosAccion" @hecho="seleccionarUltimo" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
 </template>
 
 <script setup>
 import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
@@ -136,12 +140,15 @@ import MenuAcciones from 'components/common/MenuAcciones.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import IncidenteDialog from 'components/bienes/IncidenteDialog.vue'
+import BienAccionDialog from 'components/bienes/BienAccionDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { db, bienPorId, bienesDeAmbiente, ubicacionDeAmbiente, vigente } from 'src/services/datos'
+import { db, bienPorId, bienesDeAmbiente, ubicacionDeAmbiente, ubicacionDeBien, vigente } from 'src/services/datos'
 import { antecedentesDeBien } from 'src/services/bienes'
 import { calcularNecesidades } from 'src/services/necesidades'
-import { anular, reposicionDe } from 'src/services/acciones'
+import {
+  anular, anularBaja, anularReposicion, dependenciasDeBaja, dependenciasDeReposicion, reposicionDe
+} from 'src/services/acciones'
 import { CHIP_ANULADO, INCIDENTES, SITUACIONES, TIPOS_EVENTO, TODOS, condicion } from 'src/config/catalogos'
 import { ANIO_REVISION } from 'src/config/demo'
 import { fecha, plural, soles } from 'src/utils/formato'
@@ -150,6 +157,7 @@ const CLASES = { renovacion: 'Renovación', reposicion: 'Reposición' }
 const TIPOS_HISTORIAL = ['dano', 'robo', 'incendio', 'baja', 'reposicion']
 
 const $q = useQuasar()
+const router = useRouter()
 const { carsEnAmbito, enAmbitoCar, carIdsEnAmbito, puedeAcceder, puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
@@ -229,10 +237,77 @@ function estadoNecesidad (ev) {
 
 const dialogoIncidente = reactive({ abierto: false, evento: null })
 
-// Solo los incidentes (daño, robo, incendio) se corrigen o anulan; las bajas y reposiciones cambian el estado del bien.
+// Baja y reposición se registran aquí eligiendo el bien; desde la ficha del bien se sigue pudiendo hacer lo mismo.
+const dialogoAccion = reactive({ abierto: false, modo: 'baja' })
+
+// Baja: bienes activos del ámbito. Reposición: bienes dados de baja que aún no tienen una reposición vigente.
+const candidatosAccion = computed(() =>
+  db.bienes.filter((b) => {
+    if (!enAmbitoCar(ubicacionDeBien(b).car.id)) return false
+    return dialogoAccion.modo === 'baja' ? b.situacion === 'activo' : b.situacion === 'baja' && !reposicionDe(b.id)
+  })
+)
+
+function abrirAccion (modo) {
+  Object.assign(dialogoAccion, { abierto: true, modo })
+}
+
+// El hecho recién registrado es el último del almacén: se muestra su detalle.
+function seleccionarUltimo () {
+  eventoId.value = db.eventos.at(-1)?.id ?? null
+}
+
+const verFicha = (bienId) => ({
+  label: 'Ver ficha del bien',
+  icono: 'inventory_2',
+  visible: puedeAcceder('bienes'),
+  accion: () => router.push({ name: 'bienes', query: { bien: bienId } })
+})
+
+// Los incidentes se corrigen o anulan sin cambiar el estado del bien. Las bajas y reposiciones cambian el estado de un bien:
+// solo se anulan por error de registro (reversión en orden inverso: primero la reposición y después la baja).
 const accionesEvento = computed(() => {
   const e = evento.value
-  if (!e || !esIncidente.value) return []
+  if (!e) return []
+  if (e.tipo === 'baja') {
+    return [
+      verFicha(e.bienIds[0]),
+      {
+        label: 'Anular baja',
+        icono: 'block',
+        peligro: true,
+        visible: puedeHacer('baja.anular') && vigente(e),
+        accion: () => pedirAnulacion({
+          titulo: 'Anular baja',
+          subtitulo: e.titulo,
+          aviso: 'Use esta opción solo si la baja se registró por error. El bien vuelve a estar activo y a contar en los cálculos.',
+          dependencias: dependenciasDeBaja(e),
+          mensaje: 'Baja anulada. El bien está activo nuevamente.',
+          ejecutar: (datos) => anularBaja(e, datos)
+        })
+      }
+    ]
+  }
+  if (e.tipo === 'reposicion') {
+    return [
+      verFicha(e.bienNuevoId),
+      {
+        label: 'Anular reposición',
+        icono: 'block',
+        peligro: true,
+        visible: puedeHacer('reposicion.anular') && vigente(e),
+        accion: () => pedirAnulacion({
+          titulo: 'Anular reposición',
+          subtitulo: e.titulo,
+          aviso: 'Use esta opción solo si la reposición se registró por error. El bien nuevo se anula y el anterior sigue dado de baja.',
+          dependencias: dependenciasDeReposicion(e),
+          mensaje: 'Reposición anulada. El bien anterior sigue dado de baja.',
+          ejecutar: (datos) => anularReposicion(e, datos)
+        })
+      }
+    ]
+  }
+  if (!esIncidente.value) return []
   return [
     {
       label: 'Actualizar incidente',
