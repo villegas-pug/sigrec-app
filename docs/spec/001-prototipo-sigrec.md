@@ -14,7 +14,7 @@ Construir un prototipo navegable en Vue 3 + Quasar que permita al jefe de proyec
 
 | Incluye | No incluye |
 | --- | --- |
-| 11 pantallas: Inicio, Centros y locales, Ambientes, Bienes del CAR, Registro y verificación, Incidencias, Necesidades, Precios referenciales, Servicios básicos y pagos, Vehículos e itinerarios, Combustible. | Backend, autenticación real, persistencia (los cambios viven en memoria hasta recargar). |
+| 12 pantallas: Inicio, Centros y locales, Ambientes, Bienes y componentes, Registro y verificación, Incidencias, Necesidades, Precios referenciales, Servicios básicos y pagos, Vehículos, Itinerarios, Combustible (Vehículos se añadió en la SPEC 002). | Backend, autenticación real, persistencia (los cambios viven en memoria hasta recargar). |
 | Perfiles de demostración con accesos y ámbitos de datos distintos. | Expedientes de NNA, control patrimonial formal, ejecución de pagos o compras. |
 | Reglas de negocio calculadas sobre los datos (necesidades, períodos, combustible). | Priorización presupuestal (se muestra como ampliación posterior). |
 | Acciones en memoria: registrar bien, verificación, incidente, baja, reposición, novedad, precio, pago/pendiente, interrupción/restablecimiento, itinerario, combustible. | Mapas o seguimiento vehicular. |
@@ -37,8 +37,8 @@ Construir un prototipo navegable en Vue 3 + Quasar que permita al jefe de proyec
 | --- | --- | --- |
 | Equipo central USPNNA | Todas salvo «Registro y verificación» | Todos los CAR |
 | Personal del CAR | Todas salvo «Precios referenciales» | CAR Demo Amanecer |
-| Verificación física | Bienes del CAR, Registro y verificación, Incidencias | CAR Demo Amanecer |
-| Chofer | Vehículos e itinerarios, Combustible | Vehículo AMA-V01 |
+| Verificación física | Bienes y componentes, Registro y verificación, Incidencias | CAR Demo Amanecer |
+| Chofer | Itinerarios, Vehículos (consulta), Combustible | Vehículo AMA-V01 |
 
 ## 5. Modelo de datos (`src/data/*.json`)
 
@@ -63,13 +63,13 @@ Construir un prototipo navegable en Vue 3 + Quasar que permita al jefe de proyec
 
 | RF | Pantalla |
 | --- | --- |
-| RF-01, RF-08, RF-09 | Bienes del CAR (árbol, asociaciones, verificación) |
+| RF-01, RF-08, RF-09 | Bienes y componentes (árbol Centro › Ambiente › Bien › Componente, verificación; SPEC 002) |
 | RF-02, RF-03, RF-04, RF-07 | Registro y verificación; ficha del bien |
 | RF-05, RF-06, RF-21 | Necesidades; Precios referenciales; Inicio |
 | RF-10, RF-11 | Centros y locales |
 | RF-12 | Ambientes |
 | RF-13, RF-14, RF-15 | Servicios básicos y pagos |
-| RF-16, RF-17, RF-18 | Vehículos e itinerarios; Combustible |
+| RF-16, RF-17, RF-18 | Vehículos (SPEC 002); Itinerarios; Combustible |
 | RF-19, RF-20 | Incidencias; acciones de la ficha del bien |
 
 ## 8. Criterios de aceptación cubiertos con los datos de demostración
