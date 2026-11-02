@@ -54,6 +54,8 @@ Convención `entidad.registrar | actualizar | anular`. Central y CAR comparten e
 | `combustible.informar` | ✓ | ✓ | | ✓ |
 | `combustible.actualizar`, `combustible.anular` | ✓ | ✓ | | |
 
+Equipo central es el perfil de **acceso total** (administrador del prototipo): sus rutas se derivan de `MENU` y sus acciones de `TODAS_LAS_ACCIONES` (`src/config/perfiles.js`), de modo que una pantalla o acción nueva queda cubierta. No existe un perfil Administrador aparte; si se decide acotar a Central, se crea uno con `TODAS_LAS_RUTAS` y `TODAS_LAS_ACCIONES`.
+
 Accesos: Verificación física deja de tener la pantalla «Registro de bienes» (verifica desde la ficha del bien); Equipo central la gana.
 
 ## 5. Mantenedores por entidad

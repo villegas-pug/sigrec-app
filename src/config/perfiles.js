@@ -2,6 +2,7 @@
 // `accesos` lista nombres de ruta; el primero es la ruta inicial del perfil.
 // `acciones` lista las acciones permitidas dentro de esas rutas (ver docs/spec/003-centros-mantenedores-y-ux.md §4).
 // Convención de acciones: `entidad.registrar | actualizar | anular`. `carIds` / `vehiculoIds` en null significan «sin restricción».
+import { MENU } from 'src/config/menu'
 
 // Mantenimiento de los datos de un centro: lo comparten Equipo central (todos los CAR) y Personal del CAR (su centro).
 const ACCIONES_MANTENIMIENTO = [
@@ -18,20 +19,25 @@ const ACCIONES_MANTENIMIENTO = [
   'combustible.informar', 'combustible.actualizar', 'combustible.anular'
 ]
 
-// Solo el equipo central administra el alta de centros, el catálogo de tipos de bien y sus precios.
-const ACCIONES_CENTRAL = [
+// Catálogo completo de acciones del sistema: toda acción nueva se añade aquí (o en ACCIONES_MANTENIMIENTO).
+// Las exclusivas de administración (alta de centros, catálogo de tipos de bien y precios) solo las tiene el perfil de acceso total.
+export const TODAS_LAS_ACCIONES = [
   ...ACCIONES_MANTENIMIENTO,
   'centro.registrar', 'centro.anular',
   'tipoBien.registrar', 'tipoBien.actualizar', 'tipoBien.anular', 'precio.informar'
 ]
 
+// Todas las pantallas navegables, tomadas del menú: una pantalla nueva queda disponible para el perfil de acceso total.
+export const TODAS_LAS_RUTAS = MENU.flatMap((entrada) => entrada.items ?? [entrada]).map((entrada) => entrada.key)
+
 export const PERFILES = [
   {
+    // Administrador del prototipo: acceso total (todas las rutas, todas las acciones, todos los CAR).
     id: 'central',
     nombre: 'Equipo central USPNNA',
-    ambito: { descripcion: 'Todos los CAR', carIds: null, vehiculoIds: null },
-    accesos: ['inicio', 'centros', 'ambientes', 'bienes', 'registro', 'incidencias', 'necesidades', 'precios', 'servicios', 'vehiculos', 'itinerarios', 'combustible'],
-    acciones: ACCIONES_CENTRAL
+    ambito: { descripcion: 'Todos los CAR · acceso total', carIds: null, vehiculoIds: null },
+    accesos: TODAS_LAS_RUTAS,
+    acciones: TODAS_LAS_ACCIONES
   },
   {
     id: 'car',
