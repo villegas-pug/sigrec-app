@@ -4,7 +4,7 @@
     :titulo="TITULOS[modo]"
     :subtitulo="`${vehiculo.id} · ${vehiculo.chofer ?? 'chofer no asignado'}`"
     :ancho="900"
-    :modificado="modificado"
+    :modificado="modificado || mapaModificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -14,7 +14,7 @@
         <q-input v-model="form.proposito" class="col-12 col-sm-8" outlined dense label="Propósito *" :rules="[requerido]" />
       </div>
       <q-option-group v-model="form.modoRuta" inline :options="[{ label: 'Ingreso manual', value: 'manual' }, { label: 'Definir en mapa', value: 'mapa' }]" />
-      <mapa-itinerario v-if="form.modoRuta === 'mapa'" v-model="form.ruta" />
+      <mapa-itinerario v-if="modelValue" v-show="form.modoRuta === 'mapa'" v-model="form.ruta" :visible="form.modoRuta === 'mapa'" @modificado="mapaModificado = true" />
       <q-input v-if="form.modoRuta === 'manual'" v-model="form.destinos" outlined dense label="Destinos, separados por comas *" hint="Ej.: CAR, Centro de salud, CAR" :rules="[requerido]" />
       <div class="sg-kv__label">Previsto</div>
       <div class="row q-col-gutter-md">
@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import MapaItinerario from 'components/movilidad/MapaItinerario.vue'
@@ -62,6 +62,7 @@ const $q = useQuasar()
 const tramoVacio = () => ({ salida: '', llegada: '', km: null })
 const form = reactive({ fecha: FECHA_CORTE, proposito: '', destinos: '', modoRuta: 'manual', ruta: null, previsto: tramoVacio(), conRealizado: false, realizado: tramoVacio(), confirmaKm: false })
 const { modificado, fijar } = useBorrador(form)
+const mapaModificado = ref(false)
 const sugerenciaEjecucion = computed(() => props.modo === 'ejecucion' && props.itinerario?.ruta?.distanciaM != null)
 watch(() => form.ruta, (ruta) => { if (form.modoRuta === 'mapa') form.previsto.km = ruta ? Number((ruta.distanciaM / 1000).toFixed(2)) : null })
 
@@ -72,6 +73,7 @@ const copiarTramo = (t) => ({ salida: t?.salida ?? '', llegada: t?.llegada ?? ''
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
+  mapaModificado.value = false
   const it = props.itinerario
   if (props.modo === 'ejecucion') {
     // Se propone el horario previsto; la distancia realizada se constata.
@@ -84,7 +86,7 @@ watch(() => props.modelValue, (abierto) => {
     proposito: it?.proposito ?? '',
     destinos: it?.destinos?.join(', ') ?? '',
     modoRuta: it?.ruta ? 'mapa' : 'manual',
-    ruta: it?.ruta ? structuredClone(it.ruta) : null,
+    ruta: it?.ruta ? JSON.parse(JSON.stringify(it.ruta)) : null,
     confirmaKm: false,
     previsto: copiarTramo(it?.previsto),
     conRealizado: !!it?.realizado,
@@ -97,7 +99,7 @@ const tramo = (t) => ({ salida: t.salida || null, llegada: t.llegada || null, km
 
 function guardar () {
   if (props.modo !== 'ejecucion' && form.modoRuta === 'mapa' && !form.ruta) { $q.notify({ type: 'warning', message: 'Complete y calcule la ruta antes de guardar.' }); return }
-  if (sugerenciaEjecucion.value && !form.confirmaKm) { $q.notify({ type: 'warning', message: 'Confirme o corrija la distancia realizada.' }); return }
+  if (sugerenciaEjecucion.value && (!form.confirmaKm || form.realizado.km === null || form.realizado.km === '')) { $q.notify({ type: 'warning', message: 'Confirme o corrija la distancia realizada.' }); return }
   let id = props.itinerario?.id
   let mensaje
   if (props.modo === 'ejecucion') {

@@ -27,12 +27,11 @@
         <span v-if="celda.detalle" class="sg-muted">{{ celda.detalle }}</span>
       </div>
       <div v-else-if="celda.estado === 'pagado'" class="column q-gutter-y-xs">
-        <template v-if="celda.pago">
-          <span><span class="sg-kv__label">Fecha de pago: </span>{{ celda.pago.fecha ? fecha(celda.pago.fecha) : 'no informada' }}</span>
-          <span><span class="sg-kv__label">Importe: </span>{{ celda.pago.importe != null ? soles(celda.pago.importe) : 'no informado' }}</span>
-          <span><span class="sg-kv__label">Sustento: </span>{{ celda.pago.sustento ?? 'no informado' }}</span>
+        <template>
+          <span><span class="sg-kv__label">Fecha de pago: </span>{{ celda.pago?.fecha ? fecha(celda.pago.fecha) : 'no informada' }}</span>
+          <span><span class="sg-kv__label">Importe: </span>{{ celda.pago?.importe != null ? soles(celda.pago.importe) : 'no informado' }}</span>
+          <span><span class="sg-kv__label">Sustento: </span>{{ celda.pago?.sustento ?? 'no informado' }}</span>
         </template>
-        <span v-else class="sg-muted">Sin detalle del pago informado.</span>
       </div>
       <span v-else-if="celda.estado === 'sin_info'" class="sg-muted">Sin información de pago: no equivale a un pendiente confirmado.</span>
       <span v-else class="sg-muted">El período aún no vence.</span>

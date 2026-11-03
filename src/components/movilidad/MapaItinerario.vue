@@ -1,8 +1,9 @@
 <template>
   <div class="column q-gutter-sm">
     <div v-if="!soloLectura" class="sg-muted">Haga clic en el mapa para añadir puntos. Arrastre un marcador para moverlo.</div>
-    <div ref="contenedor" style="height: 320px; width: 100%" aria-label="Mapa del itinerario" />
-    <template v-if="!soloLectura">
+    <div class="row q-col-gutter-md">
+    <div class="col-12 col-md-7"><div ref="contenedor" style="height: 320px; width: 100%" aria-label="Mapa del itinerario" /></div>
+    <div v-if="!soloLectura" class="col-12 col-md-5 column q-gutter-sm">
       <div v-for="(p, i) in puntos" :key="p.id" class="row items-center q-gutter-xs no-wrap">
         <span>{{ i + 1 }}</span>
         <q-input v-model="p.nombre" dense outlined class="col" :label="i === 0 ? 'Origen' : 'Parada o destino'" />
@@ -13,7 +14,8 @@
       <q-btn v-if="puntos.length" flat color="secondary" label="Volver al origen" @click="volver" />
       <div role="status">{{ estadoTexto }}</div>
       <q-btn v-if="estado === 'error'" outline color="secondary" label="Reintentar" @click="calcular" />
-    </template>
+    </div>
+    </div>
   </div>
 </template>
 <script setup>
@@ -21,8 +23,8 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-const props = defineProps({ modelValue: { type: Object, default: null }, soloLectura: { type: Boolean, default: false } })
-const emit = defineEmits(['update:modelValue'])
+const props = defineProps({ modelValue: { type: Object, default: null }, soloLectura: { type: Boolean, default: false }, visible: { type: Boolean, default: true } })
+const emit = defineEmits(['update:modelValue', 'modificado'])
 const contenedor = ref(null)
 let secuencia = 0
 const puntos = ref((props.modelValue?.puntos ?? []).map((p) => ({ ...p, id: ++secuencia })))
@@ -50,10 +52,12 @@ onMounted(() => {
   if (puntos.value.length) mapa.fitBounds(puntos.value.map(p => [p.lat, p.lng]), { padding: [25, 25], maxZoom: 15 })
 })
 onBeforeUnmount(() => { version++; clearTimeout(temporizador); controlador?.abort(); mapa?.remove() })
+watch(() => props.visible, (visible) => { if (visible) setTimeout(() => mapa?.invalidateSize(), 100) })
 function mover (i, cambio) { const j = i + cambio; [puntos.value[i], puntos.value[j]] = [puntos.value[j], puntos.value[i]] }
 function volver () { const p = puntos.value[0]; puntos.value.push({ ...p, id: ++secuencia }) }
 watch(puntos, () => {
   if (props.soloLectura) return
+  emit('modificado')
   version++; controlador?.abort(); clearTimeout(temporizador)
   emit('update:modelValue', null)
   pintar()

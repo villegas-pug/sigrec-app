@@ -100,7 +100,7 @@
           Itinerario anulado el {{ fecha(seleccion.it.anulacion.fecha) }} por {{ seleccion.it.anulacion.por }}. Motivo: {{ seleccion.it.anulacion.motivo }}
         </note-banner>
 
-        <q-expansion-item v-if="seleccion.it.ruta" label="Ver mapa" icon="map" class="q-mb-md"><mapa-itinerario :key="seleccion.it.id" :model-value="seleccion.it.ruta" solo-lectura /></q-expansion-item>
+        <q-expansion-item v-if="seleccion.it.ruta" label="Ver mapa" icon="map" class="q-mb-md" @show="mapaAbierto = true" @hide="mapaAbierto = false"><mapa-itinerario :key="seleccion.it.id" :model-value="seleccion.it.ruta" :visible="mapaAbierto" solo-lectura /></q-expansion-item>
 
         <template v-if="seleccion.ev.estado === 'comparable'">
           <div class="sg-calc" role="group" :aria-label="`${seleccion.ev.kmRealizados} km entre ${seleccion.ev.rendimiento} km por litro da ${litros(seleccion.ev.estimadoL)} estimados`">
@@ -187,6 +187,7 @@ const puedeRegistrarConsumo = (it) =>
 const puedeCompletarRendimiento = (ev) =>
   ev.faltantes.includes('rendimiento de referencia') && puedeHacer('vehiculo.actualizar') && puedeAcceder('vehiculos')
 const detalleRef = ref(null)
+const mapaAbierto = ref(false)
 
 const filas = computed(() =>
   vehiculo.value
