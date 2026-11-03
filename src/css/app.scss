@@ -830,7 +830,7 @@ a {
 
 // ---------- Diálogos ----------
 // El ancho de cada diálogo lo fija FormDialog; en pantallas pequeñas se maximiza.
-.sg-dialog {
+.q-dialog__inner > .sg-dialog {
   max-width: 94vw;
 }
 

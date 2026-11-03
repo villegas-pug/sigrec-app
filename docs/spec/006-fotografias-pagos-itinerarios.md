@@ -6,3 +6,10 @@
 - Itinerarios: selección ordenada de puntos en mapa, ruta vial OSRM y distancia prevista automática. La distancia realizada se confirma por separado.
 - Los servicios cartográficos externos reciben coordenadas y pueden no estar disponibles; se ofrece ingreso manual.
 - Las comprobaciones ejecutables requieren autorización explícita.
+
+## Ubicación y búsqueda de itinerarios
+
+- En un itinerario nuevo, al abrir el mapa se solicita una vez la ubicación del dispositivo y se propone como origen; el usuario puede modificarla o eliminarla.
+- Al editar se conservan los puntos registrados. La búsqueda Photon muestra sugerencias en Perú y una previsualización que se confirma antes de añadir el punto.
+- Las búsquedas y el cálculo de rutas utilizan servicios externos configurables. Se conserva el ingreso manual ante fallos.
+- La ruta y sus kilómetros solo cambian al confirmar o modificar puntos. El prototipo no realiza seguimiento de ubicación.
