@@ -20,7 +20,9 @@
         <condicion-selector v-model="form.condicion" etiqueta="Condición" />
         <div class="sg-muted q-mt-xs">Un cambio de condición queda en los antecedentes del bien.</div>
       </div>
-      <q-input v-model="form.deterioro" outlined dense type="textarea" autogrow label="Deterioro observado" />
+      <q-input v-model="form.deterioro" outlined dense type="textarea" autogrow label="Deterioro observado">
+        <template #append><boton-dictado v-model="form.deterioro" /></template>
+      </q-input>
       <campo-adquisicion v-model="form.fechaAdquisicion" label="Adquisición" hint="Indique solo lo que conoce. Vacío si se desconoce" />
       <div class="row q-col-gutter-md">
         <q-input v-model.number="form.costo" class="col-12 col-sm-6" outlined dense type="number" min="0" label="Costo original (S/)" hint="Dato histórico; no es el precio referencial" />
@@ -69,6 +71,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

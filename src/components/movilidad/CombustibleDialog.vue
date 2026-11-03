@@ -32,11 +32,14 @@
       :disable="!opcionesItinerario.length"
       :rules="[requerido]"
     />
-    <q-input v-model="form.sustento" outlined dense label="Sustento (vale, declaración…)" />
+    <q-input v-model="form.sustento" outlined dense label="Sustento (vale, declaración…)">
+      <template #append><boton-dictado v-model="form.sustento" /></template>
+    </q-input>
   </form-dialog>
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

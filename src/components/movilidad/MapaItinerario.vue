@@ -18,19 +18,25 @@
       <div v-if="avisoUbicacion" role="status" class="sg-muted">{{ avisoUbicacion }}</div>
       <div class="sg-muted">Seleccione una dirección o haga clic en el mapa y pulse «Añadir punto». Arrastre los puntos para ajustarlos.</div>
     </template>
+    <div class="row q-gutter-sm">
+      <q-btn outline dense color="secondary" icon="zoom_out_map" label="Ver todos los puntos" :disable="!puntos.length" @click="verTodos" />
+      <q-btn outline dense color="secondary" icon="location_on" label="Ir al origen" :disable="!puntos.length" @click="centrarPunto(puntos[0])" />
+    </div>
     <div class="row q-col-gutter-md">
     <div class="col-12 col-md-7"><div ref="contenedor" style="height: 320px; width: 100%" aria-label="Mapa del itinerario" /></div>
-    <div v-if="!soloLectura" class="col-12 col-md-5 column q-gutter-sm">
+    <div class="col-12 col-md-5 column q-gutter-sm">
       <div v-for="(p, i) in puntos" :key="p.id" class="row items-center q-gutter-xs no-wrap">
         <span>{{ i + 1 }}</span>
-        <q-input v-model="p.nombre" dense outlined class="col" :label="i === 0 ? 'Origen' : i === puntos.length - 1 ? 'Destino' : 'Parada'" />
-        <q-btn flat dense icon="arrow_upward" :disable="i === 0" aria-label="Subir punto" @click="mover(i, -1)" />
-        <q-btn flat dense icon="arrow_downward" :disable="i === puntos.length - 1" aria-label="Bajar punto" @click="mover(i, 1)" />
-        <q-btn flat dense icon="delete" aria-label="Eliminar punto" @click="puntos.splice(i, 1)" />
+        <q-input v-if="!soloLectura" v-model="p.nombre" dense outlined class="col" :label="i === 0 ? 'Origen' : i === puntos.length - 1 ? 'Destino' : 'Parada'" />
+        <span v-else class="col">{{ p.nombre }}</span>
+        <q-btn flat dense icon="center_focus_strong" :aria-label="`Centrar punto ${i + 1}: ${p.nombre}`" @click="centrarPunto(p)" />
+        <q-btn v-if="!soloLectura" flat dense icon="arrow_upward" :disable="i === 0" aria-label="Subir punto" @click="mover(i, -1)" />
+        <q-btn v-if="!soloLectura" flat dense icon="arrow_downward" :disable="i === puntos.length - 1" aria-label="Bajar punto" @click="mover(i, 1)" />
+        <q-btn v-if="!soloLectura" flat dense icon="delete" aria-label="Eliminar punto" @click="puntos.splice(i, 1)" />
       </div>
-      <q-btn v-if="puntos.length" flat color="secondary" label="Volver al origen" @click="volver" />
-      <div role="status">{{ estadoTexto }}</div>
-      <q-btn v-if="estado === 'error'" outline color="secondary" label="Reintentar" @click="calcular" />
+      <q-btn v-if="!soloLectura && puntos.length" flat color="secondary" label="Volver al origen" @click="volver" />
+      <div v-if="!soloLectura" role="status">{{ estadoTexto }}</div>
+      <q-btn v-if="!soloLectura && estado === 'error'" outline color="secondary" label="Reintentar" @click="calcular" />
     </div>
     </div>
   </div>
@@ -148,6 +154,15 @@ async function filtrar (valor, actualizar) {
     console.warn('Error al consultar Photon:', error.message)
     actualizar(() => { resultados.value = []; errorBusqueda.value = true; mensajeBusqueda.value = 'Servicio de búsqueda no disponible.' })
   } finally { if (!desmontado && actual === versionBusqueda) buscando.value = false }
+}
+function centrarPunto (punto) {
+  if (!mapa || !punto) return
+  mapa.setView([punto.lat, punto.lng], Math.max(mapa.getZoom(), 15))
+}
+function verTodos () {
+  if (!mapa || !puntos.value.length) return
+  if (puntos.value.length === 1) { centrarPunto(puntos.value[0]); return }
+  mapa.fitBounds(puntos.value.map(p => [p.lat, p.lng]), { padding: [25, 25], maxZoom: 15 })
 }
 function mover (i, cambio) { const j = i + cambio; [puntos.value[i], puntos.value[j]] = [puntos.value[j], puntos.value[i]] }
 function volver () { const p = puntos.value[0]; puntos.value.push({ ...p, id: ++secuencia }) }

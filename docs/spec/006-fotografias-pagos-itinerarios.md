@@ -18,3 +18,8 @@
 
 - La búsqueda prioriza la ubicación conocida del dispositivo o Lima y limita los resultados a Perú. La interfaz permanece en español; Photon devuelve los nombres locales disponibles.
 - Distinguir ausencia de resultados de indisponibilidad del servicio y permitir reintentar. Una solicitud obsoleta no puede cerrar ni reemplazar las sugerencias actuales.
+
+## Navegación del mapa de itinerarios
+
+- «Ver todos los puntos» ajusta el mapa a los puntos confirmados; «Ir al origen» centra el primer punto de la lista.
+- Cada punto permite centrarlo desde su fila, tanto al editar como en consulta. Los controles no modifican la ruta ni la previsualización.

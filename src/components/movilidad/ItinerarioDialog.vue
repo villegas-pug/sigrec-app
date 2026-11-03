@@ -11,7 +11,9 @@
     <template v-if="modo !== 'ejecucion'">
       <div class="row q-col-gutter-md">
         <q-input v-model="form.fecha" class="col-12 col-sm-4" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, fechaCoherente]" />
-        <q-input v-model="form.proposito" class="col-12 col-sm-8" outlined dense label="Propósito *" :rules="[requerido]" />
+        <q-input v-model="form.proposito" class="col-12 col-sm-8" outlined dense label="Propósito *" :rules="[requerido]">
+          <template #append><boton-dictado v-model="form.proposito" /></template>
+        </q-input>
       </div>
       <q-option-group v-model="form.modoRuta" inline :options="[{ label: 'Ingreso manual', value: 'manual' }, { label: 'Definir en mapa', value: 'mapa' }]" />
       <mapa-itinerario v-if="modelValue" v-show="form.modoRuta === 'mapa'" v-model="form.ruta" :visible="form.modoRuta === 'mapa'" :nuevo="modo === 'nuevo'" @modificado="mapaModificado = true" />
@@ -37,6 +39,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

@@ -20,11 +20,14 @@
     <note-banner v-else tono="in">
       {{ aviso || 'El registro se conserva como antecedente, deja de contar en los cálculos y puede reactivarse con «Mostrar inactivos».' }}
     </note-banner>
-    <q-input v-model="motivo" outlined dense type="textarea" autogrow label="Motivo *" :rules="[requerido]" :disable="dependencias.length > 0" />
+    <q-input v-model="motivo" outlined dense type="textarea" autogrow label="Motivo *" :rules="[requerido]" :disable="dependencias.length > 0">
+      <template #append><boton-dictado v-model="motivo" :disable="dependencias.length > 0" /></template>
+    </q-input>
   </form-dialog>
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { ref, watch } from 'vue'
 import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'

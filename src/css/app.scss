@@ -932,3 +932,19 @@ a {
     flex-basis: 72px;
   }
 }
+
+/* Dictado por voz (SPEC 007): el botón activo pulsa; el área táctil mínima es de 40 px. */
+.sg-dictado {
+  min-width: 40px;
+  min-height: 40px;
+}
+.sg-dictado--activo {
+  animation: sg-dictado-pulso 1.2s ease-in-out infinite;
+}
+@keyframes sg-dictado-pulso {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(193, 0, 21, 0.45); }
+  50% { box-shadow: 0 0 0 8px rgba(193, 0, 21, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sg-dictado--activo { animation: none; }
+}

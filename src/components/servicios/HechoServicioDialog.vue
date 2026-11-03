@@ -10,11 +10,14 @@
   >
     <q-option-group v-if="tipoEditable" v-model="form.tipo" inline :options="OPCIONES_SUMINISTRO" />
     <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, noFutura]" />
-    <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Detalle" />
+    <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Detalle">
+      <template #append><boton-dictado v-model="form.detalle" /></template>
+    </q-input>
   </form-dialog>
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

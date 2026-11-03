@@ -22,8 +22,12 @@
       <q-select v-model="form.tipo" class="col-12 col-sm-6" :options="OPCIONES_INCIDENTE" emit-value map-options outlined dense label="Hecho *" :rules="[requerido]" />
       <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha del hecho *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]" />
     </div>
-    <q-input v-model="form.titulo" outlined dense label="Motivo *" :rules="[requerido]" />
-    <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Detalle" />
+    <q-input v-model="form.titulo" outlined dense label="Motivo *" :rules="[requerido]">
+      <template #append><boton-dictado v-model="form.titulo" /></template>
+    </q-input>
+    <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Detalle">
+      <template #append><boton-dictado v-model="form.detalle" /></template>
+    </q-input>
     <q-input
       v-if="unidadesEditables"
       v-model.number="form.unidades"
@@ -54,6 +58,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

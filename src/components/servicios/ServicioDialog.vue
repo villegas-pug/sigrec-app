@@ -29,12 +29,17 @@
       <q-input v-model="form.contactoNombre" class="col-12 col-sm-6" outlined dense label="Contacto" hint="Opcional. Ej.: Mesa de ayuda, ejecutivo de cuenta" />
     </div>
     <q-input v-model="form.suministro" outlined dense label="N.º de suministro o contrato" />
-    <q-input v-model="form.contratacion" outlined dense label="Contratación" hint="Ej.: a nombre del arrendador, pago por el CAR" />
-    <q-input v-model="form.observaciones" outlined dense type="textarea" autogrow label="Observaciones de instalación" />
+    <q-input v-model="form.contratacion" outlined dense label="Contratación" hint="Ej.: a nombre del arrendador, pago por el CAR">
+      <template #append><boton-dictado v-model="form.contratacion" /></template>
+    </q-input>
+    <q-input v-model="form.observaciones" outlined dense type="textarea" autogrow label="Observaciones de instalación">
+      <template #append><boton-dictado v-model="form.observaciones" /></template>
+    </q-input>
   </form-dialog>
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

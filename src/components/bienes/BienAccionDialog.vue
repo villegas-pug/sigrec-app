@@ -28,7 +28,9 @@
     <template v-if="modo === 'verificacion'">
       <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la verificación *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]" />
       <q-option-group v-model="form.resultado" :options="OPCIONES_RESULTADO" />
-      <q-input v-model="form.nota" outlined dense type="textarea" autogrow label="Observación de la verificación" />
+      <q-input v-model="form.nota" outlined dense type="textarea" autogrow label="Observación de la verificación">
+        <template #append><boton-dictado v-model="form.nota" /></template>
+      </q-input>
     </template>
 
     <template v-if="modo === 'baja'">
@@ -42,8 +44,12 @@
         </div>
       </div>
       <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la baja *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]" />
-      <q-input v-model="form.motivo" outlined dense label="Motivo de la baja *" :rules="[requerido]" />
-      <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Sustento o detalle" />
+      <q-input v-model="form.motivo" outlined dense label="Motivo de la baja *" :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.motivo" /></template>
+      </q-input>
+      <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Sustento o detalle">
+        <template #append><boton-dictado v-model="form.detalle" /></template>
+      </q-input>
       <note-banner v-if="hijosActivos.length" tono="wa" icono="warning">
         La baja no se aplica a los bienes asociados. Quedarán marcados para revisar su situación uno por uno:
         {{ hijosActivos.map(etiquetaComponente).join(', ') }}.
@@ -89,6 +95,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

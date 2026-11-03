@@ -44,8 +44,12 @@
 
       <template v-if="form.estado === 'pendiente'">
         <q-input v-model="form.vence" outlined dense type="date" stack-label label="Fecha de vencimiento (si se conoce)" />
-        <q-input v-model="form.motivo" outlined dense label="Motivo del pendiente" hint="Opcional. Ej.: recibo observado, falta de fondos" />
-        <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Detalle" />
+        <q-input v-model="form.motivo" outlined dense label="Motivo del pendiente" hint="Opcional. Ej.: recibo observado, falta de fondos">
+          <template #append><boton-dictado v-model="form.motivo" /></template>
+        </q-input>
+        <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Detalle">
+          <template #append><boton-dictado v-model="form.detalle" /></template>
+        </q-input>
       </template>
 
       <template v-else-if="form.estado === 'pagado'">
@@ -53,7 +57,9 @@
           <q-input v-model="form.pagoFecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha de pago" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]" />
           <q-input v-model.number="form.pagoImporte" class="col-12 col-sm-6" outlined dense type="number" min="0" step="0.01" label="Importe (S/) *" :rules="[mayorQueCero]" />
         </div>
-        <q-input v-model="form.pagoSustento" outlined dense label="Sustento *" :rules="[(v) => !!v?.trim() || 'Campo obligatorio']" />
+        <q-input v-model="form.pagoSustento" outlined dense label="Sustento *" :rules="[(v) => !!v?.trim() || 'Campo obligatorio']">
+          <template #append><boton-dictado v-model="form.pagoSustento" /></template>
+        </q-input>
       </template>
 
       <note-banner v-else tono="ne" icono="help">Sin información no equivale a un pendiente confirmado: no se registra como deuda.</note-banner>
@@ -68,6 +74,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

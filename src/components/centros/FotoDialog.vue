@@ -38,12 +38,17 @@
       hint="Opcional. Sin ambiente, la fotografía queda como del centro."
       :readonly="ambienteFijo"
     />
-    <q-input v-model="form.titulo" outlined dense label="Título *" hint="Ej.: Fachada, techo del patio" :rules="[requerido]" />
-    <q-input v-model="form.nota" outlined dense label="Nota" />
+    <q-input v-model="form.titulo" outlined dense label="Título *" hint="Ej.: Fachada, techo del patio" :rules="[requerido]">
+      <template #append><boton-dictado v-model="form.titulo" /></template>
+    </q-input>
+    <q-input v-model="form.nota" outlined dense label="Nota">
+      <template #append><boton-dictado v-model="form.nota" /></template>
+    </q-input>
   </form-dialog>
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

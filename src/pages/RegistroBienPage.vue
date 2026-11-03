@@ -76,7 +76,9 @@
                     <q-input v-model.number="form.costo" class="col-12 col-sm-6" outlined dense type="number" min="0" label="Costo original (S/)" hint="Dato histórico; vacío si se desconoce" />
                     <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Vida útil (años)" hint="Vacío = pendiente de definir" />
                   </div>
-                  <q-input v-model="form.deterioro" outlined dense type="textarea" autogrow label="Deterioro observado" />
+                  <q-input v-model="form.deterioro" outlined dense type="textarea" autogrow label="Deterioro observado">
+                    <template #append><boton-dictado v-model="form.deterioro" /></template>
+                  </q-input>
                   <div class="row q-col-gutter-md">
                     <q-select v-model="form.asociadoA" class="col-12 col-sm-7" :options="opcionesAsociar" emit-value map-options clearable outlined dense label="Componente de" hint="Opcional: bien del que forma parte (p. ej. la cama de un colchón)" />
                     <q-input v-model="form.posicion" class="col-12 col-sm-5" outlined dense label="Posición" :disable="!form.asociadoA" placeholder="Ej.: Cama inferior" />
@@ -164,6 +166,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'

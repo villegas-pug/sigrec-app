@@ -8,13 +8,16 @@
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
-    <q-input v-model="form.descripcion" outlined dense label="Intervención *" hint="Ej.: Pintado de muros, cambio de chapa" :rules="[requerido]" />
+    <q-input v-model="form.descripcion" outlined dense label="Intervención *" hint="Ej.: Pintado de muros, cambio de chapa" :rules="[requerido]">
+      <template #append><boton-dictado v-model="form.descripcion" /></template>
+    </q-input>
     <q-input v-model="form.fecha" outlined dense type="month" stack-label label="Mes" hint="Vacío si no se conoce" :rules="[noFutura]" />
     <q-checkbox v-model="form.esPintado" label="Es un pintado (actualiza el último pintado si es más reciente)" />
   </form-dialog>
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

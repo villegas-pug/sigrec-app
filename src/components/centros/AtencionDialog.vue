@@ -9,7 +9,9 @@
     @enviar="guardar"
   >
     <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de atención *" :rules="[requerido, noFutura]" />
-    <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Cómo se atendió" />
+    <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Cómo se atendió">
+      <template #append><boton-dictado v-model="form.detalle" /></template>
+    </q-input>
     <note-banner v-if="novedad.requiereEvaluacion" tono="in">
       La necesidad de infraestructura asociada dejará de figurar en evaluación.
     </note-banner>
@@ -17,6 +19,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
