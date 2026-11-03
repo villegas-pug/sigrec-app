@@ -6,6 +6,7 @@
     :ancho="640"
     :etiqueta-enviar="TITULOS[modo]"
     :color-enviar="modo === 'baja' ? 'negative' : 'primary'"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -68,10 +69,10 @@
       <q-input v-model="form.rotulo" outlined dense label="Rótulo SIGREC del bien nuevo *" :rules="[requerido, rotuloLibre]" />
       <q-input v-model="form.nombre" outlined dense label="Nombre *" :rules="[requerido]" />
       <q-input v-model="form.codigoPatrimonial" outlined dense label="Código patrimonial" />
+      <campo-adquisicion v-model="form.fechaAdquisicion" label="Adquisición del bien nuevo" />
       <div class="row q-col-gutter-md">
-        <q-input v-model="form.fechaAdquisicion" class="col-12 col-sm-4" outlined dense type="month" stack-label label="Adquisición del bien nuevo" :rules="[noFutura]" />
-        <q-input v-model.number="form.costo" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Costo (S/)" />
-        <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-4" outlined dense type="number" min="1" label="Vida útil (años)" />
+        <q-input v-model.number="form.costo" class="col-12 col-sm-6" outlined dense type="number" min="0" label="Costo original (S/)" />
+        <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Vida útil (años)" />
       </div>
       <div v-if="hijosActivos.length">
         <div class="sg-kv__label q-mb-xs">Componentes que pasan al bien nuevo</div>
@@ -94,6 +95,8 @@ import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import SelectorUbicacionBien from 'components/bienes/SelectorUbicacionBien.vue'
+import CampoAdquisicion from 'components/common/CampoAdquisicion.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { db, bienPorId, textoUbicacion, tipoPorId, ubicacionDeBien } from 'src/services/datos'
 import { bajaDe, darDeBaja, informarVerificacion, registrarReposicion, reposicionDe, rotuloSugerido } from 'src/services/acciones'
 import { FECHA_CORTE } from 'src/config/demo'
@@ -133,6 +136,7 @@ const SIN_CANDIDATOS = {
 const rotuloLibre = (v) => !bienPorId(v) || 'Ya existe un bien con ese rótulo'
 
 const form = reactive({})
+const { modificado, fijar } = useBorrador(form, { excluir: ['carId'] })
 
 // Bien sobre el que se actúa: el de la ficha o, desde Incidencias, el elegido en el selector.
 const bienActivo = computed(() => props.bien ?? bienPorId(form.bienId) ?? null)
@@ -180,6 +184,7 @@ function reiniciar () {
     costo: null
   })
   aplicarBien()
+  fijar()
 }
 
 watch(() => props.modelValue, (abierto) => {

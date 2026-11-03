@@ -4,9 +4,11 @@ import {
   db, nuevoId, ambientePorId, ambientesDeCar, bienPorId, bienesDeAmbiente, carPorId, itinerarioPorId, servicioPorId, vehiculoPorId, vigentes
 } from './datos'
 import { nombrePeriodo } from './servicios'
+import { bajaDe, reposicionDe } from './bienes'
 import { autorActual } from './autor'
 import { FECHA_CORTE } from 'src/config/demo'
 import { ESTADOS_PERIODO, TIPOS_EVENTO, TIPOS_SERVICIO, condicion } from 'src/config/catalogos'
+import { soles } from 'src/utils/formato'
 
 // ---------- Utilidades ----------
 
@@ -67,7 +69,19 @@ export const dependenciasDeCentro = (car) => [
   ...vigentes(db.servicios).filter((s) => s.carId === car.id).map((s) => `Servicio de ${TIPOS_SERVICIO[s.tipo]}`)
 ]
 
-export const dependenciasDeAmbiente = (ambiente) => activos(bienesDeAmbiente(ambiente.id)).map(rotuloBien)
+// Bienes que impiden anular un ambiente: los activos (componentes asociados incluidos) y los que aún esperan revisión.
+// Se resuelven reubicándolos o dando de baja cada uno; nunca se dan de baja solos.
+export const pendientesDeAmbiente = (ambiente) =>
+  bienesDeAmbiente(ambiente.id).filter((b) => b.situacion === 'activo' || (b.revisionPendiente && b.situacion !== 'anulado'))
+
+export const dependenciasDeAmbiente = (ambiente) => pendientesDeAmbiente(ambiente).map(rotuloBien)
+
+// La regla se valida también aquí: un ambiente con bienes por resolver no se anula aunque la pantalla lo permitiera.
+export function anularAmbiente (ambiente, datos) {
+  const pendientes = pendientesDeAmbiente(ambiente)
+  if (pendientes.length) throw new Error(`El ambiente tiene bienes por resolver: ${pendientes.map(rotuloBien).join(', ')}`)
+  anular(ambiente, datos)
+}
 
 export const dependenciasDeTipoBien = (tipo) => activos(db.bienes).filter((b) => b.tipoId === tipo.id).map(rotuloBien)
 
@@ -128,8 +142,9 @@ export function actualizarCentro (car, { nombre, inmueble }) {
   if (inmueble) car.inmueble = { ...car.inmueble, ...inmueble, actualizado: sello() }
 }
 
-export function registrarFoto (car, { titulo, nota, url }) {
-  car.inmueble.fotos.push({ titulo, fecha: FECHA_CORTE, nota: nota || null, url, registradoPor: autorActual() })
+// `ambienteId` es opcional: una fotografía sin ambiente es del centro (también las históricas).
+export function registrarFoto (car, { titulo, nota, url, ambienteId = null }) {
+  car.inmueble.fotos.push({ titulo, fecha: FECHA_CORTE, nota: nota || null, url, ambienteId, registradoPor: autorActual() })
 }
 
 const liberarUrl = (url) => {
@@ -137,12 +152,12 @@ const liberarUrl = (url) => {
 }
 
 // Sin imagen nueva se conserva la anterior; con ella se libera la URL en memoria de la anterior.
-export function actualizarFoto (foto, { titulo, nota, url }) {
+export function actualizarFoto (foto, { titulo, nota, url, ambienteId = null }) {
   if (url) {
     liberarUrl(foto.url)
     foto.url = url
   }
-  Object.assign(foto, { titulo, nota: nota || null })
+  Object.assign(foto, { titulo, nota: nota || null, ambienteId })
 }
 
 // ---------- Ambientes, novedades e intervenciones ----------
@@ -369,13 +384,15 @@ export function reactivarBien (bien) {
   reactivar(bien)
 }
 
-export const bajaDe = (bienId) =>
-  db.eventos.find((e) => !e.anulacion && e.tipo === 'baja' && e.bienIds?.[0] === bienId) ?? null
-
-export const reposicionDe = (bienId) =>
-  db.eventos.find((e) => !e.anulacion && e.tipo === 'reposicion' && e.bienAnteriorId === bienId) ?? null
+// Se reexportan para que las pantallas sigan importándolos junto con las demás acciones.
+export { bajaDe, reposicionDe }
 
 export function registrarReposicion (anterior, { rotulo, nombre, codigoPatrimonial, fechaAdquisicion, costo, vidaUtilAnios, fecha, componentesIds = [] }) {
+  // Las reglas se validan antes de modificar nada, para que un fallo no deje una reposición a medias.
+  if (anterior.situacion !== 'baja') throw new Error('Solo se repone un bien dado de baja')
+  if (reposicionDe(anterior.id)) throw new Error('El bien ya tiene una reposición vigente')
+  if (bienPorId(rotulo)) throw new Error('Ya existe un bien con ese rótulo')
+
   const nuevo = registrarBien({
     id: rotulo,
     ambienteId: anterior.ambienteId,
@@ -509,7 +526,13 @@ export function actualizarServicio (servicio, cambios) {
 
 // Informar un pago registra su situación para el control del servicio; no ejecuta el pago.
 // Retroceder un período (de pagado a otro estado, o de pendiente a sin información) deja una corrección.
-export function informarPeriodo (servicio, anio, numero, { estado, vence }) {
+// `motivo` y `detalle` explican un pendiente; `pago` ({ fecha, importe, sustento }) documenta un pago. Todos son opcionales.
+export function informarPeriodo (servicio, anio, numero, { estado, vence, motivo, detalle, pago }) {
+  if (estado === 'pagado') {
+    const fechaPago = pago?.fecha
+    const fechaValida = /^\d{4}-\d{2}-\d{2}$/.test(fechaPago || '') && !Number.isNaN(Date.parse(fechaPago)) && new Date(fechaPago).toISOString().slice(0, 10) === fechaPago && fechaPago <= FECHA_CORTE
+    if (!fechaValida || !(Number(pago?.importe) > 0) || !pago?.sustento?.trim()) throw new Error('Complete fecha válida, importe positivo y sustento del pago.')
+  }
   servicio.periodos[anio] ??= { pagados: [], pendientes: [] }
   const periodo = servicio.periodos[anio]
   let anterior = 'sin_info'
@@ -519,11 +542,21 @@ export function informarPeriodo (servicio, anio, numero, { estado, vence }) {
   periodo.pagados = periodo.pagados.filter((n) => n !== numero)
   periodo.pendientes = periodo.pendientes.filter((p) => p.numero !== numero)
   if (estado === 'pagado') periodo.pagados.push(numero)
-  if (estado === 'pendiente') periodo.pendientes.push({ numero, vence: vence || null })
+  if (estado === 'pendiente') periodo.pendientes.push({ numero, vence: vence || null, motivo: motivo || null, detalle: detalle || null })
+
+  // El detalle del pago solo existe mientras el período está pagado.
+  const datosPago = { fecha: pago?.fecha || null, importe: numeroONulo(pago?.importe), sustento: pago?.sustento?.trim() || null }
+  if (estado === 'pagado' && Object.values(datosPago).some((v) => v != null)) {
+    periodo.pagos ??= {}
+    periodo.pagos[numero] = datosPago
+  } else if (periodo.pagos) {
+    delete periodo.pagos[numero]
+  }
 
   const etiqueta = `${nombrePeriodo(servicio, numero)} ${anio}`
   if (estado === 'pagado' && anterior !== 'pagado') {
-    informarHechoServicio(servicio, { tipo: 'pago', detalle: `Pago informado del período ${etiqueta}.` })
+    const importe = datosPago.importe != null ? ` · ${soles(datosPago.importe)}` : ''
+    informarHechoServicio(servicio, { tipo: 'pago', fecha: datosPago.fecha, detalle: `Pago informado del período ${etiqueta}${importe}.` })
   }
   const retrocede = (anterior === 'pagado' && estado !== 'pagado') || (anterior === 'pendiente' && estado === 'sin_info')
   if (retrocede) {
@@ -564,8 +597,8 @@ export function registrarItinerario (datos) {
   return itinerario
 }
 
-export function actualizarItinerario (itinerario, { fecha, proposito, destinos, previsto, realizado }) {
-  Object.assign(itinerario, { fecha, proposito, destinos, previsto, realizado })
+export function actualizarItinerario (itinerario, { fecha, proposito, destinos, previsto, realizado, ruta }) {
+  Object.assign(itinerario, { fecha, proposito, destinos, previsto, realizado, ruta })
 }
 
 // Lo realizado se registra aparte de lo previsto para poder distinguirlos (CA-15).

@@ -18,7 +18,7 @@ export const tienePeriodosInformados = (servicio) =>
 /**
  * Celdas de un servicio en un año.
  * - Sin registro y con el período ya cerrado a la fecha de corte: «sin información», no pendiente.
- * - El vencimiento solo existe si el pendiente informado trae fecha.
+ * - El vencimiento solo existe si el pendiente informado trae fecha. El motivo, el detalle y el pago son opcionales.
  */
 export function celdasDelServicio (servicio, anio, fechaCorte) {
   const cantidad = PERIODOS_POR_ANIO[servicio.periodicidad]
@@ -35,7 +35,16 @@ export function celdasDelServicio (servicio, anio, fechaCorte) {
     if (datos.pagados?.includes(numero)) estado = 'pagado'
     else if (pendiente) estado = 'pendiente'
     else if (cerrado) estado = 'sin_info'
-    return { numero, etiqueta: nombrePeriodo(servicio, numero), span: mesesPorPeriodo, estado, vence: pendiente?.vence ?? null }
+    return {
+      numero,
+      etiqueta: nombrePeriodo(servicio, numero),
+      span: mesesPorPeriodo,
+      estado,
+      vence: pendiente?.vence ?? null,
+      motivo: pendiente?.motivo ?? null,
+      detalle: pendiente?.detalle ?? null,
+      pago: estado === 'pagado' ? datos.pagos?.[numero] ?? null : null
+    }
   })
 }
 

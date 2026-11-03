@@ -5,6 +5,7 @@
     :subtitulo="subtitulo"
     :ancho="620"
     :etiqueta-enviar="evento ? 'Guardar cambios' : 'Registrar incidente'"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -59,6 +60,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import CondicionSelector from 'components/common/CondicionSelector.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import SelectorUbicacionBien from 'components/bienes/SelectorUbicacionBien.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { bienPorId, textoUbicacion, ubicacionDeAmbiente } from 'src/services/datos'
 import { actualizarIncidente, registrarIncidente } from 'src/services/acciones'
 import { OPCIONES_INCIDENTE, condicion } from 'src/config/catalogos'
@@ -80,6 +82,7 @@ const emit = defineEmits(['update:modelValue', 'hecho'])
 const $q = useQuasar()
 
 const form = reactive({})
+const { modificado, fijar } = useBorrador(form, { excluir: ['carId'] })
 
 const ubicacionFija = computed(() => !!props.evento || !!props.bien)
 const porBien = ref(false)
@@ -119,6 +122,7 @@ watch(() => props.modelValue, (abierto) => {
     condiciones: {},
     reportaNecesidad: evento?.reportaNecesidad ?? true
   })
+  fijar()
 })
 
 function guardar () {

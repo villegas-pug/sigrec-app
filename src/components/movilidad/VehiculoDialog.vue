@@ -4,6 +4,7 @@
     :titulo="vehiculo ? 'Actualizar vehículo' : 'Registrar vehículo'"
     :subtitulo="vehiculo ? vehiculo.id : 'Los campos con * son obligatorios'"
     :etiqueta-enviar="vehiculo ? 'Guardar cambios' : 'Registrar vehículo'"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -26,6 +27,7 @@ import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { usePerfil } from 'src/composables/usePerfil'
 import { db } from 'src/services/datos'
 import { actualizarVehiculo, numeroONulo, registrarVehiculo, vehiculoSugerido } from 'src/services/acciones'
@@ -47,6 +49,7 @@ const placaLibre = (v) =>
   !db.vehiculos.some((x) => x.id !== props.vehiculo?.id && !x.anulacion && normalizarPlaca(x.placa) === normalizarPlaca(v)) || 'Ya existe un vehículo con esa placa'
 
 const form = reactive({})
+const { modificado, fijar } = useBorrador(form)
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
@@ -59,6 +62,7 @@ watch(() => props.modelValue, (abierto) => {
     combustible: v?.combustible ?? '',
     rendimientoKmL: v?.rendimientoKmL ?? null
   })
+  fijar()
 })
 
 function guardar () {

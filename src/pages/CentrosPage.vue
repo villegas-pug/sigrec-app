@@ -5,7 +5,6 @@
         <template #acciones>
           <q-btn v-if="puedeHacer('centro.registrar')" outline color="secondary" icon="add_business" label="Registrar centro" @click="dialogos.centro = true" />
           <q-btn v-if="puedeHacer('centro.actualizar')" outline color="secondary" icon="edit" label="Actualizar ficha" :disable="!activo" @click="dialogos.ficha = true" />
-          <q-btn v-if="puedeHacer('centro.foto')" unelevated color="primary" icon="add_a_photo" label="Incorporar fotografía" :disable="!activo" @click="abrirFoto(null)" />
         </template>
       </page-header>
 
@@ -86,28 +85,24 @@
             </div>
           </section-card>
 
-          <section-card :titulo="`Fotografías (${fotos.length})`" subtitulo="Solo infraestructura; sin imágenes de personas.">
-            <template #acciones>
-              <filtro-inactivos v-model="mostrarFotosInactivas" />
+          <galeria-fotos :centro="car" titulo="Fotografías del centro" />
+
+          <section-card :titulo="`Ambientes del centro (${ambientesCentro.length})`" subtitulo="Cada ambiente tiene su ficha, su galería y sus bienes" sin-relleno>
+            <template v-if="puedeAcceder('ambientes')" #acciones>
+              <q-btn outline color="secondary" icon="meeting_room" label="Ver todos" :to="{ name: 'ambientes', query: { car: carId } }" />
             </template>
-            <div v-if="fotos.length" class="sg-kv-grid">
-              <figure v-for="(foto, i) in fotos" :key="i" class="sg-photo q-ma-none">
-                <img v-if="foto.url" :src="foto.url" :alt="foto.titulo" class="sg-photo__img">
-                <template v-else>
-                  <q-icon name="image" size="28px" aria-hidden="true" />
-                  <span>[Foto: {{ foto.titulo }}]</span>
-                </template>
-                <figcaption class="sg-muted text-center">
-                  <template v-if="foto.url">{{ foto.titulo }} · </template>{{ fecha(foto.fecha) }}<template v-if="foto.nota"> · {{ foto.nota }}</template>
-                  <status-chip v-if="foto.anulacion" v-bind="CHIP_ANULADO" class="q-ml-xs" />
-                </figcaption>
-                <menu-acciones :items="accionesFoto(foto)" :etiqueta="`Acciones de la fotografía ${foto.titulo}`" />
-              </figure>
+            <div v-for="amb in ambientesCentro" :key="amb.id" class="sg-borde-superior row items-center justify-between q-px-md q-py-sm">
+              <div class="column">
+                <router-link v-if="puedeAcceder('ambientes')" :to="{ name: 'ambientes', query: { car: carId, ambiente: amb.id } }" class="text-weight-bold">{{ amb.nombre }}</router-link>
+                <span v-else class="text-weight-bold">{{ amb.nombre }}</span>
+                <span class="sg-muted">{{ [amb.piso != null ? `Piso ${amb.piso}` : null, amb.bloque, amb.ubicacion].filter(Boolean).join(' · ') || 'Ubicación no informada' }}</span>
+              </div>
+              <div class="sg-chips">
+                <status-chip v-bind="condicion(amb.condicion)" />
+                <status-chip tono="ne" :label="plural(bienesDeAmbiente(amb.id).filter((b) => b.situacion === 'activo').length, 'bien activo', 'bienes activos')" />
+              </div>
             </div>
-            <p v-else class="sg-muted">No hay fotografías registradas.</p>
-            <p class="q-mt-md q-mb-none">
-              <router-link v-if="puedeAcceder('ambientes')" :to="{ name: 'ambientes', query: { car: carId } }" class="text-weight-bold">Ver ambientes del centro</router-link>
-            </p>
+            <p v-if="!ambientesCentro.length" class="q-pa-md sg-muted q-mb-none">El centro aún no tiene ambientes registrados.</p>
           </section-card>
         </div>
       </div>
@@ -115,7 +110,6 @@
 
     <centro-dialog v-model="dialogos.centro" @hecho="seleccionar" />
     <centro-ficha-dialog v-if="car" v-model="dialogos.ficha" :centro="car" />
-    <foto-dialog v-if="car" v-model="dialogos.foto" :centro="car" :foto="fotoEnEdicion" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
 </template>
@@ -134,11 +128,11 @@ import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import CentroDialog from 'components/centros/CentroDialog.vue'
 import CentroFichaDialog from 'components/centros/CentroFichaDialog.vue'
-import FotoDialog from 'components/centros/FotoDialog.vue'
+import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { ambientesDeCar, vigente } from 'src/services/datos'
+import { ambientesDeCar, bienesDeAmbiente, vigente } from 'src/services/datos'
 import { anular, dependenciasDeCentro } from 'src/services/acciones'
 import { CHIP_ANULADO, condicion, condicionInmueble } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
@@ -150,7 +144,6 @@ const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = use
 
 const busqueda = ref('')
 const mostrarInactivos = ref(false)
-const mostrarFotosInactivas = ref(false)
 const fichaRef = ref(null)
 
 const carsVisibles = computed(() => carsDelAmbito(mostrarInactivos.value))
@@ -163,7 +156,7 @@ const carsFiltrados = computed(() => {
 
 const inmueble = computed(() => car.value?.inmueble)
 const activo = computed(() => !!car.value && vigente(car.value))
-const fotos = computed(() => (inmueble.value?.fotos ?? []).filter((f) => mostrarFotosInactivas.value || vigente(f)))
+const ambientesCentro = computed(() => (car.value ? ambientesDeCar(car.value.id) : []))
 
 const camposConstruccion = computed(() => {
   const c = inmueble.value.construccion
@@ -185,13 +178,7 @@ async function seleccionar (id) {
   }
 }
 
-const dialogos = reactive({ centro: false, ficha: false, foto: false })
-const fotoEnEdicion = ref(null)
-
-function abrirFoto (foto) {
-  fotoEnEdicion.value = foto
-  dialogos.foto = true
-}
+const dialogos = reactive({ centro: false, ficha: false })
 
 const accionesCentro = computed(() => {
   if (!car.value) return []
@@ -218,26 +205,4 @@ const accionesCentro = computed(() => {
     }
   ]
 })
-
-const accionesFoto = (foto) => [
-  { label: 'Actualizar fotografía', icono: 'edit', visible: puedeHacer('foto.actualizar') && vigente(foto), accion: () => abrirFoto(foto) },
-  {
-    label: 'Anular fotografía',
-    icono: 'block',
-    peligro: true,
-    visible: puedeHacer('foto.anular') && vigente(foto),
-    accion: () => pedirAnulacion({
-      titulo: 'Anular fotografía',
-      subtitulo: foto.titulo,
-      mensaje: 'Fotografía anulada.',
-      ejecutar: (datos) => anular(foto, datos)
-    })
-  },
-  {
-    label: 'Reactivar fotografía',
-    icono: 'restore',
-    visible: puedeHacer('foto.anular') && !vigente(foto),
-    accion: () => pedirReactivacion({ entidad: 'foto', registro: foto, nombre: 'Fotografía' })
-  }
-]
 </script>

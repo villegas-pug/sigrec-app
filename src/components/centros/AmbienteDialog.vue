@@ -4,12 +4,15 @@
     :titulo="ambiente ? 'Actualizar ambiente' : 'Registrar ambiente'"
     :subtitulo="ambiente ? `${ambiente.nombre} · ${ambiente.id}` : centro.nombre"
     :etiqueta-enviar="ambiente ? 'Guardar cambios' : 'Registrar ambiente'"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
     <div class="row q-col-gutter-md">
       <q-input v-model="form.nombre" class="col-12 col-sm-8" outlined dense label="Nombre *" hint="Ej.: Dormitorio 3, Lavandería" :rules="[requerido]" />
       <q-input v-model.number="form.piso" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Piso" />
+      <q-input v-model="form.bloque" class="col-12 col-sm-6" outlined dense label="Bloque" hint="Opcional. Ej.: Bloque A" />
+      <q-input v-model="form.ubicacion" class="col-12 col-sm-6" outlined dense label="Ubicación" hint="Opcional. Ej.: Ala este, junto al patio" />
       <q-input v-model.number="form.areaM2" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Área (m²)" />
       <q-input v-model.number="form.puertas" class="col-6 col-sm-4" outlined dense type="number" min="0" label="Puertas" />
       <q-input v-model.number="form.ventanas" class="col-6 col-sm-4" outlined dense type="number" min="0" label="Ventanas" />
@@ -24,6 +27,7 @@ import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import CondicionSelector from 'components/common/CondicionSelector.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarAmbiente, numeroONulo, registrarAmbiente } from 'src/services/acciones'
 import { noFutura, requerido } from 'src/utils/validaciones'
 
@@ -38,6 +42,7 @@ const emit = defineEmits(['update:modelValue', 'hecho'])
 const $q = useQuasar()
 
 const form = reactive({})
+const { modificado, fijar } = useBorrador(form)
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
@@ -45,18 +50,23 @@ watch(() => props.modelValue, (abierto) => {
   Object.assign(form, {
     nombre: a?.nombre ?? '',
     piso: a?.piso ?? 1,
+    bloque: a?.bloque ?? '',
+    ubicacion: a?.ubicacion ?? '',
     areaM2: a?.areaM2 ?? null,
     puertas: a?.puertas ?? null,
     ventanas: a?.ventanas ?? null,
     condicion: a?.condicion ?? 'bueno',
     ultimoPintado: a?.ultimoPintado ?? ''
   })
+  fijar()
 })
 
 function guardar () {
   const datos = {
     nombre: form.nombre,
     piso: numeroONulo(form.piso),
+    bloque: form.bloque?.trim() || null,
+    ubicacion: form.ubicacion?.trim() || null,
     areaM2: numeroONulo(form.areaM2),
     puertas: numeroONulo(form.puertas),
     ventanas: numeroONulo(form.ventanas),

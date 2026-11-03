@@ -14,8 +14,7 @@ export const minimo = (min) => (v) => (Number.isFinite(v) && v >= min) || `Míni
 // Acepta 'AAAA-MM-DD' o 'AAAA-MM': los hechos no pueden ser posteriores a la fecha de corte.
 export const noFutura = (v) => !v || v <= FECHA_CORTE.slice(0, v.length) || `No puede ser posterior a la fecha de corte (${fecha(FECHA_CORTE)})`
 
-// La llegada no puede ser anterior a la salida (`salida` es una función para leer el valor actual del formulario).
-// `referencia` es una función para leer el valor actual del formulario.
+// El valor no puede ser anterior a otro del formulario (`referencia` es una función para leer el valor actual).
 export const noAnteriorA = (referencia, mensaje) => (v) => !v || !referencia() || v >= referencia() || mensaje
 
 export const llegadaPosterior = (salida) => noAnteriorA(salida, 'La llegada no puede ser anterior a la salida')

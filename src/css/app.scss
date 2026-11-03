@@ -678,6 +678,12 @@ a {
   border-color: var(--sg-border-control);
 }
 
+// Registro al que llegó un enlace profundo.
+.sg-box--resaltada {
+  border-color: var(--sg-primary);
+  box-shadow: 0 0 0 1px var(--sg-primary);
+}
+
 .sg-photo {
   display: flex;
   flex-direction: column;

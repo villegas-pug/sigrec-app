@@ -8,6 +8,12 @@
         </template>
       </page-header>
 
+      <registro-no-disponible v-if="itinerarioNoDisponible" entidad="El recorrido" :id="itinerarioPedido" :volver="{ name: 'combustible' }" etiqueta-volver="Ver el combustible del vehículo" />
+      <note-banner v-else-if="avisoRecorrido" tono="ne" icono="route">
+        {{ avisoRecorrido }}
+        <router-link v-if="puedeAcceder('itinerarios')" :to="{ name: 'itinerarios', query: { vehiculo: vehiculoId, itinerario: itinerarioPedido } }" class="text-weight-bold">Ver el recorrido</router-link>
+      </note-banner>
+
       <vehiculo-selector v-model="vehiculoId" :vehiculos="vehiculosEnAmbito" />
 
       <template v-if="vehiculo">
@@ -25,7 +31,7 @@
           <template #acciones>
             <filtro-inactivos v-model="mostrarInactivos" />
           </template>
-          <div class="sg-table-wrap">
+          <div v-if="!$q.screen.lt.sm" class="sg-table-wrap">
             <table class="sg-table">
               <thead>
                 <tr>
@@ -60,10 +66,27 @@
               </tbody>
             </table>
           </div>
+          <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
+            <div v-for="r in registros" :key="r.id" class="sg-box">
+              <div class="row items-start no-wrap justify-between">
+                <div class="column">
+                  <span class="text-weight-bold">{{ litros(r.cantidad) }} · {{ fecha(r.fecha) }}</span>
+                  <span class="sg-muted">{{ r.itinerarioId ? `Recorrido ${r.itinerarioId}` : `${vehiculo.id} · sin recorrido asociado` }}</span>
+                </div>
+                <menu-acciones :items="accionesRegistro(r)" :etiqueta="`Acciones del registro ${r.id}`" />
+              </div>
+              <div class="sg-chips">
+                <status-chip :tono="r.tipo === 'carga' ? 'in' : 'ne'" :label="r.tipo === 'carga' ? 'Carga al vehículo' : 'Consumo declarado'" />
+                <status-chip v-if="r.anulacion" v-bind="CHIP_ANULADO" />
+              </div>
+              <span v-if="r.sustento" class="sg-muted">Sustento: {{ r.sustento }}</span>
+            </div>
+            <p v-if="!registros.length" class="sg-muted q-mb-none">Sin registros de combustible.</p>
+          </div>
         </section-card>
 
         <section-card titulo="Comparación por recorrido" subtitulo="Estimación = distancia realizada ÷ rendimiento de referencia (orientativo)" sin-relleno>
-          <div class="sg-table-wrap">
+          <div v-if="!$q.screen.lt.sm" class="sg-table-wrap">
             <table class="sg-table">
               <thead>
                 <tr><th scope="col">Recorrido</th><th scope="col" class="sg-num">Consumo declarado</th><th scope="col" class="sg-num">Estimado</th><th scope="col" class="sg-num">Diferencia</th><th scope="col">Lectura</th></tr>
@@ -77,29 +100,42 @@
                   <td>
                     <span v-if="ev.estado === 'comparable'">{{ ev.kmRealizados }} km ÷ {{ ev.rendimiento }} km/L = {{ litros(ev.estimadoL) }}.</span>
                     <span v-else>No comparable: falta {{ ev.faltantes.join(' y ') }}. No se concluye sobreconsumo ni irregularidad.</span>
+                    <router-link v-if="completarRendimiento(ev)" :to="{ name: 'vehiculos', query: { vehiculo: vehiculo.id, itinerario: it.id } }" class="q-ml-xs">Completar rendimiento</router-link>
                   </td>
                 </tr>
                 <tr v-if="!conConsumo.length"><td colspan="5" class="sg-muted">Sin consumos declarados.</td></tr>
               </tbody>
             </table>
           </div>
+          <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
+            <div v-for="{ it, ev } in conConsumo" :key="it.id" class="sg-box">
+              <span class="text-weight-bold">{{ it.id }} · {{ fecha(it.fecha) }}</span>
+              <span class="sg-muted">{{ it.proposito }}</span>
+              <span>Consumo declarado: {{ litros(ev.consumo) }}<template v-if="ev.estimadoL != null"> · estimado {{ litros(ev.estimadoL) }}</template></span>
+              <span v-if="ev.estado === 'comparable'" class="sg-muted">{{ ev.kmRealizados }} km ÷ {{ ev.rendimiento }} km/L = {{ litros(ev.estimadoL) }}.</span>
+              <span v-else class="sg-muted">No comparable: falta {{ ev.faltantes.join(' y ') }}. No se concluye sobreconsumo ni irregularidad.</span>
+              <router-link v-if="completarRendimiento(ev)" :to="{ name: 'vehiculos', query: { vehiculo: vehiculo.id, itinerario: it.id } }">Completar rendimiento</router-link>
+            </div>
+            <p v-if="!conConsumo.length" class="sg-muted q-mb-none">Sin consumos declarados.</p>
+          </div>
         </section-card>
       </template>
     </div>
 
-    <combustible-dialog v-if="vehiculo" v-model="dialogo.abierto" :vehiculo="vehiculo" :registro="dialogo.registro" />
+    <combustible-dialog v-if="vehiculo" v-model="dialogo.abierto" :vehiculo="vehiculo" :registro="dialogo.registro" :itinerario-inicial="dialogo.itinerarioInicial" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import KpiCard from 'components/common/KpiCard.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
+import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import MenuAcciones from 'components/common/MenuAcciones.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
@@ -113,11 +149,15 @@ import { evaluarItinerario, itinerariosDeVehiculo, registrosDeVehiculo } from 's
 import { anularCombustible, reactivarCombustible } from 'src/services/acciones'
 import { CHIP_ANULADO } from 'src/config/catalogos'
 import { fecha, litros } from 'src/utils/formato'
+import { parametro } from 'src/utils/navegacion'
 
 const route = useRoute()
 const { puedeAcceder, puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
-const { vehiculoId, vehiculosEnAmbito } = useVehiculoSeleccionado(route.query.vehiculo)
+// Enlace profundo (?itinerario=): el vehículo se deduce del recorrido y, si puede declararse su consumo, se abre el formulario con él.
+const itinerarioPedido = parametro(route.query.itinerario)
+const itinerarioSolicitado = itinerarioPedido ? itinerarioPorId(itinerarioPedido) : null
+const { vehiculoId, vehiculosEnAmbito } = useVehiculoSeleccionado(parametro(route.query.vehiculo) ?? itinerarioSolicitado?.vehiculoId)
 const vehiculo = computed(() => (vehiculoId.value ? vehiculoPorId(vehiculoId.value) : null))
 
 const mostrarInactivos = ref(false)
@@ -132,8 +172,29 @@ const evaluados = computed(() =>
 const conConsumo = computed(() => evaluados.value.filter((e) => e.it.consumoDeclaradoL != null))
 const comparables = computed(() => conConsumo.value.filter((e) => e.ev.estado === 'comparable'))
 
-const dialogo = reactive({ abierto: false, registro: null })
-const abrir = (registro) => Object.assign(dialogo, { abierto: true, registro })
+const dialogo = reactive({ abierto: false, registro: null, itinerarioInicial: null })
+const abrir = (registro, itinerarioInicial = null) => Object.assign(dialogo, { abierto: true, registro, itinerarioInicial })
+
+// El recorrido pedido debe pertenecer a un vehículo del ámbito; si no, no se muestra ni se elige otro.
+const itinerarioNoDisponible = ref(!!itinerarioPedido && (!itinerarioSolicitado || itinerarioSolicitado.vehiculoId !== vehiculoId.value))
+watch(vehiculoId, () => { itinerarioNoDisponible.value = false })
+
+// Un recorrido sin ejecución informada o con consumo ya declarado no admite un consumo nuevo: se explica por qué.
+const avisoRecorrido = computed(() => {
+  const it = itinerarioSolicitado
+  if (!it || itinerarioNoDisponible.value || it.vehiculoId !== vehiculoId.value) return ''
+  if (!it.realizado) return `El recorrido ${it.id} aún no tiene ejecución informada: infórmela antes de declarar su consumo.`
+  if (it.consumoDeclaradoL != null) return `El recorrido ${it.id} ya tiene un consumo declarado (${litros(it.consumoDeclaradoL)}).`
+  return ''
+})
+
+onMounted(() => {
+  const it = itinerarioSolicitado
+  if (it && !itinerarioNoDisponible.value && !avisoRecorrido.value && vigente(it) && puedeHacer('combustible.informar')) abrir(null, it.id)
+})
+
+// La referencia de rendimiento se completa en los datos del vehículo.
+const completarRendimiento = (ev) => ev.faltantes?.includes('rendimiento de referencia') && puedeAcceder('vehiculos') && puedeHacer('vehiculo.actualizar')
 
 const accionesRegistro = (r) => [
   { label: 'Actualizar registro', icono: 'edit', visible: puedeHacer('combustible.actualizar') && vigente(r), accion: () => abrir(r) },

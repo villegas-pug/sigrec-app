@@ -141,7 +141,7 @@ const kpis = computed(() => {
       tono: 'rojo',
       valor: total.value.cantidad,
       etiqueta: `Necesidades pendientes ${ANIO_REVISION}`,
-      nota: `${plural(necesidades.value.infraestructura.length, 'de infraestructura', 'de infraestructura')} en evaluación · ${necesidades.value.atendidas.length} atendida(s)`
+      nota: `${plural(necesidades.value.infraestructura.length, 'de infraestructura', 'de infraestructura')} en evaluación · ${plural(necesidades.value.atendidas.length, 'atendida', 'atendidas')}`
     },
     {
       ruta: 'necesidades',
@@ -181,10 +181,17 @@ const kpis = computed(() => {
 
 const contextoServicio = (servicio, nombre) => `${carPorId(servicio.carId).nombre} · ${nombre}`
 
+// El enlace lleva al servicio y, si el aviso se refiere a un período, a ese período.
+const queryServicio = (a) => ({
+  car: a.servicio.carId,
+  servicio: a.servicio.id,
+  ...(a.clase !== 'interrupcion' && a.celdas[0] ? { anio: anioServicios, periodo: a.celdas[0].numero } : {})
+})
+
 const avisos = computed(() => {
   const lista = []
   for (const a of avisosServicios.value) {
-    const base = { id: `${a.servicio.id}-${a.clase}-${a.celdas[0]?.numero ?? 0}`, contexto: contextoServicio(a.servicio, a.nombre), to: puedeAcceder('servicios') ? { name: 'servicios', query: { car: a.servicio.carId } } : null, enlace: 'Revisar servicio' }
+    const base = { id: `${a.servicio.id}-${a.clase}-${a.celdas[0]?.numero ?? 0}`, contexto: contextoServicio(a.servicio, a.nombre), to: puedeAcceder('servicios') ? { name: 'servicios', query: queryServicio(a) } : null, enlace: 'Revisar servicio' }
     if (a.clase === 'pendiente_vence') lista.push({ ...base, tono: 'da', etiqueta: 'Pendiente con vencimiento', texto: `${a.celdas[0].etiqueta} ${anioServicios} pendiente de pago. Vence el ${fecha(a.celdas[0].vence)}.` })
     if (a.clase === 'pendiente_sin_fecha') lista.push({ ...base, tono: 'wa', etiqueta: 'Pendiente sin fecha', texto: `${a.celdas[0].etiqueta} pendiente. Sin fecha aplicable no se señala vencimiento.` })
     if (a.clase === 'interrupcion') lista.push({ ...base, tono: 'wa', etiqueta: 'Interrupción abierta', texto: `Interrupción informada el ${fecha(a.interrupcion.fecha)}. Restablecimiento no informado.` })
@@ -202,7 +209,7 @@ const avisos = computed(() => {
       etiqueta: TIPOS_EVENTO[evento.tipo].label,
       contexto: `${ubicacion.car.nombre} · ${ubicacion.ambiente.nombre}`,
       texto: `${evento.titulo} (${fecha(evento.fecha)}): ${plural(abiertas.length, 'necesidad abierta', 'necesidades abiertas')}.`,
-      to: puedeAcceder('incidencias') ? { name: 'incidencias' } : null,
+      to: puedeAcceder('incidencias') ? { name: 'incidencias', query: { car: ubicacion.car.id, hecho: evento.id } } : null,
       enlace: 'Ver antecedentes'
     })
   }
@@ -214,7 +221,7 @@ const avisos = computed(() => {
       etiqueta: 'Infraestructura en evaluación',
       contexto: `${item.ubicacion.car.nombre} · ${item.ubicacion.ambiente.nombre}`,
       texto: `${item.novedad.titulo}. Sin costo estimado hasta su evaluación.`,
-      to: puedeAcceder('ambientes') ? { name: 'ambientes', query: { car: item.ubicacion.car.id, ambiente: item.ubicacion.ambiente.id } } : null,
+      to: puedeAcceder('ambientes') ? { name: 'ambientes', query: { car: item.ubicacion.car.id, ambiente: item.ubicacion.ambiente.id, novedad: item.novedad.id } } : null,
       enlace: 'Ver ambiente'
     })
   }
@@ -226,7 +233,7 @@ const avisos = computed(() => {
       etiqueta: 'Datos insuficientes',
       contexto: `Movilidad ${v.id}`,
       texto: `Recorrido ${it.id}: falta ${ev.faltantes.join(' y ')}. No se puede comparar su combustible.`,
-      to: puedeAcceder('itinerarios') ? { name: 'itinerarios', query: { vehiculo: v.id } } : null,
+      to: puedeAcceder('itinerarios') ? { name: 'itinerarios', query: { vehiculo: v.id, itinerario: it.id } } : null,
       enlace: 'Ver recorrido'
     })
   }

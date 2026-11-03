@@ -9,6 +9,8 @@
         </template>
       </page-header>
 
+      <registro-no-disponible v-if="hechoNoDisponible" entidad="El hecho" :id="hechoPedido" :volver="{ name: 'incidencias' }" etiqueta-volver="Ver todos los hechos" />
+
       <div class="sg-filters">
         <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
         <q-select v-model="filtros.ambienteId" :options="opcionesAmbiente" emit-value map-options outlined dense label="Ambiente" :disable="carId === TODOS" :hint="carId === TODOS ? 'Elija un centro' : ''" />
@@ -65,7 +67,7 @@
             <router-link v-if="puedeAcceder('bienes')" :to="{ name: 'bienes', query: { bien: b.id } }" class="text-weight-bold">{{ b.nombre }} · {{ b.id }}</router-link>
             <span v-else class="text-weight-bold">{{ b.nombre }} · {{ b.id }}</span>
             <span class="sg-muted">{{ textoUbicacion(ubicacionDeBien(b)) }}</span>
-            <span class="sg-muted">Adquisición {{ fecha(b.adquisicion?.fecha) }} · vida útil {{ b.vidaUtilAnios ?? '—' }} años</span>
+            <span class="sg-muted">Adquisición {{ fecha(b.adquisicion?.fecha) }} · vida útil {{ b.vidaUtilAnios != null ? plural(b.vidaUtilAnios, 'año', 'años') : '—' }}</span>
             <q-expansion-item dense label="Historial del bien" header-class="q-px-none">
               <historial-bien :bien="b" :tipos-seleccionables="TIPOS_HISTORIAL" @seleccionar="irAHecho" />
             </q-expansion-item>
@@ -154,13 +156,14 @@
 </template>
 
 <script setup>
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, toRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
+import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import MenuAcciones from 'components/common/MenuAcciones.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
@@ -170,14 +173,17 @@ import HistorialBien from 'components/bienes/HistorialBien.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { db, ambientesDeCar, bienPorId, bienesDeAmbiente, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien, vigente } from 'src/services/datos'
 import { calcularNecesidades } from 'src/services/necesidades'
+import { siguientePaso } from 'src/services/bienes'
 import {
   anular, anularBaja, anularReposicion, dependenciasDeBaja, dependenciasDeReposicion, reposicionDe
 } from 'src/services/acciones'
 import { CHIP_ANULADO, INCIDENTES, SITUACIONES, TIPOS_EVENTO, TODOS, condicion } from 'src/config/catalogos'
 import { ANIO_REVISION } from 'src/config/demo'
 import { fecha, plural, soles } from 'src/utils/formato'
+import { parametro } from 'src/utils/navegacion'
 
 const CLASES = { renovacion: 'Renovación', reposicion: 'Reposición' }
 const TIPOS_HISTORIAL = ['dano', 'robo', 'incendio', 'baja', 'reposicion']
@@ -235,9 +241,8 @@ function estadoDeBien (ev, bienId) {
 // Siguiente paso de un incidente con necesidad pendiente (nulo si no hay o el perfil no puede hacerlo).
 function pasoDe (ev, bienId) {
   if (estadoDeBien(ev, bienId) !== ESTADOS.pendiente) return null
-  const baja = bienPorId(bienId)?.situacion === 'baja'
-  if (baja) return puedeHacer('bien.reposicion') ? { modo: 'reposicion', label: 'Registrar reposición', color: 'primary' } : null
-  return puedeHacer('bien.baja') ? { modo: 'baja', label: 'Dar de baja', color: 'negative' } : null
+  const paso = siguientePaso(bienPorId(bienId))
+  return paso && puedeHacer(paso.permiso) ? paso : null
 }
 
 // Resumen del hecho: pendiente si algún bien lo está; si no, atendida si alguno lo está.
@@ -249,13 +254,12 @@ function estadoNecesidad (ev) {
 }
 
 const filtros = reactive({ ambienteId: TODOS, texto: '', tipo: TODOS, necesidad: TODOS, anio: TODOS })
-const mostrarInactivos = ref(false)
+// Un hecho anulado pedido por enlace solo se ve con los inactivos.
+const mostrarInactivos = ref(!!db.eventos.find((e) => e.id === parametro(route.query.hecho))?.anulacion)
 const detalleRef = ref(null)
 
-// El ambiente pertenece a un centro: al cambiar de centro deja de aplicar.
-watch(carId, () => { filtros.ambienteId = TODOS })
-
 function limpiarFiltros () {
+  hechoNoDisponible.value = false
   carId.value = opcionesCar.value[0]?.value ?? TODOS
   Object.assign(filtros, { ambienteId: TODOS, texto: '', tipo: TODOS, necesidad: TODOS, anio: TODOS })
   mostrarInactivos.value = false
@@ -282,13 +286,34 @@ const eventos = computed(() => {
     .sort((a, b) => b.fecha.localeCompare(a.fecha))
 })
 
-const eventoId = ref(null)
+// Enlace profundo (?hecho=): se selecciona ese hecho; si no existe o no se puede ver, se avisa y no se elige otro.
+const hechoPedido = parametro(route.query.hecho)
+const hechoNoDisponible = ref(!!hechoPedido && !eventos.value.some((e) => e.id === hechoPedido))
+const eventoId = ref(hechoNoDisponible.value ? null : hechoPedido)
+
+// Al volver con «Atrás» se recuperan los filtros y el hecho elegido. Va antes del watch de `carId` para no reiniciar el ambiente restaurado.
+useEstadoNavegacion('incidencias', {
+  carId,
+  ambienteId: toRef(filtros, 'ambienteId'),
+  texto: toRef(filtros, 'texto'),
+  tipo: toRef(filtros, 'tipo'),
+  necesidad: toRef(filtros, 'necesidad'),
+  anio: toRef(filtros, 'anio'),
+  mostrarInactivos,
+  eventoId
+})
+
+// El ambiente pertenece a un centro: al cambiar de centro deja de aplicar.
+watch(carId, () => { filtros.ambienteId = TODOS })
+
 watch(eventos, (lista) => {
+  if (hechoNoDisponible.value) return
   if (!lista.some((e) => e.id === eventoId.value)) eventoId.value = lista[0]?.id ?? null
 }, { immediate: true })
 
 // En pantallas pequeñas el detalle queda debajo de la tabla: se baja hasta él al elegir un hecho.
 async function seleccionar (id) {
+  hechoNoDisponible.value = false
   eventoId.value = id
   if ($q.screen.lt.md) {
     await nextTick()

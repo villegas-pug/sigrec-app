@@ -1,7 +1,7 @@
 # SPEC 001 — Prototipo funcional de SIGREC
 
 - **Estado:** en implementación
-- **Actualizada por:** [`003-centros-mantenedores-y-ux.md`](003-centros-mantenedores-y-ux.md) (centros sin «Local», mantenedores completos, permisos y UI adaptable). Donde difieran, prevalece la SPEC 003.
+- **Actualizada por:** [`003-centros-mantenedores-y-ux.md`](003-centros-mantenedores-y-ux.md) (centros sin «Local», mantenedores completos, permisos y UI adaptable) y [`005-navegacion-contexto-y-captura.md`](005-navegacion-contexto-y-captura.md) (navegación contextual, captura rápida y acciones desde el pendiente). Donde difieran, prevalecen las SPEC posteriores. Los valores de §8 no cambian.
 - **Fecha:** 2026-10-30
 - **Origen:** brief «SIGREC — Sistema Integrado de Gestión de Recursos de Centros» y lienzo de diseño aprobado para implementación (`https://claude.ai/artifact/XFmGXDQS6jyyPaPXFFMVfS`).
 - **Ampliado por:** [`002-acciones-y-jerarquia.md`](002-acciones-y-jerarquia.md) (altas y ediciones faltantes, permisos por acción, jerarquía Centro › Ambiente › Bien › Componente, pantalla Vehículos).

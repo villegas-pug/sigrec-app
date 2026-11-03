@@ -1,6 +1,7 @@
 // Consultas de bienes: árbol de ubicación, componentes y antecedentes (RF-01, RF-04, RF-08, RF-20).
 import { db, bienPorId, carPorId, ambientesDeCar, bienesDeAmbiente, vigente } from './datos'
 import { condicionInmueble } from 'src/config/catalogos'
+import { plural } from 'src/utils/formato'
 
 const coincide = (bien, texto) => {
   if (!texto) return true
@@ -42,7 +43,7 @@ function nodoAmbiente (ambiente, filtros) {
     id: nodoAmbienteId(ambiente.id),
     tipo: 'ambiente',
     label: ambiente.nombre,
-    codigo: `${delAmbiente.filter((b) => b.situacion === 'activo').length} bienes activos`,
+    codigo: plural(delAmbiente.filter((b) => b.situacion === 'activo').length, 'bien activo', 'bienes activos'),
     icono: 'meeting_room',
     selectable: false,
     children: construir(null)
@@ -95,4 +96,25 @@ export function antecedentesDeBien (bien) {
     : []
   // Se invierte antes de ordenar para que, en una misma fecha, el hecho registrado después aparezca primero.
   return [...eventos.reverse(), ...alta].sort((a, b) => b.fecha.localeCompare(a.fecha))
+}
+
+// Baja patrimonial y reposición vigentes de un bien (null si no tiene).
+export const bajaDe = (bienId) =>
+  db.eventos.find((e) => vigente(e) && e.tipo === 'baja' && e.bienIds?.[0] === bienId) ?? null
+
+export const reposicionDe = (bienId) =>
+  db.eventos.find((e) => vigente(e) && e.tipo === 'reposicion' && e.bienAnteriorId === bienId) ?? null
+
+const PASOS = {
+  baja: { modo: 'baja', permiso: 'bien.baja', label: 'Dar de baja', color: 'negative' },
+  reposicion: { modo: 'reposicion', permiso: 'bien.reposicion', label: 'Registrar reposición', color: 'primary' }
+}
+
+// Paso siguiente de la atención de una necesidad sobre un bien: un bien activo se da de baja; uno dado de baja se repone.
+// La reposición exige la baja previa y ninguno de los dos pasos se ejecuta solo. Nulo si no hay paso (anulado o ya repuesto).
+export function siguientePaso (bien) {
+  if (!bien) return null
+  if (bien.situacion === 'activo') return PASOS.baja
+  if (bien.situacion === 'baja' && !reposicionDe(bien.id)) return PASOS.reposicion
+  return null
 }

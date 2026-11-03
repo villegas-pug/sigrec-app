@@ -33,45 +33,56 @@
               <div class="row q-col-gutter-md">
                 <q-select v-model="form.tipoId" class="col-12 col-sm-6" :options="opcionesTipo" emit-value map-options outlined dense label="Tipo de bien *" :rules="[requerido]" @update:model-value="alCambiarTipo" />
                 <q-input v-model="form.nombre" class="col-12 col-sm-6" outlined dense label="Nombre *" :rules="[requerido]" />
-                <q-select v-model="form.categoria" class="col-12 col-sm-6" :options="OPCIONES_CATEGORIA" emit-value map-options outlined dense label="Categoría *" :rules="[requerido]" />
                 <q-input v-model="form.rotulo" class="col-12 col-sm-6" outlined dense label="Rótulo SIGREC *" hint="Sugerido a partir del ambiente; puede corregirse" :rules="[requerido, rotuloLibre]" />
-                <q-input
-                  v-model="form.codigoPatrimonial"
-                  class="col-12 col-sm-6"
-                  outlined
-                  dense
-                  label="Código patrimonial"
-                  :hint="previo ? `Dato previo: ${previo.codigoPatrimonial ?? 'no informado'}. Déjelo vacío si no es visible.` : 'Vacío si el bien no tiene código patrimonial'"
-                />
                 <q-input v-model.number="form.cantidad" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Cantidad *" :rules="[minimo(1)]" />
-                <q-input v-model="form.marcaModelo" class="col-12 col-sm-6" outlined dense label="Marca y modelo" :hint="previo ? `Dato previo: ${previo.marcaModelo ?? 'no informado'}` : ''" />
-                <q-input v-model="form.serie" class="col-12 col-sm-6" outlined dense label="Serie" :hint="previo ? `Dato previo: ${previo.serie ?? 'no informado'}` : ''" />
+              </div>
+
+              <div v-if="tipoElegido" class="sg-box">
+                <div class="sg-muted">Precio referencial del catálogo (no es el costo original del bien)</div>
+                <template v-if="tipoElegido.precio != null">
+                  <span class="text-weight-bold">{{ soles(tipoElegido.precio) }}</span>
+                  <span class="sg-muted">{{ tipoElegido.nombre }} · {{ tipoElegido.procedencia ?? 'Procedencia no informada' }} · {{ fecha(tipoElegido.fechaPrecio) }}</span>
+                </template>
+                <template v-else>
+                  <div class="sg-chips"><status-chip tono="wa" label="Sin valorar" /></div>
+                  <router-link v-if="puedeValorar" :to="{ name: 'precios', query: { tipo: tipoElegido.id } }" class="text-weight-bold">Informar el precio de {{ tipoElegido.nombre }}</router-link>
+                  <span v-else class="sg-muted">Pendiente de valoración por equipo central.</span>
+                </template>
               </div>
 
               <condicion-selector v-model="form.condicion" etiqueta="Condición constatada *" />
               <div v-if="previo" class="sg-muted">Dato previo: {{ previo.condicion ? condicion(previo.condicion).label : 'no informado' }}</div>
-              <q-input v-model="form.deterioro" outlined dense type="textarea" autogrow label="Deterioro observado" />
 
-              <div class="row q-col-gutter-md">
-                <q-input
-                  v-model="form.fechaAdquisicion"
-                  class="col-12 col-sm-4"
-                  outlined
-                  dense
-                  type="month"
-                  stack-label
-                  label="Adquisición"
-                  :hint="previo?.fechaAdquisicion ? `Dato previo sin confirmar: ${previo.fechaAdquisicion}. Indíquela solo si la constata.` : 'Vacío si se desconoce'"
-                  :rules="[noFutura]"
-                />
-                <q-input v-model.number="form.costo" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Costo de adquisición (S/)" hint="Vacío si se desconoce" />
-                <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-4" outlined dense type="number" min="1" label="Vida útil (años)" hint="Vacío = pendiente de definir" />
-              </div>
+              <campo-adquisicion
+                v-model="form.fechaAdquisicion"
+                label="Adquisición"
+                :hint="previo?.fechaAdquisicion ? `Dato previo sin confirmar: ${fecha(previo.fechaAdquisicion)}. Indíquela solo si la constata.` : 'Indique solo lo que conoce: el año o el año y mes. Vacío si se desconoce'"
+              />
 
-              <div class="row q-col-gutter-md">
-                <q-select v-model="form.asociadoA" class="col-12 col-sm-7" :options="opcionesAsociar" emit-value map-options clearable outlined dense label="Componente de" hint="Opcional: bien del que forma parte (p. ej. la cama de un colchón)" />
-                <q-input v-model="form.posicion" class="col-12 col-sm-5" outlined dense label="Posición" :disable="!form.asociadoA" placeholder="Ej.: Cama inferior" />
-              </div>
+              <q-expansion-item v-model="adicionalesAbierto" dense expand-separator icon="tune" label="Datos adicionales" caption="Categoría, código patrimonial, marca, serie, deterioro, costo original, vida útil y componente de">
+                <div class="column q-gutter-y-md q-pt-md">
+                  <div class="row q-col-gutter-md">
+                    <q-select v-model="form.categoria" class="col-12 col-sm-6" :options="OPCIONES_CATEGORIA" emit-value map-options outlined dense label="Categoría *" hint="Se completa con el tipo de bien" :rules="[requerido]" />
+                    <q-input
+                      v-model="form.codigoPatrimonial"
+                      class="col-12 col-sm-6"
+                      outlined
+                      dense
+                      label="Código patrimonial"
+                      :hint="previo ? `Dato previo: ${previo.codigoPatrimonial ?? 'no informado'}. Déjelo vacío si no es visible.` : 'Vacío si el bien no tiene código patrimonial'"
+                    />
+                    <q-input v-model="form.marcaModelo" class="col-12 col-sm-6" outlined dense label="Marca y modelo" :hint="previo ? `Dato previo: ${previo.marcaModelo ?? 'no informado'}` : ''" />
+                    <q-input v-model="form.serie" class="col-12 col-sm-6" outlined dense label="Serie" :hint="previo ? `Dato previo: ${previo.serie ?? 'no informado'}` : ''" />
+                    <q-input v-model.number="form.costo" class="col-12 col-sm-6" outlined dense type="number" min="0" label="Costo original (S/)" hint="Dato histórico; vacío si se desconoce" />
+                    <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Vida útil (años)" hint="Vacío = pendiente de definir" />
+                  </div>
+                  <q-input v-model="form.deterioro" outlined dense type="textarea" autogrow label="Deterioro observado" />
+                  <div class="row q-col-gutter-md">
+                    <q-select v-model="form.asociadoA" class="col-12 col-sm-7" :options="opcionesAsociar" emit-value map-options clearable outlined dense label="Componente de" hint="Opcional: bien del que forma parte (p. ej. la cama de un colchón)" />
+                    <q-input v-model="form.posicion" class="col-12 col-sm-5" outlined dense label="Posición" :disable="!form.asociadoA" placeholder="Ej.: Cama inferior" />
+                  </div>
+                </div>
+              </q-expansion-item>
 
               <div class="row justify-end q-gutter-sm">
                 <q-btn outline color="secondary" label="Guardar" :disable="!ambiente" @click="guardarYSalir" />
@@ -83,9 +94,9 @@
           <div class="column q-gutter-y-md">
             <section-card v-if="previo" titulo="Contraste con el inventario previo" :subtitulo="`${previo.id} · inventario informático (ficticio)`" sin-relleno>
               <div class="sg-chips q-px-md q-pb-sm">
-                <status-chip tono="ok" :label="`${conteo.coincide} coinciden`" />
-                <status-chip tono="wa" :label="`${conteo.diferencia} diferencias`" />
-                <status-chip tono="si" :label="`${conteo.pendiente} pendientes de verificación`" />
+                <status-chip tono="ok" :label="plural(conteo.coincide, 'coincide', 'coinciden')" />
+                <status-chip tono="wa" :label="plural(conteo.diferencia, 'diferencia', 'diferencias')" />
+                <status-chip tono="si" :label="plural(conteo.pendiente, 'pendiente de verificación', 'pendientes de verificación')" />
               </div>
               <div class="sg-table-wrap">
                 <table class="sg-table">
@@ -107,7 +118,7 @@
               </note-banner>
             </section-card>
 
-            <section-card titulo="Inventario previo sin vincular" :subtitulo="`${disponibles.length} registros en este centro`" sin-relleno>
+            <section-card titulo="Inventario previo sin vincular" :subtitulo="`${plural(disponibles.length, 'registro', 'registros')} en este centro`" sin-relleno>
               <div v-for="item in disponibles" :key="item.id" class="sg-borde-superior row items-center justify-between q-px-md q-py-sm">
                 <div class="column">
                   <span class="text-weight-bold">{{ item.nombre }}</span>
@@ -138,7 +149,7 @@
                   <td><status-chip v-bind="condicion(b.condicion)" /></td>
                   <td>{{ b.asociadoA ? `${b.asociadoA.bienId} (${b.asociadoA.posicion})` : '—' }}</td>
                   <td>
-                    <template v-if="b.vidaUtilAnios">{{ b.vidaUtilAnios }} años</template>
+                    <template v-if="b.vidaUtilAnios">{{ plural(b.vidaUtilAnios, 'año', 'años') }}</template>
                     <status-chip v-else tono="si" label="Pendiente" />
                   </td>
                 </tr>
@@ -161,12 +172,16 @@ import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import CondicionSelector from 'components/common/CondicionSelector.vue'
+import CampoAdquisicion from 'components/common/CampoAdquisicion.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useBorrador } from 'src/composables/useBorrador'
 import { db, ambientePorId, ambientesDeCar, bienPorId, bienesDeAmbiente, textoUbicacion, tipoPorId, ubicacionDeAmbiente, vigentes } from 'src/services/datos'
 import { informarVerificacion, numeroONulo, registrarBien, rotuloSugerido } from 'src/services/acciones'
 import { CATEGORIAS, OPCIONES_CATEGORIA, condicion } from 'src/config/catalogos'
-import { minimo, noFutura, requerido } from 'src/utils/validaciones'
+import { minimo, requerido } from 'src/utils/validaciones'
+import { fecha, plural, soles } from 'src/utils/formato'
+import { parametro } from 'src/utils/navegacion'
 
 const RESULTADOS = {
   coincide: { label: 'Coincide', tono: 'ok' },
@@ -185,9 +200,9 @@ const puedeRegistrar = computed(() => puedeHacer('bien.registrar'))
 const rotuloLibre = (v) => !bienPorId(v) || 'Ya existe un bien con ese rótulo'
 
 // El contexto puede llegar desde la URL (?car=, ?ambiente=, ?asociar=) y solo se acepta dentro del ámbito.
-const { carId, opcionesCar } = useCentroSeleccionado(route.query.car)
+const { carId, opcionesCar } = useCentroSeleccionado(parametro(route.query.car))
 const opcionesAmbiente = computed(() => (carId.value ? ambientesDeCar(carId.value) : []).map((a) => ({ label: a.nombre, value: a.id })))
-const ambienteId = ref(opcionesAmbiente.value.find((o) => o.value === route.query.ambiente)?.value ?? opcionesAmbiente.value[0]?.value ?? null)
+const ambienteId = ref(opcionesAmbiente.value.find((o) => o.value === parametro(route.query.ambiente))?.value ?? opcionesAmbiente.value[0]?.value ?? null)
 const ambiente = computed(() => (ambienteId.value ? ambientePorId(ambienteId.value) : null))
 
 watch(carId, () => {
@@ -223,7 +238,17 @@ const vacio = () => ({
   posicion: ''
 })
 const form = reactive(vacio())
-if (opcionesAsociar.value.some((o) => o.value === route.query.asociar)) form.asociadoA = route.query.asociar
+if (opcionesAsociar.value.some((o) => o.value === parametro(route.query.asociar))) form.asociadoA = parametro(route.query.asociar)
+
+// Salir con datos sin guardar pide confirmación; tras guardar, el formulario vuelve a su estado base.
+const { fijar } = useBorrador(form, { proteger: true })
+
+const tipoElegido = computed(() => (form.tipoId ? tipoPorId(form.tipoId) : null))
+const puedeValorar = computed(() => puedeHacer('precio.informar'))
+
+// «Datos adicionales» se abre solo cuando ya trae valores (componente de otro bien o inventario previo).
+const adicionalesAbierto = ref(!!form.asociadoA)
+watch(previo, (p) => { if (p) adicionalesAbierto.value = true })
 
 function alCambiarTipo (tipoId) {
   const tipo = tipoPorId(tipoId)
@@ -258,11 +283,11 @@ const normalizar = (v) => String(v ?? '').trim().toLowerCase()
 const contraste = computed(() => {
   const p = previo.value
   if (!p) return []
-  const campo = (etiqueta, valorPrevio, valorForm, formato = (v) => v) => {
+  const campo = (etiqueta, valorPrevio, valorForm, formato = (v) => v, igual = (a, b) => normalizar(a) === normalizar(b)) => {
     const constatado = valorForm ? formato(valorForm) : null
     let resultado = 'pendiente'
     if (valorForm && valorPrevio == null) resultado = 'nuevo'
-    else if (valorForm) resultado = normalizar(valorForm) === normalizar(valorPrevio) ? 'coincide' : 'diferencia'
+    else if (valorForm) resultado = igual(valorForm, valorPrevio) ? 'coincide' : 'diferencia'
     return { etiqueta, previo: valorPrevio != null ? formato(valorPrevio) : 'No informado', constatado, resultado }
   }
   return [
@@ -271,7 +296,11 @@ const contraste = computed(() => {
     campo('Código patrimonial', p.codigoPatrimonial, form.codigoPatrimonial),
     campo('Condición', p.condicion, form.condicion, (v) => condicion(v).label),
     campo('Ubicación', p.ubicacionPrevia, ambiente.value?.nombre),
-    campo('Fecha de adquisición', p.fechaAdquisicion, form.fechaAdquisicion)
+    // Se compara con la precisión que ambos valores tienen en común (2019 coincide con 2019-03).
+    campo('Fecha de adquisición', p.fechaAdquisicion, form.fechaAdquisicion, fecha, (a, b) => {
+      const n = Math.min(String(a).length, String(b).length)
+      return String(a).slice(0, n) === String(b).slice(0, n)
+    })
   ]
 })
 
@@ -313,12 +342,13 @@ function guardar () {
     p.bienId = bien.id
     informarVerificacion(bien, {
       resultado: conteo.value.diferencia ? 'diferencias' : 'coincide',
-      nota: `Contraste con ${p.id}: ${conteo.value.coincide} coinciden, ${conteo.value.diferencia} diferencias, ${conteo.value.pendiente} pendientes.`
+      nota: `Contraste con ${p.id}: ${plural(conteo.value.coincide, 'coincide', 'coinciden')}, ${plural(conteo.value.diferencia, 'diferencia', 'diferencias')}, ${plural(conteo.value.pendiente, 'pendiente', 'pendientes')}.`
     })
   }
   registrados.value.unshift(bien)
   previo.value = null
   Object.assign(form, vacio())
+  fijar()
   formulario.value?.resetValidation()
   $q.notify({ type: 'positive', message: `Bien ${bien.id} registrado en ${ambiente.value.nombre}.` })
   return bien

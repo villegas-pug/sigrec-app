@@ -7,11 +7,17 @@
         </template>
       </page-header>
 
+      <registro-no-disponible v-if="vehiculoNoDisponible" entidad="El vehículo" :id="vehiculoPedido" :volver="{ name: 'vehiculos' }" etiqueta-volver="Ver todos los vehículos" />
+      <note-banner v-else-if="itinerarioOrigen" tono="in" icono="route">
+        Viene del recorrido <strong>{{ itinerarioOrigen.id }}</strong>: complete aquí el rendimiento de referencia del vehículo.
+        <router-link v-if="puedeAcceder('itinerarios')" :to="{ name: 'itinerarios', query: { vehiculo: itinerarioOrigen.vehiculoId, itinerario: itinerarioOrigen.id } }" class="text-weight-bold">Volver al recorrido</router-link>
+      </note-banner>
+
       <section-card titulo="Movilidad por centro" :subtitulo="`${plural(vehiculos.length, 'vehículo', 'vehículos')} · ${perfil.ambito.descripcion}`" sin-relleno>
         <template #acciones>
           <filtro-inactivos v-model="mostrarInactivos" />
         </template>
-        <div class="sg-table-wrap">
+        <div v-if="!compacto" class="sg-table-wrap">
           <table class="sg-table">
             <thead>
               <tr>
@@ -25,7 +31,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="v in vehiculos" :key="v.id">
+              <tr v-for="v in vehiculos" :key="v.id" :class="{ 'sg-row--selected': v.id === vehiculoDestacado }">
                 <td>
                   <span class="text-weight-bold">{{ v.tipo }} · {{ v.id }}</span>
                   <div class="sg-muted">Placa {{ v.placa }}</div>
@@ -57,6 +63,37 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Móvil y tableta: una tarjeta por vehículo, con sus accesos a la vista. -->
+        <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
+          <div v-for="v in vehiculos" :key="v.id" class="sg-box" :class="{ 'sg-box--resaltada': v.id === vehiculoDestacado }">
+            <div class="row items-start no-wrap justify-between">
+              <div class="column">
+                <span class="text-weight-bold">{{ v.tipo }} · {{ v.id }}</span>
+                <span class="sg-muted">Placa {{ v.placa }} · {{ carPorId(v.carId).nombre }}</span>
+              </div>
+              <menu-acciones :items="accionesVehiculo(v)" :etiqueta="`Acciones del vehículo ${v.id}`" />
+            </div>
+            <div class="sg-chips">
+              <status-chip v-if="v.anulacion" v-bind="CHIP_ANULADO" />
+              <status-chip v-if="!v.chofer" tono="si" label="Chofer no asignado" />
+              <status-chip v-if="!v.rendimientoKmL" tono="si" label="Rendimiento no informado" />
+            </div>
+            <span v-if="v.chofer" class="sg-muted">Chofer: {{ v.chofer }}</span>
+            <span class="sg-muted">{{ v.combustible }} · {{ v.unidad === 'L' ? 'litros' : v.unidad }}<template v-if="v.rendimientoKmL"> · {{ v.rendimientoKmL }} km/L</template></span>
+            <span class="sg-muted">{{ plural(itinerariosDeVehiculo(v.id).length, 'itinerario', 'itinerarios') }}</span>
+            <div v-if="!v.anulacion" class="row q-gutter-sm">
+              <q-btn v-if="puedeAcceder('itinerarios')" dense outline no-caps color="secondary" icon="route" label="Itinerarios" :to="{ name: 'itinerarios', query: { vehiculo: v.id } }" />
+              <q-btn v-if="puedeAcceder('combustible')" dense outline no-caps color="secondary" icon="local_gas_station" label="Combustible" :to="{ name: 'combustible', query: { vehiculo: v.id } }" />
+            </div>
+          </div>
+          <div v-for="c in centrosSinMovilidad" :key="c.id" class="sg-box sg-box--dashed">
+            <status-chip tono="si" label="Sin movilidad registrada" />
+            <span class="text-weight-bold">{{ c.nombre }}</span>
+            <span class="sg-muted">No se ha informado ningún vehículo para este centro.</span>
+          </div>
+          <p v-if="!vehiculos.length && !centrosSinMovilidad.length" class="sg-muted q-mb-none">Sin vehículos en el ámbito del perfil.</p>
+        </div>
       </section-card>
 
       <note-banner tono="in">
@@ -70,27 +107,30 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
+import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import MenuAcciones from 'components/common/MenuAcciones.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import VehiculoDialog from 'components/movilidad/VehiculoDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { carPorId, vigente } from 'src/services/datos'
+import { carPorId, itinerarioPorId, vigente } from 'src/services/datos'
 import { itinerariosDeVehiculo } from 'src/services/combustible'
 import { anular } from 'src/services/acciones'
 import { CHIP_ANULADO } from 'src/config/catalogos'
 import { plural } from 'src/utils/formato'
+import { parametro } from 'src/utils/navegacion'
 
 const $q = useQuasar()
 const router = useRouter()
+const route = useRoute()
 const { perfil, carsEnAmbito, vehiculosDelAmbito, puedeAcceder, puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
@@ -102,6 +142,18 @@ const centrosSinMovilidad = computed(() =>
   perfil.value.ambito.vehiculoIds ? [] : carsEnAmbito.value.filter((c) => !vehiculos.value.some((v) => v.carId === c.id && vigente(v)))
 )
 
+// En móvil y tableta las tablas anchas pasan a tarjetas, para no desplazar la página en horizontal.
+const compacto = computed(() => $q.screen.lt.md)
+
+// Enlaces profundos (?vehiculo=&itinerario=): se resalta el vehículo y, si se llega desde un recorrido, se abre su ficha para completar
+// el rendimiento y se ofrece volver a ese recorrido. Un vehículo fuera del ámbito del perfil no se muestra ni se sustituye por otro.
+const vehiculoPedido = parametro(route.query.vehiculo)
+const vehiculoSolicitado = computed(() => (vehiculoPedido ? vehiculosDelAmbito(true).find((v) => v.id === vehiculoPedido) ?? null : null))
+if (vehiculoSolicitado.value?.anulacion) mostrarInactivos.value = true
+const vehiculoNoDisponible = !!vehiculoPedido && !vehiculoSolicitado.value
+const vehiculoDestacado = vehiculoSolicitado.value?.id ?? null
+const itinerarioOrigen = !vehiculoNoDisponible && vehiculoPedido && parametro(route.query.itinerario) ? itinerarioPorId(parametro(route.query.itinerario)) : null
+
 const dialogo = reactive({ abierto: false, vehiculo: null })
 
 function abrir (vehiculo) {
@@ -109,10 +161,14 @@ function abrir (vehiculo) {
   dialogo.abierto = true
 }
 
+onMounted(() => {
+  if (itinerarioOrigen && vehiculoSolicitado.value && vigente(vehiculoSolicitado.value) && puedeHacer('vehiculo.actualizar')) abrir(vehiculoSolicitado.value)
+})
+
 const accionesVehiculo = (v) => [
   // En móvil los accesos a Itinerarios y Combustible (botones ocultos) se ofrecen en el menú.
-  { label: 'Ver itinerarios', icono: 'route', visible: $q.screen.lt.sm && puedeAcceder('itinerarios') && !v.anulacion, accion: () => router.push({ name: 'itinerarios', query: { vehiculo: v.id } }) },
-  { label: 'Ver combustible', icono: 'local_gas_station', visible: $q.screen.lt.sm && puedeAcceder('combustible') && !v.anulacion, accion: () => router.push({ name: 'combustible', query: { vehiculo: v.id } }) },
+  { label: 'Ver itinerarios', icono: 'route', visible: !compacto.value && $q.screen.lt.sm && puedeAcceder('itinerarios') && !v.anulacion, accion: () => router.push({ name: 'itinerarios', query: { vehiculo: v.id } }) },
+  { label: 'Ver combustible', icono: 'local_gas_station', visible: !compacto.value && $q.screen.lt.sm && puedeAcceder('combustible') && !v.anulacion, accion: () => router.push({ name: 'combustible', query: { vehiculo: v.id } }) },
   { label: 'Actualizar vehículo', icono: 'edit', visible: puedeHacer('vehiculo.actualizar') && vigente(v), accion: () => abrir(v) },
   {
     label: 'Anular vehículo',

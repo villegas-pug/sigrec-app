@@ -4,6 +4,7 @@
 - **Fecha:** 2026-11-03
 - **Origen:** revisión de UX de Incidencias, bajas y reposiciones con el perfil Equipo central.
 - **Complementa:** SPEC 003 §5 y §6 (baja de un bien y reposición). Donde difieran, prevalece esta SPEC.
+- **Reutilizada por:** [`005-navegacion-contexto-y-captura.md`](005-navegacion-contexto-y-captura.md) (el «Siguiente paso» pasa a `services/bienes.js › siguientePaso` y se ofrece también desde Necesidades).
 
 ## 1. Decisiones confirmadas
 

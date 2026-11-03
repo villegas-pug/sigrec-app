@@ -11,12 +11,18 @@
       <div class="sg-filters">
         <q-select v-model="anio" :options="ANIOS_REVISION" outlined dense label="Año a revisar" />
         <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
-        <q-select v-model="clase" :options="OPCIONES_CLASE" emit-value map-options outlined dense label="Tipo de necesidad" />
+        <q-select v-model="clase" :options="OPCIONES_CLASE" emit-value map-options outlined dense label="Clasificación principal" />
         <div class="row items-center sg-chips">
           <status-chip tono="pv" label="Regla de vida útil · Por validar" />
           <status-chip tono="pv" label="Priorización · ampliación posterior" />
         </div>
       </div>
+
+      <note-banner tono="in">
+        <strong>Clasificación principal.</strong> Cada bien cuenta una sola vez y conserva todos sus motivos.
+        Si tiene un incidente vigente que reporta necesidad, su clasificación principal es reposición aunque también haya cumplido su vida útil
+        (regla provisional: se muestran ambos motivos).
+      </note-banner>
 
       <div class="sg-kpi-panel">
         <kpi-card icono="assignment_late" tono="rojo" :valor="total.cantidad" etiqueta="Necesidades de bienes pendientes" :nota="`${total.renovacion} renovación · ${total.reposicion} reposición`" />
@@ -88,6 +94,7 @@
                 <th scope="col" class="sg-num">Cantidad</th>
                 <th scope="col" class="sg-num">Precio referencial</th>
                 <th scope="col" class="sg-num">Importe</th>
+                <th scope="col">Siguiente paso</th>
               </tr>
             </thead>
             <tbody>
@@ -96,6 +103,7 @@
                   <router-link v-if="puedeAcceder('bienes')" :to="{ name: 'bienes', query: { bien: n.id } }" class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</router-link>
                   <span v-else class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</span>
                   <div class="sg-muted">{{ textoUbicacion(n.ubicacion) }}</div>
+                  <status-chip :tono="n.clase === 'reposicion' ? 'da' : 'in'" :label="`Clasificación principal: ${CLASES[n.clase]}`" />
                 </td>
                 <td>
                   <div class="column q-gutter-y-xs items-start">
@@ -107,20 +115,52 @@
                 <td class="sg-num">{{ n.cantidad }}</td>
                 <td class="sg-num">
                   <template v-if="n.precioUnitario != null">{{ soles(n.precioUnitario) }}</template>
-                  <status-chip v-else tono="wa" label="Sin precio" />
+                  <template v-else>
+                    <status-chip tono="wa" label="Sin precio" />
+                    <div v-if="n.tipo">
+                      <router-link v-if="puedeValorar" :to="{ name: 'precios', query: { tipo: n.tipo.id } }" class="text-weight-bold">Valorar {{ n.tipo.nombre }}</router-link>
+                      <span v-else class="sg-muted">Pendiente de valoración por equipo central</span>
+                    </div>
+                  </template>
                 </td>
                 <td class="sg-num">
                   <template v-if="n.importe != null">{{ soles(n.importe) }}</template>
                   <status-chip v-else tono="wa" label="Sin valorar" />
                 </td>
+                <td>
+                  <div class="column q-gutter-y-xs items-start">
+                    <q-btn v-if="pasoDe(n)" dense outline no-caps :color="pasoDe(n).color" :label="pasoDe(n).label" @click="abrirPaso(n.bien, pasoDe(n).modo)" />
+                    <span v-else-if="siguientePaso(n.bien)" class="sg-muted">Requiere: equipo central</span>
+                    <router-link v-if="antecedenteDe(n)" :to="antecedenteDe(n).to">{{ antecedenteDe(n).label }}</router-link>
+                  </div>
+                </td>
               </tr>
               <tr v-if="pendientes.length" class="sg-row--total">
                 <td colspan="5">Importe conocido</td>
                 <td class="sg-num">{{ soles(total.importeConocido) }}<div v-if="total.sinValorar" class="sg-muted">+ {{ plural(total.sinValorar, 'necesidad sin valorar', 'necesidades sin valorar') }}</div></td>
+                <td />
               </tr>
-              <tr v-else><td colspan="6" class="sg-muted">Sin necesidades pendientes para los filtros seleccionados.</td></tr>
+              <tr v-else><td colspan="7" class="sg-muted">Sin necesidades pendientes para los filtros seleccionados.</td></tr>
             </tbody>
           </table>
+        </div>
+        <note-banner tono="ne" icono="info" class="q-ma-md">
+          La reposición exige la baja previa del bien. Ninguno de los dos pasos se ejecuta automáticamente al registrar una necesidad.
+        </note-banner>
+      </section-card>
+
+      <section-card v-if="resultado.porReponer.length" titulo="Bajas pendientes de reposición" subtitulo="Informativo: ya salieron del cálculo de pendientes y no suman al total (regla por validar)">
+        <div class="column q-gutter-y-sm">
+          <div v-for="r in resultado.porReponer" :key="r.id" class="sg-box">
+            <div class="sg-chips"><status-chip v-bind="SITUACIONES.baja" /><status-chip tono="si" label="Sin reposición" /></div>
+            <span class="text-weight-bold">{{ r.bien.nombre }} · {{ r.id }}</span>
+            <span class="sg-muted">{{ textoUbicacion(r.ubicacion) }}</span>
+            <span v-for="e in r.incidentes" :key="e.id" class="sg-muted">{{ TIPOS_EVENTO[e.tipo].label }}: {{ e.titulo }} · {{ fecha(e.fecha) }}</span>
+            <div class="row items-center q-gutter-x-md">
+              <q-btn v-if="puedeHacer('bien.reposicion')" dense outline no-caps color="primary" label="Registrar reposición" @click="abrirPaso(r.bien, 'reposicion')" />
+              <router-link v-if="puedeAcceder('incidencias')" :to="{ name: 'incidencias', query: { car: r.ubicacion.car.id, hecho: r.incidentes[0].id } }">Ver incidente</router-link>
+            </div>
+          </div>
         </div>
       </section-card>
 
@@ -131,6 +171,7 @@
               <div class="sg-chips"><status-chip tono="in" label="Requiere evaluación" /><status-chip tono="si" label="Costo no estimado" /></div>
               <span class="text-weight-bold">{{ i.novedad.titulo }}</span>
               <span class="sg-muted">{{ textoUbicacion(i.ubicacion) }} · informada el {{ fecha(i.novedad.fecha) }}</span>
+              <router-link v-if="puedeAcceder('ambientes')" :to="{ name: 'ambientes', query: { car: i.ubicacion.car.id, ambiente: i.ubicacion.ambiente.id, novedad: i.id } }">Ver novedad en el ambiente</router-link>
             </div>
             <p v-if="!resultado.infraestructura.length" class="sg-muted q-mb-none">Sin necesidades de infraestructura.</p>
           </div>
@@ -142,22 +183,26 @@
               <div class="sg-chips"><status-chip tono="ok" label="Atendida por reposición" /><status-chip tono="ne" label="No suma" /></div>
               <span class="text-weight-bold">{{ a.anterior.nombre }} · {{ a.anterior.id }}</span>
               <span class="sg-muted">Repuesto por {{ a.nuevo.id }} el {{ fecha(a.evento.fecha) }}</span>
+              <router-link v-if="puedeAcceder('incidencias')" :to="{ name: 'incidencias', query: { car: a.ubicacion.car.id, hecho: a.id } }">Ver reposición</router-link>
             </div>
             <div v-for="i in resultado.insuficientes" :key="i.bien.id" class="sg-box sg-box--dashed">
               <div class="sg-chips"><status-chip tono="si" label="Antecedentes insuficientes" /></div>
               <span class="text-weight-bold">{{ i.bien.nombre }} · {{ i.bien.id }}</span>
               <span class="sg-muted">Falta {{ i.faltantes.join(' y ') }}: no se calcula renovación por vida útil.</span>
+              <router-link v-if="puedeAcceder('bienes')" :to="{ name: 'bienes', query: { bien: i.bien.id } }">Completar en la ficha del bien</router-link>
             </div>
             <p v-if="!resultado.atendidas.length && !resultado.insuficientes.length" class="sg-muted q-mb-none">Sin registros.</p>
           </div>
         </section-card>
       </div>
     </div>
+
+    <bien-accion-dialog v-model="dialogoAccion.abierto" :modo="dialogoAccion.modo" :bien="dialogoAccion.bien" />
   </q-page>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { exportFile, useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
@@ -165,13 +210,18 @@ import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import KpiCard from 'components/common/KpiCard.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
+import BienAccionDialog from 'components/bienes/BienAccionDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { carPorId, textoUbicacion } from 'src/services/datos'
 import { calcularNecesidades, consolidarPorCar, totalizar } from 'src/services/necesidades'
-import { TODOS, condicion } from 'src/config/catalogos'
+import { siguientePaso } from 'src/services/bienes'
+import { SITUACIONES, TIPOS_EVENTO, TODOS, condicion } from 'src/config/catalogos'
 import { ANIO_REVISION, ANIOS_REVISION } from 'src/config/demo'
 import { fecha, plural, soles } from 'src/utils/formato'
+
+const CLASES = { renovacion: 'Renovación por vida útil', reposicion: 'Reposición por incidente' }
 
 const OPCIONES_CLASE = [
   { label: 'Todas', value: TODOS },
@@ -181,11 +231,31 @@ const OPCIONES_CLASE = [
 
 const $q = useQuasar()
 const route = useRoute()
-const { perfil, puedeAcceder } = usePerfil()
+const { perfil, puedeAcceder, puedeHacer } = usePerfil()
 const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(route.query.car, { todos: true })
 
 const anio = ref(ANIO_REVISION)
 const clase = ref(TODOS)
+
+// Al volver con «Atrás» desde un bien o desde el catálogo se conservan año, centro y clasificación.
+useEstadoNavegacion('necesidades', { anio, carId, clase })
+
+const puedeValorar = computed(() => puedeHacer('precio.informar') && puedeAcceder('precios'))
+
+// Siguiente paso de la atención (baja o reposición) si el perfil puede darlo; el paso abre el formulario con el bien ya elegido.
+const pasoDe = (n) => {
+  const paso = siguientePaso(n.bien)
+  return paso && puedeHacer(paso.permiso) ? paso : null
+}
+const dialogoAccion = reactive({ abierto: false, modo: 'baja', bien: null })
+const abrirPaso = (bien, modo) => Object.assign(dialogoAccion, { abierto: true, modo, bien })
+
+// Antecedente de la necesidad: el incidente que la motivó o, si solo es por vida útil, la ficha del bien.
+function antecedenteDe (n) {
+  const motivo = n.motivos.find((m) => m.eventoId)
+  if (motivo && puedeAcceder('incidencias')) return { label: 'Ver incidente', to: { name: 'incidencias', query: { car: n.ubicacion.car.id, hecho: motivo.eventoId } } }
+  return null
+}
 
 const carsVisibles = computed(() => carIdsVisibles.value.map(carPorId))
 const tituloAmbito = computed(() => (carId.value === TODOS ? perfil.value.ambito.descripcion : carPorId(carId.value).nombre))
@@ -199,12 +269,13 @@ const consolidado = computed(() => consolidarPorCar({ ...resultado.value, pendie
 function exportar () {
   const escapar = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
   const filas = [
-    ['Rótulo', 'Bien', 'CAR', 'Ambiente', 'Motivos', 'Cantidad', 'Precio referencial', 'Importe'],
+    ['Rótulo', 'Bien', 'CAR', 'Ambiente', 'Clasificación principal', 'Motivos', 'Cantidad', 'Precio referencial', 'Importe'],
     ...pendientes.value.map((n) => [
       n.id,
       n.bien.nombre,
       n.ubicacion.car.nombre,
       n.ubicacion.ambiente.nombre,
+      CLASES[n.clase],
       n.motivos.map((m) => m.texto).join(' | '),
       n.cantidad,
       n.precioUnitario ?? 'Sin precio',
@@ -212,7 +283,7 @@ function exportar () {
     ])
   ]
   const csv = '﻿' + filas.map((f) => f.map(escapar).join(';')).join('\r\n')
-  const ok = exportFile(`sigrec-necesidades-${anio.value}.csv`, csv, 'text/csv;charset=utf-8')
+  const ok = exportFile(`sigrec-necesidades-${anio.value}-${carId.value}-${clase.value}.csv`, csv, 'text/csv;charset=utf-8')
   if (ok !== true) $q.notify({ type: 'negative', message: 'El navegador bloqueó la descarga del archivo.' })
 }
 </script>

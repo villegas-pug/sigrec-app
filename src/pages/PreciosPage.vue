@@ -7,6 +7,8 @@
         </template>
       </page-header>
 
+      <registro-no-disponible v-if="tipoNoDisponible" entidad="El tipo de bien" :id="tipoPedido" :volver="{ name: 'precios' }" etiqueta-volver="Ver todos los tipos" />
+
       <note-banner tono="in">
         El precio referencial es el precio esperado de reposición y no el costo original de adquisición. Su fuente y vigencia están por definir.
         El catálogo de tipos de bien lo administra el equipo central.
@@ -19,7 +21,7 @@
       </div>
 
       <section-card titulo="Tipos de bien y precios" :subtitulo="`Necesidades del ${ANIO_REVISION} · ${perfil.ambito.descripcion}`" sin-relleno>
-        <div class="sg-table-wrap">
+        <div v-if="!$q.screen.lt.sm" class="sg-table-wrap">
           <table class="sg-table">
             <thead>
               <tr>
@@ -32,7 +34,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="fila in filas" :key="fila.tipo.id">
+              <tr v-for="fila in filas" :id="`tipo-${fila.tipo.id}`" :key="fila.tipo.id" :class="{ 'sg-row--selected': fila.tipo.id === tipoResaltado }">
                 <td>
                   {{ fila.tipo.nombre }}
                   <div class="sg-muted">
@@ -57,13 +59,36 @@
                   <span v-else class="sg-muted">—</span>
                 </td>
                 <td class="text-right no-wrap">
-                  <q-btn v-if="puedeHacer('precio.informar') && vigente(fila.tipo)" flat dense color="secondary" icon="sell" label="Informar precio" class="gt-xs" @click="abrirPrecio(fila.tipo)" />
+                  <q-btn v-if="puedeHacer('precio.informar') && vigente(fila.tipo)" flat dense color="secondary" icon="sell" label="Informar precio" @click="abrirPrecio(fila.tipo)" />
                   <menu-acciones :items="accionesTipo(fila.tipo)" :etiqueta="`Acciones del tipo ${fila.tipo.nombre}`" />
                 </td>
               </tr>
               <tr v-if="!filas.length"><td colspan="6" class="sg-muted">Sin tipos de bien para los filtros seleccionados.</td></tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Móvil: una tarjeta por tipo, con sus acciones a la vista. -->
+        <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
+          <div v-for="fila in filas" :id="`tipo-${fila.tipo.id}`" :key="fila.tipo.id" class="sg-box" :class="{ 'sg-box--resaltada': fila.tipo.id === tipoResaltado }">
+            <div class="row items-start no-wrap justify-between">
+              <div class="column">
+                <span class="text-weight-bold">{{ fila.tipo.nombre }}</span>
+                <span class="sg-muted">{{ CATEGORIAS[fila.tipo.categoria] }}<template v-if="fila.tipo.vidaUtilSugerida"> · vida útil sugerida {{ plural(fila.tipo.vidaUtilSugerida, 'año', 'años') }}</template></span>
+              </div>
+              <menu-acciones :items="accionesTipo(fila.tipo)" :etiqueta="`Acciones del tipo ${fila.tipo.nombre}`" />
+            </div>
+            <status-chip v-if="fila.tipo.anulacion" v-bind="CHIP_ANULADO" />
+            <div>
+              <span class="sg-kv__label">Precio referencial: </span>
+              <template v-if="fila.tipo.precio != null"><strong>{{ soles(fila.tipo.precio) }}</strong> · {{ fecha(fila.tipo.fechaPrecio) }}</template>
+              <status-chip v-else tono="wa" label="Sin precio" />
+            </div>
+            <span class="sg-muted">Procedencia: {{ fila.tipo.procedencia ?? 'no informada' }}</span>
+            <span v-if="fila.necesidades" class="sg-muted">{{ plural(fila.necesidades, 'necesidad', 'necesidades') }} ({{ plural(fila.unidades, 'unidad', 'unidades') }})</span>
+            <q-btn v-if="puedeHacer('precio.informar') && vigente(fila.tipo)" outline dense no-caps color="secondary" icon="sell" label="Informar precio" class="self-start" @click="abrirPrecio(fila.tipo)" />
+          </div>
+          <p v-if="!filas.length" class="sg-muted q-mb-none">Sin tipos de bien para los filtros seleccionados.</p>
         </div>
       </section-card>
     </div>
@@ -75,12 +100,13 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
-import { useQuasar } from 'quasar'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
+import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import MenuAcciones from 'components/common/MenuAcciones.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
@@ -88,12 +114,13 @@ import TipoBienDialog from 'components/precios/TipoBienDialog.vue'
 import PrecioDialog from 'components/precios/PrecioDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { db, vigente } from 'src/services/datos'
+import { db, tipoPorId, vigente } from 'src/services/datos'
 import { calcularNecesidades } from 'src/services/necesidades'
 import { anular, dependenciasDeTipoBien } from 'src/services/acciones'
 import { CATEGORIAS, CHIP_ANULADO } from 'src/config/catalogos'
 import { ANIO_REVISION } from 'src/config/demo'
 import { fecha, plural, soles } from 'src/utils/formato'
+import { parametro } from 'src/utils/navegacion'
 
 const OPCIONES_FILTRO = [
   { label: 'Todos los tipos', value: 'todos' },
@@ -101,13 +128,19 @@ const OPCIONES_FILTRO = [
   { label: 'Necesidades sin precio', value: 'faltantes' }
 ]
 
-const $q = useQuasar()
+const route = useRoute()
 const { perfil, carIdsEnAmbito, puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
+// Enlaces profundos: ?tipo= abre la valoración de ese tipo (o lo resalta si el perfil no puede valorar); ?filtro=faltantes muestra los tipos sin precio.
+const tipoPedido = parametro(route.query.tipo)
+const tipoSolicitado = tipoPedido ? tipoPorId(tipoPedido) : null
+const tipoNoDisponible = !!tipoPedido && !tipoSolicitado
+const tipoResaltado = tipoSolicitado?.id ?? null
+
 const texto = ref('')
-const filtro = ref('todos')
-const mostrarInactivos = ref(false)
+const filtro = ref(OPCIONES_FILTRO.some((o) => o.value === parametro(route.query.filtro)) ? parametro(route.query.filtro) : 'todos')
+const mostrarInactivos = ref(!!tipoSolicitado?.anulacion)
 
 const pendientes = computed(() => calcularNecesidades({ anio: ANIO_REVISION, carIds: carIdsEnAmbito.value }).pendientes)
 
@@ -130,8 +163,14 @@ const dialogoPrecio = reactive({ abierto: false, tipo: null })
 const abrirTipo = (tipo) => Object.assign(dialogoTipo, { abierto: true, tipo })
 const abrirPrecio = (tipo) => Object.assign(dialogoPrecio, { abierto: true, tipo })
 
+onMounted(async () => {
+  if (!tipoSolicitado) return
+  if (puedeHacer('precio.informar') && vigente(tipoSolicitado)) abrirPrecio(tipoSolicitado)
+  await nextTick()
+  document.getElementById(`tipo-${tipoSolicitado.id}`)?.scrollIntoView({ block: 'center' })
+})
+
 const accionesTipo = (tipo) => [
-  { label: 'Informar precio', icono: 'sell', visible: $q.screen.lt.sm && puedeHacer('precio.informar') && vigente(tipo), accion: () => abrirPrecio(tipo) },
   { label: 'Actualizar tipo de bien', icono: 'edit', visible: puedeHacer('tipoBien.actualizar') && vigente(tipo), accion: () => abrirTipo(tipo) },
   {
     label: 'Anular tipo de bien',

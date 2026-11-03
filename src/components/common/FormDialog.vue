@@ -1,5 +1,11 @@
 <template>
-  <q-dialog :model-value="modelValue" :maximized="$q.screen.lt.sm" @update:model-value="$emit('update:modelValue', $event)">
+  <q-dialog
+    :model-value="modelValue"
+    :persistent="modificado"
+    :maximized="$q.screen.lt.sm"
+    @update:model-value="$emit('update:modelValue', $event)"
+    @escape-key="cerrar"
+  >
     <q-card class="sg-dialog" :style="{ width: `${ancho}px` }">
       <q-card-section>
         <h2 class="text-h6 text-weight-bold q-my-none">{{ titulo }}</h2>
@@ -9,8 +15,8 @@
         <q-form class="column q-gutter-y-md" @submit="$emit('enviar')">
           <slot />
           <div class="row justify-end q-gutter-sm">
-            <q-btn flat color="secondary" label="Cancelar" v-close-popup />
-            <q-btn unelevated :color="colorEnviar" type="submit" :label="etiquetaEnviar" :disable="deshabilitarEnviar" />
+            <q-btn flat color="secondary" :label="soloLectura ? 'Cerrar' : 'Cancelar'" @click="cerrar" />
+            <q-btn v-if="!soloLectura" unelevated :color="colorEnviar" type="submit" :label="etiquetaEnviar" :disable="deshabilitarEnviar" />
           </div>
         </q-form>
       </q-card-section>
@@ -20,15 +26,37 @@
 
 <script setup>
 // Diálogo de formulario común: título, campos (slot), Cancelar y Enviar. En pantallas pequeñas se maximiza.
-defineProps({
+// Con `modificado` pide confirmación antes de descartar lo escrito (Cancelar o Esc).
+import { useQuasar } from 'quasar'
+
+const props = defineProps({
   modelValue: { type: Boolean, default: false },
   titulo: { type: String, required: true },
   subtitulo: { type: String, default: '' },
   ancho: { type: Number, default: 560 },
   etiquetaEnviar: { type: String, default: 'Guardar' },
   colorEnviar: { type: String, default: 'primary' },
-  deshabilitarEnviar: { type: Boolean, default: false }
+  deshabilitarEnviar: { type: Boolean, default: false },
+  // El formulario tiene cambios sin guardar (ver useBorrador).
+  modificado: { type: Boolean, default: false },
+  // Solo consulta: sin botón de envío.
+  soloLectura: { type: Boolean, default: false }
 })
 
-defineEmits(['update:modelValue', 'enviar'])
+const emit = defineEmits(['update:modelValue', 'enviar'])
+const $q = useQuasar()
+
+function cerrar () {
+  if (!props.modificado) {
+    emit('update:modelValue', false)
+    return
+  }
+  $q.dialog({
+    title: 'Cambios sin guardar',
+    message: 'Hay datos escritos que no se han guardado. Si cierra ahora se descartarán.',
+    persistent: true,
+    cancel: { flat: true, label: 'Seguir editando', color: 'secondary' },
+    ok: { unelevated: true, label: 'Descartar', color: 'negative' }
+  }).onOk(() => emit('update:modelValue', false))
+}
 </script>

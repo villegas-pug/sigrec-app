@@ -112,6 +112,8 @@
       </div>
     </section-card>
 
+    <galeria-fotos :bien="bien" titulo="Fotografías del bien" />
+
     <section-card titulo="Antecedentes">
       <historial-bien :bien="bien" />
     </section-card>
@@ -127,6 +129,7 @@ import KeyValue from 'components/common/KeyValue.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import MenuAcciones from 'components/common/MenuAcciones.vue'
 import HistorialBien from 'components/bienes/HistorialBien.vue'
+import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
 import { db, bienPorId, tipoPorId, textoUbicacion, ubicacionDeBien } from 'src/services/datos'
 import { asociacionesDeBien } from 'src/services/bienes'
 import { antecedentesFaltantes, calcularNecesidades, finVidaUtil } from 'src/services/necesidades'

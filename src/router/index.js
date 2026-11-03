@@ -8,7 +8,8 @@ export default defineRouter(() => {
     : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory)
 
   return createRouter({
-    scrollBehavior: () => ({ left: 0, top: 0 }),
+    // Al volver con «Atrás» se recupera la posición; en cualquier otra navegación se abre arriba.
+    scrollBehavior: (to, from, savedPosition) => savedPosition ?? { left: 0, top: 0 },
     routes,
     // Se configura en quasar.config.js › build › vueRouterMode y publicPath.
     history: createHistory(process.env.VUE_ROUTER_BASE)

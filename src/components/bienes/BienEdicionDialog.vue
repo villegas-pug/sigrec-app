@@ -4,6 +4,7 @@
     :titulo="TITULOS[modo]"
     :subtitulo="`${bien.nombre} · ${bien.id}`"
     :ancho="640"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -20,10 +21,10 @@
         <div class="sg-muted q-mt-xs">Un cambio de condición queda en los antecedentes del bien.</div>
       </div>
       <q-input v-model="form.deterioro" outlined dense type="textarea" autogrow label="Deterioro observado" />
+      <campo-adquisicion v-model="form.fechaAdquisicion" label="Adquisición" hint="Indique solo lo que conoce. Vacío si se desconoce" />
       <div class="row q-col-gutter-md">
-        <q-input v-model="form.fechaAdquisicion" class="col-12 col-sm-4" outlined dense type="month" stack-label label="Adquisición" hint="Vacío si se desconoce" :rules="[noFutura]" />
-        <q-input v-model.number="form.costo" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Costo de adquisición (S/)" />
-        <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-4" outlined dense type="number" min="1" label="Vida útil (años)" />
+        <q-input v-model.number="form.costo" class="col-12 col-sm-6" outlined dense type="number" min="0" label="Costo original (S/)" hint="Dato histórico; no es el precio referencial" />
+        <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Vida útil (años)" />
       </div>
     </template>
 
@@ -72,7 +73,9 @@ import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import CondicionSelector from 'components/common/CondicionSelector.vue'
+import CampoAdquisicion from 'components/common/CampoAdquisicion.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { ambientesDeCar, bienesDeAmbiente, ubicacionDeBien } from 'src/services/datos'
 import { actualizarBien, asociarBien, numeroONulo, puedeAsociar, trasladarBien } from 'src/services/acciones'
 import { asociacionesDeBien } from 'src/services/bienes'
@@ -96,6 +99,7 @@ const TITULOS = {
 }
 
 const form = reactive({})
+const { modificado, fijar } = useBorrador(form)
 
 const opcionesPadre = computed(() =>
   bienesDeAmbiente(props.bien.ambienteId)
@@ -130,6 +134,7 @@ watch(() => props.modelValue, (abierto) => {
     ambienteId: null,
     fecha: FECHA_CORTE
   })
+  fijar()
 })
 
 function guardar () {

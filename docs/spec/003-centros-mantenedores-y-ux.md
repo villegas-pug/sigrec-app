@@ -3,7 +3,7 @@
 - **Estado:** implementado en el prototipo (verificación en navegador pendiente de autorización)
 - **Fecha:** 2026-11-02
 - **Origen:** revisión integral del prototipo (SPEC 001 y 002) y aclaraciones del solicitante.
-- **Actualizada por:** [`004-incidencias-contexto-y-recorrido.md`](004-incidencias-contexto-y-recorrido.md) (baja y reposición, condición y traslado de componentes).
+- **Actualizada por:** [`004-incidencias-contexto-y-recorrido.md`](004-incidencias-contexto-y-recorrido.md) (baja y reposición, condición y traslado de componentes) y [`005-navegacion-contexto-y-captura.md`](005-navegacion-contexto-y-captura.md) (inactivación de ambientes con bienes por resolver, galería por ambiente, tablas adaptables).
 - **Reemplaza:** de la SPEC 002 §1 («el local se consulta como ficha del inmueble») y §5 («CAR con varios locales»).
 
 ## 1. Decisiones confirmadas

@@ -1,5 +1,7 @@
 // Reglas de necesidades y presupuesto (RF-05, RF-06, RF-19, RF-20, RF-21).
 import { db, bienPorId, tipoPorId, ubicacionDeBien, ubicacionDeAmbiente, vigente } from './datos'
+import { reposicionDe } from './bienes'
+import { plural } from 'src/utils/formato'
 import { INCIDENTES, TIPOS_EVENTO } from 'src/config/catalogos'
 
 const enAmbito = (carIds, carId) => !carIds || carIds.includes(carId)
@@ -64,8 +66,8 @@ export function calcularNecesidades ({ anio, carIds = null }) {
     const incidentes = incidentesConNecesidad(bien.id, anio)
     for (const evento of incidentes) {
       const unidades = unidadesDelIncidente(evento, cantidadBien)
-      const parcial = unidades < cantidadBien ? ` (${unidades} de ${cantidadBien} unidades)` : ''
-      motivos.push({ clase: 'incidente', texto: `${TIPOS_EVENTO[evento.tipo].label}: ${evento.titulo}${parcial}`, fecha: evento.fecha })
+      const parcial = unidades < cantidadBien ? ` (${unidades} de ${plural(cantidadBien, 'unidad', 'unidades')})` : ''
+      motivos.push({ clase: 'incidente', texto: `${TIPOS_EVENTO[evento.tipo].label}: ${evento.titulo}${parcial}`, fecha: evento.fecha, eventoId: evento.id })
     }
     if (!motivos.length) continue
 
@@ -105,7 +107,14 @@ export function calcularNecesidades ({ anio, carIds = null }) {
     })
     .filter((a) => enAmbito(carIds, a.ubicacion.car.id))
 
-  return { pendientes, infraestructura, atendidas, insuficientes }
+  // Bienes ya dados de baja por un incidente con necesidad y todavía sin reposición. Es informativo: no suma a los pendientes
+  // (regla por validar), porque la baja saca al bien del cálculo.
+  const porReponer = db.bienes
+    .filter((b) => b.situacion === 'baja' && !reposicionDe(b.id))
+    .map((bien) => ({ id: bien.id, bien, ubicacion: ubicacionDeBien(bien), incidentes: incidentesConNecesidad(bien.id, anio) }))
+    .filter((r) => r.incidentes.length && enAmbito(carIds, r.ubicacion.car.id))
+
+  return { pendientes, infraestructura, atendidas, insuficientes, porReponer }
 }
 
 export function totalizar (pendientes) {
