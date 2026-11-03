@@ -1,5 +1,7 @@
 // Motor de respaldo: graba con el micrófono y transcribe con Whisper en el propio dispositivo (sin conexión tras la primera descarga).
 // No da resultados parciales. Estados: escuchando → descargando (solo la primera vez) → transcribiendo.
+import { normalizarErrorVoz } from './errores'
+
 const DURACION_MAXIMA_MS = 30000
 const FRECUENCIA = 16000
 
@@ -84,31 +86,38 @@ export function crear () {
     try {
       flujo = await navigator.mediaDevices.getUserMedia({ audio: true })
     } catch (e) {
-      alError?.(e?.name === 'NotFoundError' ? 'audio-capture' : 'not-allowed')
+      alError?.(normalizarErrorVoz(e))
       alTerminar?.('')
       return
     }
     if (cancelado) { liberar(); alTerminar?.(''); return }
 
-    const trozos = []
-    grabador = new MediaRecorder(flujo)
-    grabador.ondataavailable = (e) => { if (e.data.size) trozos.push(e.data) }
-    grabador.onstop = async () => {
+    try {
+      const trozos = []
+      grabador = new MediaRecorder(flujo)
+      grabador.ondataavailable = (e) => { if (e.data.size) trozos.push(e.data) }
+      grabador.onstop = async () => {
+        liberar()
+        grabador = null
+        if (cancelado || !trozos.length) { alTerminar?.(''); return }
+        try {
+          const audio = await aAudio16k(new Blob(trozos))
+          const texto = await transcribir(audio, (estado, valor) => { if (!cancelado) alEstado?.(estado, valor) })
+          alTerminar?.(cancelado ? '' : texto)
+        } catch {
+          if (!cancelado) alError?.('transcripcion')
+          alTerminar?.('')
+        }
+      }
+      alEstado?.('escuchando')
+      grabador.start()
+      temporizador = setTimeout(detener, DURACION_MAXIMA_MS)
+    } catch (e) {
       liberar()
       grabador = null
-      if (cancelado || !trozos.length) { alTerminar?.(''); return }
-      try {
-        const audio = await aAudio16k(new Blob(trozos))
-        const texto = await transcribir(audio, (estado, valor) => { if (!cancelado) alEstado?.(estado, valor) })
-        alTerminar?.(cancelado ? '' : texto)
-      } catch {
-        if (!cancelado) alError?.('transcripcion')
-        alTerminar?.('')
-      }
+      alError?.(normalizarErrorVoz(e))
+      alTerminar?.('')
     }
-    alEstado?.('escuchando')
-    grabador.start()
-    temporizador = setTimeout(detener, DURACION_MAXIMA_MS)
   }
 
   function cancelar () {

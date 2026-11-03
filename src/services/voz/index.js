@@ -21,7 +21,8 @@ export function nombreDeMotor ({ local = false } = {}) {
 }
 
 // Whisper se carga bajo demanda para que transformers.js no entre en el paquete inicial.
-export async function crearMotor (nombre) {
-  if (nombre === 'whisper') return (await import('./motorWhisper')).crear()
+// El motor del navegador se crea síncronamente para conservar el gesto del usuario en móviles.
+export function crearMotor (nombre) {
+  if (nombre === 'whisper') return import('./motorWhisper').then(({ crear }) => crear())
   return crearNavegador()
 }

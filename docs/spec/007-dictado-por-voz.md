@@ -17,6 +17,9 @@
 | Whisper en el dispositivo (`whisper-tiny`, transformers.js, WASM) | En los demás casos | Sin conexión tras la primera descarga (~40 MB, en caché). El audio no sale del dispositivo. Sin texto parcial; límite de 30 s por tramo. |
 
 - Si el servicio de voz del navegador falla (`network`, `service-not-allowed`), el resto de la sesión usa Whisper.
+- Iniciar Web Speech API directamente desde la acción del botón, sin una espera asíncrona previa que pueda perder el gesto del usuario en móvil.
+- Normalizar los errores de ambos motores: permiso bloqueado, micrófono inexistente, micrófono ocupado/no disponible, servicio de voz y transcripción. No informar «permiso denegado» para fallos distintos.
+- Ante un permiso bloqueado, explicar cómo habilitar el micrófono para el sitio en Chrome y para Chrome en los ajustes de Android; después, el usuario puede volver a pulsar el botón.
 - Whisper se carga bajo demanda; antes de la primera descarga se pide confirmación.
 - Campos con datos personales (chofer, arrendador, contacto) llevan `local`: siempre usan Whisper.
 - Una sola sesión de dictado a la vez; al cerrar el diálogo o cambiar de página se libera el micrófono.
@@ -41,6 +44,7 @@
 ## Entorno
 
 - El micrófono requiere HTTPS (o `localhost`) con cualquier motor. En un contexto inseguro o sin `getUserMedia` el botón no aparece y el campo funciona como antes.
+- Un permiso denegado por Chrome, Android o la política de permisos del sitio debe habilitarse en la configuración correspondiente; SIGREC no puede concederlo desde la página.
 - Pruebas desde un teléfono: reenvío de puerto por USB (`chrome://inspect`) o `devServer.https` de Quasar con certificado autofirmado. La configuración del proyecto no se modifica.
 - ⚠️ Por validar: calidad de `whisper-tiny` en español de Perú. Alternativa: `whisper-base` (~80 MB) cambiando `MODELO_WHISPER` en `whisper.worker.js`.
 
@@ -60,3 +64,4 @@ Comandos de voz que rellenen varios campos a la vez y puntuación hablada.
 4. En el buscador del mapa, el texto dictado lanza las sugerencias.
 5. Los campos `local` usan Whisper incluso en Chrome.
 6. Texto parcial en vivo, sesión única, mensajes de error, confirmación de descarte con texto dictado y uso cómodo a 390 px.
+7. En Android Chrome con HTTPS, comprobar permisos concedidos y denegados para ambos motores, ausencia/ocupación del micrófono, guía de recuperación y reintento tras habilitar el permiso.

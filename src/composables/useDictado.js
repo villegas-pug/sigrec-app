@@ -8,10 +8,12 @@ export { dictadoDisponible }
 export { unirDictado } from 'src/utils/interpretacionVoz'
 
 const MENSAJES = {
-  'not-allowed': 'Permiso de micrófono denegado: actívelo en el navegador.',
+  'permiso-denegado': 'Chrome o Android no permitió acceder al micrófono. Revise los permisos para este sitio y para Chrome.',
   'service-not-allowed': 'El servicio de voz del navegador no está disponible. La próxima vez se usará el reconocimiento en el dispositivo.',
   'no-speech': 'No se detectó voz.',
   'audio-capture': 'No se encontró un micrófono.',
+  'microfono-ocupado': 'El micrófono no está disponible o está siendo usado por otra aplicación. Ciérrela e intente de nuevo.',
+  'microfono-no-disponible': 'No se pudo iniciar el micrófono en este navegador. Recargue la página e intente de nuevo.',
   network: 'Sin conexión con el servicio de voz. La próxima vez se usará el reconocimiento en el dispositivo.',
   transcripcion: 'No se pudo transcribir el audio. Intente de nuevo o escriba el texto.'
 }
@@ -46,6 +48,14 @@ export function useDictado () {
     })
   }
 
+  function mostrarGuiaPermiso () {
+    $q.dialog({
+      title: 'Permitir el micrófono',
+      message: 'En Chrome, toque el icono junto a la dirección, abra Permisos y permita el micrófono para este sitio. Si el permiso ya está habilitado, vaya a Ajustes de Android → Aplicaciones → Chrome → Permisos → Micrófono y permita el acceso. Vuelva a SIGREC y pulse el micrófono para reintentar.',
+      ok: { unelevated: true, label: 'Entendido', color: 'primary' }
+    })
+  }
+
   // alParcial(texto): texto provisional; alFinal(texto): definitivo; alCancelar(): terminó sin texto.
   // `local` obliga a usar el reconocimiento en el dispositivo (campos con datos personales).
   async function iniciar ({ alParcial, alFinal, alCancelar, local = false } = {}) {
@@ -67,7 +77,17 @@ export function useDictado () {
       $q.notify({ type: 'info', icon: 'privacy_tip', message: 'El audio se procesa en el servicio de voz del navegador. No dicte datos personales de residentes.', timeout: 6000 })
     }
 
-    motor = await crearMotor(nombre)
+    try {
+      const motorCreado = crearMotor(nombre)
+      // Web Speech API se inicia dentro de esta misma llamada originada por el toque del usuario.
+      motor = nombre === 'whisper' ? await motorCreado : motorCreado
+    } catch {
+      estado.value = 'inactivo'
+      if (sesionActiva === cancelar) sesionActiva = null
+      $q.notify({ type: 'warning', message: MENSAJES['microfono-no-disponible'] })
+      alCancelar?.()
+      return
+    }
     sesionActiva = cancelar
     progreso.value = 0
     motor.iniciar({
@@ -79,7 +99,13 @@ export function useDictado () {
       alError: (codigo) => {
         if (nombre === 'navegador' && (codigo === 'network' || codigo === 'service-not-allowed')) marcarFalloNavegador()
         const mensaje = MENSAJES[codigo]
-        if (mensaje) $q.notify({ type: 'warning', message: mensaje })
+        if (!mensaje) return
+        const notificacion = { type: 'warning', message: mensaje }
+        if (codigo === 'permiso-denegado') {
+          notificacion.timeout = 10000
+          notificacion.actions = [{ label: 'Cómo habilitarlo', color: 'white', handler: mostrarGuiaPermiso }]
+        }
+        $q.notify(notificacion)
       },
       alTerminar: (texto) => {
         estado.value = 'inactivo'
