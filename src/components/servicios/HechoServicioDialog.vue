@@ -9,7 +9,9 @@
     @enviar="guardar"
   >
     <q-option-group v-if="tipoEditable" v-model="form.tipo" inline :options="OPCIONES_SUMINISTRO" />
-    <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, noFutura]" />
+    <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, noFutura]">
+      <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
+    </q-input>
     <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Detalle">
       <template #append><boton-dictado v-model="form.detalle" /></template>
     </q-input>

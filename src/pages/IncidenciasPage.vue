@@ -12,12 +12,24 @@
       <registro-no-disponible v-if="hechoNoDisponible" entidad="El hecho" :id="hechoPedido" :volver="{ name: 'incidencias' }" etiqueta-volver="Ver todos los hechos" />
 
       <div class="sg-filters">
-        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
-        <q-select v-model="filtros.ambienteId" :options="opcionesAmbiente" emit-value map-options outlined dense label="Ambiente" :disable="carId === TODOS" :hint="carId === TODOS ? 'Elija un centro' : ''" />
-        <q-input v-model="filtros.texto" outlined dense clearable label="Recurso (bien, rótulo o ambiente)" />
-        <q-select v-model="filtros.tipo" :options="opcionesTipo" emit-value map-options outlined dense label="Hecho" />
-        <q-select v-model="filtros.necesidad" :options="OPCIONES_NECESIDAD" emit-value map-options outlined dense label="Necesidad" />
-        <q-select v-model="filtros.anio" :options="opcionesAnio" emit-value map-options outlined dense label="Período" />
+        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
+          <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
+        </q-select>
+        <q-select v-model="filtros.ambienteId" :options="opcionesAmbiente" emit-value map-options outlined dense label="Ambiente" :disable="carId === TODOS" :hint="carId === TODOS ? 'Elija un centro' : ''">
+          <template #append><boton-dictado v-model="filtros.ambienteId" tipo="opcion" :opciones="opcionesAmbiente" emit-value :disable="carId === TODOS" /></template>
+        </q-select>
+        <q-input v-model="filtros.texto" outlined dense clearable label="Recurso (bien, rótulo o ambiente)">
+          <template #append><boton-dictado v-model="filtros.texto" /></template>
+        </q-input>
+        <q-select v-model="filtros.tipo" :options="opcionesTipo" emit-value map-options outlined dense label="Hecho">
+          <template #append><boton-dictado v-model="filtros.tipo" tipo="opcion" :opciones="opcionesTipo" emit-value /></template>
+        </q-select>
+        <q-select v-model="filtros.necesidad" :options="OPCIONES_NECESIDAD" emit-value map-options outlined dense label="Necesidad">
+          <template #append><boton-dictado v-model="filtros.necesidad" tipo="opcion" :opciones="OPCIONES_NECESIDAD" emit-value /></template>
+        </q-select>
+        <q-select v-model="filtros.anio" :options="opcionesAnio" emit-value map-options outlined dense label="Período">
+          <template #append><boton-dictado v-model="filtros.anio" tipo="opcion" :opciones="opcionesAnio" emit-value /></template>
+        </q-select>
         <div class="row items-center q-gutter-x-sm">
           <filtro-inactivos v-model="mostrarInactivos" />
           <q-btn flat dense color="secondary" icon="filter_alt_off" label="Limpiar filtros" @click="limpiarFiltros" />
@@ -156,6 +168,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, nextTick, reactive, ref, toRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'

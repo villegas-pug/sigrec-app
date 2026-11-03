@@ -13,7 +13,9 @@
       :hint="hint"
       :rules="[anioValido, noFutura]"
       @update:model-value="(v) => $emit('update:modelValue', v == null ? '' : String(v))"
-    />
+    >
+      <template #append><boton-dictado :model-value="modelValue" tipo="anio" como-texto @update:model-value="(v) => $emit('update:modelValue', v)" /></template>
+    </q-input>
     <q-input
       v-else
       :model-value="modelValue"
@@ -25,13 +27,16 @@
       :hint="hint"
       :rules="[noFutura]"
       @update:model-value="(v) => $emit('update:modelValue', v ?? '')"
-    />
+    >
+      <template #append><boton-dictado :model-value="modelValue" tipo="mes" @update:model-value="(v) => $emit('update:modelValue', v)" /></template>
+    </q-input>
   </div>
 </template>
 
 <script setup>
 // Fecha de adquisición con la precisión que realmente se conoce: solo el año ('AAAA') o el mes ('AAAA-MM').
 // Un año conocido no se convierte en enero. Vacío = se desconoce.
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { ref, watch } from 'vue'
 import { noFutura } from 'src/utils/validaciones'
 

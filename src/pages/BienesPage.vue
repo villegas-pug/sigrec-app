@@ -15,11 +15,15 @@
       </page-header>
 
       <div class="sg-filters">
-        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
+        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
+          <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
+        </q-select>
         <q-input v-model="texto" outlined dense clearable label="Buscar por nombre, rótulo o código patrimonial">
-          <template #append><q-icon name="search" /></template>
+          <template #append><boton-dictado v-model="texto" /><q-icon name="search" /></template>
         </q-input>
-        <q-select v-model="situacion" :options="OPCIONES_SITUACION" emit-value map-options outlined dense label="Situación" />
+        <q-select v-model="situacion" :options="OPCIONES_SITUACION" emit-value map-options outlined dense label="Situación">
+          <template #append><boton-dictado v-model="situacion" tipo="opcion" :opciones="OPCIONES_SITUACION" emit-value /></template>
+        </q-select>
       </div>
 
       <div class="sg-split">
@@ -73,6 +77,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'

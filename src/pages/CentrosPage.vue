@@ -14,7 +14,9 @@
             <filtro-inactivos v-model="mostrarInactivos" />
           </template>
           <div class="q-px-md q-pb-md">
-            <q-input v-model="busqueda" dense outlined clearable label="Buscar centro" />
+            <q-input v-model="busqueda" dense outlined clearable label="Buscar centro">
+              <template #append><boton-dictado v-model="busqueda" /></template>
+            </q-input>
           </div>
           <button
             v-for="c in carsFiltrados"
@@ -115,6 +117,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, nextTick, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'

@@ -63,8 +63,9 @@
         dense
         outlined
         bg-color="white"
-        label="Perfil de demostración"
-      />
+        label="Perfil de demostración">
+        <template #append><boton-dictado v-model="perfilId" tipo="opcion" :opciones="opcionesPerfil" emit-value /></template>
+      </q-select>
       <p class="sg-perfil__texto">Ámbito: {{ perfil.ambito.descripcion }}</p>
       <p class="sg-perfil__texto">Accesos por perfil provisionales, por validar.</p>
     </div>
@@ -72,6 +73,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive } from 'vue'
 import { useRoute } from 'vue-router'
 import { MENU } from 'src/config/menu'

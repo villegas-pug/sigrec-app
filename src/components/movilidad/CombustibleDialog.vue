@@ -16,8 +16,12 @@
       <router-link v-if="puedeAcceder('itinerarios')" :to="{ name: 'itinerarios', query: { vehiculo: vehiculo.id } }" class="text-weight-bold">Ir a informar la ejecución</router-link>
     </note-banner>
     <div class="row q-col-gutter-md">
-      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, noFutura]" />
-      <q-input v-model.number="form.cantidad" class="col-12 col-sm-6" outlined dense type="number" min="0" step="0.1" label="Cantidad *" suffix="L" :rules="[mayorQueCero]" />
+      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, noFutura]">
+        <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
+      </q-input>
+      <q-input v-model.number="form.cantidad" class="col-12 col-sm-6" outlined dense type="number" min="0" step="0.1" label="Cantidad *" suffix="L" :rules="[mayorQueCero]">
+        <template #append><boton-dictado v-model="form.cantidad" tipo="numero" /></template>
+      </q-input>
     </div>
     <q-select
       v-if="form.tipo === 'consumo'"
@@ -30,8 +34,9 @@
       label="Recorrido *"
       hint="Solo recorridos realizados sin consumo declarado, para no contarlos dos veces"
       :disable="!opcionesItinerario.length"
-      :rules="[requerido]"
-    />
+      :rules="[requerido]">
+      <template #append><boton-dictado v-model="form.itinerarioId" tipo="opcion" :opciones="opcionesItinerario" emit-value :disable="!opcionesItinerario.length" /></template>
+    </q-select>
     <q-input v-model="form.sustento" outlined dense label="Sustento (vale, declaración…)">
       <template #append><boton-dictado v-model="form.sustento" /></template>
     </q-input>

@@ -10,11 +10,21 @@
   >
     <template v-if="modo === 'datos'">
       <div class="row q-col-gutter-md">
-        <q-input v-model="form.nombre" class="col-12 col-sm-6" outlined dense label="Nombre *" :rules="[requerido]" />
-        <q-input v-model="form.codigoPatrimonial" class="col-12 col-sm-6" outlined dense label="Código patrimonial" hint="Vacío si no tiene" />
-        <q-input v-model="form.marcaModelo" class="col-12 col-sm-6" outlined dense label="Marca y modelo" />
-        <q-input v-model="form.serie" class="col-12 col-sm-6" outlined dense label="Serie" />
-        <q-input v-model.number="form.cantidad" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Cantidad *" :rules="[minimo(1)]" />
+        <q-input v-model="form.nombre" class="col-12 col-sm-6" outlined dense label="Nombre *" :rules="[requerido]">
+          <template #append><boton-dictado v-model="form.nombre" /></template>
+        </q-input>
+        <q-input v-model="form.codigoPatrimonial" class="col-12 col-sm-6" outlined dense label="Código patrimonial" hint="Vacío si no tiene">
+          <template #append><boton-dictado v-model="form.codigoPatrimonial" tipo="codigo" /></template>
+        </q-input>
+        <q-input v-model="form.marcaModelo" class="col-12 col-sm-6" outlined dense label="Marca y modelo">
+          <template #append><boton-dictado v-model="form.marcaModelo" /></template>
+        </q-input>
+        <q-input v-model="form.serie" class="col-12 col-sm-6" outlined dense label="Serie">
+          <template #append><boton-dictado v-model="form.serie" tipo="codigo" /></template>
+        </q-input>
+        <q-input v-model.number="form.cantidad" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Cantidad *" :rules="[minimo(1)]">
+          <template #append><boton-dictado v-model="form.cantidad" tipo="numero" /></template>
+        </q-input>
       </div>
       <div>
         <condicion-selector v-model="form.condicion" etiqueta="Condición" />
@@ -25,8 +35,12 @@
       </q-input>
       <campo-adquisicion v-model="form.fechaAdquisicion" label="Adquisición" hint="Indique solo lo que conoce. Vacío si se desconoce" />
       <div class="row q-col-gutter-md">
-        <q-input v-model.number="form.costo" class="col-12 col-sm-6" outlined dense type="number" min="0" label="Costo original (S/)" hint="Dato histórico; no es el precio referencial" />
-        <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Vida útil (años)" />
+        <q-input v-model.number="form.costo" class="col-12 col-sm-6" outlined dense type="number" min="0" label="Costo original (S/)" hint="Dato histórico; no es el precio referencial">
+          <template #append><boton-dictado v-model="form.costo" tipo="numero" /></template>
+        </q-input>
+        <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Vida útil (años)">
+          <template #append><boton-dictado v-model="form.vidaUtilAnios" tipo="numero" /></template>
+        </q-input>
       </div>
     </template>
 
@@ -40,9 +54,12 @@
         dense
         label="Forma parte de *"
         hint="Solo bienes activos del mismo ambiente que no sean componentes de este bien"
-        :rules="[requerido]"
-      />
-      <q-input v-model="form.posicion" outlined dense label="Posición" placeholder="Ej.: Cama inferior, silla 3" />
+        :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.padreId" tipo="opcion" :opciones="opcionesPadre" emit-value /></template>
+      </q-select>
+      <q-input v-model="form.posicion" outlined dense label="Posición" placeholder="Ej.: Cama inferior, silla 3">
+        <template #append><boton-dictado v-model="form.posicion" /></template>
+      </q-input>
       <p v-if="!opcionesPadre.length" class="sg-muted q-mb-none">No hay otros bienes activos en el ambiente a los que pueda asociarse.</p>
     </template>
 
@@ -56,9 +73,12 @@
         dense
         label="Ambiente de destino *"
         hint="Del mismo centro"
-        :rules="[requerido]"
-      />
-      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha del traslado *" :rules="[requerido, noFutura]" />
+        :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.ambienteId" tipo="opcion" :opciones="opcionesAmbiente" emit-value /></template>
+      </q-select>
+      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha del traslado *" :rules="[requerido, noFutura]">
+        <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
+      </q-input>
       <note-banner v-if="bien.asociadoA" tono="wa" icono="warning">
         Este bien es componente de {{ bien.asociadoA.bienId }}. Al trasladarlo por separado deja de ser su componente.
       </note-banner>

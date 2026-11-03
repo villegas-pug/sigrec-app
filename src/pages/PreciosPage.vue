@@ -15,8 +15,12 @@
       </note-banner>
 
       <div class="sg-filters">
-        <q-input v-model="texto" outlined dense clearable label="Buscar tipo de bien" />
-        <q-select v-model="filtro" :options="OPCIONES_FILTRO" emit-value map-options outlined dense label="Mostrar" />
+        <q-input v-model="texto" outlined dense clearable label="Buscar tipo de bien">
+          <template #append><boton-dictado v-model="texto" /></template>
+        </q-input>
+        <q-select v-model="filtro" :options="OPCIONES_FILTRO" emit-value map-options outlined dense label="Mostrar">
+          <template #append><boton-dictado v-model="filtro" tipo="opcion" :opciones="OPCIONES_FILTRO" emit-value /></template>
+        </q-select>
         <div class="row items-center"><filtro-inactivos v-model="mostrarInactivos" /></div>
       </div>
 
@@ -100,6 +104,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import PageHeader from 'components/common/PageHeader.vue'

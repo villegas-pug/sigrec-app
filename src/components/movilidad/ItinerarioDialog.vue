@@ -10,28 +10,44 @@
   >
     <template v-if="modo !== 'ejecucion'">
       <div class="row q-col-gutter-md">
-        <q-input v-model="form.fecha" class="col-12 col-sm-4" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, fechaCoherente]" />
+        <q-input v-model="form.fecha" class="col-12 col-sm-4" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, fechaCoherente]">
+          <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
+        </q-input>
         <q-input v-model="form.proposito" class="col-12 col-sm-8" outlined dense label="Propósito *" :rules="[requerido]">
           <template #append><boton-dictado v-model="form.proposito" /></template>
         </q-input>
       </div>
       <q-option-group v-model="form.modoRuta" inline :options="[{ label: 'Ingreso manual', value: 'manual' }, { label: 'Definir en mapa', value: 'mapa' }]" />
       <mapa-itinerario v-if="modelValue" v-show="form.modoRuta === 'mapa'" v-model="form.ruta" :visible="form.modoRuta === 'mapa'" :nuevo="modo === 'nuevo'" @modificado="mapaModificado = true" />
-      <q-input v-if="form.modoRuta === 'manual'" v-model="form.destinos" outlined dense label="Destinos, separados por comas *" hint="Ej.: CAR, Centro de salud, CAR" :rules="[requerido]" />
+      <q-input v-if="form.modoRuta === 'manual'" v-model="form.destinos" outlined dense label="Destinos, separados por comas *" hint="Ej.: CAR, Centro de salud, CAR" :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.destinos" /></template>
+      </q-input>
       <div class="sg-kv__label">Previsto</div>
       <div class="row q-col-gutter-md">
-        <q-input v-model="form.previsto.salida" class="col-6 col-sm-4" outlined dense type="time" stack-label label="Salida" />
-        <q-input v-model="form.previsto.llegada" class="col-6 col-sm-4" outlined dense type="time" stack-label label="Llegada" :rules="[llegadaPosterior(() => form.previsto.salida)]" />
-        <q-input v-model.number="form.previsto.km" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Distancia (km)" :readonly="form.modoRuta === 'mapa'" />
+        <q-input v-model="form.previsto.salida" class="col-6 col-sm-4" outlined dense type="time" stack-label label="Salida">
+          <template #append><boton-dictado v-model="form.previsto.salida" tipo="hora" /></template>
+        </q-input>
+        <q-input v-model="form.previsto.llegada" class="col-6 col-sm-4" outlined dense type="time" stack-label label="Llegada" :rules="[llegadaPosterior(() => form.previsto.salida)]">
+          <template #append><boton-dictado v-model="form.previsto.llegada" tipo="hora" /></template>
+        </q-input>
+        <q-input v-model.number="form.previsto.km" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Distancia (km)" :readonly="form.modoRuta === 'mapa'">
+          <template #append><boton-dictado v-model="form.previsto.km" tipo="numero" :disable="form.modoRuta === 'mapa'" /></template>
+        </q-input>
       </div>
       <q-checkbox v-model="form.conRealizado" label="El recorrido ya se realizó" />
     </template>
     <template v-if="modo === 'ejecucion' || form.conRealizado">
       <div class="sg-kv__label">Realizado</div>
       <div class="row q-col-gutter-md">
-        <q-input v-model="form.realizado.salida" class="col-6 col-sm-4" outlined dense type="time" stack-label label="Salida" />
-        <q-input v-model="form.realizado.llegada" class="col-6 col-sm-4" outlined dense type="time" stack-label label="Llegada" :rules="[llegadaPosterior(() => form.realizado.salida)]" />
-        <q-input v-model.number="form.realizado.km" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Distancia (km)" hint="Vacío si no se conoce" />
+        <q-input v-model="form.realizado.salida" class="col-6 col-sm-4" outlined dense type="time" stack-label label="Salida">
+          <template #append><boton-dictado v-model="form.realizado.salida" tipo="hora" /></template>
+        </q-input>
+        <q-input v-model="form.realizado.llegada" class="col-6 col-sm-4" outlined dense type="time" stack-label label="Llegada" :rules="[llegadaPosterior(() => form.realizado.salida)]">
+          <template #append><boton-dictado v-model="form.realizado.llegada" tipo="hora" /></template>
+        </q-input>
+        <q-input v-model.number="form.realizado.km" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Distancia (km)" hint="Vacío si no se conoce">
+          <template #append><boton-dictado v-model="form.realizado.km" tipo="numero" /></template>
+        </q-input>
       </div>
       <q-checkbox v-if="sugerenciaEjecucion" v-model="form.confirmaKm" label="Confirmo o he corregido la distancia realizada" />
     </template>

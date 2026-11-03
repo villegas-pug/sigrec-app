@@ -3,7 +3,7 @@
     <template v-if="vehiculos.length > 1" #acciones>
       <q-select
         :model-value="modelValue"
-        :options="vehiculos.map((v) => ({ label: `${v.id} · ${carPorId(v.carId).nombre}`, value: v.id }))"
+        :options="opcionesVehiculo"
         emit-value
         map-options
         outlined
@@ -11,7 +11,9 @@
         label="Vehículo"
         style="min-width: min(260px, 100%)"
         @update:model-value="$emit('update:modelValue', $event)"
-      />
+      >
+        <template #append><boton-dictado :model-value="modelValue" tipo="opcion" :opciones="opcionesVehiculo" emit-value @update:model-value="$emit('update:modelValue', $event)" /></template>
+      </q-select>
     </template>
     <div v-if="vehiculo" class="sg-kv-grid">
       <key-value etiqueta="Placa">{{ vehiculo.placa }}</key-value>
@@ -30,6 +32,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed } from 'vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
@@ -44,6 +47,7 @@ const props = defineProps({
 
 defineEmits(['update:modelValue'])
 
+const opcionesVehiculo = computed(() => props.vehiculos.map((v) => ({ label: `${v.id} · ${carPorId(v.carId).nombre}`, value: v.id })))
 const vehiculo = computed(() => (props.modelValue ? vehiculoPorId(props.modelValue) : null))
 const unidad = computed(() => (vehiculo.value?.unidad === 'L' ? 'litros' : vehiculo.value?.unidad))
 </script>

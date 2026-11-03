@@ -36,8 +36,9 @@
       dense
       label="Ambiente"
       hint="Opcional. Sin ambiente, la fotografía queda como del centro."
-      :readonly="ambienteFijo"
-    />
+      :readonly="ambienteFijo">
+      <template #append><boton-dictado v-model="form.ambienteId" tipo="opcion" :opciones="opcionesAmbiente" emit-value :disable="ambienteFijo" /></template>
+    </q-select>
     <q-input v-model="form.titulo" outlined dense label="Título *" hint="Ej.: Fachada, techo del patio" :rules="[requerido]">
       <template #append><boton-dictado v-model="form.titulo" /></template>
     </q-input>

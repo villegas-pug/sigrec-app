@@ -1,55 +1,62 @@
-# SPEC 007 — Dictado por voz en campos de texto libre
+# SPEC 007 — Dictado por voz en todo el proyecto y en todo dispositivo
 
-- Estado: implementada. Prototipo en memoria con datos ficticios.
+- Estado: implementada, pendiente de verificar en navegador. Prototipo en memoria con datos ficticios.
 - Objetivo: agilizar el registro desde dispositivos móviles dictando en lugar de escribir.
-- Motor: Web Speech API del navegador, en `es-PE`. Sin backend ni dependencias nuevas.
+- Dependencia nueva: `@huggingface/transformers@4.3.1` (solo se carga dentro de un Web Worker).
 
-## Contrato
+## Alcance
 
-- El dictado es una mejora progresiva. Si el navegador no ofrece `SpeechRecognition` o el contexto no es seguro (`window.isSecureContext`), el botón no aparece y el campo funciona como antes.
-- Ninguna validación ni flujo depende del dictado. El texto dictado se puede corregir con el teclado.
-- Cada pulsación es un tramo de dictado (`continuous = false`). El texto se añade al final del ya escrito, con espacio y mayúscula inicial si empieza una oración, y se ve en vivo mientras se habla.
-- Una sola sesión activa: iniciar en otro campo detiene la anterior. Al cerrar el diálogo o cambiar de página se libera el micrófono.
-- Si no hay texto final (error o cancelación) el campo recupera su valor previo.
-- El texto dictado cuenta como modificación: la protección de borradores (SPEC 005) sigue funcionando.
+- **Con dictado:** todo `q-input` (texto, área de texto, número, fecha, mes, hora, teléfono) y todo `q-select`, además de los campos internos de `CampoAdquisicion`, el buscador de lugares del mapa y la selección de centro, ambiente y bien.
+- **Sin dictado:** controles de un solo toque (`q-checkbox`, `q-toggle`, `q-option-group`, `CondicionSelector`, `q-file`) y botones.
+
+## Motores
+
+| Motor | Cuándo se usa | Características |
+| --- | --- | --- |
+| Navegador (Web Speech API, `es-PE`) | Si existe, hay conexión, no es iOS instalado en pantalla de inicio y el campo no es `local` | Texto parcial en vivo. El audio lo procesa el servicio de voz del navegador. |
+| Whisper en el dispositivo (`whisper-tiny`, transformers.js, WASM) | En los demás casos | Sin conexión tras la primera descarga (~40 MB, en caché). El audio no sale del dispositivo. Sin texto parcial; límite de 30 s por tramo. |
+
+- Si el servicio de voz del navegador falla (`network`, `service-not-allowed`), el resto de la sesión usa Whisper.
+- Whisper se carga bajo demanda; antes de la primera descarga se pide confirmación.
+- Campos con datos personales (chofer, arrendador, contacto) llevan `local`: siempre usan Whisper.
+- Una sola sesión de dictado a la vez; al cerrar el diálogo o cambiar de página se libera el micrófono.
+
+## Interpretación por tipo de campo
+
+- `texto`: se añade al final de lo escrito, con espacio y mayúscula inicial si empieza una oración.
+- `numero`, `anio`: cifras o palabras («tres coma cinco», «dos mil diecinueve»). Respeta si el valor del campo es texto o número.
+- `fecha`, `mes`: «15 de marzo de 2024», «quince de marzo» (año de la fecha de corte), «hoy», «ayer», «anteayer», «15/03/2024», «marzo de 2019».
+- `hora`: «tres y media de la tarde», «nueve y cuarto», «diez menos cuarto», «mediodía», «14:20».
+- `telefono`, `codigo`: dígitos dictados en palabras, «guion», mayúsculas (rótulo, placa, serie, código patrimonial, suministro).
+- `opcion` (listas): se elige la opción más parecida a lo dictado (exacta, que empiece, que contenga, palabras en común). Si no hay una clara, no se elige ninguna. En selección múltiple se añade el bien dictado a los elegidos.
+- Los tipos distintos de texto **reemplazan** el valor, muestran «Se entendió «…» → valor» con la acción **Deshacer**, y si no se entiende nada el campo no cambia.
 
 ## Privacidad
 
-- El audio lo procesa el servicio de voz del navegador (Google en Chrome, Apple en Safari). SIGREC no graba ni guarda audio.
-- En el primer uso de la sesión se avisa: «El audio se procesa en el servicio de voz del navegador. No dicte datos personales de residentes.»
-- ⚠️ Por validar: para producción, conformidad con protección de datos personales.
-
-## Campos incluidos
-
-Detalles, observaciones, deterioro, motivos, sustentos, notas, títulos de novedad, incidente y foto, intervención, características, litigios, contratación, propósito del itinerario.
-
-## Campos excluidos
-
-- Identificadores y códigos validados (rótulo, código patrimonial, serie, placa, nombres únicos): un error de transcripción rompe la unicidad.
-- Números, fechas, horas y teléfonos.
-- Direcciones que van al geocodificador.
-- Nombres de personas (chofer, arrendador, contacto).
-- Búsquedas.
+- SIGREC no graba ni guarda audio.
+- Motor del navegador: aviso en el primer uso («El audio se procesa en el servicio de voz del navegador. No dicte datos personales de residentes»).
+- Whisper: el audio se procesa en el dispositivo; el modelo se descarga del CDN de Hugging Face (coordinadas externas, como OSRM y Photon en la SPEC 006).
+- ⚠️ Por validar: conformidad con protección de datos personales para producción.
 
 ## Entorno
 
-- Requiere HTTPS (o `localhost`), conexión a internet en Chrome para Android y permiso de micrófono.
+- El micrófono requiere HTTPS (o `localhost`) con cualquier motor. En un contexto inseguro o sin `getUserMedia` el botón no aparece y el campo funciona como antes.
 - Pruebas desde un teléfono: reenvío de puerto por USB (`chrome://inspect`) o `devServer.https` de Quasar con certificado autofirmado. La configuración del proyecto no se modifica.
+- ⚠️ Por validar: calidad de `whisper-tiny` en español de Perú. Alternativa: `whisper-base` (~80 MB) cambiando `MODELO_WHISPER` en `whisper.worker.js`.
 
 ## Fuera de alcance
 
-Rellenar formularios por voz con comandos, reconocimiento sin conexión (Whisper) y puntuación por voz.
+Comandos de voz que rellenen varios campos a la vez y puntuación hablada.
 
 ## Implementación
 
-`src/composables/useDictado.js`, `src/components/common/BotonDictado.vue` (slot `#append` de `q-input`) y estilos `.sg-dictado*` en `src/css/app.scss`.
+`src/services/voz/` (motores y elección), `src/utils/interpretacionVoz.js` (funciones puras), `src/composables/useDictado.js`, `src/components/common/BotonDictado.vue` (slot `#append`) y estilos `.sg-dictado*` en `src/css/app.scss`.
 
 ## Verificación pendiente (requiere autorización para `quasar dev`)
 
-1. En un navegador sin soporte el botón no aparece y los campos funcionan igual.
-2. El primer uso muestra el aviso y pide el permiso de micrófono.
-3. El texto parcial se ve en vivo y el final se añade tras el existente.
-4. Iniciar otro campo detiene el anterior; cerrar el diálogo libera el micrófono.
-5. Permiso denegado, sin voz o sin red: mensaje en español y el campo conserva su texto.
-6. Con texto dictado, cancelar el diálogo pide confirmación de descarte.
-7. A 390 px el botón no tapa el texto y es fácil de pulsar.
+1. Chrome: usa el motor del navegador. Firefox o sin conexión: pide confirmación de descarga, muestra el progreso y transcribe con Whisper.
+2. Fecha, hora, número y opción dictados se aplican, muestran «Deshacer» y, si no se entienden, no cambian el campo.
+3. Dictar en un `q-select` elige la opción sin abrir la lista.
+4. En el buscador del mapa, el texto dictado lanza las sugerencias.
+5. Los campos `local` usan Whisper incluso en Chrome.
+6. Texto parcial en vivo, sesión única, mensajes de error, confirmación de descarte con texto dictado y uso cómodo a 390 px.

@@ -19,8 +19,12 @@
     />
     <div class="sg-muted" style="margin-top: -8px">Solo los bienes indicados quedan afectados; el resto del ambiente no cambia.</div>
     <div class="row q-col-gutter-md">
-      <q-select v-model="form.tipo" class="col-12 col-sm-6" :options="OPCIONES_INCIDENTE" emit-value map-options outlined dense label="Hecho *" :rules="[requerido]" />
-      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha del hecho *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]" />
+      <q-select v-model="form.tipo" class="col-12 col-sm-6" :options="OPCIONES_INCIDENTE" emit-value map-options outlined dense label="Hecho *" :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.tipo" tipo="opcion" :opciones="OPCIONES_INCIDENTE" emit-value /></template>
+      </q-select>
+      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha del hecho *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
+        <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
+      </q-input>
     </div>
     <q-input v-model="form.titulo" outlined dense label="Motivo *" :rules="[requerido]">
       <template #append><boton-dictado v-model="form.titulo" /></template>
@@ -38,8 +42,9 @@
       :max="bienUnico.cantidad"
       :label="`Unidades afectadas (de ${bienUnico.cantidad})`"
       hint="Vacío = todas las unidades. Define cuántas unidades se reponen (regla por validar)."
-      :rules="[unidadesValidas]"
-    />
+      :rules="[unidadesValidas]">
+      <template #append><boton-dictado v-model="form.unidades" tipo="numero" /></template>
+    </q-input>
     <template v-if="!evento">
       <q-toggle v-if="form.bienIds?.length > 1" v-model="porBien" label="Indicar condición por bien" />
       <div v-if="porBien && form.bienIds?.length > 1" class="column q-gutter-y-sm">

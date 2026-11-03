@@ -8,9 +8,15 @@
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
-    <q-input v-model.number="form.precio" outlined dense type="number" min="0" step="0.01" label="Precio (S/) *" :rules="[mayorQueCero]" />
-    <q-input v-model="form.fechaPrecio" outlined dense type="month" stack-label label="Fecha del precio" :rules="[noFutura]" />
-    <q-input v-model="form.procedencia" outlined dense label="Procedencia (cotización, catálogo, factura…)" />
+    <q-input v-model.number="form.precio" outlined dense type="number" min="0" step="0.01" label="Precio (S/) *" :rules="[mayorQueCero]">
+      <template #append><boton-dictado v-model="form.precio" tipo="numero" /></template>
+    </q-input>
+    <q-input v-model="form.fechaPrecio" outlined dense type="month" stack-label label="Fecha del precio" :rules="[noFutura]">
+      <template #append><boton-dictado v-model="form.fechaPrecio" tipo="mes" /></template>
+    </q-input>
+    <q-input v-model="form.procedencia" outlined dense label="Procedencia (cotización, catálogo, factura…)">
+      <template #append><boton-dictado v-model="form.procedencia" /></template>
+    </q-input>
     <div v-if="tipo.historial?.length">
       <div class="sg-kv__label q-mb-xs">Precios anteriores</div>
       <ul class="q-my-none q-pl-md">
@@ -24,6 +30,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

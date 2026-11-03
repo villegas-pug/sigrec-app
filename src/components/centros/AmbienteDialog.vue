@@ -9,20 +9,37 @@
     @enviar="guardar"
   >
     <div class="row q-col-gutter-md">
-      <q-input v-model="form.nombre" class="col-12 col-sm-8" outlined dense label="Nombre *" hint="Ej.: Dormitorio 3, Lavandería" :rules="[requerido]" />
-      <q-input v-model.number="form.piso" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Piso" />
-      <q-input v-model="form.bloque" class="col-12 col-sm-6" outlined dense label="Bloque" hint="Opcional. Ej.: Bloque A" />
-      <q-input v-model="form.ubicacion" class="col-12 col-sm-6" outlined dense label="Ubicación" hint="Opcional. Ej.: Ala este, junto al patio" />
-      <q-input v-model.number="form.areaM2" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Área (m²)" />
-      <q-input v-model.number="form.puertas" class="col-6 col-sm-4" outlined dense type="number" min="0" label="Puertas" />
-      <q-input v-model.number="form.ventanas" class="col-6 col-sm-4" outlined dense type="number" min="0" label="Ventanas" />
+      <q-input v-model="form.nombre" class="col-12 col-sm-8" outlined dense label="Nombre *" hint="Ej.: Dormitorio 3, Lavandería" :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.nombre" /></template>
+      </q-input>
+      <q-input v-model.number="form.piso" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Piso">
+        <template #append><boton-dictado v-model="form.piso" tipo="numero" /></template>
+      </q-input>
+      <q-input v-model="form.bloque" class="col-12 col-sm-6" outlined dense label="Bloque" hint="Opcional. Ej.: Bloque A">
+        <template #append><boton-dictado v-model="form.bloque" /></template>
+      </q-input>
+      <q-input v-model="form.ubicacion" class="col-12 col-sm-6" outlined dense label="Ubicación" hint="Opcional. Ej.: Ala este, junto al patio">
+        <template #append><boton-dictado v-model="form.ubicacion" /></template>
+      </q-input>
+      <q-input v-model.number="form.areaM2" class="col-12 col-sm-4" outlined dense type="number" min="0" label="Área (m²)">
+        <template #append><boton-dictado v-model="form.areaM2" tipo="numero" /></template>
+      </q-input>
+      <q-input v-model.number="form.puertas" class="col-6 col-sm-4" outlined dense type="number" min="0" label="Puertas">
+        <template #append><boton-dictado v-model="form.puertas" tipo="numero" /></template>
+      </q-input>
+      <q-input v-model.number="form.ventanas" class="col-6 col-sm-4" outlined dense type="number" min="0" label="Ventanas">
+        <template #append><boton-dictado v-model="form.ventanas" tipo="numero" /></template>
+      </q-input>
     </div>
     <condicion-selector v-model="form.condicion" etiqueta="Condición *" />
-    <q-input v-model="form.ultimoPintado" outlined dense type="month" stack-label label="Último pintado" hint="Vacío si no se conoce" :rules="[noFutura]" />
+    <q-input v-model="form.ultimoPintado" outlined dense type="month" stack-label label="Último pintado" hint="Vacío si no se conoce" :rules="[noFutura]">
+      <template #append><boton-dictado v-model="form.ultimoPintado" tipo="mes" /></template>
+    </q-input>
   </form-dialog>
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

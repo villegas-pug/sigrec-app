@@ -8,7 +8,9 @@
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
-    <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de atención *" :rules="[requerido, noFutura]" />
+    <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de atención *" :rules="[requerido, noFutura]">
+      <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
+    </q-input>
     <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Cómo se atendió">
       <template #append><boton-dictado v-model="form.detalle" /></template>
     </q-input>

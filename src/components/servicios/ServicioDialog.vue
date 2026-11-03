@@ -9,7 +9,9 @@
     @enviar="guardar"
   >
     <div class="row q-col-gutter-md">
-      <q-select v-if="!servicio" v-model="form.tipo" class="col-12 col-sm-6" :options="opcionesTipo" emit-value map-options outlined dense label="Servicio *" :rules="[requerido]" />
+      <q-select v-if="!servicio" v-model="form.tipo" class="col-12 col-sm-6" :options="opcionesTipo" emit-value map-options outlined dense label="Servicio *" :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.tipo" tipo="opcion" :opciones="opcionesTipo" emit-value /></template>
+      </q-select>
       <q-select
         v-model="form.periodicidad"
         class="col-12 col-sm-6"
@@ -20,15 +22,24 @@
         dense
         label="Periodicidad *"
         :disable="periodicidadBloqueada"
-        :hint="periodicidadBloqueada ? 'Tiene períodos informados: no puede cambiarse.' : ''"
-      />
+        :hint="periodicidadBloqueada ? 'Tiene períodos informados: no puede cambiarse.' : ''">
+        <template #append><boton-dictado v-model="form.periodicidad" tipo="opcion" :opciones="OPCIONES_PERIODICIDAD" emit-value :disable="periodicidadBloqueada" /></template>
+      </q-select>
     </div>
-    <q-input v-model="form.proveedor" outlined dense label="Proveedor *" :rules="[requerido]" />
+    <q-input v-model="form.proveedor" outlined dense label="Proveedor *" :rules="[requerido]">
+      <template #append><boton-dictado v-model="form.proveedor" /></template>
+    </q-input>
     <div class="row q-col-gutter-md">
-      <q-input v-model="form.telefono" class="col-12 col-sm-6" outlined dense type="tel" label="Teléfono del proveedor" hint="Solo se muestra como dato de contacto" :rules="[telefonoValido]" />
-      <q-input v-model="form.contactoNombre" class="col-12 col-sm-6" outlined dense label="Contacto" hint="Opcional. Ej.: Mesa de ayuda, ejecutivo de cuenta" />
+      <q-input v-model="form.telefono" class="col-12 col-sm-6" outlined dense type="tel" label="Teléfono del proveedor" hint="Solo se muestra como dato de contacto" :rules="[telefonoValido]">
+        <template #append><boton-dictado v-model="form.telefono" tipo="telefono" /></template>
+      </q-input>
+      <q-input v-model="form.contactoNombre" class="col-12 col-sm-6" outlined dense label="Contacto" hint="Opcional. Ej.: Mesa de ayuda, ejecutivo de cuenta">
+        <template #append><boton-dictado v-model="form.contactoNombre" local /></template>
+      </q-input>
     </div>
-    <q-input v-model="form.suministro" outlined dense label="N.º de suministro o contrato" />
+    <q-input v-model="form.suministro" outlined dense label="N.º de suministro o contrato">
+      <template #append><boton-dictado v-model="form.suministro" tipo="codigo" /></template>
+    </q-input>
     <q-input v-model="form.contratacion" outlined dense label="Contratación" hint="Ej.: a nombre del arrendador, pago por el CAR">
       <template #append><boton-dictado v-model="form.contratacion" /></template>
     </q-input>

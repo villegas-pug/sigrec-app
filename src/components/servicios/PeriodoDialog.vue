@@ -43,7 +43,9 @@
       <q-option-group v-model="form.estado" :options="OPCIONES_ESTADO" />
 
       <template v-if="form.estado === 'pendiente'">
-        <q-input v-model="form.vence" outlined dense type="date" stack-label label="Fecha de vencimiento (si se conoce)" />
+        <q-input v-model="form.vence" outlined dense type="date" stack-label label="Fecha de vencimiento (si se conoce)">
+          <template #append><boton-dictado v-model="form.vence" tipo="fecha" /></template>
+        </q-input>
         <q-input v-model="form.motivo" outlined dense label="Motivo del pendiente" hint="Opcional. Ej.: recibo observado, falta de fondos">
           <template #append><boton-dictado v-model="form.motivo" /></template>
         </q-input>
@@ -54,8 +56,12 @@
 
       <template v-else-if="form.estado === 'pagado'">
         <div class="row q-col-gutter-md">
-          <q-input v-model="form.pagoFecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha de pago" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]" />
-          <q-input v-model.number="form.pagoImporte" class="col-12 col-sm-6" outlined dense type="number" min="0" step="0.01" label="Importe (S/) *" :rules="[mayorQueCero]" />
+          <q-input v-model="form.pagoFecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha de pago" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
+            <template #append><boton-dictado v-model="form.pagoFecha" tipo="fecha" /></template>
+          </q-input>
+          <q-input v-model.number="form.pagoImporte" class="col-12 col-sm-6" outlined dense type="number" min="0" step="0.01" label="Importe (S/) *" :rules="[mayorQueCero]">
+            <template #append><boton-dictado v-model="form.pagoImporte" tipo="numero" /></template>
+          </q-input>
         </div>
         <q-input v-model="form.pagoSustento" outlined dense label="Sustento *" :rules="[(v) => !!v?.trim() || 'Campo obligatorio']">
           <template #append><boton-dictado v-model="form.pagoSustento" /></template>

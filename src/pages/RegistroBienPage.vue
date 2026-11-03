@@ -10,8 +10,12 @@
       <template v-else>
         <section-card titulo="Contexto de registro" subtitulo="Se conserva al guardar para continuar con otros bienes del mismo ambiente">
           <div class="sg-kv-grid items-end">
-            <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
-            <q-select v-model="ambienteId" :options="opcionesAmbiente" emit-value map-options outlined dense label="Ambiente *" :rules="[requerido]" />
+            <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
+              <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
+            </q-select>
+            <q-select v-model="ambienteId" :options="opcionesAmbiente" emit-value map-options outlined dense label="Ambiente *" :rules="[requerido]">
+              <template #append><boton-dictado v-model="ambienteId" tipo="opcion" :opciones="opcionesAmbiente" emit-value /></template>
+            </q-select>
             <div v-if="ambiente" class="sg-chips items-center">
               <q-icon name="location_on" color="secondary" size="20px" aria-hidden="true" />
               <span class="text-weight-bold">{{ textoUbicacion(ubicacionDeAmbiente(ambiente.id)) }}</span>
@@ -31,10 +35,18 @@
             </template>
             <q-form ref="formulario" class="column q-gutter-y-md" @submit="guardar">
               <div class="row q-col-gutter-md">
-                <q-select v-model="form.tipoId" class="col-12 col-sm-6" :options="opcionesTipo" emit-value map-options outlined dense label="Tipo de bien *" :rules="[requerido]" @update:model-value="alCambiarTipo" />
-                <q-input v-model="form.nombre" class="col-12 col-sm-6" outlined dense label="Nombre *" :rules="[requerido]" />
-                <q-input v-model="form.rotulo" class="col-12 col-sm-6" outlined dense label="Rótulo SIGREC *" hint="Sugerido a partir del ambiente; puede corregirse" :rules="[requerido, rotuloLibre]" />
-                <q-input v-model.number="form.cantidad" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Cantidad *" :rules="[minimo(1)]" />
+                <q-select v-model="form.tipoId" class="col-12 col-sm-6" :options="opcionesTipo" emit-value map-options outlined dense label="Tipo de bien *" :rules="[requerido]" @update:model-value="alCambiarTipo">
+                  <template #append><boton-dictado v-model="form.tipoId" tipo="opcion" :opciones="opcionesTipo" emit-value /></template>
+                </q-select>
+                <q-input v-model="form.nombre" class="col-12 col-sm-6" outlined dense label="Nombre *" :rules="[requerido]">
+                  <template #append><boton-dictado v-model="form.nombre" /></template>
+                </q-input>
+                <q-input v-model="form.rotulo" class="col-12 col-sm-6" outlined dense label="Rótulo SIGREC *" hint="Sugerido a partir del ambiente; puede corregirse" :rules="[requerido, rotuloLibre]">
+                  <template #append><boton-dictado v-model="form.rotulo" tipo="codigo" /></template>
+                </q-input>
+                <q-input v-model.number="form.cantidad" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Cantidad *" :rules="[minimo(1)]">
+                  <template #append><boton-dictado v-model="form.cantidad" tipo="numero" /></template>
+                </q-input>
               </div>
 
               <div v-if="tipoElegido" class="sg-box">
@@ -62,26 +74,41 @@
               <q-expansion-item v-model="adicionalesAbierto" dense expand-separator icon="tune" label="Datos adicionales" caption="Categoría, código patrimonial, marca, serie, deterioro, costo original, vida útil y componente de">
                 <div class="column q-gutter-y-md q-pt-md">
                   <div class="row q-col-gutter-md">
-                    <q-select v-model="form.categoria" class="col-12 col-sm-6" :options="OPCIONES_CATEGORIA" emit-value map-options outlined dense label="Categoría *" hint="Se completa con el tipo de bien" :rules="[requerido]" />
+                    <q-select v-model="form.categoria" class="col-12 col-sm-6" :options="OPCIONES_CATEGORIA" emit-value map-options outlined dense label="Categoría *" hint="Se completa con el tipo de bien" :rules="[requerido]">
+                      <template #append><boton-dictado v-model="form.categoria" tipo="opcion" :opciones="OPCIONES_CATEGORIA" emit-value /></template>
+                    </q-select>
                     <q-input
                       v-model="form.codigoPatrimonial"
                       class="col-12 col-sm-6"
                       outlined
                       dense
                       label="Código patrimonial"
-                      :hint="previo ? `Dato previo: ${previo.codigoPatrimonial ?? 'no informado'}. Déjelo vacío si no es visible.` : 'Vacío si el bien no tiene código patrimonial'"
-                    />
-                    <q-input v-model="form.marcaModelo" class="col-12 col-sm-6" outlined dense label="Marca y modelo" :hint="previo ? `Dato previo: ${previo.marcaModelo ?? 'no informado'}` : ''" />
-                    <q-input v-model="form.serie" class="col-12 col-sm-6" outlined dense label="Serie" :hint="previo ? `Dato previo: ${previo.serie ?? 'no informado'}` : ''" />
-                    <q-input v-model.number="form.costo" class="col-12 col-sm-6" outlined dense type="number" min="0" label="Costo original (S/)" hint="Dato histórico; vacío si se desconoce" />
-                    <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Vida útil (años)" hint="Vacío = pendiente de definir" />
+                      :hint="previo ? `Dato previo: ${previo.codigoPatrimonial ?? 'no informado'}. Déjelo vacío si no es visible.` : 'Vacío si el bien no tiene código patrimonial'">
+                      <template #append><boton-dictado v-model="form.codigoPatrimonial" tipo="codigo" /></template>
+                    </q-input>
+                    <q-input v-model="form.marcaModelo" class="col-12 col-sm-6" outlined dense label="Marca y modelo" :hint="previo ? `Dato previo: ${previo.marcaModelo ?? 'no informado'}` : ''">
+                      <template #append><boton-dictado v-model="form.marcaModelo" /></template>
+                    </q-input>
+                    <q-input v-model="form.serie" class="col-12 col-sm-6" outlined dense label="Serie" :hint="previo ? `Dato previo: ${previo.serie ?? 'no informado'}` : ''">
+                      <template #append><boton-dictado v-model="form.serie" tipo="codigo" /></template>
+                    </q-input>
+                    <q-input v-model.number="form.costo" class="col-12 col-sm-6" outlined dense type="number" min="0" label="Costo original (S/)" hint="Dato histórico; vacío si se desconoce">
+                      <template #append><boton-dictado v-model="form.costo" tipo="numero" /></template>
+                    </q-input>
+                    <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Vida útil (años)" hint="Vacío = pendiente de definir">
+                      <template #append><boton-dictado v-model="form.vidaUtilAnios" tipo="numero" /></template>
+                    </q-input>
                   </div>
                   <q-input v-model="form.deterioro" outlined dense type="textarea" autogrow label="Deterioro observado">
                     <template #append><boton-dictado v-model="form.deterioro" /></template>
                   </q-input>
                   <div class="row q-col-gutter-md">
-                    <q-select v-model="form.asociadoA" class="col-12 col-sm-7" :options="opcionesAsociar" emit-value map-options clearable outlined dense label="Componente de" hint="Opcional: bien del que forma parte (p. ej. la cama de un colchón)" />
-                    <q-input v-model="form.posicion" class="col-12 col-sm-5" outlined dense label="Posición" :disable="!form.asociadoA" placeholder="Ej.: Cama inferior" />
+                    <q-select v-model="form.asociadoA" class="col-12 col-sm-7" :options="opcionesAsociar" emit-value map-options clearable outlined dense label="Componente de" hint="Opcional: bien del que forma parte (p. ej. la cama de un colchón)">
+                      <template #append><boton-dictado v-model="form.asociadoA" tipo="opcion" :opciones="opcionesAsociar" emit-value /></template>
+                    </q-select>
+                    <q-input v-model="form.posicion" class="col-12 col-sm-5" outlined dense label="Posición" :disable="!form.asociadoA" placeholder="Ej.: Cama inferior">
+                      <template #append><boton-dictado v-model="form.posicion" :disable="!form.asociadoA" /></template>
+                    </q-input>
                   </div>
                 </div>
               </q-expansion-item>

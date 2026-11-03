@@ -4,6 +4,7 @@
       <q-select ref="selectorBusqueda" v-model="resultadoElegido" outlined dense clearable use-input hide-selected fill-input
         input-debounce="500" :options="resultados" :loading="buscando" label="Buscar dirección o lugar"
         @filter="filtrar" @input-value="actualizarConsulta" @update:model-value="seleccionarResultado">
+        <template #append><boton-dictado :model-value="consultaBusqueda" @update:model-value="dictarBusqueda" /></template>
         <template #no-option><q-item><q-item-section class="text-grey">{{ mensajeBusqueda }}</q-item-section></q-item></template>
       </q-select>
       <div v-if="errorBusqueda" class="row items-center q-gutter-sm" role="status">
@@ -27,7 +28,9 @@
     <div class="col-12 col-md-5 column q-gutter-sm">
       <div v-for="(p, i) in puntos" :key="p.id" class="row items-center q-gutter-xs no-wrap">
         <span>{{ i + 1 }}</span>
-        <q-input v-if="!soloLectura" v-model="p.nombre" dense outlined class="col" :label="i === 0 ? 'Origen' : i === puntos.length - 1 ? 'Destino' : 'Parada'" />
+        <q-input v-if="!soloLectura" v-model="p.nombre" dense outlined class="col" :label="i === 0 ? 'Origen' : i === puntos.length - 1 ? 'Destino' : 'Parada'">
+          <template #append><boton-dictado v-model="p.nombre" /></template>
+        </q-input>
         <span v-else class="col">{{ p.nombre }}</span>
         <q-btn flat dense icon="center_focus_strong" :aria-label="`Centrar punto ${i + 1}: ${p.nombre}`" @click="centrarPunto(p)" />
         <q-btn v-if="!soloLectura" flat dense icon="arrow_upward" :disable="i === 0" aria-label="Subir punto" @click="mover(i, -1)" />
@@ -42,6 +45,7 @@
   </div>
 </template>
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -132,6 +136,11 @@ function seleccionarResultado (resultado) {
 function actualizarConsulta (valor) {
   consultaBusqueda.value = valor
   errorBusqueda.value = false
+}
+// El texto dictado se pone en el campo de búsqueda y lanza la búsqueda de sugerencias.
+function dictarBusqueda (texto) {
+  selectorBusqueda.value?.updateInputValue(texto)
+  if (texto.trim().length >= 3) selectorBusqueda.value?.filter(texto)
 }
 async function reintentarBusqueda () {
   if (consultaBusqueda.value.trim().length < 3) return

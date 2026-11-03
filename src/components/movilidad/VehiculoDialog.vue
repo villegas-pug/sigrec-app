@@ -9,12 +9,24 @@
     @enviar="guardar"
   >
     <div class="row q-col-gutter-md">
-      <q-select v-model="form.carId" class="col-12 col-sm-6" :options="opcionesCar" emit-value map-options outlined dense label="Centro *" :rules="[requerido]" />
-      <q-input v-model="form.tipo" class="col-12 col-sm-6" outlined dense label="Tipo *" hint="Ej.: Camioneta, Minivan" :rules="[requerido]" />
-      <q-input v-model="form.placa" class="col-12 col-sm-6" outlined dense label="Placa *" :rules="[requerido, placaLibre]" />
-      <q-input v-model="form.chofer" class="col-12 col-sm-6" outlined dense label="Chofer relacionado" hint="Vacío si no está asignado" />
-      <q-input v-model="form.combustible" class="col-12 col-sm-6" outlined dense label="Combustible *" hint="Ej.: Gasohol 90, Diésel B5" :rules="[requerido]" />
-      <q-input v-model.number="form.rendimientoKmL" class="col-12 col-sm-6" outlined dense type="number" min="0" step="0.1" label="Rendimiento de referencia (km/L)" hint="Vacío si no se conoce" />
+      <q-select v-model="form.carId" class="col-12 col-sm-6" :options="opcionesCar" emit-value map-options outlined dense label="Centro *" :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
+      </q-select>
+      <q-input v-model="form.tipo" class="col-12 col-sm-6" outlined dense label="Tipo *" hint="Ej.: Camioneta, Minivan" :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.tipo" /></template>
+      </q-input>
+      <q-input v-model="form.placa" class="col-12 col-sm-6" outlined dense label="Placa *" :rules="[requerido, placaLibre]">
+        <template #append><boton-dictado v-model="form.placa" tipo="codigo" /></template>
+      </q-input>
+      <q-input v-model="form.chofer" class="col-12 col-sm-6" outlined dense label="Chofer relacionado" hint="Vacío si no está asignado">
+        <template #append><boton-dictado v-model="form.chofer" local /></template>
+      </q-input>
+      <q-input v-model="form.combustible" class="col-12 col-sm-6" outlined dense label="Combustible *" hint="Ej.: Gasohol 90, Diésel B5" :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.combustible" /></template>
+      </q-input>
+      <q-input v-model.number="form.rendimientoKmL" class="col-12 col-sm-6" outlined dense type="number" min="0" step="0.1" label="Rendimiento de referencia (km/L)" hint="Vacío si no se conoce">
+        <template #append><boton-dictado v-model="form.rendimientoKmL" tipo="numero" /></template>
+      </q-input>
     </div>
     <note-banner v-if="vehiculo && form.carId !== vehiculo.carId" tono="in">
       Al cambiar de centro el vehículo conserva su código ({{ vehiculo.id }}) y sus itinerarios.
@@ -23,6 +35,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

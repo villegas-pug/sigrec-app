@@ -26,7 +26,9 @@
     </note-banner>
 
     <template v-if="modo === 'verificacion'">
-      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la verificación *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]" />
+      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la verificación *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
+        <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
+      </q-input>
       <q-option-group v-model="form.resultado" :options="OPCIONES_RESULTADO" />
       <q-input v-model="form.nota" outlined dense type="textarea" autogrow label="Observación de la verificación">
         <template #append><boton-dictado v-model="form.nota" /></template>
@@ -43,7 +45,9 @@
           <status-chip v-bind="SITUACIONES[bienActivo.situacion]" />
         </div>
       </div>
-      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la baja *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]" />
+      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la baja *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
+        <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
+      </q-input>
       <q-input v-model="form.motivo" outlined dense label="Motivo de la baja *" :rules="[requerido]">
         <template #append><boton-dictado v-model="form.motivo" /></template>
       </q-input>
@@ -71,14 +75,26 @@
           <span v-if="bienActivo.asociadoA" class="sg-muted">Componente de {{ bienActivo.asociadoA.bienId }} ({{ bienActivo.asociadoA.posicion ?? 'posición no informada' }})</span>
         </div>
       </div>
-      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la reposición *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura, noAnteriorABaja]" />
-      <q-input v-model="form.rotulo" outlined dense label="Rótulo SIGREC del bien nuevo *" :rules="[requerido, rotuloLibre]" />
-      <q-input v-model="form.nombre" outlined dense label="Nombre *" :rules="[requerido]" />
-      <q-input v-model="form.codigoPatrimonial" outlined dense label="Código patrimonial" />
+      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la reposición *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura, noAnteriorABaja]">
+        <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
+      </q-input>
+      <q-input v-model="form.rotulo" outlined dense label="Rótulo SIGREC del bien nuevo *" :rules="[requerido, rotuloLibre]">
+        <template #append><boton-dictado v-model="form.rotulo" tipo="codigo" /></template>
+      </q-input>
+      <q-input v-model="form.nombre" outlined dense label="Nombre *" :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.nombre" /></template>
+      </q-input>
+      <q-input v-model="form.codigoPatrimonial" outlined dense label="Código patrimonial">
+        <template #append><boton-dictado v-model="form.codigoPatrimonial" tipo="codigo" /></template>
+      </q-input>
       <campo-adquisicion v-model="form.fechaAdquisicion" label="Adquisición del bien nuevo" />
       <div class="row q-col-gutter-md">
-        <q-input v-model.number="form.costo" class="col-12 col-sm-6" outlined dense type="number" min="0" label="Costo original (S/)" />
-        <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Vida útil (años)" />
+        <q-input v-model.number="form.costo" class="col-12 col-sm-6" outlined dense type="number" min="0" label="Costo original (S/)">
+          <template #append><boton-dictado v-model="form.costo" tipo="numero" /></template>
+        </q-input>
+        <q-input v-model.number="form.vidaUtilAnios" class="col-12 col-sm-6" outlined dense type="number" min="1" label="Vida útil (años)">
+          <template #append><boton-dictado v-model="form.vidaUtilAnios" tipo="numero" /></template>
+        </q-input>
       </div>
       <div v-if="hijosActivos.length">
         <div class="sg-kv__label q-mb-xs">Componentes que pasan al bien nuevo</div>

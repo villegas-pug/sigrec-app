@@ -13,7 +13,9 @@
         :readonly="ubicacionFija"
         :rules="[requerido]"
         @update:model-value="alCambiarCentro"
-      />
+      >
+        <template #append><boton-dictado :model-value="carId" tipo="opcion" :opciones="opcionesCar" emit-value :disable="ubicacionFija" @update:model-value="alCambiarCentro" /></template>
+      </q-select>
       <q-select
         :model-value="ambienteId"
         class="col-12 col-sm-6"
@@ -28,7 +30,9 @@
         :hint="carId ? '' : 'Elija primero el centro.'"
         :rules="[requerido]"
         @update:model-value="alCambiarAmbiente"
-      />
+      >
+        <template #append><boton-dictado :model-value="ambienteId" tipo="opcion" :opciones="opcionesAmbiente" emit-value :disable="ubicacionFija || !carId" @update:model-value="alCambiarAmbiente" /></template>
+      </q-select>
     </div>
 
     <q-select
@@ -46,6 +50,7 @@
       :rules="[reglaBien]"
       @update:model-value="$emit('update:modelValue', $event)"
     >
+      <template #append><boton-dictado :model-value="modelValue" tipo="opcion" :opciones="opcionesBien" emit-value :disable="!ambienteId" @update:model-value="dictarBien" /></template>
       <template #option="{ itemProps, opt }">
         <q-item v-bind="itemProps">
           <q-item-section>
@@ -63,6 +68,7 @@
 <script setup>
 // Selección jerárquica Centro › Ambiente › Bien. Cambiar un nivel limpia los inferiores,
 // de modo que no se puede quedar con un bien que no pertenece a la ubicación mostrada.
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, watch } from 'vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { ambientesDeCar, bienesDeAmbiente } from 'src/services/datos'
@@ -112,6 +118,12 @@ function alCambiarCentro (id) {
   emit('update:carId', id)
   emit('update:ambienteId', null)
   emit('update:modelValue', vacio())
+}
+
+// Con selección múltiple, el bien dictado se añade a los ya elegidos.
+function dictarBien (id) {
+  if (!props.multiple) emit('update:modelValue', id)
+  else if (id != null && !(props.modelValue ?? []).includes(id)) emit('update:modelValue', [...(props.modelValue ?? []), id])
 }
 
 function alCambiarAmbiente (id) {

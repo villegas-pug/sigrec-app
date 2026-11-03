@@ -11,7 +11,9 @@
     <q-input v-model="form.descripcion" outlined dense label="Intervención *" hint="Ej.: Pintado de muros, cambio de chapa" :rules="[requerido]">
       <template #append><boton-dictado v-model="form.descripcion" /></template>
     </q-input>
-    <q-input v-model="form.fecha" outlined dense type="month" stack-label label="Mes" hint="Vacío si no se conoce" :rules="[noFutura]" />
+    <q-input v-model="form.fecha" outlined dense type="month" stack-label label="Mes" hint="Vacío si no se conoce" :rules="[noFutura]">
+      <template #append><boton-dictado v-model="form.fecha" tipo="mes" /></template>
+    </q-input>
     <q-checkbox v-model="form.esPintado" label="Es un pintado (actualiza el último pintado si es más reciente)" />
   </form-dialog>
 </template>

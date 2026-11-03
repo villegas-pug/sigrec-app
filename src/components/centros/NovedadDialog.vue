@@ -8,8 +8,12 @@
     @enviar="guardar"
   >
     <div class="row q-col-gutter-md">
-      <q-select v-model="form.tipo" class="col-12 col-sm-6" :options="OPCIONES_NOVEDAD" emit-value map-options outlined dense label="Tipo *" :rules="[requerido]" />
-      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, noFutura]" />
+      <q-select v-model="form.tipo" class="col-12 col-sm-6" :options="OPCIONES_NOVEDAD" emit-value map-options outlined dense label="Tipo *" :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.tipo" tipo="opcion" :opciones="OPCIONES_NOVEDAD" emit-value /></template>
+      </q-select>
+      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, noFutura]">
+        <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
+      </q-input>
     </div>
     <q-input v-model="form.titulo" outlined dense label="Novedad *" :rules="[requerido]">
       <template #append><boton-dictado v-model="form.titulo" /></template>

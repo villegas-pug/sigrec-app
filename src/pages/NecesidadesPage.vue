@@ -9,9 +9,15 @@
       </page-header>
 
       <div class="sg-filters">
-        <q-select v-model="anio" :options="ANIOS_REVISION" outlined dense label="Año a revisar" />
-        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
-        <q-select v-model="clase" :options="OPCIONES_CLASE" emit-value map-options outlined dense label="Clasificación principal" />
+        <q-select v-model="anio" :options="ANIOS_REVISION" outlined dense label="Año a revisar">
+          <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="ANIOS_REVISION" /></template>
+        </q-select>
+        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
+          <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
+        </q-select>
+        <q-select v-model="clase" :options="OPCIONES_CLASE" emit-value map-options outlined dense label="Clasificación principal">
+          <template #append><boton-dictado v-model="clase" tipo="opcion" :opciones="OPCIONES_CLASE" emit-value /></template>
+        </q-select>
         <div class="row items-center sg-chips">
           <status-chip tono="pv" label="Regla de vida útil · Por validar" />
           <status-chip tono="pv" label="Priorización · ampliación posterior" />
@@ -202,6 +208,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { exportFile, useQuasar } from 'quasar'

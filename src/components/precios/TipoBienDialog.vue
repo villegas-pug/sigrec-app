@@ -8,8 +8,12 @@
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
-    <q-input v-model="form.nombre" outlined dense label="Nombre *" hint="Ej.: Cocina industrial, Silla de estudio" :rules="[requerido, nombreLibre]" />
-    <q-select v-model="form.categoria" :options="OPCIONES_CATEGORIA" emit-value map-options outlined dense label="Categoría *" :rules="[requerido]" />
+    <q-input v-model="form.nombre" outlined dense label="Nombre *" hint="Ej.: Cocina industrial, Silla de estudio" :rules="[requerido, nombreLibre]">
+      <template #append><boton-dictado v-model="form.nombre" /></template>
+    </q-input>
+    <q-select v-model="form.categoria" :options="OPCIONES_CATEGORIA" emit-value map-options outlined dense label="Categoría *" :rules="[requerido]">
+      <template #append><boton-dictado v-model="form.categoria" tipo="opcion" :opciones="OPCIONES_CATEGORIA" emit-value /></template>
+    </q-select>
     <q-input
       v-model.number="form.vidaUtilSugerida"
       outlined
@@ -17,12 +21,14 @@
       type="number"
       min="1"
       label="Vida útil sugerida (años)"
-      hint="Opcional: se propone al registrar un bien de este tipo. No es tabla oficial."
-    />
+      hint="Opcional: se propone al registrar un bien de este tipo. No es tabla oficial.">
+      <template #append><boton-dictado v-model="form.vidaUtilSugerida" tipo="numero" /></template>
+    </q-input>
   </form-dialog>
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'

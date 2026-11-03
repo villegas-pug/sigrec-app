@@ -10,8 +10,12 @@
       <registro-no-disponible v-if="servicioNoDisponible" entidad="El servicio" :id="servicioPedido" :volver="{ name: 'servicios' }" etiqueta-volver="Ver los servicios del centro" />
 
       <div class="sg-filters">
-        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
-        <q-select v-model="anio" :options="ANIOS_SERVICIOS" outlined dense label="Año" />
+        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
+          <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
+        </q-select>
+        <q-select v-model="anio" :options="ANIOS_SERVICIOS" outlined dense label="Año">
+          <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="ANIOS_SERVICIOS" /></template>
+        </q-select>
         <div class="row items-center"><filtro-inactivos v-model="mostrarInactivos" /></div>
       </div>
 
@@ -185,6 +189,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import PageHeader from 'components/common/PageHeader.vue'

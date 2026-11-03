@@ -11,7 +11,9 @@
       <registro-no-disponible v-if="pedidoNoDisponible" :entidad="pedidoNoDisponible.entidad" :id="pedidoNoDisponible.id" :volver="{ name: 'ambientes' }" etiqueta-volver="Ver los ambientes del centro" />
 
       <div class="sg-filters">
-        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
+        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
+          <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
+        </q-select>
         <div class="row items-center"><filtro-inactivos v-model="mostrarInactivos" /></div>
       </div>
 
@@ -194,6 +196,7 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'

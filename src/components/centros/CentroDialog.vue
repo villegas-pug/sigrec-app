@@ -9,7 +9,9 @@
     @enviar="guardar"
   >
     <div class="row q-col-gutter-md">
-      <q-input v-model="form.nombre" class="col-12 col-sm-8" outlined dense label="Nombre del centro *" :rules="[requerido]" />
+      <q-input v-model="form.nombre" class="col-12 col-sm-8" outlined dense label="Nombre del centro *" :rules="[requerido]">
+        <template #append><boton-dictado v-model="form.nombre" /></template>
+      </q-input>
       <q-input
         v-model="form.id"
         class="col-12 col-sm-4"
@@ -19,20 +21,28 @@
         hint="3 letras, único; no se modifica después"
         maxlength="3"
         :rules="[requerido, codigoValido, codigoLibre]"
-        @update:model-value="(v) => (form.id = String(v ?? '').toUpperCase())"
-      />
+        @update:model-value="(v) => (form.id = String(v ?? '').toUpperCase())">
+        <template #append><boton-dictado v-model="form.id" /></template>
+      </q-input>
     </div>
     <div class="sg-kv__label">Inmueble donde funciona</div>
-    <q-input v-model="form.direccion" outlined dense label="Dirección *" :rules="[requerido]" />
+    <q-input v-model="form.direccion" outlined dense label="Dirección *" :rules="[requerido]">
+      <template #append><boton-dictado v-model="form.direccion" /></template>
+    </q-input>
     <q-option-group v-model="form.condicion" inline :options="OPCIONES_INMUEBLE" />
     <template v-if="form.condicion === 'alquilado'">
-      <q-input v-model="form.arrendador" outlined dense label="Arrendador" />
-      <q-input v-model="form.contratoHasta" outlined dense type="date" stack-label label="Contrato vigente hasta" />
+      <q-input v-model="form.arrendador" outlined dense label="Arrendador">
+        <template #append><boton-dictado v-model="form.arrendador" local /></template>
+      </q-input>
+      <q-input v-model="form.contratoHasta" outlined dense type="date" stack-label label="Contrato vigente hasta">
+        <template #append><boton-dictado v-model="form.contratoHasta" tipo="fecha" /></template>
+      </q-input>
     </template>
   </form-dialog>
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
