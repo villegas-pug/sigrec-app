@@ -13,3 +13,8 @@
 - Al editar se conservan los puntos registrados. La búsqueda Photon muestra sugerencias en Perú y una previsualización que se confirma antes de añadir el punto.
 - Las búsquedas y el cálculo de rutas utilizan servicios externos configurables. Se conserva el ingreso manual ante fallos.
 - La ruta y sus kilómetros solo cambian al confirmar o modificar puntos. El prototipo no realiza seguimiento de ubicación.
+
+## Búsqueda de direcciones en Lima
+
+- La búsqueda prioriza la ubicación conocida del dispositivo o Lima y limita los resultados a Perú. La interfaz permanece en español; Photon devuelve los nombres locales disponibles.
+- Distinguir ausencia de resultados de indisponibilidad del servicio y permitir reintentar. Una solicitud obsoleta no puede cerrar ni reemplazar las sugerencias actuales.

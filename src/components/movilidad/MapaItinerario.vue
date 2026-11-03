@@ -1,11 +1,15 @@
 <template>
   <div class="column q-gutter-sm">
     <template v-if="!soloLectura">
-      <q-select v-model="resultadoElegido" outlined dense clearable use-input hide-selected fill-input
+      <q-select ref="selectorBusqueda" v-model="resultadoElegido" outlined dense clearable use-input hide-selected fill-input
         input-debounce="500" :options="resultados" :loading="buscando" label="Buscar dirección o lugar"
-        @filter="filtrar" @update:model-value="seleccionarResultado">
+        @filter="filtrar" @input-value="actualizarConsulta" @update:model-value="seleccionarResultado">
         <template #no-option><q-item><q-item-section class="text-grey">{{ mensajeBusqueda }}</q-item-section></q-item></template>
       </q-select>
+      <div v-if="errorBusqueda" class="row items-center q-gutter-sm" role="status">
+        <span>No se pudo conectar con el servicio de búsqueda.</span>
+        <q-btn flat dense color="secondary" label="Reintentar" @click="reintentarBusqueda" />
+      </div>
       <div class="row items-center q-gutter-sm">
         <q-btn outline color="secondary" icon="my_location" label="Mi ubicación" :loading="ubicando" @click="localizar(false)" />
         <q-btn v-if="previsualizacion" unelevated color="primary" icon="add_location" label="Añadir punto" @click="anadirPunto" />
@@ -32,7 +36,7 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { buscarLugares, ubicacionActual } from 'src/services/geolocalizacion'
@@ -40,6 +44,10 @@ import { buscarLugares, ubicacionActual } from 'src/services/geolocalizacion'
 const props = defineProps({ modelValue: { type: Object, default: null }, soloLectura: { type: Boolean, default: false }, visible: { type: Boolean, default: true }, nuevo: { type: Boolean, default: false } })
 const emit = defineEmits(['update:modelValue', 'modificado'])
 const contenedor = ref(null)
+const selectorBusqueda = ref(null)
+const consultaBusqueda = ref('')
+const errorBusqueda = ref(false)
+const ubicacionPreferida = ref({ lat: -12.0464, lng: -77.0428 })
 let secuencia = 0
 const puntos = ref((props.modelValue?.puntos ?? []).map((p) => ({ ...p, id: ++secuencia })))
 const estado = ref(props.modelValue?.geometry ? 'listo' : 'incompleto')
@@ -91,6 +99,7 @@ async function localizar (automatica) {
   try {
     const posicion = await ubicacionActual()
     if (desmontado || actual !== versionUbicacion || !props.visible) return
+    ubicacionPreferida.value = posicion
     if (automatica && (puntos.value.length || previsualizacion.value)) return
     if (automatica) {
       puntos.value.push({ id: ++secuencia, nombre: 'Mi ubicación actual', ...posicion })
@@ -114,18 +123,30 @@ function anadirPunto () {
 function seleccionarResultado (resultado) {
   if (resultado && mapa) mostrarVista({ nombre: resultado.label, lat: resultado.lat, lng: resultado.lng })
 }
-async function filtrar (valor, actualizar, cancelar) {
+function actualizarConsulta (valor) {
+  consultaBusqueda.value = valor
+  errorBusqueda.value = false
+}
+async function reintentarBusqueda () {
+  if (consultaBusqueda.value.trim().length < 3) return
+  selectorBusqueda.value?.focus()
+  await nextTick()
+  selectorBusqueda.value?.filter(consultaBusqueda.value)
+}
+async function filtrar (valor, actualizar) {
   const actual = ++versionBusqueda
   controlBusqueda?.abort()
+  errorBusqueda.value = false
   if (valor.trim().length < 3) { buscando.value = false; mensajeBusqueda.value = 'Escriba al menos tres caracteres.'; actualizar(() => { resultados.value = [] }); return }
   controlBusqueda = new AbortController(); buscando.value = true; mensajeBusqueda.value = 'Buscando…'
   try {
-    const lista = await buscarLugares(valor.trim(), mapa?.getCenter(), controlBusqueda.signal)
-    if (desmontado || actual !== versionBusqueda) { cancelar(); return }
+    const lista = await buscarLugares(valor.trim(), ubicacionPreferida.value, controlBusqueda.signal)
+    if (desmontado || actual !== versionBusqueda) return
     actualizar(() => { resultados.value = lista; mensajeBusqueda.value = lista.length ? '' : 'No se encontraron lugares.' })
-  } catch {
-    if (desmontado || actual !== versionBusqueda) { cancelar(); return }
-    actualizar(() => { resultados.value = []; mensajeBusqueda.value = 'No se pudo realizar la búsqueda. Inténtelo nuevamente.' })
+  } catch (error) {
+    if (desmontado || actual !== versionBusqueda) return
+    console.warn('Error al consultar Photon:', error.message)
+    actualizar(() => { resultados.value = []; errorBusqueda.value = true; mensajeBusqueda.value = 'Servicio de búsqueda no disponible.' })
   } finally { if (!desmontado && actual === versionBusqueda) buscando.value = false }
 }
 function mover (i, cambio) { const j = i + cambio; [puntos.value[i], puntos.value[j]] = [puntos.value[j], puntos.value[i]] }
