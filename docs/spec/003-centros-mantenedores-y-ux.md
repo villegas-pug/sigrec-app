@@ -3,6 +3,7 @@
 - **Estado:** implementado en el prototipo (verificación en navegador pendiente de autorización)
 - **Fecha:** 2026-11-02
 - **Origen:** revisión integral del prototipo (SPEC 001 y 002) y aclaraciones del solicitante.
+- **Actualizada por:** [`004-incidencias-contexto-y-recorrido.md`](004-incidencias-contexto-y-recorrido.md) (baja y reposición, condición y traslado de componentes).
 - **Reemplaza:** de la SPEC 002 §1 («el local se consulta como ficha del inmueble») y §5 («CAR con varios locales»).
 
 ## 1. Decisiones confirmadas
@@ -97,7 +98,7 @@ Accesos: Verificación física deja de tener la pantalla «Registro de bienes» 
 ## 7. UI adaptable
 
 - `FormDialog` / `BaseDialog`: diálogos maximizados en móvil.
-- `CondicionSelector`: botones desde `sm`, lista desplegable en móvil.
+- `CondicionSelector`: botones de opción (opción única) en todos los tamaños; SPEC 004.
 - Cabecera, KPI y tablas con ajustes para ≤ 599 px; primera columna fija en tablas anchas; períodos de servicio como tarjetas en móvil.
 - Foco visible y estado `disabled` en los controles propios.
 - En pantallas menores a 1024 px, al seleccionar un bien o un centro la vista baja a su ficha.

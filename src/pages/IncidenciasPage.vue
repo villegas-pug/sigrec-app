@@ -3,21 +3,26 @@
     <div class="sg-page__inner">
       <page-header>
         <template #acciones>
-          <q-btn v-if="puedeHacer('bien.incidente')" unelevated color="primary" icon="report" label="Registrar incidente" @click="dialogoIncidente.abierto = true; dialogoIncidente.evento = null" />
+          <q-btn v-if="puedeHacer('bien.incidente')" unelevated color="primary" icon="report" label="Registrar incidente" @click="Object.assign(dialogoIncidente, { abierto: true, evento: null })" />
           <q-btn v-if="puedeHacer('bien.baja')" outline color="negative" icon="remove_circle" label="Dar de baja" @click="abrirAccion('baja')" />
           <q-btn v-if="puedeHacer('bien.reposicion')" outline color="primary" icon="swap_horiz" label="Registrar reposición" @click="abrirAccion('reposicion')" />
         </template>
       </page-header>
 
       <div class="sg-filters">
-        <q-select v-model="filtros.carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
+        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
+        <q-select v-model="filtros.ambienteId" :options="opcionesAmbiente" emit-value map-options outlined dense label="Ambiente" :disable="carId === TODOS" :hint="carId === TODOS ? 'Elija un centro' : ''" />
         <q-input v-model="filtros.texto" outlined dense clearable label="Recurso (bien, rótulo o ambiente)" />
         <q-select v-model="filtros.tipo" :options="opcionesTipo" emit-value map-options outlined dense label="Hecho" />
+        <q-select v-model="filtros.necesidad" :options="OPCIONES_NECESIDAD" emit-value map-options outlined dense label="Necesidad" />
         <q-select v-model="filtros.anio" :options="opcionesAnio" emit-value map-options outlined dense label="Período" />
-        <div class="row items-center"><filtro-inactivos v-model="mostrarInactivos" /></div>
+        <div class="row items-center q-gutter-x-sm">
+          <filtro-inactivos v-model="mostrarInactivos" />
+          <q-btn flat dense color="secondary" icon="filter_alt_off" label="Limpiar filtros" @click="limpiarFiltros" />
+        </div>
       </div>
 
-      <section-card titulo="Hechos registrados" :subtitulo="`${eventos.length} hechos · del más reciente al más antiguo`" sin-relleno>
+      <section-card titulo="Hechos registrados" :subtitulo="`${plural(eventos.length, 'hecho', 'hechos')} · del más reciente al más antiguo`" sin-relleno>
         <div class="sg-table-wrap">
           <table class="sg-table">
             <thead>
@@ -32,7 +37,7 @@
                 </td>
                 <td>{{ ubicacion(ev).car.nombre }} · {{ ubicacion(ev).ambiente.nombre }}</td>
                 <td><button type="button" class="sg-row-btn" @click="seleccionar(ev.id)">{{ ev.titulo }}</button><div class="sg-muted">{{ ev.bienIds.join(', ') }}</div></td>
-                <td><status-chip v-bind="estadoNecesidad(ev)" /></td>
+                <td><status-chip :tono="estadoNecesidad(ev).tono" :label="estadoNecesidad(ev).label" /></td>
               </tr>
               <tr v-if="!eventos.length"><td colspan="5" class="sg-muted">Sin hechos para los filtros seleccionados.</td></tr>
             </tbody>
@@ -59,10 +64,11 @@
             </div>
             <router-link v-if="puedeAcceder('bienes')" :to="{ name: 'bienes', query: { bien: b.id } }" class="text-weight-bold">{{ b.nombre }} · {{ b.id }}</router-link>
             <span v-else class="text-weight-bold">{{ b.nombre }} · {{ b.id }}</span>
+            <span class="sg-muted">{{ textoUbicacion(ubicacionDeBien(b)) }}</span>
             <span class="sg-muted">Adquisición {{ fecha(b.adquisicion?.fecha) }} · vida útil {{ b.vidaUtilAnios ?? '—' }} años</span>
-            <ul class="q-pl-md q-my-xs">
-              <li v-for="a in antecedentesDeBien(b)" :key="a.id">{{ fecha(a.fecha) }} · {{ TIPOS_EVENTO[a.tipo].label }}: {{ a.titulo }}</li>
-            </ul>
+            <q-expansion-item dense label="Historial del bien" header-class="q-px-none">
+              <historial-bien :bien="b" :tipos-seleccionables="TIPOS_HISTORIAL" @seleccionar="irAHecho" />
+            </q-expansion-item>
           </div>
         </div>
 
@@ -71,30 +77,49 @@
           <div class="sg-table-wrap">
             <table class="sg-table">
               <thead>
-                <tr><th scope="col">Bien</th><th scope="col">Condición actual</th><th scope="col">Situación</th><th scope="col">Necesidad</th></tr>
+                <tr><th scope="col">Bien</th><th scope="col">Condición actual</th><th scope="col">Situación</th><th scope="col">Necesidad</th><th v-if="esIncidente" scope="col">Siguiente paso</th></tr>
               </thead>
               <tbody>
                 <tr v-for="b in afectados" :key="b.id">
                   <td>
                     <router-link v-if="puedeAcceder('bienes')" :to="{ name: 'bienes', query: { bien: b.id } }">{{ b.nombre }} · {{ b.id }}</router-link>
                     <template v-else>{{ b.nombre }} · {{ b.id }}</template>
+                    <div class="sg-muted">{{ textoUbicacion(ubicacionDeBien(b)) }}</div>
                     <div v-if="evento.unidades && afectados.length === 1" class="sg-muted">{{ evento.unidades }} de {{ b.cantidad }} unidades afectadas</div>
                   </td>
                   <td><status-chip v-bind="condicion(b.condicion)" /></td>
                   <td><status-chip v-bind="SITUACIONES[b.situacion]" /></td>
                   <td>
-                    <template v-if="necesidadDe(b.id)">
+                    <status-chip :tono="estadoDeBien(evento, b.id).tono" :label="estadoDeBien(evento, b.id).label" />
+                    <div v-if="necesidadDe(b.id)" class="sg-muted">
                       {{ CLASES[necesidadDe(b.id).clase] }} ·
                       <template v-if="necesidadDe(b.id).importe != null">{{ soles(necesidadDe(b.id).importe) }}</template>
                       <status-chip v-else tono="wa" label="Sin valorar" />
-                    </template>
-                    <status-chip v-else-if="reposicionDe(b.id)" tono="ok" label="Atendida por reposición" />
-                    <span v-else class="sg-muted">—</span>
+                    </div>
+                  </td>
+                  <td v-if="esIncidente">
+                    <q-btn
+                      v-if="pasoDe(evento, b.id)"
+                      outline
+                      dense
+                      no-caps
+                      :color="pasoDe(evento, b.id).color"
+                      :label="pasoDe(evento, b.id).label"
+                      @click="abrirPaso(b, pasoDe(evento, b.id).modo)"
+                    />
+                    <span v-else class="sg-muted">Ninguno</span>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <q-expansion-item v-for="b in afectados" :key="`h-${b.id}`" dense :default-opened="afectados.length === 1" :label="`Historial de ${b.nombre} · ${b.id}`" header-class="q-px-none">
+            <historial-bien :bien="b" :tipos-seleccionables="TIPOS_HISTORIAL" @seleccionar="irAHecho">
+              <template #extra="{ item }">
+                <status-chip v-if="INCIDENTES.includes(item.tipo)" class="q-ml-xs" :tono="estadoDeBien(item, b.id).tono" :label="estadoDeBien(item, b.id).label" />
+              </template>
+            </historial-bien>
+          </q-expansion-item>
 
           <div v-if="esIncidente" class="sg-box sg-box--dashed q-mt-md">
             <span class="text-weight-bold">{{ plural(noAfectados.length, 'bien no reportado como afectado', 'bienes no reportados como afectados') }}</span>
@@ -122,15 +147,15 @@
       </section-card>
     </div>
 
-    <incidente-dialog v-model="dialogoIncidente.abierto" :evento="dialogoIncidente.evento" />
-    <bien-accion-dialog v-model="dialogoAccion.abierto" :modo="dialogoAccion.modo" :candidatos="candidatosAccion" @hecho="seleccionarUltimo" />
+    <incidente-dialog v-model="dialogoIncidente.abierto" :evento="dialogoIncidente.evento" :car-inicial="carContexto" @hecho="seleccionarUltimo" />
+    <bien-accion-dialog v-model="dialogoAccion.abierto" :modo="dialogoAccion.modo" :bien="dialogoAccion.bien" :car-inicial="carContexto" @hecho="alRegistrarAccion" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
 </template>
 
 <script setup>
 import { computed, nextTick, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
@@ -141,10 +166,11 @@ import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import IncidenteDialog from 'components/bienes/IncidenteDialog.vue'
 import BienAccionDialog from 'components/bienes/BienAccionDialog.vue'
+import HistorialBien from 'components/bienes/HistorialBien.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { db, bienPorId, bienesDeAmbiente, ubicacionDeAmbiente, ubicacionDeBien, vigente } from 'src/services/datos'
-import { antecedentesDeBien } from 'src/services/bienes'
+import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { db, ambientesDeCar, bienPorId, bienesDeAmbiente, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien, vigente } from 'src/services/datos'
 import { calcularNecesidades } from 'src/services/necesidades'
 import {
   anular, anularBaja, anularReposicion, dependenciasDeBaja, dependenciasDeReposicion, reposicionDe
@@ -156,12 +182,36 @@ import { fecha, plural, soles } from 'src/utils/formato'
 const CLASES = { renovacion: 'Renovación', reposicion: 'Reposición' }
 const TIPOS_HISTORIAL = ['dano', 'robo', 'incendio', 'baja', 'reposicion']
 
-const $q = useQuasar()
-const router = useRouter()
-const { carsEnAmbito, enAmbitoCar, carIdsEnAmbito, puedeAcceder, puedeHacer } = usePerfil()
-const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
+// Estados de necesidad: el mismo significado en el listado y en el detalle.
+const ESTADOS = {
+  pendiente: { clave: 'pendiente', tono: 'da', label: 'Pendiente' },
+  atendida: { clave: 'atendida', tono: 'ok', label: 'Atendida' },
+  sin: { clave: 'sin', tono: 'ne', label: 'Sin necesidad reportada' },
+  sinAbierta: { clave: 'sin', tono: 'ne', label: 'Sin necesidad abierta' },
+  anulado: { clave: 'anulado', tono: 'ne', label: 'Anulado' }
+}
+const OPCIONES_NECESIDAD = [
+  { label: 'Todas', value: TODOS },
+  { label: ESTADOS.pendiente.label, value: 'pendiente' },
+  { label: ESTADOS.atendida.label, value: 'atendida' },
+  { label: ESTADOS.sin.label, value: 'sin' },
+  { label: ESTADOS.anulado.label, value: 'anulado' }
+]
 
-const opcionesCar = computed(() => [{ label: 'Todos los centros del ámbito', value: TODOS }, ...carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id }))])
+const $q = useQuasar()
+const route = useRoute()
+const router = useRouter()
+const { enAmbitoCar, carIdsEnAmbito, puedeAcceder, puedeHacer } = usePerfil()
+const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
+const { carId, opcionesCar } = useCentroSeleccionado(route.query.car, { todos: true })
+
+// Centro que heredan los formularios; con «Todos» no hay contexto y se pide elegirlo.
+const carContexto = computed(() => (carId.value === TODOS ? null : carId.value))
+
+const opcionesAmbiente = computed(() => [
+  { label: 'Todos los ambientes', value: TODOS },
+  ...(carContexto.value ? ambientesDeCar(carContexto.value).map((a) => ({ label: a.nombre, value: a.id })) : [])
+])
 const opcionesTipo = [{ label: 'Todos', value: TODOS }, ...TIPOS_HISTORIAL.map((t) => ({ label: TIPOS_EVENTO[t].label, value: t }))]
 // Los años del filtro salen de los hechos registrados, del más reciente al más antiguo.
 const opcionesAnio = computed(() => [
@@ -169,9 +219,47 @@ const opcionesAnio = computed(() => [
   ...[...new Set(db.eventos.map((ev) => ev.fecha.slice(0, 4)))].sort().reverse().map((a) => ({ label: a, value: a }))
 ])
 
-const filtros = reactive({ carId: TODOS, texto: '', tipo: TODOS, anio: TODOS })
+const pendientes = computed(() => calcularNecesidades({ anio: ANIO_REVISION, carIds: carIdsEnAmbito.value }).pendientes)
+const necesidadDe = (bienId) => pendientes.value.find((n) => n.id === bienId) ?? null
+
+// Estado de la necesidad de un bien frente a un hecho. Un incidente sobre un bien activo con necesidad pide darlo de baja;
+// si ya está dado de baja y sin reposición, pide la reposición.
+function estadoDeBien (ev, bienId) {
+  if (ev.anulacion) return ESTADOS.anulado
+  if (ev.tipo === 'reposicion' || reposicionDe(bienId)) return ESTADOS.atendida
+  if (!INCIDENTES.includes(ev.tipo) || !ev.reportaNecesidad) return ESTADOS.sin
+  if (bienPorId(bienId)?.situacion === 'baja') return ESTADOS.pendiente
+  return necesidadDe(bienId) ? ESTADOS.pendiente : ESTADOS.sinAbierta
+}
+
+// Siguiente paso de un incidente con necesidad pendiente (nulo si no hay o el perfil no puede hacerlo).
+function pasoDe (ev, bienId) {
+  if (estadoDeBien(ev, bienId) !== ESTADOS.pendiente) return null
+  const baja = bienPorId(bienId)?.situacion === 'baja'
+  if (baja) return puedeHacer('bien.reposicion') ? { modo: 'reposicion', label: 'Registrar reposición', color: 'primary' } : null
+  return puedeHacer('bien.baja') ? { modo: 'baja', label: 'Dar de baja', color: 'negative' } : null
+}
+
+// Resumen del hecho: pendiente si algún bien lo está; si no, atendida si alguno lo está.
+function estadoNecesidad (ev) {
+  const estados = ev.bienIds.map((id) => estadoDeBien(ev, id))
+  const pend = estados.filter((e) => e === ESTADOS.pendiente).length
+  if (pend) return { ...ESTADOS.pendiente, label: ev.bienIds.length > 1 ? plural(pend, 'pendiente', 'pendientes') : ESTADOS.pendiente.label }
+  return estados.find((e) => e === ESTADOS.atendida) ?? estados[0] ?? ESTADOS.sin
+}
+
+const filtros = reactive({ ambienteId: TODOS, texto: '', tipo: TODOS, necesidad: TODOS, anio: TODOS })
 const mostrarInactivos = ref(false)
 const detalleRef = ref(null)
+
+// El ambiente pertenece a un centro: al cambiar de centro deja de aplicar.
+watch(carId, () => { filtros.ambienteId = TODOS })
+
+function limpiarFiltros () {
+  carId.value = opcionesCar.value[0]?.value ?? TODOS
+  Object.assign(filtros, { ambienteId: TODOS, texto: '', tipo: TODOS, necesidad: TODOS, anio: TODOS })
+  mostrarInactivos.value = false
+}
 
 const ubicacion = (ev) => ubicacionDeAmbiente(ev.ambienteId)
 
@@ -182,8 +270,10 @@ const eventos = computed(() => {
     .filter((ev) => {
       const u = ubicacion(ev)
       if (!enAmbitoCar(u.car.id)) return false
-      if (filtros.carId !== TODOS && u.car.id !== filtros.carId) return false
+      if (carId.value !== TODOS && u.car.id !== carId.value) return false
+      if (filtros.ambienteId !== TODOS && ev.ambienteId !== filtros.ambienteId) return false
       if (filtros.tipo !== TODOS && ev.tipo !== filtros.tipo) return false
+      if (filtros.necesidad !== TODOS && estadoNecesidad(ev).clave !== filtros.necesidad) return false
       if (filtros.anio !== TODOS && !ev.fecha.startsWith(filtros.anio)) return false
       if (!t) return true
       const nombres = ev.bienIds.map((id) => bienPorId(id)?.nombre ?? '').join(' ')
@@ -223,38 +313,31 @@ const asociados = computed(() => {
     .map((b) => ({ bien: b, posicion: b.asociadoA.posicion }))
 })
 
-const pendientes = computed(() => calcularNecesidades({ anio: ANIO_REVISION, carIds: carIdsEnAmbito.value }).pendientes)
-const necesidadDe = (bienId) => pendientes.value.find((n) => n.id === bienId) ?? null
-
-function estadoNecesidad (ev) {
-  if (ev.anulacion) return { tono: 'ne', label: 'Anulado' }
-  if (ev.tipo === 'reposicion') return { tono: 'ok', label: 'Atendida' }
-  if (ev.bienIds.some((id) => reposicionDe(id))) return { tono: 'ok', label: 'Atendida' }
-  if (!ev.reportaNecesidad) return { tono: 'si', label: 'No reportada' }
-  const abiertas = ev.bienIds.filter((id) => necesidadDe(id)).length
-  return abiertas ? { tono: 'da', label: plural(abiertas, 'pendiente', 'pendientes') } : { tono: 'ne', label: 'Sin necesidad abierta' }
-}
-
 const dialogoIncidente = reactive({ abierto: false, evento: null })
 
-// Baja y reposición se registran aquí eligiendo el bien; desde la ficha del bien se sigue pudiendo hacer lo mismo.
-const dialogoAccion = reactive({ abierto: false, modo: 'baja' })
+// Baja y reposición se registran aquí eligiendo Centro › Ambiente › Bien, o desde «Siguiente paso» con el bien ya elegido.
+const dialogoAccion = reactive({ abierto: false, modo: 'baja', bien: null })
 
-// Baja: bienes activos del ámbito. Reposición: bienes dados de baja que aún no tienen una reposición vigente.
-const candidatosAccion = computed(() =>
-  db.bienes.filter((b) => {
-    if (!enAmbitoCar(ubicacionDeBien(b).car.id)) return false
-    return dialogoAccion.modo === 'baja' ? b.situacion === 'activo' : b.situacion === 'baja' && !reposicionDe(b.id)
-  })
-)
-
-function abrirAccion (modo) {
-  Object.assign(dialogoAccion, { abierto: true, modo })
+function abrirAccion (modo, bien = null) {
+  Object.assign(dialogoAccion, { abierto: true, modo, bien })
 }
+
+const abrirPaso = (bien, modo) => abrirAccion(modo, bien)
 
 // El hecho recién registrado es el último del almacén: se muestra su detalle.
 function seleccionarUltimo () {
   eventoId.value = db.eventos.at(-1)?.id ?? null
+}
+
+// Un paso iniciado desde un incidente no cambia el hecho que se está viendo; su estado se actualiza solo.
+function alRegistrarAccion () {
+  if (!dialogoAccion.bien) seleccionarUltimo()
+}
+
+// Salta a un hecho del historial; si un filtro lo oculta, los limpia primero.
+function irAHecho (id) {
+  if (!eventos.value.some((e) => e.id === id)) limpiarFiltros()
+  seleccionar(id)
 }
 
 const verFicha = (bienId) => ({

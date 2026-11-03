@@ -113,16 +113,7 @@
     </section-card>
 
     <section-card titulo="Antecedentes">
-      <ul class="sg-timeline">
-        <li v-for="ev in antecedentes" :key="ev.id" class="sg-timeline__item">
-          <span class="sg-timeline__date">{{ fecha(ev.fecha) }}</span>
-          <div class="column">
-            <span><status-chip v-bind="TIPOS_EVENTO[ev.tipo]" /> {{ ev.titulo }}</span>
-            <span v-if="ev.detalle" class="sg-muted">{{ ev.detalle }}</span>
-            <span v-if="ev.informadoPor" class="sg-muted">{{ ev.informadoPor }}</span>
-          </div>
-        </li>
-      </ul>
+      <historial-bien :bien="bien" />
     </section-card>
   </div>
 </template>
@@ -135,11 +126,12 @@ import StatusChip from 'components/common/StatusChip.vue'
 import KeyValue from 'components/common/KeyValue.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import MenuAcciones from 'components/common/MenuAcciones.vue'
+import HistorialBien from 'components/bienes/HistorialBien.vue'
 import { db, bienPorId, tipoPorId, textoUbicacion, ubicacionDeBien } from 'src/services/datos'
-import { antecedentesDeBien, asociacionesDeBien } from 'src/services/bienes'
+import { asociacionesDeBien } from 'src/services/bienes'
 import { antecedentesFaltantes, calcularNecesidades, finVidaUtil } from 'src/services/necesidades'
 import { reposicionDe } from 'src/services/acciones'
-import { CATEGORIAS, SITUACIONES, TIPOS_EVENTO, condicion } from 'src/config/catalogos'
+import { CATEGORIAS, SITUACIONES, condicion } from 'src/config/catalogos'
 import { ANIO_REVISION } from 'src/config/demo'
 import { fecha, plural, soles } from 'src/utils/formato'
 
@@ -159,7 +151,6 @@ const condicionBien = computed(() => condicion(props.bien.condicion))
 const fin = computed(() => finVidaUtil(props.bien))
 const faltantes = computed(() => antecedentesFaltantes(props.bien))
 const asociaciones = computed(() => asociacionesDeBien(props.bien))
-const antecedentes = computed(() => antecedentesDeBien(props.bien))
 const reposicion = computed(() => reposicionDe(props.bien.id))
 const reemplazaA = computed(() => db.eventos.find((e) => !e.anulacion && e.tipo === 'reposicion' && e.bienNuevoId === props.bien.id) ?? null)
 

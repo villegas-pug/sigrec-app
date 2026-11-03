@@ -1,41 +1,31 @@
 <template>
   <div>
     <div v-if="etiqueta" class="sg-kv__label q-mb-xs">{{ etiqueta }}</div>
-    <!-- En móvil, cuatro botones no caben en una línea: se usa una lista desplegable. -->
-    <q-select
-      v-if="$q.screen.lt.sm"
+    <!-- Opción única: botones de opción (en móvil se ajustan en varias líneas). -->
+    <q-option-group
       :model-value="modelValue"
-      :options="OPCIONES_CONDICION"
-      emit-value
-      map-options
-      outlined
-      dense
-      :clearable="clearable"
-      :label="etiqueta ? undefined : 'Condición'"
-      @update:model-value="$emit('update:modelValue', $event)"
-    />
-    <q-btn-toggle
-      v-else
-      :model-value="modelValue"
-      :options="OPCIONES_CONDICION"
-      unelevated
-      toggle-color="secondary"
-      color="white"
-      text-color="secondary"
-      no-caps
+      :options="opciones"
+      type="radio"
+      inline
+      color="secondary"
+      :aria-label="etiqueta || 'Condición'"
       @update:model-value="$emit('update:modelValue', $event)"
     />
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { OPCIONES_CONDICION } from 'src/config/catalogos'
 
-defineProps({
+const props = defineProps({
   modelValue: { type: String, default: null },
   etiqueta: { type: String, default: '' },
+  // Permite no cambiar la condición: añade la opción «Sin cambio» (valor null).
   clearable: { type: Boolean, default: false }
 })
 
 defineEmits(['update:modelValue'])
+
+const opciones = computed(() => (props.clearable ? [{ value: null, label: 'Sin cambio' }, ...OPCIONES_CONDICION] : OPCIONES_CONDICION))
 </script>

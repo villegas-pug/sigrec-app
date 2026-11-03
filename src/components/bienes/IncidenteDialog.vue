@@ -8,29 +8,21 @@
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
-    <div v-if="!ubicacionFija" class="row q-col-gutter-md">
-      <q-select v-model="form.carId" class="col-12 col-sm-6" :options="opcionesCar" emit-value map-options outlined dense label="Centro *" :rules="[requerido]" @update:model-value="alCambiarCentro" />
-      <q-select v-model="form.ambienteId" class="col-12 col-sm-6" :options="opcionesAmbiente" emit-value map-options outlined dense label="Ambiente *" :rules="[requerido]" @update:model-value="form.bienIds = []" />
-    </div>
+    <selector-ubicacion-bien
+      v-model="form.bienIds"
+      v-model:car-id="form.carId"
+      v-model:ambiente-id="form.ambienteId"
+      multiple
+      :ubicacion-fija="ubicacionFija"
+      :filtro="esElegible"
+    />
+    <div class="sg-muted" style="margin-top: -8px">Solo los bienes indicados quedan afectados; el resto del ambiente no cambia.</div>
     <div class="row q-col-gutter-md">
       <q-select v-model="form.tipo" class="col-12 col-sm-6" :options="OPCIONES_INCIDENTE" emit-value map-options outlined dense label="Hecho *" :rules="[requerido]" />
-      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha del hecho *" :rules="[requerido, noFutura]" />
+      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha del hecho *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]" />
     </div>
     <q-input v-model="form.titulo" outlined dense label="Motivo *" :rules="[requerido]" />
     <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Detalle" />
-    <q-select
-      v-model="form.bienIds"
-      :options="opcionesBien"
-      multiple
-      emit-value
-      map-options
-      use-chips
-      outlined
-      dense
-      label="Bienes afectados *"
-      hint="Solo los bienes indicados quedan afectados; el resto del ambiente no cambia."
-      :rules="[(v) => v.length > 0 || 'Indique al menos un bien']"
-    />
     <q-input
       v-if="unidadesEditables"
       v-model.number="form.unidades"
@@ -43,47 +35,57 @@
       hint="Vacío = todas las unidades. Define cuántas unidades se reponen (regla por validar)."
       :rules="[unidadesValidas]"
     />
-    <condicion-selector v-if="!evento" v-model="form.condicion" etiqueta="Nueva condición de los bienes afectados" clearable />
+    <template v-if="!evento">
+      <q-toggle v-if="form.bienIds?.length > 1" v-model="porBien" label="Indicar condición por bien" />
+      <div v-if="porBien && form.bienIds?.length > 1" class="column q-gutter-y-sm">
+        <div v-for="id in form.bienIds" :key="id" class="sg-box">
+          <div class="sg-chips">
+            <span class="text-weight-bold">{{ bienPorId(id).nombre }} · {{ id }}</span>
+            <status-chip v-bind="condicion(bienPorId(id).condicion)" :label="`Actual: ${condicion(bienPorId(id).condicion).label}`" />
+          </div>
+          <condicion-selector v-model="form.condiciones[id]" clearable />
+        </div>
+      </div>
+      <condicion-selector v-else v-model="form.condicion" etiqueta="Nueva condición de los bienes afectados" clearable />
+    </template>
     <q-checkbox v-model="form.reportaNecesidad" label="Reportar necesidad de reposición (sin esperar el fin de la vida útil)" />
   </form-dialog>
 </template>
 
 <script setup>
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import CondicionSelector from 'components/common/CondicionSelector.vue'
-import { usePerfil } from 'src/composables/usePerfil'
-import { ambientesDeCar, bienPorId, bienesDeAmbiente, textoUbicacion, ubicacionDeAmbiente } from 'src/services/datos'
+import StatusChip from 'components/common/StatusChip.vue'
+import SelectorUbicacionBien from 'components/bienes/SelectorUbicacionBien.vue'
+import { bienPorId, textoUbicacion, ubicacionDeAmbiente } from 'src/services/datos'
 import { actualizarIncidente, registrarIncidente } from 'src/services/acciones'
-import { OPCIONES_INCIDENTE } from 'src/config/catalogos'
+import { OPCIONES_INCIDENTE, condicion } from 'src/config/catalogos'
 import { FECHA_CORTE } from 'src/config/demo'
-import { noFutura, requerido } from 'src/utils/validaciones'
+import { HINT_FECHA_CORTE, noFutura, requerido } from 'src/utils/validaciones'
+import { plural } from 'src/utils/formato'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   // null = incidente nuevo; si no, el hecho que se corrige.
   evento: { type: Object, default: null },
   // Bien desde cuya ficha se registra: fija el centro y el ambiente.
-  bien: { type: Object, default: null }
+  bien: { type: Object, default: null },
+  // Centro de contexto (p. ej. el filtrado en Incidencias); null = el usuario lo elige.
+  carInicial: { type: String, default: null }
 })
 
 const emit = defineEmits(['update:modelValue', 'hecho'])
 const $q = useQuasar()
-const { carsEnAmbito } = usePerfil()
 
 const form = reactive({})
 
 const ubicacionFija = computed(() => !!props.evento || !!props.bien)
-const opcionesCar = computed(() => carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id })))
-const opcionesAmbiente = computed(() => (form.carId ? ambientesDeCar(form.carId) : []).map((a) => ({ label: a.nombre, value: a.id })))
+const porBien = ref(false)
 
 // Al corregir un hecho se conservan como opción los bienes ya reportados aunque hoy estén dados de baja.
-const opcionesBien = computed(() =>
-  (form.ambienteId ? bienesDeAmbiente(form.ambienteId) : [])
-    .filter((b) => b.situacion === 'activo' || (form.bienIds ?? []).includes(b.id))
-    .map((b) => ({ label: `${b.nombre} · ${b.id}`, value: b.id }))
-)
+const esElegible = (b) => b.situacion === 'activo' || (form.bienIds ?? []).includes(b.id)
 
 const subtitulo = computed(() => (form.ambienteId ? textoUbicacion(ubicacionDeAmbiente(form.ambienteId)) : 'Los campos con * son obligatorios'))
 
@@ -92,19 +94,21 @@ const bienUnico = computed(() => (form.bienIds?.length === 1 ? bienPorId(form.bi
 const unidadesEditables = computed(() => (bienUnico.value?.cantidad ?? 1) > 1)
 const unidadesValidas = (v) => v === '' || v == null || (Number.isInteger(v) && v >= 1 && v <= (bienUnico.value?.cantidad ?? 1)) || 'Indique un número entero dentro de la cantidad del bien'
 
-function alCambiarCentro () {
-  form.ambienteId = opcionesAmbiente.value[0]?.value ?? null
-  form.bienIds = []
-}
+// Las condiciones por bien solo se conservan para los bienes aún seleccionados.
+watch(() => form.bienIds, (ids) => {
+  for (const id of Object.keys(form.condiciones ?? {})) if (!(ids ?? []).includes(id)) delete form.condiciones[id]
+}, { deep: true })
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
   const { evento, bien } = props
+  // El hecho o el bien fijan la ubicación; si no, se hereda el contexto de la pantalla (centro filtrado) sin elegir ambiente.
   const ambienteId = evento?.ambienteId ?? bien?.ambienteId ?? null
-  const carId = ambienteId ? ubicacionDeAmbiente(ambienteId).car.id : carsEnAmbito.value[0]?.id ?? null
+  const carId = ambienteId ? ubicacionDeAmbiente(ambienteId).car.id : props.carInicial
+  porBien.value = false
   Object.assign(form, {
-    carId,
-    ambienteId: ambienteId ?? (carId ? ambientesDeCar(carId)[0]?.id ?? null : null),
+    carId: carId ?? null,
+    ambienteId,
     tipo: evento?.tipo ?? 'dano',
     fecha: evento?.fecha ?? FECHA_CORTE,
     titulo: evento?.titulo ?? '',
@@ -112,6 +116,7 @@ watch(() => props.modelValue, (abierto) => {
     bienIds: evento ? [...evento.bienIds] : bien ? [bien.id] : [],
     unidades: evento?.unidades ?? null,
     condicion: null,
+    condiciones: {},
     reportaNecesidad: evento?.reportaNecesidad ?? true
   })
 })
@@ -130,8 +135,13 @@ function guardar () {
     actualizarIncidente(props.evento, datos)
     $q.notify({ type: 'positive', message: 'Incidente actualizado.' })
   } else {
-    registrarIncidente({ ...datos, ambienteId: form.ambienteId, condicion: form.condicion })
-    $q.notify({ type: 'positive', message: `Incidente registrado para ${form.bienIds.length} bien(es).` })
+    registrarIncidente({
+      ...datos,
+      ambienteId: form.ambienteId,
+      condicion: porBien.value ? null : form.condicion,
+      condiciones: porBien.value ? form.condiciones : {}
+    })
+    $q.notify({ type: 'positive', message: `Incidente registrado para ${plural(form.bienIds.length, 'bien', 'bienes')}.` })
   }
   emit('update:modelValue', false)
   emit('hecho')

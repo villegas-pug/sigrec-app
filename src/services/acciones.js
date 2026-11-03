@@ -231,9 +231,11 @@ export function cambiarCondicion (bien, nueva, { fecha, detalle = '' } = {}) {
 
 // Solo los bienes indicados quedan afectados; el resto del ambiente no cambia por inferencia (CA-11).
 // `unidades` solo aplica a un único bien de un lote: las unidades afectadas (regla por validar).
-export function registrarIncidente ({ tipo, titulo, detalle, fecha, ambienteId, bienIds, reportaNecesidad, condicion: nueva, unidades }) {
-  if (nueva) {
-    for (const id of bienIds) cambiarCondicion(bienPorId(id), nueva, { fecha, detalle: titulo })
+// `condiciones` (mapa bienId → condición) tiene prioridad sobre la `condicion` común a todos los bienes.
+export function registrarIncidente ({ tipo, titulo, detalle, fecha, ambienteId, bienIds, reportaNecesidad, condicion: nueva, condiciones = {}, unidades }) {
+  for (const id of bienIds) {
+    const cond = condiciones[id] ?? nueva
+    if (cond) cambiarCondicion(bienPorId(id), cond, { fecha, detalle: titulo })
   }
   return registrarEvento({
     tipo,
@@ -343,7 +345,7 @@ export function trasladarBien (bien, ambienteDestinoId, { fecha } = {}) {
 
   const detalle = padreAnterior
     ? `Deja de ser componente de ${padreAnterior}.`
-    : movidos.length > 1 ? `Se trasladan también ${movidos.length - 1} componente(s).` : ''
+    : movidos.length > 1 ? `Se ${movidos.length - 1 === 1 ? 'traslada también 1 componente' : `trasladan también ${movidos.length - 1} componentes`}.` : ''
   return registrarEvento({
     tipo: 'traslado',
     titulo: `Traslado: ${origen.nombre} → ${destino.nombre}`,
@@ -367,10 +369,13 @@ export function reactivarBien (bien) {
   reactivar(bien)
 }
 
+export const bajaDe = (bienId) =>
+  db.eventos.find((e) => !e.anulacion && e.tipo === 'baja' && e.bienIds?.[0] === bienId) ?? null
+
 export const reposicionDe = (bienId) =>
   db.eventos.find((e) => !e.anulacion && e.tipo === 'reposicion' && e.bienAnteriorId === bienId) ?? null
 
-export function registrarReposicion (anterior, { rotulo, nombre, codigoPatrimonial, fechaAdquisicion, costo, vidaUtilAnios, fecha, trasladarComponentes }) {
+export function registrarReposicion (anterior, { rotulo, nombre, codigoPatrimonial, fechaAdquisicion, costo, vidaUtilAnios, fecha, componentesIds = [] }) {
   const nuevo = registrarBien({
     id: rotulo,
     ambienteId: anterior.ambienteId,
@@ -386,7 +391,7 @@ export function registrarReposicion (anterior, { rotulo, nombre, codigoPatrimoni
     cantidad: anterior.cantidad ?? 1,
     asociadoA: anterior.asociadoA ? { ...anterior.asociadoA } : null
   })
-  const trasladados = trasladarComponentes ? activos(componentesDe(anterior.id)) : []
+  const trasladados = activos(componentesDe(anterior.id)).filter((h) => componentesIds.includes(h.id))
   for (const hijo of trasladados) {
     hijo.asociadoA = { ...hijo.asociadoA, bienId: nuevo.id }
     hijo.revisionPendiente = false
@@ -395,7 +400,7 @@ export function registrarReposicion (anterior, { rotulo, nombre, codigoPatrimoni
   registrarEvento({
     tipo: 'reposicion',
     titulo: `Reposición de ${anterior.id}`,
-    detalle: trasladados.length ? `Alta por reposición. Se trasladan ${trasladados.length} componente(s) al bien nuevo.` : 'Alta por reposición.',
+    detalle: trasladados.length ? `Alta por reposición. ${trasladados.length === 1 ? 'Se traslada 1 componente' : `Se trasladan ${trasladados.length} componentes`} al bien nuevo.` : 'Alta por reposición.',
     fecha,
     ambienteId: anterior.ambienteId,
     bienIds: [anterior.id, nuevo.id],
