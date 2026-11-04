@@ -5,18 +5,18 @@
         <div class="sg-gallery-viewer__details">
           <h2 class="text-h6 q-my-none">{{ foto.titulo }}</h2>
           <div class="sg-muted">{{ fecha(foto.fecha) }} · {{ contexto(foto) }}</div>
-          <div v-if="foto.nota" class="sg-muted">{{ foto.nota }}</div>
+          <div v-if="foto.nota" class="sg-gallery-viewer__note">{{ foto.nota }}</div>
         </div>
-        <q-btn v-close-popup flat round icon="close" aria-label="Cerrar visor de fotografías" />
+        <q-btn v-close-popup flat round color="secondary" icon="close" aria-label="Cerrar visor de fotografías" />
       </q-card-section>
       <div class="sg-gallery-viewer__body" @touchstart.passive="iniciarGesto" @touchend.passive="terminarGesto" @touchcancel="toque = null">
-        <q-btn flat round icon="chevron_left" aria-label="Fotografía anterior" :disable="indice <= 0" @click="anterior" />
+        <q-btn unelevated round icon="chevron_left" class="sg-gallery-viewer__nav sg-gallery-viewer__nav--previous" aria-label="Fotografía anterior" :disable="indice <= 0" @click="anterior" />
         <img :src="foto.url" :alt="foto.titulo" @error="$emit('error-imagen', foto.url)">
-        <q-btn flat round icon="chevron_right" aria-label="Fotografía siguiente" :disable="indice >= fotos.length - 1" @click="siguiente" />
+        <q-btn unelevated round icon="chevron_right" class="sg-gallery-viewer__nav sg-gallery-viewer__nav--next" aria-label="Fotografía siguiente" :disable="indice >= fotos.length - 1" @click="siguiente" />
       </div>
       <q-card-actions class="sg-gallery-viewer__footer">
-        <span aria-live="polite">{{ indice + 1 }} de {{ fotos.length }} fotografías</span>
-        <q-btn flat icon="download" label="Descargar imagen" @click="$emit('descargar', foto)" />
+        <span class="sg-gallery-viewer__count" aria-live="polite">{{ indice + 1 }} de {{ fotos.length }} fotografías</span>
+        <q-btn outline color="secondary" icon="download" label="Descargar imagen" @click="$emit('descargar', foto)" />
       </q-card-actions>
     </q-card>
   </q-dialog>

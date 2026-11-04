@@ -51,6 +51,8 @@
 
 La galería de centros y ambientes presenta miniaturas 4:3, visor accesible con navegación y descarga individual del archivo original. Las imágenes sin archivo o con error muestran «Imagen no disponible». El nombre de archivo es opcional y las imágenes se conservan en memoria durante la sesión.
 
+El visor compartido usa los colores institucionales, una zona neutra para la imagen y cabecera y pie fijos. Su ancho se adapta al escritorio y ocupa la pantalla en móvil; mantiene controles accesibles por teclado y gestos táctiles.
+
 - Todos los campos nuevos son opcionales:
   - `ambiente.bloque` y `ambiente.ubicacion`.
   - `foto.ambienteId`.
