@@ -23,22 +23,26 @@
       <q-btn outline dense color="secondary" icon="zoom_out_map" label="Ver todos los puntos" :disable="!puntos.length" @click="verTodos" />
       <q-btn outline dense color="secondary" icon="location_on" label="Ir al origen" :disable="!puntos.length" @click="centrarPunto(puntos[0])" />
     </div>
-    <div class="row q-col-gutter-md">
-    <div class="col-12 col-md-7"><div ref="contenedor" style="height: 320px; width: 100%" aria-label="Mapa del itinerario" /></div>
-    <div class="col-12 col-md-5 column q-gutter-sm">
-      <div v-for="(p, i) in puntos" :key="p.id" class="row items-center q-gutter-xs no-wrap">
+    <div class="sg-map-layout">
+    <div class="sg-map-layout__map"><div ref="contenedor" style="height: 320px; width: 100%" aria-label="Mapa del itinerario" /></div>
+    <div class="sg-map-layout__points column q-gutter-sm">
+      <div v-for="(p, i) in puntos" :key="p.id" class="sg-map-point">
+        <div class="sg-map-point__field">
         <span>{{ i + 1 }}</span>
         <q-input v-if="!soloLectura" v-model="p.nombre" dense outlined class="col" :label="i === 0 ? 'Origen' : i === puntos.length - 1 ? 'Destino' : 'Parada'">
           <template #append><boton-dictado v-model="p.nombre" /></template>
         </q-input>
         <span v-else class="col">{{ p.nombre }}</span>
+        </div>
+        <div class="sg-map-point__actions">
         <q-btn flat dense icon="center_focus_strong" :aria-label="`Centrar punto ${i + 1}: ${p.nombre}`" @click="centrarPunto(p)" />
         <q-btn v-if="!soloLectura" flat dense icon="arrow_upward" :disable="i === 0" aria-label="Subir punto" @click="mover(i, -1)" />
         <q-btn v-if="!soloLectura" flat dense icon="arrow_downward" :disable="i === puntos.length - 1" aria-label="Bajar punto" @click="mover(i, 1)" />
         <q-btn v-if="!soloLectura" flat dense icon="delete" aria-label="Eliminar punto" @click="puntos.splice(i, 1)" />
+        </div>
       </div>
       <q-btn v-if="!soloLectura && puntos.length" flat color="secondary" label="Volver al origen" @click="volver" />
-      <div v-if="!soloLectura" role="status">{{ estadoTexto }}</div>
+      <div v-if="!soloLectura" class="sg-map-layout__status" role="status">{{ estadoTexto }}</div>
       <q-btn v-if="!soloLectura && estado === 'error'" outline color="secondary" label="Reintentar" @click="calcular" />
     </div>
     </div>

@@ -5,6 +5,7 @@
 - El visor compartido de fotografías adapta su ancho al dispositivo y utiliza la identidad visual institucional, con cabecera y acciones fijas y navegación accesible.
 - Pagos: detalle antes de editar; fecha, importe positivo y sustento obligatorios al informar pagos; datos de demostración completos.
 - Itinerarios: selección ordenada de puntos en mapa, ruta vial OSRM y distancia prevista automática. La distancia realizada se confirma por separado.
+- El editor organiza datos generales, ruta, previsto y realizado en secuencia vertical; mapa y puntos se adaptan al ancho disponible sin desplazamiento horizontal.
 - Los servicios cartográficos externos reciben coordenadas y pueden no estar disponibles; se ofrece ingreso manual.
 - Las comprobaciones ejecutables requieren autorización explícita.
 

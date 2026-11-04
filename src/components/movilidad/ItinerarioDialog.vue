@@ -9,6 +9,7 @@
     @enviar="guardar"
   >
     <template v-if="modo !== 'ejecucion'">
+      <div class="sg-itinerary-heading">Datos generales</div>
       <div class="row q-col-gutter-md">
         <q-input v-model="form.fecha" class="col-12 col-sm-4" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, fechaCoherente]">
           <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
@@ -17,12 +18,13 @@
           <template #append><boton-dictado v-model="form.proposito" /></template>
         </q-input>
       </div>
+      <div class="sg-itinerary-heading">Ruta</div>
       <q-option-group v-model="form.modoRuta" inline :options="[{ label: 'Ingreso manual', value: 'manual' }, { label: 'Definir en mapa', value: 'mapa' }]" />
       <mapa-itinerario v-if="modelValue" v-show="form.modoRuta === 'mapa'" v-model="form.ruta" :visible="form.modoRuta === 'mapa'" :nuevo="modo === 'nuevo'" @modificado="mapaModificado = true" />
       <q-input v-if="form.modoRuta === 'manual'" v-model="form.destinos" outlined dense label="Destinos, separados por comas *" hint="Ej.: CAR, Centro de salud, CAR" :rules="[requerido]">
         <template #append><boton-dictado v-model="form.destinos" /></template>
       </q-input>
-      <div class="sg-kv__label">Previsto</div>
+      <div class="sg-itinerary-heading">Previsto</div>
       <div class="row q-col-gutter-md">
         <q-input v-model="form.previsto.salida" class="col-6 col-sm-4" outlined dense type="time" stack-label label="Salida">
           <template #append><boton-dictado v-model="form.previsto.salida" tipo="hora" /></template>
@@ -37,7 +39,7 @@
       <q-checkbox v-model="form.conRealizado" label="El recorrido ya se realizó" />
     </template>
     <template v-if="modo === 'ejecucion' || form.conRealizado">
-      <div class="sg-kv__label">Realizado</div>
+      <div class="sg-itinerary-heading">Realizado</div>
       <div class="row q-col-gutter-md">
         <q-input v-model="form.realizado.salida" class="col-6 col-sm-4" outlined dense type="time" stack-label label="Salida">
           <template #append><boton-dictado v-model="form.realizado.salida" tipo="hora" /></template>

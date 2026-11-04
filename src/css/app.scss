@@ -925,6 +925,21 @@ a {
 
 .sg-dialog__header h2 { color: var(--sg-blue); }
 .sg-dialog__footer { border-top: 1px solid var(--sg-border-soft); }
+.sg-dialog__footer,
+.sg-gallery-viewer__footer,
+.q-dialog-plugin > .q-card__actions {
+  flex-wrap: wrap;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.sg-dialog__footer .q-btn,
+.sg-gallery-viewer__footer .q-btn,
+.q-dialog-plugin > .q-card__actions .q-btn { max-width: 100%; }
+
+.sg-dialog__footer .q-btn__content,
+.sg-gallery-viewer__footer .q-btn__content,
+.q-dialog-plugin > .q-card__actions .q-btn__content { white-space: normal; }
 
 .sg-dialog__form {
   display: flex;
@@ -937,9 +952,40 @@ a {
 .sg-dialog__body {
   flex: 1 1 auto;
   min-height: 0;
+  container-type: inline-size;
   overflow-y: auto;
+  overflow-wrap: anywhere;
   overscroll-behavior: contain;
 }
+
+.sg-dialog__body.column { flex-wrap: nowrap; }
+.sg-dialog__body.column > * { flex-shrink: 0; min-width: 0; }
+
+.sg-itinerary-heading {
+  color: var(--sg-blue);
+  font-weight: 700;
+  border-bottom: 1px solid var(--sg-border-soft);
+  padding-bottom: 6px;
+}
+.sg-map-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; min-width: 0; }
+.sg-map-layout__map, .sg-map-layout__points { min-width: 0; }
+.sg-map-layout__points.column { flex-wrap: nowrap; }
+.sg-map-layout__status { padding: 8px 12px; border-radius: var(--sg-radius); background: var(--sg-blue-soft); overflow-wrap: anywhere; }
+
+@container (max-width: 520px) {
+  .sg-dialog__body .row > [class*='col-sm-'],
+  .sg-dialog__body .row > .col-6 {
+    width: 100%;
+    max-width: 100%;
+    flex: 0 0 100%;
+  }
+}
+
+.sg-map-point { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
+.sg-map-point__field { display: flex; align-items: center; gap: 8px; flex: 1 1 180px; min-width: 0; }
+.sg-map-point__field > .col { min-width: 0; overflow-wrap: anywhere; }
+.sg-map-point__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+.sg-map-point__actions .q-btn { min-width: 44px; min-height: 44px; }
 
 // Los diálogos de confirmación/prompt de Quasar también conservan título y acciones visibles.
 .q-dialog__inner > .q-dialog-plugin {
