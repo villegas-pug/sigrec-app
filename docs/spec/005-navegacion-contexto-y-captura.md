@@ -49,6 +49,8 @@
 
 ## 3. Reglas de datos (compatibles con los registros existentes)
 
+La galería de centros y ambientes presenta miniaturas 4:3, visor accesible con navegación y descarga individual del archivo original. Las imágenes sin archivo o con error muestran «Imagen no disponible». El nombre de archivo es opcional y las imágenes se conservan en memoria durante la sesión.
+
 - Todos los campos nuevos son opcionales:
   - `ambiente.bloque` y `ambiente.ubicacion`.
   - `foto.ambienteId`.

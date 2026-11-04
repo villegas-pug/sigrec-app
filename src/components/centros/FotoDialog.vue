@@ -95,12 +95,12 @@ function rechazada () {
 function guardar () {
   const url = form.archivo ? URL.createObjectURL(form.archivo) : null
   if (props.foto) {
-    actualizarFoto(props.foto, { titulo: form.titulo, nota: form.nota, url, ambienteId: form.ambienteId })
+    actualizarFoto(props.foto, { titulo: form.titulo, nota: form.nota, url, nombreArchivo: form.archivo?.name, ambienteId: form.ambienteId })
   } else {
     if (props.bien) {
       props.bien.fotos ??= []
-      props.bien.fotos.push({ titulo: form.titulo, nota: form.nota || null, url, fecha: FECHA_CORTE })
-    } else registrarFoto(props.centro, { titulo: form.titulo, nota: form.nota, url, ambienteId: form.ambienteId })
+      props.bien.fotos.push({ titulo: form.titulo, nota: form.nota || null, url, nombreArchivo: form.archivo?.name, fecha: FECHA_CORTE })
+    } else registrarFoto(props.centro, { titulo: form.titulo, nota: form.nota, url, nombreArchivo: form.archivo?.name, ambienteId: form.ambienteId })
   }
   $q.notify({ type: 'positive', message: props.foto ? 'Fotografía actualizada.' : 'Fotografía incorporada.' })
   emit('update:modelValue', false)

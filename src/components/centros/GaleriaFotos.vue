@@ -5,19 +5,25 @@
         <filtro-inactivos v-model="mostrarInactivas" />
         <q-btn v-if="puedeHacer(bien ? 'bien.actualizar' : 'centro.foto')" outline color="secondary" icon="add_a_photo" label="Incorporar fotografía" :disable="!activo" @click="abrir(null)" />
       </template>
-      <div v-if="items.length" class="sg-kv-grid">
+      <div v-if="items.length" class="sg-photo-grid">
         <figure v-for="{ foto, i } in items" :key="i" class="sg-photo q-ma-none">
-          <img v-if="foto.url" :src="foto.url" :alt="foto.titulo" class="sg-photo__img">
-          <template v-else>
+          <button v-if="disponible(foto)" type="button" class="sg-photo__open" :aria-label="`Ampliar fotografía ${foto.titulo}`" @click="abrirVisor(foto, $event)">
+            <img :src="foto.url" :alt="foto.titulo" class="sg-photo__img" @error="marcarError(foto.url)">
+          </button>
+          <div v-else class="sg-photo__missing">
             <q-icon name="image" size="28px" aria-hidden="true" />
-            <span>[Foto: {{ foto.titulo }}]</span>
-          </template>
-          <figcaption class="sg-muted text-center">
-            <template v-if="foto.url">{{ foto.titulo }} · </template>{{ fecha(foto.fecha) }}<template v-if="foto.nota"> · {{ foto.nota }}</template>
+            <span>Imagen no disponible</span>
+          </div>
+          <figcaption class="sg-photo__caption">
+            <strong>{{ foto.titulo }}</strong>
+            <span>{{ fecha(foto.fecha) }}</span><span v-if="foto.nota">{{ foto.nota }}</span>
             <status-chip v-if="!ambienteId && !bien" tono="ne" :label="foto.ambienteId ? (ambientePorId(foto.ambienteId)?.nombre ?? 'Ambiente') : 'Del centro'" class="q-ml-xs" />
             <status-chip v-if="foto.anulacion" v-bind="CHIP_ANULADO" class="q-ml-xs" />
           </figcaption>
-          <menu-acciones :items="accionesFoto(foto)" :etiqueta="`Acciones de la fotografía ${foto.titulo}`" />
+          <div class="sg-photo__actions">
+            <q-btn v-if="disponible(foto)" flat round icon="download" color="secondary" :aria-label="`Descargar imagen ${foto.titulo}`" @click="descargar(foto)" />
+            <menu-acciones :items="accionesFoto(foto)" :etiqueta="`Acciones de la fotografía ${foto.titulo}`" />
+          </div>
         </figure>
       </div>
       <p v-else class="sg-muted q-mb-none">{{ ambienteId ? 'Este ambiente no tiene fotografías.' : 'No hay fotografías registradas.' }}</p>
@@ -26,6 +32,7 @@
 
     <foto-dialog v-model="dialogo" :centro="centro" :bien="bien" :foto="enEdicion" :ambiente-inicial="ambienteId" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
+    <visor-fotos v-model="visorAbierto" :fotos="fotosDisponibles" :indice-inicial="indiceInicial" :contexto="contexto" @descargar="descargar" @error-imagen="marcarError" @hide="restaurarFoco" />
   </div>
 </template>
 
@@ -39,6 +46,7 @@ import MenuAcciones from 'components/common/MenuAcciones.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import FotoDialog from 'components/centros/FotoDialog.vue'
+import VisorFotos from 'components/centros/VisorFotos.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { ambientePorId, vigente } from 'src/services/datos'
@@ -60,6 +68,10 @@ const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = use
 const mostrarInactivas = ref(false)
 const dialogo = ref(false)
 const enEdicion = ref(null)
+const errores = ref([])
+const visorAbierto = ref(false)
+const indiceInicial = ref(0)
+let focoAnterior = null
 
 const activo = computed(() => props.bien ? props.bien.situacion === 'activo' : vigente(props.centro) && (!props.ambienteId || vigente(ambientePorId(props.ambienteId) ?? {})))
 
@@ -70,6 +82,24 @@ const items = computed(() =>
     .filter(({ foto }) => !props.ambienteId || foto.ambienteId === props.ambienteId)
     .filter(({ foto }) => mostrarInactivas.value || vigente(foto))
 )
+
+const disponible = (foto) => !!foto.url && !errores.value.includes(foto.url)
+const fotosDisponibles = computed(() => items.value.map(({ foto }) => foto).filter(disponible))
+const marcarError = (url) => { if (url && !errores.value.includes(url)) errores.value = [...errores.value, url] }
+const contexto = (foto) => props.bien ? `${props.bien.nombre} · ${props.bien.id}` : (foto.ambienteId ? (ambientePorId(foto.ambienteId)?.nombre ?? 'Ambiente') : 'Del centro')
+function abrirVisor (foto, evento) {
+  focoAnterior = evento.currentTarget
+  indiceInicial.value = fotosDisponibles.value.indexOf(foto)
+  visorAbierto.value = true
+}
+function restaurarFoco () { if (focoAnterior?.isConnected) focoAnterior.focus() }
+function descargar (foto) {
+  if (!disponible(foto)) return
+  const enlace = document.createElement('a')
+  enlace.href = foto.url
+  enlace.download = (foto.nombreArchivo || foto.titulo || 'fotografia').replace(/[\\/:*?"<>|\x00-\x1f]/g, '_')
+  enlace.click()
+}
 
 function abrir (foto) {
   enEdicion.value = foto

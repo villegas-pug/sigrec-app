@@ -143,8 +143,8 @@ export function actualizarCentro (car, { nombre, inmueble }) {
 }
 
 // `ambienteId` es opcional: una fotografía sin ambiente es del centro (también las históricas).
-export function registrarFoto (car, { titulo, nota, url, ambienteId = null }) {
-  car.inmueble.fotos.push({ titulo, fecha: FECHA_CORTE, nota: nota || null, url, ambienteId, registradoPor: autorActual() })
+export function registrarFoto (car, { titulo, nota, url, nombreArchivo, ambienteId = null }) {
+  car.inmueble.fotos.push({ titulo, fecha: FECHA_CORTE, nota: nota || null, url, nombreArchivo, ambienteId, registradoPor: autorActual() })
 }
 
 const liberarUrl = (url) => {
@@ -152,10 +152,11 @@ const liberarUrl = (url) => {
 }
 
 // Sin imagen nueva se conserva la anterior; con ella se libera la URL en memoria de la anterior.
-export function actualizarFoto (foto, { titulo, nota, url, ambienteId = null }) {
+export function actualizarFoto (foto, { titulo, nota, url, nombreArchivo, ambienteId = null }) {
   if (url) {
     liberarUrl(foto.url)
     foto.url = url
+    foto.nombreArchivo = nombreArchivo || null
   }
   Object.assign(foto, { titulo, nota: nota || null, ambienteId })
 }
