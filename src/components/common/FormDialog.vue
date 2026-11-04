@@ -7,19 +7,19 @@
     @escape-key="cerrar"
   >
     <q-card class="sg-dialog" :style="{ width: `${ancho}px` }">
-      <q-card-section>
+      <q-card-section class="sg-dialog__header">
         <h2 class="text-h6 text-weight-bold q-my-none">{{ titulo }}</h2>
         <p v-if="subtitulo" class="sg-muted q-mb-none">{{ subtitulo }}</p>
       </q-card-section>
-      <q-card-section>
-        <q-form class="column q-gutter-y-md" @submit="$emit('enviar')">
+      <q-form class="sg-dialog__form" @submit="$emit('enviar')">
+        <q-card-section class="sg-dialog__body column q-gutter-y-md">
           <slot />
-          <div class="row justify-end q-gutter-sm">
-            <q-btn flat color="secondary" :label="soloLectura ? 'Cerrar' : 'Cancelar'" @click="cerrar" />
-            <q-btn v-if="!soloLectura" unelevated :color="colorEnviar" type="submit" :label="etiquetaEnviar" :disable="deshabilitarEnviar" />
-          </div>
-        </q-form>
-      </q-card-section>
+        </q-card-section>
+        <q-card-actions align="right" class="sg-dialog__footer q-px-md q-pb-md q-gutter-sm">
+          <q-btn flat color="secondary" :label="soloLectura ? 'Cerrar' : 'Cancelar'" @click="cerrar" />
+          <q-btn v-if="!soloLectura" unelevated :color="colorEnviar" type="submit" :label="etiquetaEnviar" :disable="deshabilitarEnviar" />
+        </q-card-actions>
+      </q-form>
     </q-card>
   </q-dialog>
 </template>

@@ -14,3 +14,4 @@
 | Reunión | Documentos |
 | --- | --- |
 | 2026-10-30, reunión con jefe de proyecto (hora inferida del nombre del audio) | [Transcripción](2026-10-30_1910_reunion-jefe-proyecto/2026-10-30_1910_transcripcion_reunion-jefe-proyecto.md) · [Plan de auditoría](2026-10-30_1910_reunion-jefe-proyecto/2026-10-30_1910_plan_auditoria-sigrec.md) |
+| 2026-11-03, presentación del prototipo con jefe de proyecto (hora inferida del nombre del audio) | [Transcripción](2026-11-03_1749_reunion-presentacion-prototipo-jefe-proyecto/2026-11-03_1749_transcripcion_reunion-presentacion-prototipo-jefe-proyecto.md) |

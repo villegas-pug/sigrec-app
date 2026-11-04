@@ -98,6 +98,8 @@ Accesos: Verificación física deja de tener la pantalla «Registro de bienes» 
 ## 7. UI adaptable
 
 - `FormDialog` / `BaseDialog`: diálogos maximizados en móvil.
+- En los diálogos, la cabecera y las acciones permanecen visibles; el cuerpo se desplaza de forma independiente.
+- En el explorador, el selector «Situación del bien» ocupa todo el ancho del panel y «Mostrar inactivos» queda debajo, alineado a la derecha.
 - `CondicionSelector`: botones de opción (opción única) en todos los tamaños; SPEC 004.
 - Cabecera, KPI y tablas con ajustes para ≤ 599 px; primera columna fija en tablas anchas; períodos de servicio como tarjetas en móvil.
 - Foco visible y estado `disabled` en los controles propios.

@@ -2,12 +2,12 @@
   <div>
     <q-dialog :model-value="modelValue" :maximized="$q.screen.lt.sm" @update:model-value="$emit('update:modelValue', $event)">
       <q-card class="sg-dialog" :style="{ width: '720px' }">
-        <q-card-section>
+        <q-card-section class="sg-dialog__header">
           <h2 class="text-h6 text-weight-bold q-my-none">Resolver los bienes antes de anular el ambiente</h2>
           <p class="sg-muted q-mb-none">{{ ambiente.nombre }} · {{ ambiente.id }}</p>
         </q-card-section>
 
-        <q-card-section class="column q-gutter-y-md">
+        <q-card-section class="sg-dialog__body column q-gutter-y-md">
           <note-banner v-if="pendientes.length" tono="wa" icono="block">
             <strong>No se puede anular todavía.</strong>
             {{ plural(pendientes.length, 'bien o componente asociado sigue', 'bienes o componentes asociados siguen') }} en el ambiente.
@@ -38,7 +38,7 @@
           <p v-if="pendientes.length && !hayDestino" class="sg-muted q-mb-none">El centro no tiene otros ambientes vigentes: registre uno para poder reubicar los bienes.</p>
         </q-card-section>
 
-        <q-card-actions align="right" class="q-px-md q-pb-md">
+        <q-card-actions align="right" class="sg-dialog__footer q-px-md q-pb-md">
           <q-btn flat color="secondary" label="Cerrar" v-close-popup />
           <q-btn unelevated color="negative" label="Continuar con la anulación" :disable="pendientes.length > 0" @click="continuar" />
         </q-card-actions>

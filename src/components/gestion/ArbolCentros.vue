@@ -4,11 +4,13 @@
       <q-input v-model="texto" outlined dense clearable label="Buscar bien por nombre, rótulo o código">
         <template #append><boton-dictado v-model="texto" /><q-icon name="search" /></template>
       </q-input>
-      <div class="row items-center justify-between no-wrap q-gutter-x-sm">
-        <q-select v-model="situacion" class="col" :options="OPCIONES_SITUACION" emit-value map-options outlined dense label="Situación del bien">
+      <div class="column q-gutter-y-xs">
+        <q-select v-model="situacion" class="full-width" :options="OPCIONES_SITUACION" emit-value map-options outlined dense label="Situación del bien">
           <template #append><boton-dictado v-model="situacion" tipo="opcion" :opciones="OPCIONES_SITUACION" emit-value /></template>
         </q-select>
-        <filtro-inactivos v-model="inactivos" />
+        <div class="row justify-end">
+          <filtro-inactivos v-model="inactivos" />
+        </div>
       </div>
     </div>
 
