@@ -72,7 +72,7 @@
 
 - Persistencia, autorización en la capa de datos y control de concurrencia. Son deuda técnica antes de cualquier uso operativo.
 - Integración SGD, carga documental del sustento de pago, gestión de personal y choferes, indicadores gerenciales, aprobación presupuestal y compras.
-- Rediseño de menús.
+- Rediseño de menús. *(Reemplazado por la SPEC 008 solo para «Gestión de centros».)*
 
 ## 6. Verificación pendiente (requiere autorización para ejecutar `quasar dev`)
 

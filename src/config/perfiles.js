@@ -45,14 +45,14 @@ export const PERFILES = [
     id: 'car',
     nombre: 'Personal del CAR',
     ambito: { descripcion: 'CAR Demo Amanecer', carIds: ['AMA'], vehiculoIds: null },
-    accesos: ['inicio', 'centros', 'ambientes', 'bienes', 'registro', 'incidencias', 'necesidades', 'servicios', 'vehiculos', 'itinerarios', 'combustible'],
+    accesos: ['inicio', 'centros', 'incidencias', 'necesidades', 'servicios', 'vehiculos', 'itinerarios', 'combustible'],
     acciones: ACCIONES_MANTENIMIENTO
   },
   {
     id: 'verifica',
     nombre: 'Verificación física',
     ambito: { descripcion: 'CAR Demo Amanecer', carIds: ['AMA'], vehiculoIds: null },
-    accesos: ['bienes', 'incidencias'],
+    accesos: ['centros', 'incidencias'],
     acciones: ['bien.verificar', 'bien.incidente']
   },
   {

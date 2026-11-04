@@ -948,3 +948,134 @@ a {
 @media (prefers-reduced-motion: reduce) {
   .sg-dictado--activo { animation: none; }
 }
+
+// ---------- Gestión de centros: explorador árbol + detalle ----------
+// En escritorio la página ocupa el alto visible y cada columna hace scroll propio, para no desplazar toda la pantalla.
+.sg-page--explorador {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 8px;
+}
+
+.sg-page--explorador > .sg-page__inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  gap: 8px;
+}
+
+.sg-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  .sg-page-title {
+    margin: 0;
+    text-align: left;
+  }
+}
+
+.sg-explorer {
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sg-explorer__col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--sg-border);
+  border-radius: var(--sg-radius);
+  background: var(--sg-surface);
+  overflow: hidden;
+}
+
+.sg-explorer__filtros {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--sg-border);
+}
+
+.sg-explorer__arbol {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 8px 12px;
+  overflow: auto;
+}
+
+.sg-detalle {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sg-detalle__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 16px;
+}
+
+.sg-detalle__titulo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.sg-detalle__texto {
+  min-width: 0;
+
+  .sg-section-title,
+  .sg-card__sub {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.sg-detalle__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sg-detalle__panels {
+  flex: 1 1 auto;
+  min-height: 0;
+  background: transparent;
+}
+
+.sg-detalle__panel {
+  padding: 12px 16px;
+}
+
+@media (max-width: 1023.98px) {
+  // Móvil y tableta: lista → detalle, cada vista a pantalla completa y con el scroll normal de la página.
+  .sg-explorer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sg-explorer__col {
+    overflow: visible;
+  }
+
+  .sg-explorer__arbol {
+    overflow: visible;
+  }
+
+  .sg-detalle__panels {
+    overflow: visible;
+  }
+}

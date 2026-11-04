@@ -1,0 +1,163 @@
+<template>
+  <detalle-panel :titulo="centro.nombre" :ruta="`${centro.id} · Centro`" icono="home_work" :tabs="tabs" :con-volver="conVolver" @volver="$emit('volver')">
+    <template #chips>
+      <status-chip v-bind="condicionInmueble(inmueble.condicion)" />
+      <status-chip v-if="centro.anulacion" v-bind="CHIP_ANULADO" />
+    </template>
+    <template #acciones>
+      <q-btn v-if="puedeHacer('ambiente.registrar')" outline color="secondary" icon="add_home" label="Registrar ambiente" :disable="!activo" @click="dialogos.ambiente = true" />
+      <q-btn v-if="puedeHacer('centro.actualizar')" outline color="secondary" icon="edit" label="Actualizar ficha" :disable="!activo" @click="dialogos.ficha = true" />
+      <menu-acciones :items="accionesCentro" :etiqueta="`Acciones de ${centro.nombre}`" />
+    </template>
+
+    <template #ficha>
+      <note-banner v-if="centro.anulacion" tono="ne" icono="block">
+        Centro anulado el {{ fecha(centro.anulacion.fecha) }} por {{ centro.anulacion.por }}. Motivo: {{ centro.anulacion.motivo }}
+      </note-banner>
+      <section-card titulo="Centro e inmueble" subtitulo="Datos del centro y del inmueble donde funciona.">
+        <div class="sg-kv-grid">
+          <key-value etiqueta="Dirección">
+            <template v-if="inmueble.direccion">{{ inmueble.direccion }}</template>
+            <status-chip v-else tono="si" label="No informada" />
+          </key-value>
+          <key-value etiqueta="Referencia de fundación" :nota="inmueble.fundacion.nota || ''">
+            <template v-if="inmueble.fundacion.referencia">{{ inmueble.fundacion.referencia }}</template>
+            <status-chip v-else tono="si" label="No informada" />
+          </key-value>
+          <key-value etiqueta="Condición del inmueble">{{ condicionInmueble(inmueble.condicion).label }}</key-value>
+          <template v-if="inmueble.condicion === 'alquilado'">
+            <key-value etiqueta="Arrendador">
+              <template v-if="inmueble.arrendador">{{ inmueble.arrendador }}</template>
+              <status-chip v-else tono="si" label="Información pendiente" />
+            </key-value>
+            <key-value etiqueta="Contrato de alquiler">
+              <template v-if="inmueble.contratoHasta">Vigente hasta el {{ fecha(inmueble.contratoHasta) }}</template>
+              <status-chip v-else tono="si" label="Información pendiente" />
+            </key-value>
+          </template>
+          <key-value etiqueta="Litigios" :nota="inmueble.litigios ? '' : 'No se ha informado si existen litigios'">
+            <template v-if="inmueble.litigios">{{ inmueble.litigios }}</template>
+            <status-chip v-else tono="si" label="Información pendiente" />
+          </key-value>
+        </div>
+      </section-card>
+
+      <section-card titulo="Construcción e infraestructura">
+        <div class="sg-kv-grid">
+          <key-value v-for="campo in camposConstruccion" :key="campo.etiqueta" :etiqueta="campo.etiqueta" :nota="campo.nota || ''">
+            <template v-if="campo.valor != null && campo.valor !== ''">{{ campo.valor }}</template>
+            <status-chip v-else tono="si" label="No informado" />
+          </key-value>
+          <key-value etiqueta="Estado general">
+            <status-chip v-bind="condicion(inmueble.construccion.estado)" />
+          </key-value>
+          <key-value etiqueta="Última actualización" :nota="inmueble.actualizado.por">{{ fecha(inmueble.actualizado.fecha) }}</key-value>
+        </div>
+      </section-card>
+    </template>
+
+    <template #fotos>
+      <galeria-fotos :centro="centro" titulo="Fotografías del centro" />
+    </template>
+
+    <template #ambientes>
+      <section-card :titulo="`Ambientes del centro (${ambientes.length})`" subtitulo="Seleccione un ambiente para ver su ficha, galería, novedades y bienes" sin-relleno>
+        <div v-for="amb in ambientes" :key="amb.id" class="sg-borde-superior row items-center justify-between q-px-md q-py-sm">
+          <div class="column">
+            <button type="button" class="sg-row-btn text-weight-bold self-start" @click="$emit('seleccionar', nodoAmbienteId(amb.id))">{{ amb.nombre }}</button>
+            <span class="sg-muted">{{ [amb.piso != null ? `Piso ${amb.piso}` : null, amb.bloque, amb.ubicacion].filter(Boolean).join(' · ') || 'Ubicación no informada' }}</span>
+          </div>
+          <div class="sg-chips">
+            <status-chip v-bind="condicion(amb.condicion)" />
+            <status-chip v-if="amb.anulacion" v-bind="CHIP_ANULADO" />
+            <status-chip tono="ne" :label="plural(bienesDeAmbiente(amb.id).filter((b) => b.situacion === 'activo').length, 'bien activo', 'bienes activos')" />
+          </div>
+        </div>
+        <p v-if="!ambientes.length" class="q-pa-md sg-muted q-mb-none">El centro aún no tiene ambientes registrados.</p>
+      </section-card>
+    </template>
+  </detalle-panel>
+
+  <centro-ficha-dialog v-model="dialogos.ficha" :centro="centro" />
+  <ambiente-dialog v-model="dialogos.ambiente" :centro="centro" @hecho="(id) => $emit('seleccionar', nodoAmbienteId(id))" />
+  <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
+</template>
+
+<script setup>
+import { computed, reactive } from 'vue'
+import DetallePanel from 'components/gestion/DetallePanel.vue'
+import SectionCard from 'components/common/SectionCard.vue'
+import StatusChip from 'components/common/StatusChip.vue'
+import NoteBanner from 'components/common/NoteBanner.vue'
+import KeyValue from 'components/common/KeyValue.vue'
+import MenuAcciones from 'components/common/MenuAcciones.vue'
+import AnularDialog from 'components/common/AnularDialog.vue'
+import CentroFichaDialog from 'components/centros/CentroFichaDialog.vue'
+import AmbienteDialog from 'components/centros/AmbienteDialog.vue'
+import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
+import { usePerfil } from 'src/composables/usePerfil'
+import { useAnulacion } from 'src/composables/useAnulacion'
+import { ambientesDeCar, bienesDeAmbiente, vigente } from 'src/services/datos'
+import { nodoAmbienteId } from 'src/services/bienes'
+import { anular, dependenciasDeCentro } from 'src/services/acciones'
+import { CHIP_ANULADO, condicion, condicionInmueble } from 'src/config/catalogos'
+import { fecha, plural } from 'src/utils/formato'
+
+const props = defineProps({
+  centro: { type: Object, required: true },
+  conVolver: { type: Boolean, default: false }
+})
+
+defineEmits(['seleccionar', 'volver'])
+
+const { puedeHacer } = usePerfil()
+const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
+
+const dialogos = reactive({ ficha: false, ambiente: false })
+
+const inmueble = computed(() => props.centro.inmueble)
+const activo = computed(() => vigente(props.centro))
+const ambientes = computed(() => ambientesDeCar(props.centro.id, { inactivos: true }))
+
+const tabs = computed(() => [
+  { name: 'ficha', label: 'Ficha' },
+  { name: 'fotos', label: 'Fotografías' },
+  { name: 'ambientes', label: `Ambientes (${ambientes.value.length})` }
+])
+
+const camposConstruccion = computed(() => {
+  const c = inmueble.value.construccion
+  return [
+    { etiqueta: 'Material de construcción', valor: c.material },
+    { etiqueta: 'Antigüedad', valor: c.antiguedad, nota: c.antiguedadNota },
+    { etiqueta: 'Pisos', valor: c.pisos },
+    { etiqueta: 'Área construida', valor: c.areaM2 ? `${c.areaM2} m²` : null },
+    { etiqueta: 'Características', valor: c.caracteristicas }
+  ]
+})
+
+const accionesCentro = computed(() => {
+  const c = props.centro
+  return [
+    {
+      label: 'Anular centro',
+      icono: 'block',
+      peligro: true,
+      visible: puedeHacer('centro.anular') && vigente(c),
+      accion: () => pedirAnulacion({
+        titulo: 'Anular centro',
+        subtitulo: `${c.nombre} · ${c.id}`,
+        dependencias: dependenciasDeCentro(c),
+        mensaje: 'Centro anulado.',
+        ejecutar: (datos) => anular(c, datos)
+      })
+    },
+    {
+      label: 'Reactivar centro',
+      icono: 'restore',
+      visible: puedeHacer('centro.anular') && !vigente(c),
+      accion: () => pedirReactivacion({ entidad: 'centro', registro: c, nombre: 'Centro' })
+    }
+  ]
+})
+</script>

@@ -53,14 +53,14 @@
         outlined
         dense
         label="Forma parte de *"
-        hint="Solo bienes activos del mismo ambiente que no sean componentes de este bien"
+        hint="Solo bienes activos del mismo ambiente que no sean componentes. Un componente no admite componentes"
         :rules="[requerido]">
         <template #append><boton-dictado v-model="form.padreId" tipo="opcion" :opciones="opcionesPadre" emit-value /></template>
       </q-select>
       <q-input v-model="form.posicion" outlined dense label="Posición" placeholder="Ej.: Cama inferior, silla 3">
         <template #append><boton-dictado v-model="form.posicion" /></template>
       </q-input>
-      <p v-if="!opcionesPadre.length" class="sg-muted q-mb-none">No hay otros bienes activos en el ambiente a los que pueda asociarse.</p>
+      <p v-if="!opcionesPadre.length" class="sg-muted q-mb-none">No hay otros bienes activos en el ambiente a los que pueda asociarse (un componente no puede asociarse a otro componente, ni un bien con componentes pasar a serlo).</p>
     </template>
 
     <template v-else>

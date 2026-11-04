@@ -106,7 +106,7 @@
             <tbody>
               <tr v-for="n in pendientes" :key="n.id">
                 <td>
-                  <router-link v-if="puedeAcceder('bienes')" :to="{ name: 'bienes', query: { bien: n.id } }" class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</router-link>
+                  <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: n.id } }" class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</router-link>
                   <span v-else class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</span>
                   <div class="sg-muted">{{ textoUbicacion(n.ubicacion) }}</div>
                   <status-chip :tono="n.clase === 'reposicion' ? 'da' : 'in'" :label="`Clasificación principal: ${CLASES[n.clase]}`" />
@@ -177,7 +177,7 @@
               <div class="sg-chips"><status-chip tono="in" label="Requiere evaluación" /><status-chip tono="si" label="Costo no estimado" /></div>
               <span class="text-weight-bold">{{ i.novedad.titulo }}</span>
               <span class="sg-muted">{{ textoUbicacion(i.ubicacion) }} · informada el {{ fecha(i.novedad.fecha) }}</span>
-              <router-link v-if="puedeAcceder('ambientes')" :to="{ name: 'ambientes', query: { car: i.ubicacion.car.id, ambiente: i.ubicacion.ambiente.id, novedad: i.id } }">Ver novedad en el ambiente</router-link>
+              <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { car: i.ubicacion.car.id, ambiente: i.ubicacion.ambiente.id, novedad: i.id } }">Ver novedad en el ambiente</router-link>
             </div>
             <p v-if="!resultado.infraestructura.length" class="sg-muted q-mb-none">Sin necesidades de infraestructura.</p>
           </div>
@@ -195,7 +195,7 @@
               <div class="sg-chips"><status-chip tono="si" label="Antecedentes insuficientes" /></div>
               <span class="text-weight-bold">{{ i.bien.nombre }} · {{ i.bien.id }}</span>
               <span class="sg-muted">Falta {{ i.faltantes.join(' y ') }}: no se calcula renovación por vida útil.</span>
-              <router-link v-if="puedeAcceder('bienes')" :to="{ name: 'bienes', query: { bien: i.bien.id } }">Completar en la ficha del bien</router-link>
+              <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: i.bien.id } }">Completar en la ficha del bien</router-link>
             </div>
             <p v-if="!resultado.atendidas.length && !resultado.insuficientes.length" class="sg-muted q-mb-none">Sin registros.</p>
           </div>

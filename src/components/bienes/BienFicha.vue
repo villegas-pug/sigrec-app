@@ -1,28 +1,35 @@
 <template>
-  <div class="column q-gutter-y-md">
-    <section-card :titulo="`${bien.nombre} · ${bien.id}`" :subtitulo="textoUbicacion(ubicacion) + cadenaAsociacion">
-      <template #acciones>
-        <q-btn v-if="activo && puedeHacer('bien.actualizar')" outline color="secondary" icon="edit" label="Actualizar información" @click="$emit('accion', 'datos')" />
-        <q-btn v-if="!anulado && puedeHacer('bien.verificar')" outline color="secondary" icon="fact_check" label="Informar verificación" @click="$emit('accion', 'verificacion')" />
-        <q-btn v-if="activo && puedeHacer('bien.incidente')" outline color="secondary" icon="report" label="Registrar incidente" @click="$emit('accion', 'incidente')" />
-        <q-btn v-if="activo && puedeHacer('bien.baja')" outline color="negative" icon="remove_circle" label="Dar de baja" @click="$emit('accion', 'baja')" />
-        <q-btn v-if="!activo && !anulado && !reposicion && puedeHacer('bien.reposicion')" unelevated color="primary" icon="swap_horiz" label="Registrar reposición" @click="$emit('accion', 'reposicion')" />
-        <menu-acciones :items="accionesMenu" :etiqueta="`Más acciones de ${bien.nombre}`" />
-      </template>
+  <detalle-panel
+    :titulo="`${bien.nombre} · ${bien.id}`"
+    :ruta="textoUbicacion(ubicacion) + cadenaAsociacion"
+    :icono="esComponente ? 'extension' : 'label'"
+    :tabs="tabs"
+    :con-volver="conVolver"
+    @volver="$emit('volver')"
+  >
+    <template #chips>
+      <status-chip tono="ne" :label="esComponente ? `Componente · ${CATEGORIAS[bien.categoria]}` : CATEGORIAS[bien.categoria]" />
+      <status-chip v-bind="condicionBien" :label="`Condición: ${condicionBien.label}`" />
+      <status-chip v-bind="SITUACIONES[bien.situacion]" />
+      <status-chip v-if="bien.verificacion" :tono="bien.verificacion.resultado === 'coincide' ? 'ok' : 'wa'" :label="`Verificado el ${fecha(bien.verificacion.fecha)}`" />
+      <status-chip v-else tono="si" label="Pendiente de verificación" />
+      <status-chip v-if="bien.revisionPendiente" tono="wa" label="Situación por revisar" />
+    </template>
 
-      <note-banner v-if="anulado" tono="ne" icono="block" class="q-mb-md">
+    <template #acciones>
+      <q-btn v-if="activo && puedeHacer('bien.actualizar')" outline color="secondary" icon="edit" label="Actualizar información" @click="$emit('accion', 'datos')" />
+      <q-btn v-if="!anulado && puedeHacer('bien.verificar')" outline color="secondary" icon="fact_check" label="Informar verificación" @click="$emit('accion', 'verificacion')" />
+      <q-btn v-if="activo && puedeHacer('bien.incidente')" outline color="secondary" icon="report" label="Registrar incidente" @click="$emit('accion', 'incidente')" />
+      <q-btn v-if="activo && puedeHacer('bien.baja')" outline color="negative" icon="remove_circle" label="Dar de baja" @click="$emit('accion', 'baja')" />
+      <q-btn v-if="!activo && !anulado && !reposicion && puedeHacer('bien.reposicion')" unelevated color="primary" icon="swap_horiz" label="Registrar reposición" @click="$emit('accion', 'reposicion')" />
+      <menu-acciones :items="accionesMenu" :etiqueta="`Más acciones de ${bien.nombre}`" />
+    </template>
+
+    <template #ficha>
+      <note-banner v-if="anulado" tono="ne" icono="block">
         Registro anulado el {{ fecha(bien.anulacion.fecha) }} por {{ bien.anulacion.por }}. Motivo: {{ bien.anulacion.motivo }}
         No cuenta en las necesidades ni en los avisos.
       </note-banner>
-
-      <div class="sg-chips q-mb-md">
-        <status-chip tono="ne" :label="CATEGORIAS[bien.categoria]" />
-        <status-chip v-bind="condicionBien" :label="`Condición: ${condicionBien.label}`" />
-        <status-chip v-bind="SITUACIONES[bien.situacion]" />
-        <status-chip v-if="bien.verificacion" :tono="bien.verificacion.resultado === 'coincide' ? 'ok' : 'wa'" :label="`Verificado el ${fecha(bien.verificacion.fecha)}`" />
-        <status-chip v-else tono="si" label="Pendiente de verificación" />
-        <status-chip v-if="bien.revisionPendiente" tono="wa" label="Situación por revisar" />
-      </div>
 
       <div class="sg-kv-grid">
         <key-value etiqueta="Rótulo SIGREC">{{ bien.id }}</key-value>
@@ -51,78 +58,89 @@
         </key-value>
       </div>
 
-      <note-banner v-if="faltantes.length" tono="ne" icono="help" class="q-mt-md">
+      <note-banner v-if="faltantes.length" tono="ne" icono="help">
         Antecedentes insuficientes: falta {{ faltantes.join(' y ') }}. No se calcula una renovación por vida útil.
       </note-banner>
-      <note-banner v-if="necesidad" tono="wa" icono="event_repeat" class="q-mt-md">
+      <note-banner v-if="necesidad" tono="wa" icono="event_repeat">
         <strong>Necesidad para revisión en {{ ANIO_REVISION }}:</strong> {{ necesidad.motivos.map((m) => m.texto).join(' · ') }}.
         No constituye autorización de baja ni de compra.
         <router-link v-if="puedeAcceder('necesidades')" :to="{ name: 'necesidades' }" class="text-weight-bold">Ver necesidades</router-link>
       </note-banner>
-      <note-banner v-if="reposicion" tono="ok" icono="swap_horiz" class="q-mt-md">
+      <note-banner v-if="reposicion" tono="ok" icono="swap_horiz">
         Repuesto por
         <button type="button" class="sg-row-btn" @click="$emit('seleccionar', reposicion.bienNuevoId)">{{ reposicion.bienNuevoId }}</button>
         el {{ fecha(reposicion.fecha) }}. La necesidad quedó atendida.
       </note-banner>
-      <note-banner v-if="reemplazaA" tono="in" icono="swap_horiz" class="q-mt-md">
+      <note-banner v-if="reemplazaA" tono="in" icono="swap_horiz">
         Alta por reposición de
         <button type="button" class="sg-row-btn" @click="$emit('seleccionar', reemplazaA.bienAnteriorId)">{{ reemplazaA.bienAnteriorId }}</button>.
         Este bien tiene antecedentes y vida útil propios.
       </note-banner>
-    </section-card>
+    </template>
 
-    <section-card titulo="Componentes" subtitulo="Bienes asociados entre sí para localizar el objeto concreto, por ejemplo el colchón de una cama">
-      <template v-if="activo && puedeHacer('bien.componente')" #acciones>
-        <q-btn v-if="!bien.asociadoA" outline color="secondary" icon="link" label="Asociar a otro bien" @click="$emit('accion', 'componente')" />
-        <q-btn v-else outline color="secondary" icon="link_off" label="Quitar asociación" @click="$emit('accion', 'desasociar')" />
-        <q-btn
-          v-if="puedeAcceder('registro') && puedeHacer('bien.registrar')"
-          unelevated
-          color="primary"
-          icon="add"
-          label="Registrar componente"
-          :to="{ name: 'registro', query: { car: ubicacion.car.id, ambiente: bien.ambienteId, asociar: bien.id } }"
-        />
-      </template>
-      <div class="sg-kv-grid">
-        <div v-if="asociaciones.padre" class="sg-box">
-          <span class="sg-kv__label">Forma parte de</span>
-          <button type="button" class="sg-row-btn" @click="$emit('seleccionar', asociaciones.padre.id)">{{ asociaciones.padre.nombre }} {{ asociaciones.padre.id }}</button>
-          <span class="sg-muted">Posición: {{ bien.asociadoA.posicion }} · {{ SITUACIONES[asociaciones.padre.situacion].label }}</span>
-        </div>
-        <div v-for="h in asociaciones.hermanos" :key="h.id" class="sg-box">
-          <span class="sg-kv__label">Componente del mismo bien</span>
-          <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)">{{ h.nombre }} {{ h.id }}</button>
-          <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
-        </div>
-        <div v-for="h in asociaciones.hijos" :key="h.id" class="sg-box" :class="{ 'sg-box--dashed': h.revisionPendiente }">
-          <span class="sg-kv__label">Componente</span>
-          <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)">{{ h.nombre }} {{ h.id }}</button>
-          <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
-          <status-chip v-if="h.revisionPendiente" tono="wa" label="Situación por revisar" />
-        </div>
-      </div>
-      <p v-if="!asociaciones.padre && !asociaciones.hijos.length" class="sg-muted q-mb-none">Sin componentes ni asociaciones registradas.</p>
-      <div v-if="bien.revisionPendiente" class="row q-gutter-sm q-mt-md">
-        <span class="self-center">El bien del que forma parte fue dado de baja. Revise su situación:</span>
-        <template v-if="puedeHacer('bien.baja')">
-          <q-btn outline color="secondary" label="Mantener activo" @click="$emit('mantener')" />
-          <q-btn outline color="negative" label="Dar de baja" @click="$emit('accion', 'baja')" />
+    <!-- Bien: sus componentes (un solo nivel). -->
+    <template #componentes>
+      <section-card titulo="Componentes" subtitulo="Piezas que forman parte de este bien, por ejemplo el colchón de una cama">
+        <template v-if="activo" #acciones>
+          <q-btn v-if="puedeHacer('bien.registrar')" unelevated color="primary" icon="add" label="Registrar componente" @click="$emit('accion', 'registrarComponente')" />
+          <q-btn v-if="puedeHacer('bien.componente') && !asociaciones.hijos.length" outline color="secondary" icon="link" label="Asociar a otro bien" @click="$emit('accion', 'componente')" />
         </template>
-      </div>
-    </section-card>
+        <div class="sg-kv-grid">
+          <div v-for="h in asociaciones.hijos" :key="h.id" class="sg-box" :class="{ 'sg-box--dashed': h.revisionPendiente }">
+            <span class="sg-kv__label">Componente</span>
+            <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)">{{ h.nombre }} {{ h.id }}</button>
+            <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
+            <status-chip v-if="h.revisionPendiente" tono="wa" label="Situación por revisar" />
+          </div>
+        </div>
+        <p v-if="!asociaciones.hijos.length" class="sg-muted q-mb-none">Sin componentes registrados.</p>
+      </section-card>
+    </template>
 
-    <galeria-fotos :bien="bien" titulo="Fotografías del bien" />
+    <!-- Componente: el bien del que forma parte y sus hermanos. -->
+    <template #padre>
+      <section-card titulo="Forma parte de" subtitulo="Un componente pertenece a un solo bien y no admite componentes propios">
+        <template v-if="activo && puedeHacer('bien.componente')" #acciones>
+          <q-btn outline color="secondary" icon="link_off" label="Quitar asociación" @click="$emit('accion', 'desasociar')" />
+        </template>
+        <div class="sg-kv-grid">
+          <div v-if="asociaciones.padre" class="sg-box">
+            <span class="sg-kv__label">Bien</span>
+            <button type="button" class="sg-row-btn" @click="$emit('seleccionar', asociaciones.padre.id)">{{ asociaciones.padre.nombre }} {{ asociaciones.padre.id }}</button>
+            <span class="sg-muted">Posición: {{ bien.asociadoA.posicion }} · {{ SITUACIONES[asociaciones.padre.situacion].label }}</span>
+          </div>
+          <div v-for="h in asociaciones.hermanos" :key="h.id" class="sg-box">
+            <span class="sg-kv__label">Componente del mismo bien</span>
+            <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)">{{ h.nombre }} {{ h.id }}</button>
+            <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
+          </div>
+        </div>
+        <div v-if="bien.revisionPendiente" class="row q-gutter-sm q-mt-md">
+          <span class="self-center">El bien del que forma parte fue dado de baja. Revise su situación:</span>
+          <template v-if="puedeHacer('bien.baja')">
+            <q-btn outline color="secondary" label="Mantener activo" @click="$emit('mantener')" />
+            <q-btn outline color="negative" label="Dar de baja" @click="$emit('accion', 'baja')" />
+          </template>
+        </div>
+      </section-card>
+    </template>
 
-    <section-card titulo="Antecedentes">
-      <historial-bien :bien="bien" />
-    </section-card>
-  </div>
+    <template #fotos>
+      <galeria-fotos :bien="bien" titulo="Fotografías del bien" />
+    </template>
+
+    <template #antecedentes>
+      <section-card titulo="Antecedentes">
+        <historial-bien :bien="bien" />
+      </section-card>
+    </template>
+  </detalle-panel>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { usePerfil } from 'src/composables/usePerfil'
+import DetallePanel from 'components/gestion/DetallePanel.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import KeyValue from 'components/common/KeyValue.vue'
@@ -139,10 +157,11 @@ import { ANIO_REVISION } from 'src/config/demo'
 import { fecha, plural, soles } from 'src/utils/formato'
 
 const props = defineProps({
-  bien: { type: Object, required: true }
+  bien: { type: Object, required: true },
+  conVolver: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['accion', 'seleccionar', 'mantener'])
+const emit = defineEmits(['accion', 'seleccionar', 'mantener', 'volver'])
 
 const { puedeAcceder, puedeHacer } = usePerfil()
 
@@ -150,12 +169,23 @@ const ubicacion = computed(() => ubicacionDeBien(props.bien))
 const tipo = computed(() => tipoPorId(props.bien.tipoId))
 const activo = computed(() => props.bien.situacion === 'activo')
 const anulado = computed(() => props.bien.situacion === 'anulado')
+const esComponente = computed(() => !!props.bien.asociadoA)
 const condicionBien = computed(() => condicion(props.bien.condicion))
 const fin = computed(() => finVidaUtil(props.bien))
 const faltantes = computed(() => antecedentesFaltantes(props.bien))
 const asociaciones = computed(() => asociacionesDeBien(props.bien))
 const reposicion = computed(() => reposicionDe(props.bien.id))
 const reemplazaA = computed(() => db.eventos.find((e) => !e.anulacion && e.tipo === 'reposicion' && e.bienNuevoId === props.bien.id) ?? null)
+
+// Un bien muestra sus componentes; un componente, el bien del que forma parte.
+const tabs = computed(() => [
+  { name: 'ficha', label: 'Ficha' },
+  esComponente.value
+    ? { name: 'padre', label: 'Forma parte de' }
+    : { name: 'componentes', label: `Componentes (${asociaciones.value.hijos.length})` },
+  { name: 'fotos', label: 'Fotografías' },
+  { name: 'antecedentes', label: 'Antecedentes' }
+])
 
 const cadenaAsociacion = computed(() => {
   const padre = props.bien.asociadoA ? bienPorId(props.bien.asociadoA.bienId) : null

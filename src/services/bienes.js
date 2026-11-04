@@ -1,5 +1,5 @@
 // Consultas de bienes: árbol de ubicación, componentes y antecedentes (RF-01, RF-04, RF-08, RF-20).
-import { db, bienPorId, carPorId, ambientesDeCar, bienesDeAmbiente, vigente } from './datos'
+import { db, ambientePorId, bienPorId, carPorId, ambientesDeCar, bienesDeAmbiente, vigente } from './datos'
 import { condicionInmueble } from 'src/config/catalogos'
 import { plural } from 'src/utils/formato'
 
@@ -15,11 +15,11 @@ const cumpleSituacion = (bien, situacion) => (situacion === 'todos' ? bien.situa
 function nodoBien (bien, hijos) {
   return {
     id: bien.id,
-    tipo: 'bien',
+    tipo: bien.asociadoA ? 'componente' : 'bien',
     label: bien.nombre,
     codigo: bien.id,
     bien,
-    icono: hijos.length ? 'account_tree' : 'label',
+    icono: bien.asociadoA ? 'extension' : hijos.length ? 'account_tree' : 'label',
     children: hijos
   }
 }
@@ -45,22 +45,22 @@ function nodoAmbiente (ambiente, filtros) {
     label: ambiente.nombre,
     codigo: plural(delAmbiente.filter((b) => b.situacion === 'activo').length, 'bien activo', 'bienes activos'),
     icono: 'meeting_room',
-    selectable: false,
+    ambiente,
     children: construir(null)
   }
 }
 
 /**
- * Árbol centro › ambiente › bien › componente (RF-01, RF-08).
+ * Árbol centro › ambiente › bien › componente (RF-01, RF-08). Todos los niveles son seleccionables.
  * El inmueble no es un nivel: sus datos son parte de la ficha del centro.
  * Con filtro, conserva los bienes que coinciden y sus antecesores para no perder la ubicación.
  */
-export function arbolDeCentros (carIds, { texto = '', situacion = 'activo' } = {}) {
+export function arbolDeCentros (carIds, { texto = '', situacion = 'activo', inactivos = false } = {}) {
   const filtros = { texto, situacion }
   return carIds
     .map((carId) => {
       const car = carPorId(carId)
-      const children = ambientesDeCar(carId)
+      const children = ambientesDeCar(carId, { inactivos })
         .map((ambiente) => nodoAmbiente(ambiente, filtros))
         .filter((nodo) => nodo.children.length || !texto)
       return {
@@ -69,11 +69,48 @@ export function arbolDeCentros (carIds, { texto = '', situacion = 'activo' } = {
         label: car.nombre,
         codigo: car.inmueble ? `Inmueble ${condicionInmueble(car.inmueble.condicion).label.toLowerCase()}` : 'Sin datos del inmueble',
         icono: 'home_work',
-        selectable: false,
+        car,
         children
       }
     })
     .filter((nodo) => nodo.children.length || !texto)
+}
+
+// Nodo del árbol a partir de su id: { tipo: 'centro' | 'ambiente' | 'bien' | 'componente', registro } o null si no existe.
+export function resolverNodo (id) {
+  if (!id) return null
+  if (id.startsWith('car:')) {
+    const registro = carPorId(id.slice(4))
+    return registro ? { tipo: 'centro', registro } : null
+  }
+  if (id.startsWith('amb:')) {
+    const registro = ambientePorId(id.slice(4))
+    return registro ? { tipo: 'ambiente', registro } : null
+  }
+  const registro = bienPorId(id)
+  return registro ? { tipo: registro.asociadoA ? 'componente' : 'bien', registro } : null
+}
+
+// Ids de los nodos que tienen hijos (los que se pueden expandir), en cualquier nivel.
+export const idsExpandibles = (nodos) => nodos.flatMap((n) => (n.children?.length ? [n.id, ...idsExpandibles(n.children)] : []))
+
+// Ids de los antecesores de un nodo dentro del árbol dado; null si el nodo no figura en él.
+export function rutaHasta (nodos, objetivo, camino = []) {
+  for (const n of nodos) {
+    if (n.id === objetivo) return camino
+    const r = n.children?.length ? rutaHasta(n.children, objetivo, [...camino, n.id]) : null
+    if (r) return r
+  }
+  return null
+}
+
+// Antecesores de un nodo según los datos (sin depender de los filtros del árbol): centro › ambiente › bien padre.
+export function antecesoresDeNodo (id) {
+  const nodo = resolverNodo(id)
+  if (!nodo || nodo.tipo === 'centro') return []
+  if (nodo.tipo === 'ambiente') return [nodoCentroId(nodo.registro.carId)]
+  const ambiente = ambientePorId(nodo.registro.ambienteId)
+  return [nodoCentroId(ambiente.carId), nodoAmbienteId(ambiente.id), ...(nodo.registro.asociadoA ? [nodo.registro.asociadoA.bienId] : [])]
 }
 
 // Los componentes anulados (registro erróneo) no figuran entre las asociaciones.

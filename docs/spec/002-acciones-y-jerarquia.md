@@ -48,7 +48,7 @@
 
 | Regla | Implementación |
 | --- | --- |
-| Un componente solo se asocia a un bien activo del mismo ambiente, y nunca a sí mismo ni a uno de sus componentes (sin ciclos). | `services/acciones.js › puedeAsociar` |
+| Un componente solo se asocia a un bien activo del mismo ambiente. **Los componentes tienen un solo nivel (SPEC 008):** el padre no puede ser a su vez componente y un bien con componentes no puede pasar a serlo. | `services/acciones.js › puedeAsociar`, `registrarBien` |
 | Cambiar la condición de un bien deja un antecedente «Condición actualizada»; cambiar su asociación, «Componente actualizado». | `actualizarBien`, `asociarBien`, `desasociarBien` |
 | La placa de un vehículo y el código de un centro son únicos. | `VehiculoDialog`, `CentroDialog` |
 | Un pintado actualiza el último pintado del ambiente solo si es más reciente. | `registrarIntervencion` |

@@ -212,6 +212,7 @@ export const rotuloSugerido = (ambienteId, tipoId) =>
   siguienteCodigo(`${ambienteId}-${tipoId.slice(0, 2).toUpperCase()}`, bienPorId)
 
 export function registrarBien (datos) {
+  if (datos.asociadoA && bienPorId(datos.asociadoA.bienId)?.asociadoA) throw new Error('Un componente no admite componentes')
   const bien = { situacion: 'activo', asociadoA: null, verificacion: null, cantidad: 1, ...datos }
   db.bienes.push(bien)
   return bien
@@ -302,15 +303,11 @@ export function actualizarBien (bien, cambios) {
   cambiarCondicion(bien, nueva, { detalle: resto.deterioro || '' })
 }
 
-function esDescendiente (candidatoId, bienId) {
-  return componentesDe(bienId).some((c) => c.id === candidatoId || esDescendiente(candidatoId, c.id))
-}
-
-const descendientesDe = (bienId) => componentesDe(bienId).flatMap((c) => [c, ...descendientesDe(c.id)])
-
-// Un componente solo se asocia a un bien activo del mismo ambiente, sin crear ciclos.
+// Los componentes tienen un solo nivel: un componente no admite componentes. Por eso el padre no puede ser a su vez
+// componente, y un bien que ya tiene componentes no puede pasar a serlo. Además, el padre es un bien activo del mismo ambiente.
 export const puedeAsociar = (bien, padre) =>
-  padre.id !== bien.id && padre.situacion === 'activo' && padre.ambienteId === bien.ambienteId && !esDescendiente(padre.id, bien.id)
+  padre.id !== bien.id && padre.situacion === 'activo' && padre.ambienteId === bien.ambienteId &&
+  !padre.asociadoA && !componentesDe(bien.id).length
 
 export function asociarBien (bien, padreId, posicion) {
   const padre = bienPorId(padreId)
@@ -355,7 +352,7 @@ export function trasladarBien (bien, ambienteDestinoId, { fecha } = {}) {
     bien.asociadoA = null
     bien.revisionPendiente = false
   }
-  const movidos = [bien, ...descendientesDe(bien.id)]
+  const movidos = [bien, ...componentesDe(bien.id)]
   for (const b of movidos) b.ambienteId = destino.id
 
   const detalle = padreAnterior

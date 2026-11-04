@@ -76,7 +76,7 @@
               <status-chip v-bind="SITUACIONES[b.situacion]" />
               <status-chip :tono="idx === 0 ? 'ne' : 'in'" :label="idx === 0 ? 'Bien anterior' : 'Reposición'" />
             </div>
-            <router-link v-if="puedeAcceder('bienes')" :to="{ name: 'bienes', query: { bien: b.id } }" class="text-weight-bold">{{ b.nombre }} · {{ b.id }}</router-link>
+            <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: b.id } }" class="text-weight-bold">{{ b.nombre }} · {{ b.id }}</router-link>
             <span v-else class="text-weight-bold">{{ b.nombre }} · {{ b.id }}</span>
             <span class="sg-muted">{{ textoUbicacion(ubicacionDeBien(b)) }}</span>
             <span class="sg-muted">Adquisición {{ fecha(b.adquisicion?.fecha) }} · vida útil {{ b.vidaUtilAnios != null ? plural(b.vidaUtilAnios, 'año', 'años') : '—' }}</span>
@@ -96,7 +96,7 @@
               <tbody>
                 <tr v-for="b in afectados" :key="b.id">
                   <td>
-                    <router-link v-if="puedeAcceder('bienes')" :to="{ name: 'bienes', query: { bien: b.id } }">{{ b.nombre }} · {{ b.id }}</router-link>
+                    <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: b.id } }">{{ b.nombre }} · {{ b.id }}</router-link>
                     <template v-else>{{ b.nombre }} · {{ b.id }}</template>
                     <div class="sg-muted">{{ textoUbicacion(ubicacionDeBien(b)) }}</div>
                     <div v-if="evento.unidades && afectados.length === 1" class="sg-muted">{{ evento.unidades }} de {{ b.cantidad }} unidades afectadas</div>
@@ -151,7 +151,7 @@
                   <status-chip v-bind="SITUACIONES[a.bien.situacion]" />
                   <status-chip v-if="a.bien.revisionPendiente" tono="wa" label="Situación por revisar" />
                 </div>
-                <router-link v-if="puedeAcceder('bienes')" :to="{ name: 'bienes', query: { bien: a.bien.id } }" class="text-weight-bold">{{ a.bien.nombre }} · {{ a.bien.id }}</router-link>
+                <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: a.bien.id } }" class="text-weight-bold">{{ a.bien.nombre }} · {{ a.bien.id }}</router-link>
                 <span v-else class="text-weight-bold">{{ a.bien.nombre }} · {{ a.bien.id }}</span>
                 <span class="sg-muted">Antes en: {{ evento.bienIds[0] }} ({{ a.posicion ?? 'posición no informada' }})</span>
               </div>
@@ -381,8 +381,8 @@ function irAHecho (id) {
 const verFicha = (bienId) => ({
   label: 'Ver ficha del bien',
   icono: 'inventory_2',
-  visible: puedeAcceder('bienes'),
-  accion: () => router.push({ name: 'bienes', query: { bien: bienId } })
+  visible: puedeAcceder('centros'),
+  accion: () => router.push({ name: 'centros', query: { bien: bienId } })
 })
 
 // Los incidentes se corrigen o anulan sin cambiar el estado del bien. Las bajas y reposiciones cambian el estado de un bien:

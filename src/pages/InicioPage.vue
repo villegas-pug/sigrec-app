@@ -160,7 +160,7 @@ const kpis = computed(() => {
       nota: `${plural(resumenServicios.value.interrupciones, 'interrupción abierta', 'interrupciones abiertas')} · ${resumenServicios.value.sinInfo} períodos sin información`
     },
     {
-      ruta: 'bienes',
+      ruta: 'centros',
       icono: 'fact_check',
       tono: 'verde',
       valor: `${verificados.value} / ${bienesActivos.value.length}`,
@@ -221,7 +221,7 @@ const avisos = computed(() => {
       etiqueta: 'Infraestructura en evaluación',
       contexto: `${item.ubicacion.car.nombre} · ${item.ubicacion.ambiente.nombre}`,
       texto: `${item.novedad.titulo}. Sin costo estimado hasta su evaluación.`,
-      to: puedeAcceder('ambientes') ? { name: 'ambientes', query: { car: item.ubicacion.car.id, ambiente: item.ubicacion.ambiente.id, novedad: item.novedad.id } } : null,
+      to: puedeAcceder('centros') ? { name: 'centros', query: { car: item.ubicacion.car.id, ambiente: item.ubicacion.ambiente.id, novedad: item.novedad.id } } : null,
       enlace: 'Ver ambiente'
     })
   }
