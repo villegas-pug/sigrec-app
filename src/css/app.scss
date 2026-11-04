@@ -858,7 +858,7 @@ a {
   background: var(--sg-surface);
 }
 .sg-gallery-viewer__header, .sg-gallery-viewer__footer { flex: 0 0 auto; }
-.sg-gallery-viewer__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; max-height: 30%; padding: 16px 20px; border-top: 4px solid var(--sg-primary); border-bottom: 1px solid var(--sg-border-soft); }
+.sg-gallery-viewer__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; max-height: 30%; padding: 16px 20px; border-bottom: 1px solid var(--sg-border-soft); }
 .sg-gallery-viewer__details { min-width: 0; overflow: auto; overflow-wrap: anywhere; }
 .sg-gallery-viewer__details h2 { color: var(--sg-blue); font-weight: 700; }
 .sg-gallery-viewer__note { margin-top: 4px; color: var(--sg-text); }
@@ -882,6 +882,12 @@ a {
 }
 
 // ---------- Diálogos ----------
+.q-dialog__inner > .sg-gallery-viewer,
+.q-dialog__inner > .sg-dialog,
+.q-dialog__inner > .q-dialog-plugin {
+  border-top: 4px solid var(--sg-primary);
+}
+
 // El ancho de cada diálogo lo fija FormDialog; en pantallas pequeñas se maximiza.
 .q-dialog__inner > .sg-dialog {
   max-width: 94vw;
@@ -889,7 +895,6 @@ a {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border-top: 4px solid var(--sg-primary);
   border-radius: var(--sg-radius);
   background: var(--sg-surface);
 }
@@ -943,7 +948,6 @@ a {
   max-width: min(400px, calc(100vw - 32px));
   max-height: calc(var(--q-dialog-viewport-height, 100dvh) - 48px);
   overflow: hidden;
-  border-top: 4px solid var(--sg-primary);
   border-radius: var(--sg-radius);
   background: var(--sg-surface);
 }

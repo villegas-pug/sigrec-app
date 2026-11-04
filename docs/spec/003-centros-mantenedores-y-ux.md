@@ -99,7 +99,7 @@ Accesos: Verificación física deja de tener la pantalla «Registro de bienes» 
 
 - `FormDialog` / `BaseDialog`: diálogos maximizados en móvil.
 - En los diálogos, la cabecera y las acciones permanecen visibles; el cuerpo se desplaza de forma independiente.
-- Los formularios, diálogos personalizados y avisos de Quasar comparten el estilo institucional del visor: acento rojo superior, título azul, fondo claro y separación de cabecera y acciones. Se conservan los tamaños, las acciones de peligro y el fondo neutro del visor de fotografías.
+- Los formularios, diálogos personalizados, visor de fotografías y avisos de Quasar comparten un borde rojo de 4 px en la parte superior del contenedor, título azul y separación de cabecera y acciones. Se conservan los tamaños, las acciones de peligro y el fondo neutro del visor de fotografías.
 - En el explorador, el selector «Situación del bien» ocupa todo el ancho del panel y «Mostrar inactivos» queda debajo, alineado a la derecha.
 - `CondicionSelector`: botones de opción (opción única) en todos los tamaños; SPEC 004.
 - Cabecera, KPI y tablas con ajustes para ≤ 599 px; primera columna fija en tablas anchas; períodos de servicio como tarjetas en móvil.
