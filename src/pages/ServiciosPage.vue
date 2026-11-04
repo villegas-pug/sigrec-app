@@ -45,7 +45,7 @@
             <tbody>
               <tr v-for="fila in filas" :key="fila.servicio.id">
                 <th scope="row" class="sg-periodos__servicio">
-                  <button type="button" class="sg-row-btn" @click="seleccionarServicio(fila.servicio.id)">{{ TIPOS_SERVICIO[fila.servicio.tipo] }}</button>
+                  <button type="button" class="sg-row-btn" @click="seleccionarServicio(fila.servicio.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ TIPOS_SERVICIO[fila.servicio.tipo] }}</button>
                   <div class="sg-muted">
                     {{ PERIODICIDADES[fila.servicio.periodicidad] }}
                     <span v-if="fila.interrupcion" class="text-weight-bold sg-aviso-texto"> · interrupción abierta</span>
@@ -64,7 +64,7 @@
                 <th scope="row" class="sg-periodos__servicio">{{ TIPOS_SERVICIO[tipo] }}</th>
                 <td colspan="12">
                   <button v-if="puedeHacer('servicio.registrar')" type="button" class="sg-celda sg-celda--sin_info" @click="abrirServicio(null, tipo)">
-                    Sin servicio registrado para este centro · Registrar
+                    <q-icon name="add" size="16px" aria-hidden="true" class="q-mr-xs" />Sin servicio registrado para este centro · Registrar
                   </button>
                   <span v-else class="sg-celda sg-celda--sin_info sg-celda--inerte">Sin servicio registrado para este centro</span>
                 </td>
@@ -77,7 +77,7 @@
         <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
           <div v-for="fila in filas" :key="fila.servicio.id" class="sg-box">
             <div class="row items-center justify-between no-wrap">
-              <button type="button" class="sg-row-btn" @click="seleccionarServicio(fila.servicio.id)">{{ TIPOS_SERVICIO[fila.servicio.tipo] }}</button>
+              <button type="button" class="sg-row-btn" @click="seleccionarServicio(fila.servicio.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ TIPOS_SERVICIO[fila.servicio.tipo] }}</button>
               <span class="sg-muted">{{ PERIODICIDADES[fila.servicio.periodicidad] }}</span>
             </div>
             <div v-if="fila.interrupcion || fila.servicio.anulacion" class="sg-chips">
@@ -116,7 +116,7 @@
               <div class="column q-gutter-y-xs">
                 <status-chip v-bind="ETIQUETAS_AVISO[a.clase]" />
                 <span><strong>{{ a.nombre }}</strong> · {{ describir(a) }}</span>
-                <button v-if="a.clase !== 'interrupcion'" type="button" class="sg-row-btn self-start" @click="abrirPeriodo(a.servicio, a.celdas[0])">Ver detalle del período</button>
+                <button v-if="a.clase !== 'interrupcion'" type="button" class="sg-row-btn self-start" @click="abrirPeriodo(a.servicio, a.celdas[0])"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />Ver detalle del período</button>
               </div>
             </li>
             <li v-if="!avisos.length" class="sg-timeline__item sg-muted">Sin pendientes ni problemas informados.</li>
@@ -127,8 +127,8 @@
           <template #acciones>
             <q-btn v-if="puedeHacer('servicio.actualizar')" outline color="secondary" icon="edit" label="Actualizar ficha" :disable="!!servicio.anulacion" @click="abrirServicio(servicio)" />
             <template v-if="puedeHacer('hecho.registrar')">
-              <q-btn outline color="secondary" label="Informar restablecimiento" :disable="!!servicio.anulacion" @click="abrirHecho(null, 'restablecimiento')" />
-              <q-btn outline color="secondary" label="Informar interrupción" :disable="!!servicio.anulacion" @click="abrirHecho(null, 'interrupcion')" />
+              <q-btn outline color="secondary" icon="check_circle" label="Informar restablecimiento" :disable="!!servicio.anulacion" @click="abrirHecho(null, 'restablecimiento')" />
+              <q-btn outline color="secondary" icon="report_problem" label="Informar interrupción" :disable="!!servicio.anulacion" @click="abrirHecho(null, 'interrupcion')" />
             </template>
             <menu-acciones :items="accionesServicio" :etiqueta="`Acciones del servicio de ${TIPOS_SERVICIO[servicio.tipo]}`" />
           </template>

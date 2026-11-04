@@ -61,7 +61,7 @@
       <section-card :titulo="`Ambientes del centro (${ambientes.length})`" subtitulo="Seleccione un ambiente para ver su ficha, galería, novedades y bienes" sin-relleno>
         <div v-for="amb in ambientes" :key="amb.id" class="sg-borde-superior row items-center justify-between q-px-md q-py-sm">
           <div class="column">
-            <button type="button" class="sg-row-btn text-weight-bold self-start" @click="$emit('seleccionar', nodoAmbienteId(amb.id))">{{ amb.nombre }}</button>
+            <button type="button" class="sg-row-btn text-weight-bold self-start" @click="$emit('seleccionar', nodoAmbienteId(amb.id))"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ amb.nombre }}</button>
             <span class="sg-muted">{{ [amb.piso != null ? `Piso ${amb.piso}` : null, amb.bloque, amb.ubicacion].filter(Boolean).join(' · ') || 'Ubicación no informada' }}</span>
           </div>
           <div class="sg-chips">

@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    icono-enviar="add"
     titulo="Registrar centro"
     subtitulo="Se registra el centro con los datos de su inmueble. Los datos faltantes quedan como información pendiente."
     :ancho="600"

@@ -5,7 +5,7 @@
       <div class="column">
         <span>
           <status-chip v-bind="TIPOS_EVENTO[ev.tipo]" />
-          <button v-if="tiposSeleccionables.includes(ev.tipo)" type="button" class="sg-row-btn" @click="$emit('seleccionar', ev.id)">{{ ev.titulo }}</button>
+          <button v-if="tiposSeleccionables.includes(ev.tipo)" type="button" class="sg-row-btn" @click="$emit('seleccionar', ev.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ ev.titulo }}</button>
           <template v-else>{{ ev.titulo }}</template>
           <slot name="extra" :item="ev" />
         </span>

@@ -9,7 +9,7 @@
         <p class="sg-muted">
           El menú muestra solo los módulos de este perfil. Los accesos por perfil son provisionales y deben validarse con el jefe de proyecto.
         </p>
-        <q-btn unelevated color="primary" :to="{ name: rutaInicial }" :label="`Ir a ${nombreRutaInicial}`" />
+        <q-btn unelevated color="primary" icon="arrow_forward" :to="{ name: rutaInicial }" :label="`Ir a ${nombreRutaInicial}`" />
       </section>
     </div>
   </q-page>

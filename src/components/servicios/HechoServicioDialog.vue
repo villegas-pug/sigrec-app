@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="hecho ? 'save' : 'add'"
     :titulo="titulo"
     :subtitulo="subtitulo"
     :ancho="460"

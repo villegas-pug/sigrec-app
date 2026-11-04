@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    icono-enviar="task_alt"
     titulo="Marcar novedad como atendida"
     :subtitulo="novedad.titulo"
     :ancho="480"

@@ -32,8 +32,8 @@ export function useAnulacion () {
       title: `Reactivar ${nombre}`,
       message: 'El registro volverá a contar en los listados y los cálculos.',
       persistent: true,
-      cancel: { flat: true, label: 'Cancelar', color: 'secondary' },
-      ok: { unelevated: true, label: 'Reactivar', color: 'primary' }
+      cancel: { flat: true, icon: 'close', label: 'Cancelar', color: 'secondary' },
+      ok: { unelevated: true, icon: 'restore', label: 'Reactivar', color: 'primary' }
     }).onOk(() => {
       accion(registro)
       $q.notify({ type: 'positive', message: `${nombre} reactivado.` })

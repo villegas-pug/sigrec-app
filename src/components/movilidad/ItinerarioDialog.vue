@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="modo === 'nuevo' ? 'add_road' : modo === 'ejecucion' ? 'flag' : 'save'"
     :titulo="TITULOS[modo]"
     :subtitulo="`${vehiculo.id} · ${vehiculo.chofer ?? 'chofer no asignado'}`"
     :ancho="900"

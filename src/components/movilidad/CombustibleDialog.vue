@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="registro ? 'save' : 'local_gas_station'"
     :titulo="registro ? 'Actualizar registro de combustible' : 'Informar combustible'"
     :subtitulo="`${vehiculo.id} · ${vehiculo.combustible}`"
     :ancho="520"

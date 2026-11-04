@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="foto ? 'save' : 'add_a_photo'"
     :titulo="foto ? 'Actualizar fotografía' : 'Incorporar fotografía'"
     :subtitulo="`${(bien || centro).id} · ${(bien || centro).nombre}`"
     :ancho="520"

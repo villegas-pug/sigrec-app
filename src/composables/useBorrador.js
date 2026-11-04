@@ -22,8 +22,8 @@ export function useBorrador (form, { proteger = false, excluir = [] } = {}) {
         title: 'Cambios sin guardar',
         message: 'Hay datos escritos que no se han guardado. Si sale ahora se descartarán.',
         persistent: true,
-        cancel: { flat: true, label: 'Seguir editando', color: 'secondary' },
-        ok: { unelevated: true, label: 'Descartar', color: 'negative' }
+        cancel: { flat: true, icon: 'edit', label: 'Seguir editando', color: 'secondary' },
+        ok: { unelevated: true, icon: 'delete_outline', label: 'Descartar', color: 'negative' }
       })
         .onOk(() => resolver(true))
         .onCancel(() => resolver(false))

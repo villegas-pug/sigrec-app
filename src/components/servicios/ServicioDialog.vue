@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="servicio ? 'save' : 'add'"
     :titulo="servicio ? 'Actualizar ficha del servicio' : 'Registrar servicio'"
     :subtitulo="centro.nombre"
     :etiqueta-enviar="servicio ? 'Guardar cambios' : 'Registrar servicio'"

@@ -71,12 +71,12 @@
       </note-banner>
       <note-banner v-if="reposicion" tono="ok" icono="swap_horiz">
         Repuesto por
-        <button type="button" class="sg-row-btn" @click="$emit('seleccionar', reposicion.bienNuevoId)">{{ reposicion.bienNuevoId }}</button>
+        <button type="button" class="sg-row-btn" @click="$emit('seleccionar', reposicion.bienNuevoId)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ reposicion.bienNuevoId }}</button>
         el {{ fecha(reposicion.fecha) }}. La necesidad quedó atendida.
       </note-banner>
       <note-banner v-if="reemplazaA" tono="in" icono="swap_horiz">
         Alta por reposición de
-        <button type="button" class="sg-row-btn" @click="$emit('seleccionar', reemplazaA.bienAnteriorId)">{{ reemplazaA.bienAnteriorId }}</button>.
+        <button type="button" class="sg-row-btn" @click="$emit('seleccionar', reemplazaA.bienAnteriorId)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ reemplazaA.bienAnteriorId }}</button>.
         Este bien tiene antecedentes y vida útil propios.
       </note-banner>
     </template>
@@ -91,7 +91,7 @@
         <div class="sg-kv-grid">
           <div v-for="h in asociaciones.hijos" :key="h.id" class="sg-box" :class="{ 'sg-box--dashed': h.revisionPendiente }">
             <span class="sg-kv__label">Componente</span>
-            <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)">{{ h.nombre }} {{ h.id }}</button>
+            <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ h.nombre }} {{ h.id }}</button>
             <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
             <status-chip v-if="h.revisionPendiente" tono="wa" label="Situación por revisar" />
           </div>
@@ -109,20 +109,20 @@
         <div class="sg-kv-grid">
           <div v-if="asociaciones.padre" class="sg-box">
             <span class="sg-kv__label">Bien</span>
-            <button type="button" class="sg-row-btn" @click="$emit('seleccionar', asociaciones.padre.id)">{{ asociaciones.padre.nombre }} {{ asociaciones.padre.id }}</button>
+            <button type="button" class="sg-row-btn" @click="$emit('seleccionar', asociaciones.padre.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ asociaciones.padre.nombre }} {{ asociaciones.padre.id }}</button>
             <span class="sg-muted">Posición: {{ bien.asociadoA.posicion }} · {{ SITUACIONES[asociaciones.padre.situacion].label }}</span>
           </div>
           <div v-for="h in asociaciones.hermanos" :key="h.id" class="sg-box">
             <span class="sg-kv__label">Componente del mismo bien</span>
-            <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)">{{ h.nombre }} {{ h.id }}</button>
+            <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ h.nombre }} {{ h.id }}</button>
             <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
           </div>
         </div>
         <div v-if="bien.revisionPendiente" class="row q-gutter-sm q-mt-md">
           <span class="self-center">El bien del que forma parte fue dado de baja. Revise su situación:</span>
           <template v-if="puedeHacer('bien.baja')">
-            <q-btn outline color="secondary" label="Mantener activo" @click="$emit('mantener')" />
-            <q-btn outline color="negative" label="Dar de baja" @click="$emit('accion', 'baja')" />
+            <q-btn outline color="secondary" icon="check_circle" label="Mantener activo" @click="$emit('mantener')" />
+            <q-btn outline color="negative" icon="remove_circle" label="Dar de baja" @click="$emit('accion', 'baja')" />
           </template>
         </div>
       </section-card>

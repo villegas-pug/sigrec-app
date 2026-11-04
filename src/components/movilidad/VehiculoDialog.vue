@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="vehiculo ? 'save' : 'add'"
     :titulo="vehiculo ? 'Actualizar vehículo' : 'Registrar vehículo'"
     :subtitulo="vehiculo ? vehiculo.id : 'Los campos con * son obligatorios'"
     :etiqueta-enviar="vehiculo ? 'Guardar cambios' : 'Registrar vehículo'"

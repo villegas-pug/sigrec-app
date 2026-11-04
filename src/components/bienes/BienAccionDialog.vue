@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="modo === 'baja' ? 'remove_circle' : modo === 'reposicion' ? 'swap_horiz' : 'fact_check'"
     :titulo="TITULOS[modo]"
     :subtitulo="bienActivo ? `${bienActivo.nombre} · ${bienActivo.id}` : 'Los campos con * son obligatorios'"
     :ancho="640"

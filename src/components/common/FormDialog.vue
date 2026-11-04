@@ -16,8 +16,8 @@
           <slot />
         </q-card-section>
         <q-card-actions align="right" class="sg-dialog__footer q-px-md q-pb-md q-gutter-sm">
-          <q-btn flat color="secondary" :label="soloLectura ? 'Cerrar' : 'Cancelar'" @click="cerrar" />
-          <q-btn v-if="!soloLectura" unelevated :color="colorEnviar" type="submit" :label="etiquetaEnviar" :disable="deshabilitarEnviar" />
+          <q-btn flat color="secondary" icon="close" :label="soloLectura ? 'Cerrar' : 'Cancelar'" @click="cerrar" />
+          <q-btn v-if="!soloLectura" unelevated :color="colorEnviar" :icon="iconoEnviar" type="submit" :label="etiquetaEnviar" :disable="deshabilitarEnviar" />
         </q-card-actions>
       </q-form>
     </q-card>
@@ -35,6 +35,7 @@ const props = defineProps({
   subtitulo: { type: String, default: '' },
   ancho: { type: Number, default: 560 },
   etiquetaEnviar: { type: String, default: 'Guardar' },
+  iconoEnviar: { type: String, default: 'save' },
   colorEnviar: { type: String, default: 'primary' },
   deshabilitarEnviar: { type: Boolean, default: false },
   // El formulario tiene cambios sin guardar (ver useBorrador).
@@ -55,8 +56,8 @@ function cerrar () {
     title: 'Cambios sin guardar',
     message: 'Hay datos escritos que no se han guardado. Si cierra ahora se descartarán.',
     persistent: true,
-    cancel: { flat: true, label: 'Seguir editando', color: 'secondary' },
-    ok: { unelevated: true, label: 'Descartar', color: 'negative' }
+    cancel: { flat: true, icon: 'edit', label: 'Seguir editando', color: 'secondary' },
+    ok: { unelevated: true, icon: 'delete_outline', label: 'Descartar', color: 'negative' }
   }).onOk(() => emit('update:modelValue', false))
 }
 </script>

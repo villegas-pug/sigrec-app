@@ -32,15 +32,15 @@
               <q-btn v-if="b.situacion === 'activo' && puedeHacer('bien.trasladar')" dense outline no-caps color="secondary" icon="swap_horiz" label="Reubicar" :disable="!hayDestino" @click="abrirTraslado(b)" />
               <q-btn v-if="b.situacion === 'activo' && puedeHacer('bien.baja')" dense outline no-caps color="negative" icon="remove_circle" label="Dar de baja" @click="abrirBaja(b)" />
               <q-btn v-if="b.situacion !== 'activo' && b.revisionPendiente && puedeHacer('bien.baja')" dense outline no-caps color="secondary" icon="task_alt" label="Cerrar revisión" @click="cerrarRevision(b)" />
-              <q-btn v-if="puedeAcceder('centros')" flat dense no-caps color="secondary" label="Ver ficha" :to="{ name: 'centros', query: { bien: b.id } }" />
+              <q-btn v-if="puedeAcceder('centros')" flat dense no-caps color="secondary" icon="visibility" label="Ver ficha" :to="{ name: 'centros', query: { bien: b.id } }" />
             </div>
           </div>
           <p v-if="pendientes.length && !hayDestino" class="sg-muted q-mb-none">El centro no tiene otros ambientes vigentes: registre uno para poder reubicar los bienes.</p>
         </q-card-section>
 
         <q-card-actions align="right" class="sg-dialog__footer q-px-md q-pb-md">
-          <q-btn flat color="secondary" label="Cerrar" v-close-popup />
-          <q-btn unelevated color="negative" label="Continuar con la anulación" :disable="pendientes.length > 0" @click="continuar" />
+          <q-btn flat color="secondary" icon="close" label="Cerrar" v-close-popup />
+          <q-btn unelevated color="negative" icon="block" label="Continuar con la anulación" :disable="pendientes.length > 0" @click="continuar" />
         </q-card-actions>
       </q-card>
     </q-dialog>

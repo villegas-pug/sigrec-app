@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="intervencion ? 'save' : 'add'"
     :titulo="intervencion ? 'Actualizar intervención' : 'Registrar intervención'"
     :subtitulo="ambiente.nombre"
     :ancho="480"

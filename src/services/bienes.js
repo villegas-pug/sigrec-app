@@ -143,8 +143,8 @@ export const reposicionDe = (bienId) =>
   db.eventos.find((e) => vigente(e) && e.tipo === 'reposicion' && e.bienAnteriorId === bienId) ?? null
 
 const PASOS = {
-  baja: { modo: 'baja', permiso: 'bien.baja', label: 'Dar de baja', color: 'negative' },
-  reposicion: { modo: 'reposicion', permiso: 'bien.reposicion', label: 'Registrar reposición', color: 'primary' }
+  baja: { modo: 'baja', permiso: 'bien.baja', label: 'Dar de baja', icono: 'remove_circle', color: 'negative' },
+  reposicion: { modo: 'reposicion', permiso: 'bien.reposicion', label: 'Registrar reposición', icono: 'swap_horiz', color: 'primary' }
 }
 
 // Paso siguiente de la atención de una necesidad sobre un bien: un bien activo se da de baja; uno dado de baja se repone.

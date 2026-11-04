@@ -138,7 +138,7 @@
               <span class="text-weight-bold">{{ item.nombre }}</span>
               <span class="sg-muted">{{ item.id }} · ubicación previa: {{ item.ubicacionPrevia ?? 'no informada' }}</span>
             </div>
-            <q-btn outline color="secondary" label="Aprovechar datos" :disable="previo?.id === item.id" @click="usarPrevio(item)" />
+            <q-btn outline color="secondary" icon="content_copy" label="Aprovechar datos" :disable="previo?.id === item.id" @click="usarPrevio(item)" />
           </div>
           <p v-if="!disponibles.length" class="q-pa-md sg-muted q-mb-none">No hay registros pendientes de vincular.</p>
         </section-card>
@@ -146,8 +146,8 @@
     </div>
       </q-card-section>
       <q-card-actions align="right" class="sg-dialog__footer q-pa-md q-gutter-sm">
-        <q-btn flat color="secondary" label="Cancelar" @click="cerrar" />
-        <q-btn outline color="secondary" label="Guardar" @click="guardarYTerminar" />
+        <q-btn flat color="secondary" icon="close" label="Cancelar" @click="cerrar" />
+        <q-btn outline color="secondary" icon="save" label="Guardar" @click="guardarYTerminar" />
         <q-btn unelevated color="primary" icon="playlist_add" :label="`Guardar y registrar otro en ${ambiente.nombre}`" @click="formulario?.submit()" />
       </q-card-actions>
     </q-card>

@@ -39,8 +39,8 @@ export function useDictado () {
         title: 'Reconocimiento de voz en este dispositivo',
         message: 'Se descargará un modelo de voz de unos 40 MB, una sola vez. El audio se procesa en este dispositivo y no sale de él.',
         persistent: true,
-        cancel: { flat: true, label: 'Cancelar', color: 'secondary' },
-        ok: { unelevated: true, label: 'Descargar y dictar', color: 'primary' }
+        cancel: { flat: true, icon: 'close', label: 'Cancelar', color: 'secondary' },
+        ok: { unelevated: true, icon: 'download', label: 'Descargar y dictar', color: 'primary' }
       })
         .onOk(() => resolver(true))
         .onCancel(() => resolver(false))
@@ -52,7 +52,7 @@ export function useDictado () {
     $q.dialog({
       title: 'Permitir el micrófono',
       message: 'En Chrome, toque el icono junto a la dirección, abra Permisos y permita el micrófono para este sitio. Si el permiso ya está habilitado, vaya a Ajustes de Android → Aplicaciones → Chrome → Permisos → Micrófono y permita el acceso. Vuelva a SIGREC y pulse el micrófono para reintentar.',
-      ok: { unelevated: true, label: 'Entendido', color: 'primary' }
+      ok: { unelevated: true, icon: 'check', label: 'Entendido', color: 'primary' }
     })
   }
 

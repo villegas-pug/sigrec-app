@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="novedad ? 'save' : 'add'"
     :titulo="novedad ? 'Actualizar novedad' : 'Registrar novedad'"
     :subtitulo="ambiente.nombre"
     :etiqueta-enviar="novedad ? 'Guardar cambios' : 'Registrar'"

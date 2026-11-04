@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="tipo ? 'save' : 'add'"
     :titulo="tipo ? 'Actualizar tipo de bien' : 'Registrar tipo de bien'"
     :subtitulo="tipo ? tipo.id : 'El precio referencial se informa después'"
     :ancho="480"

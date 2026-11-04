@@ -248,8 +248,8 @@ function abrirAccion (tipo) {
       title: 'Quitar asociación',
       message: `${actual.nombre} ${actual.id} dejará de ser componente. La relación anterior queda en sus antecedentes.`,
       persistent: true,
-      cancel: { flat: true, label: 'Cancelar', color: 'secondary' },
-      ok: { unelevated: true, label: 'Quitar asociación', color: 'primary' }
+      cancel: { flat: true, icon: 'close', label: 'Cancelar', color: 'secondary' },
+      ok: { unelevated: true, icon: 'link_off', label: 'Quitar asociación', color: 'primary' }
     }).onOk(() => {
       desasociarBien(actual)
       $q.notify({ type: 'positive', message: 'El bien deja de ser componente. La relación queda en sus antecedentes.' })

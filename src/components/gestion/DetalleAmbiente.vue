@@ -51,7 +51,7 @@
       <section-card :titulo="`Bienes del ambiente (${bienes.length})`" subtitulo="Inventario directo del ambiente; un componente indica el bien del que forma parte" sin-relleno>
         <div v-for="b in bienes" :key="b.id" class="sg-borde-superior row items-center justify-between q-px-md q-py-sm">
           <div class="column">
-            <button type="button" class="sg-row-btn text-weight-bold self-start" @click="$emit('seleccionar', b.id)">{{ b.nombre }} · {{ b.id }}</button>
+            <button type="button" class="sg-row-btn text-weight-bold self-start" @click="$emit('seleccionar', b.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ b.nombre }} · {{ b.id }}</button>
             <span v-if="b.asociadoA" class="sg-muted">Componente de {{ b.asociadoA.bienId }}<template v-if="b.asociadoA.posicion"> ({{ b.asociadoA.posicion }})</template></span>
           </div>
           <div class="sg-chips">

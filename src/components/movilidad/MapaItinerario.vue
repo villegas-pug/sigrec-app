@@ -9,7 +9,7 @@
       </q-select>
       <div v-if="errorBusqueda" class="row items-center q-gutter-sm" role="status">
         <span>No se pudo conectar con el servicio de búsqueda.</span>
-        <q-btn flat dense color="secondary" label="Reintentar" @click="reintentarBusqueda" />
+        <q-btn flat dense color="secondary" icon="refresh" label="Reintentar" @click="reintentarBusqueda" />
       </div>
       <div class="row items-center q-gutter-sm">
         <q-btn outline color="secondary" icon="my_location" label="Mi ubicación" :loading="ubicando" @click="localizar(false)" />
@@ -41,9 +41,9 @@
         <q-btn v-if="!soloLectura" flat dense icon="delete" aria-label="Eliminar punto" @click="puntos.splice(i, 1)" />
         </div>
       </div>
-      <q-btn v-if="!soloLectura && puntos.length" flat color="secondary" label="Volver al origen" @click="volver" />
+      <q-btn v-if="!soloLectura && puntos.length" flat color="secondary" icon="keyboard_return" label="Volver al origen" @click="volver" />
       <div v-if="!soloLectura" class="sg-map-layout__status" role="status">{{ estadoTexto }}</div>
-      <q-btn v-if="!soloLectura && estado === 'error'" outline color="secondary" label="Reintentar" @click="calcular" />
+      <q-btn v-if="!soloLectura && estado === 'error'" outline color="secondary" icon="refresh" label="Reintentar" @click="calcular" />
     </div>
     </div>
   </div>

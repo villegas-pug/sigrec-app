@@ -33,7 +33,7 @@
             <tbody>
               <tr v-for="fila in filas" :key="fila.it.id" :class="{ 'sg-row--selected': fila.it.id === itinerarioId }">
                 <td>
-                  <button type="button" class="sg-row-btn" @click="seleccionar(fila.it.id)">{{ fila.it.id }}</button>
+                  <button type="button" class="sg-row-btn" @click="seleccionar(fila.it.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ fila.it.id }}</button>
                   <div class="sg-muted">{{ fecha(fila.it.fecha) }}</div>
                   <status-chip v-if="fila.it.anulacion" v-bind="CHIP_ANULADO" />
                 </td>
@@ -67,7 +67,7 @@
           <div v-for="fila in filas" :key="fila.it.id" class="sg-box" :class="{ 'sg-box--resaltada': fila.it.id === itinerarioId }">
             <div class="row items-start no-wrap justify-between">
               <div class="column">
-                <button type="button" class="sg-row-btn self-start" @click="seleccionar(fila.it.id)">{{ fila.it.id }} · {{ fecha(fila.it.fecha) }}</button>
+                <button type="button" class="sg-row-btn self-start" @click="seleccionar(fila.it.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ fila.it.id }} · {{ fecha(fila.it.fecha) }}</button>
                 <span>{{ fila.it.proposito }}</span>
                 <span class="sg-muted">{{ fila.it.destinos.join(' → ') }}</span>
               </div>

@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    icono-enviar="block"
     :titulo="titulo"
     :subtitulo="subtitulo"
     :ancho="520"

@@ -50,7 +50,7 @@
                   <status-chip v-if="ev.anulacion" v-bind="CHIP_ANULADO" class="q-ml-xs" />
                 </td>
                 <td>{{ ubicacion(ev).car.nombre }} · {{ ubicacion(ev).ambiente.nombre }}</td>
-                <td><button type="button" class="sg-row-btn" @click="seleccionar(ev.id)">{{ ev.titulo }}</button><div class="sg-muted">{{ ev.bienIds.join(', ') }}</div></td>
+                <td><button type="button" class="sg-row-btn" @click="seleccionar(ev.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ ev.titulo }}</button><div class="sg-muted">{{ ev.bienIds.join(', ') }}</div></td>
                 <td><status-chip :tono="estadoNecesidad(ev).tono" :label="estadoNecesidad(ev).label" /></td>
               </tr>
               <tr v-if="!eventos.length"><td colspan="5" class="sg-muted">Sin hechos para los filtros seleccionados.</td></tr>
@@ -118,6 +118,7 @@
                       dense
                       no-caps
                       :color="pasoDe(evento, b.id).color"
+                      :icon="pasoDe(evento, b.id).icono"
                       :label="pasoDe(evento, b.id).label"
                       @click="abrirPaso(b, pasoDe(evento, b.id).modo)"
                     />

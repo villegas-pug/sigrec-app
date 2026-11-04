@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="ambiente ? 'save' : 'add'"
     :titulo="ambiente ? 'Actualizar ambiente' : 'Registrar ambiente'"
     :subtitulo="ambiente ? `${ambiente.nombre} · ${ambiente.id}` : centro.nombre"
     :etiqueta-enviar="ambiente ? 'Guardar cambios' : 'Registrar ambiente'"

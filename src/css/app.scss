@@ -55,6 +55,11 @@ a {
   font-weight: 700;
 }
 
+@media (max-width: 599.98px) {
+  .q-btn { max-width: 100%; }
+  .q-btn__content { white-space: normal; }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

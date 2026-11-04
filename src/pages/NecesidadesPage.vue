@@ -62,7 +62,7 @@
             </thead>
             <tbody>
               <tr v-for="fila in consolidado" :key="fila.car.id">
-                <td><button type="button" class="sg-row-btn" @click="carId = fila.car.id">{{ fila.car.nombre }}</button></td>
+                <td><button type="button" class="sg-row-btn" @click="carId = fila.car.id"><q-icon name="filter_alt" size="16px" aria-hidden="true" class="q-mr-xs" />{{ fila.car.nombre }}</button></td>
                 <td class="sg-num">{{ fila.renovacion }}</td>
                 <td class="sg-num">{{ fila.reposicion }}</td>
                 <td class="sg-num text-weight-bold">{{ soles(fila.importeConocido) }}</td>
@@ -135,7 +135,7 @@
                 </td>
                 <td>
                   <div class="column q-gutter-y-xs items-start">
-                    <q-btn v-if="pasoDe(n)" dense outline no-caps :color="pasoDe(n).color" :label="pasoDe(n).label" @click="abrirPaso(n.bien, pasoDe(n).modo)" />
+                    <q-btn v-if="pasoDe(n)" dense outline no-caps :color="pasoDe(n).color" :icon="pasoDe(n).icono" :label="pasoDe(n).label" @click="abrirPaso(n.bien, pasoDe(n).modo)" />
                     <span v-else-if="siguientePaso(n.bien)" class="sg-muted">Requiere: equipo central</span>
                     <router-link v-if="antecedenteDe(n)" :to="antecedenteDe(n).to">{{ antecedenteDe(n).label }}</router-link>
                   </div>
@@ -163,7 +163,7 @@
             <span class="sg-muted">{{ textoUbicacion(r.ubicacion) }}</span>
             <span v-for="e in r.incidentes" :key="e.id" class="sg-muted">{{ TIPOS_EVENTO[e.tipo].label }}: {{ e.titulo }} · {{ fecha(e.fecha) }}</span>
             <div class="row items-center q-gutter-x-md">
-              <q-btn v-if="puedeHacer('bien.reposicion')" dense outline no-caps color="primary" label="Registrar reposición" @click="abrirPaso(r.bien, 'reposicion')" />
+              <q-btn v-if="puedeHacer('bien.reposicion')" dense outline no-caps color="primary" icon="swap_horiz" label="Registrar reposición" @click="abrirPaso(r.bien, 'reposicion')" />
               <router-link v-if="puedeAcceder('incidencias')" :to="{ name: 'incidencias', query: { car: r.ubicacion.car.id, hecho: r.incidentes[0].id } }">Ver incidente</router-link>
             </div>
           </div>

@@ -35,7 +35,7 @@
       </div>
       <span v-else-if="celda.estado === 'sin_info'" class="sg-muted">Sin información de pago: no equivale a un pendiente confirmado.</span>
       <span v-else class="sg-muted">El período aún no vence.</span>
-      <div v-if="!soloLectura" class="row q-gutter-sm"><q-btn outline color="secondary" label="Actualizar pago" @click="consulta = false" /><q-btn flat color="secondary" label="Corregir situación" @click="consulta = false" /></div>
+      <div v-if="!soloLectura" class="row q-gutter-sm"><q-btn outline color="secondary" icon="edit" label="Actualizar pago" @click="consulta = false" /><q-btn flat color="secondary" icon="edit_note" label="Corregir situación" @click="consulta = false" /></div>
     </template>
 
     <!-- Registro -->

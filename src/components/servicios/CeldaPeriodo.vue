@@ -7,7 +7,7 @@
     :disabled="disabled"
     @click="$emit('abrir')"
   >
-    <span>{{ conEtiqueta || celda.span > 1 ? `${celda.etiqueta} · ` : '' }}{{ ESTADOS_PERIODO[celda.estado].label }}</span>
+    <span><q-icon name="visibility" size="14px" aria-hidden="true" class="q-mr-xs" />{{ conEtiqueta || celda.span > 1 ? `${celda.etiqueta} · ` : '' }}{{ ESTADOS_PERIODO[celda.estado].label }}</span>
     <span v-if="celda.estado === 'pendiente'" class="sg-celda__sub">{{ celda.vence ? `vence ${fecha(celda.vence)}` : 'vencimiento no informado' }}</span>
   </button>
 </template>

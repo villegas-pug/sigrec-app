@@ -1,6 +1,7 @@
 <template>
   <form-dialog
     :model-value="modelValue"
+    :icono-enviar="evento ? 'save' : 'report'"
     :titulo="evento ? 'Actualizar incidente' : 'Registrar incidente'"
     :subtitulo="subtitulo"
     :ancho="620"
