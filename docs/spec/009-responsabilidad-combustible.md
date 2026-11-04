@@ -1,6 +1,6 @@
 # SPEC 009 — Responsabilidad sobre el combustible
 
-- **Estado:** implementado en el prototipo. La verificación en navegador está pendiente de autorización.
+- **Estado:** implementado en el prototipo (permisos, autoría y columna «Informado por»). La verificación en navegador está pendiente de autorización.
 - **Fecha:** 2026-11-04
 - **Origen:** el chofer podía informar combustible pero no corregir sus errores, y los registros no guardaban quién los informó.
 - **Complementa:** SPEC 003 §4 (permisos por acción). Donde difieran, prevalece esta SPEC.

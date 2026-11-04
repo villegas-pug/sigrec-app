@@ -40,6 +40,7 @@
                   <th scope="col" class="sg-num">Cantidad</th>
                   <th scope="col">Relacionado con</th>
                   <th scope="col">Sustento</th>
+                  <th scope="col">Informado por</th>
                   <th scope="col"><span class="sr-only">Acciones</span></th>
                 </tr>
               </thead>
@@ -60,9 +61,10 @@
                     <span v-else class="sg-muted">{{ vehiculo.id }} · sin recorrido asociado</span>
                   </td>
                   <td>{{ r.sustento || '—' }}</td>
+                  <td>{{ r.informadoPor || '—' }}</td>
                   <td class="text-right"><menu-acciones :items="accionesRegistro(r)" :etiqueta="`Acciones del registro ${r.id}`" /></td>
                 </tr>
-                <tr v-if="!registros.length"><td colspan="6" class="sg-muted">Sin registros de combustible.</td></tr>
+                <tr v-if="!registros.length"><td colspan="7" class="sg-muted">Sin registros de combustible.</td></tr>
               </tbody>
             </table>
           </div>
@@ -80,6 +82,7 @@
                 <status-chip v-if="r.anulacion" v-bind="CHIP_ANULADO" />
               </div>
               <span v-if="r.sustento" class="sg-muted">Sustento: {{ r.sustento }}</span>
+              <span class="sg-muted">Informado por: {{ r.informadoPor || '—' }}</span>
             </div>
             <p v-if="!registros.length" class="sg-muted q-mb-none">Sin registros de combustible.</p>
           </div>
@@ -152,7 +155,7 @@ import { fecha, litros } from 'src/utils/formato'
 import { parametro } from 'src/utils/navegacion'
 
 const route = useRoute()
-const { puedeAcceder, puedeHacer } = usePerfil()
+const { perfil, puedeAcceder, puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 // Enlace profundo (?itinerario=): el vehículo se deduce del recorrido y, si puede declararse su consumo, se abre el formulario con él.
 const itinerarioPedido = parametro(route.query.itinerario)
@@ -196,8 +199,12 @@ onMounted(() => {
 // La referencia de rendimiento se completa en los datos del vehículo.
 const completarRendimiento = (ev) => ev.faltantes?.includes('rendimiento de referencia') && puedeAcceder('vehiculos') && puedeHacer('vehiculo.actualizar')
 
+// Actualiza cualquier registro vigente quien tiene `combustible.actualizar`; con `actualizarPropio`, solo los que informó el perfil activo.
+const puedeActualizar = (r) =>
+  vigente(r) && (puedeHacer('combustible.actualizar') || (puedeHacer('combustible.actualizarPropio') && r.informadoPor === perfil.value.nombre))
+
 const accionesRegistro = (r) => [
-  { label: 'Actualizar registro', icono: 'edit', visible: puedeHacer('combustible.actualizar') && vigente(r), accion: () => abrir(r) },
+  { label: 'Actualizar registro', icono: 'edit', visible: puedeActualizar(r), accion: () => abrir(r) },
   {
     label: 'Anular registro',
     icono: 'block',

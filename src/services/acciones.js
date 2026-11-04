@@ -613,13 +613,15 @@ const desvincularConsumo = (registro) => {
   if (registro.tipo === 'consumo' && registro.itinerarioId) itinerarioPorId(registro.itinerarioId).consumoDeclaradoL = null
 }
 
+// El autor se fija al informar y va después de `datos` para que no pueda sobrescribirse.
 export function registrarCombustible (datos) {
-  const registro = { id: nuevoId('CB'), unidad: 'L', ...datos }
+  const registro = { id: nuevoId('CB'), unidad: 'L', ...datos, informadoPor: autorActual() }
   db.combustible.push(registro)
   vincularConsumo(registro)
   return registro
 }
 
+// Corregir no cambia la autoría: `cambios` no incluye `informadoPor`, así que se conserva.
 export function actualizarCombustible (registro, cambios) {
   desvincularConsumo(registro)
   Object.assign(registro, cambios)

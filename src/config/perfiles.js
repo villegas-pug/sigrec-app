@@ -2,6 +2,7 @@
 // `accesos` lista nombres de ruta; el primero es la ruta inicial del perfil.
 // `acciones` lista las acciones permitidas dentro de esas rutas (ver docs/spec/003-centros-mantenedores-y-ux.md §4).
 // Convención de acciones: `entidad.registrar | actualizar | anular`. `carIds` / `vehiculoIds` en null significan «sin restricción».
+// `entidad.actualizarPropio` permite actualizar solo los registros vigentes que informó el perfil activo (ver docs/spec/009-responsabilidad-combustible.md).
 import { MENU } from 'src/config/menu'
 
 // Mantenimiento de los datos de un centro: lo comparten Equipo central (todos los CAR) y Personal del CAR (su centro).
@@ -26,7 +27,8 @@ export const TODAS_LAS_ACCIONES = [
   ...ACCIONES_MANTENIMIENTO,
   'centro.registrar', 'centro.anular',
   'baja.anular', 'reposicion.anular',
-  'tipoBien.registrar', 'tipoBien.actualizar', 'tipoBien.anular', 'precio.informar'
+  'tipoBien.registrar', 'tipoBien.actualizar', 'tipoBien.anular', 'precio.informar',
+  'combustible.actualizarPropio'
 ]
 
 // Todas las pantallas navegables, tomadas del menú: una pantalla nueva queda disponible para el perfil de acceso total.
@@ -60,7 +62,7 @@ export const PERFILES = [
     nombre: 'Chofer',
     ambito: { descripcion: 'Movilidad AMA-V01 · CAR Demo Amanecer', carIds: ['AMA'], vehiculoIds: ['AMA-V01'] },
     accesos: ['itinerarios', 'vehiculos', 'combustible'],
-    acciones: ['itinerario.registrar', 'itinerario.ejecucion', 'combustible.informar']
+    acciones: ['itinerario.registrar', 'itinerario.ejecucion', 'combustible.informar', 'combustible.actualizarPropio']
   }
 ]
 
