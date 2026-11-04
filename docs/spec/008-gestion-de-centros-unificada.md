@@ -8,7 +8,7 @@
 ## 0. Contrato
 
 - SIGREC sigue siendo un **prototipo con datos ficticios**; el estado vive en memoria y los permisos por perfil son controles de interfaz.
-- Esta SPEC **reemplaza** el punto «Rediseño de menús» de la SPEC 005 §5 únicamente para «Gestión de centros», y la ubicación del alta breve de la SPEC 005 L02 (ahora es un modo del panel).
+- Esta SPEC **reemplaza** el punto «Rediseño de menús» de la SPEC 005 §5 únicamente para «Gestión de centros», y la ubicación del alta breve de la SPEC 005 L02 (ahora es un modal).
 - No cambian las reglas de negocio salvo la de componentes (§3).
 
 ## 1. Decisiones confirmadas
@@ -16,7 +16,7 @@
 | # | Decisión |
 | --- | --- |
 | 1 | «Gestión de centros» es **una sola entrada de menú**, sin submenú. |
-| 2 | Todo ocurre en una pantalla **sin redirigir a otras**: el registro de bienes es un **modo del panel de detalle**. |
+| 2 | El registro de bienes y componentes se abre en un **modal** sobre el detalle seleccionado. |
 | 3 | Los componentes tienen **un solo nivel**: un componente no admite componentes. |
 | 4 | Los enlaces de otros módulos abren el explorador en el nodo exacto. Las URL antiguas siguen funcionando como alias. |
 
@@ -33,13 +33,13 @@
 | Bien | Ficha, Componentes, Fotografías, Antecedentes | Las de la ficha del bien; **Registrar componente** en la pestaña Componentes. |
 | Componente | Ficha, Forma parte de, Fotografías, Antecedentes | Las de la ficha del bien; «Quitar asociación». Sin «Registrar componente». |
 
-### Modo registro
+### Modal de registro
 
-- «Registrar bien» (ambiente) y «Registrar componente» (bien) cambian el panel de detalle al formulario de alta breve, con el inventario previo y su contraste al lado.
+- «Registrar bien» (ambiente), «Registrar componente» (bien) y los enlaces directos abren el formulario de alta breve en un modal con el inventario previo y su contraste.
 - El contexto (centro y ambiente) es el nodo seleccionado; ya no hay selectores de contexto.
-- «Guardar y registrar otro» conserva el ambiente. «Guardar» cierra el modo y selecciona el bien creado.
+- «Guardar y registrar otro» conserva el ambiente. «Guardar» cierra el modal y selecciona el bien creado.
 - Los bienes registrados en la sesión se marcan en el árbol con el chip «Nuevo» (sustituye a la tabla «Registrados en esta sesión»).
-- Con datos escritos, **Cerrar** o elegir otro nodo pide «Seguir editando / Descartar» (`useBorrador › confirmarDescarte`).
+- Con datos escritos, cerrar el modal o salir de la página pide «Seguir editando / Descartar» (`useBorrador › confirmarDescarte`). La cabecera y las acciones permanecen fijas.
 
 ## 3. Regla de componentes
 
@@ -53,7 +53,7 @@ Los datos de demostración ya tienen un solo nivel; no requieren migración.
 
 ## 4. Rutas, accesos y enlaces profundos
 
-- Ruta única `centros`. Alias que conservan la consulta: `/locales`, `/ambientes`, `/bienes` y `/bienes/registro` (este último abre el modo registro).
+- Ruta única `centros`. Alias que conservan la consulta: `/locales`, `/ambientes`, `/bienes` y `/bienes/registro` (este último abre el modal de registro).
 - Parámetros: `?car=`, `?ambiente=`, `?bien=`, `?novedad=` (abre la pestaña Novedades y resalta la novedad), `?registrar=1` con `?ambiente=` o `?asociar=`.
 - Un id inexistente o fuera del ámbito muestra «Registro no disponible» y no se elige otro registro (SPEC 005 L01).
 - Accesos: el perfil `car` conserva `centros`; `verifica` pasa de `bienes` a `centros`. Las acciones siguen gobernadas por `puedeHacer`.

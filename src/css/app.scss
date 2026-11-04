@@ -889,6 +889,14 @@ a {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  border-top: 4px solid var(--sg-primary);
+  border-radius: var(--sg-radius);
+  background: var(--sg-surface);
+}
+
+.q-dialog__inner > .sg-registro-bien-dialog {
+  width: 1100px;
+  max-width: 94vw;
 }
 
 .q-dialog__inner--maximized > .sg-dialog {
@@ -901,6 +909,17 @@ a {
 .sg-dialog__footer {
   flex: 0 0 auto;
 }
+
+.sg-dialog__header {
+  max-height: 30%;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--sg-border-soft);
+}
+
+.sg-dialog__header h2 { color: var(--sg-blue); }
+.sg-dialog__footer { border-top: 1px solid var(--sg-border-soft); }
 
 .sg-dialog__form {
   display: flex;
@@ -924,6 +943,31 @@ a {
   max-width: min(400px, calc(100vw - 32px));
   max-height: calc(var(--q-dialog-viewport-height, 100dvh) - 48px);
   overflow: hidden;
+  border-top: 4px solid var(--sg-primary);
+  border-radius: var(--sg-radius);
+  background: var(--sg-surface);
+}
+
+.q-dialog-plugin > .q-dialog__title {
+  color: var(--sg-blue);
+  font-weight: 700;
+  max-height: 30%;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--sg-border-soft);
+}
+
+.q-dialog-plugin > .q-card__actions { border-top: 1px solid var(--sg-border-soft); }
+
+.sg-dialog__header .q-btn,
+.sg-dialog__footer .q-btn,
+.q-dialog-plugin > .q-card__actions .q-btn { min-width: 44px; min-height: 44px; }
+
+.sg-dialog .q-btn:focus-visible,
+.q-dialog-plugin .q-btn:focus-visible { outline: 3px solid var(--sg-blue); outline-offset: 2px; }
+
+@media (max-width: 599.98px) {
+  .sg-dialog__header { padding: 12px; }
 }
 
 .q-dialog-plugin > .q-dialog__title,

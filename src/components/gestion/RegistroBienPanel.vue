@@ -1,15 +1,11 @@
 <template>
-  <detalle-panel
-    :titulo="padre ? `Registrar componente de ${padre.nombre}` : `Registrar bien en ${ambiente.nombre}`"
-    :ruta="textoUbicacion(ubicacionDeAmbiente(ambiente.id)) + (padre ? ` › ${padre.nombre} ${padre.id}` : '')"
-    icono="playlist_add"
-    :con-volver="conVolver"
-    @volver="cerrar"
-  >
-    <template #acciones>
-      <q-btn flat color="secondary" icon="close" label="Cerrar" @click="cerrar" />
-    </template>
-
+  <q-dialog :model-value="true" persistent :maximized="$q.screen.lt.sm" @keydown.esc.stop="cerrar">
+    <q-card class="sg-dialog sg-registro-bien-dialog">
+      <q-card-section class="sg-dialog__header">
+        <h2 class="text-h6 text-weight-bold q-my-none">{{ padre ? `Registrar componente de ${padre.nombre}` : `Registrar bien en ${ambiente.nombre}` }}</h2>
+        <p class="sg-muted q-mb-none">{{ textoUbicacion(ubicacionDeAmbiente(ambiente.id)) }}<template v-if="padre"> › {{ padre.nombre }} {{ padre.id }}</template></p>
+      </q-card-section>
+      <q-card-section class="sg-dialog__body">
     <div class="sg-grid-2">
       <section-card titulo="Datos del bien" :subtitulo="previo ? `Datos aprovechados del inventario previo ${previo.id}` : 'Los campos con * son obligatorios'">
         <template v-if="previo" #acciones>
@@ -106,10 +102,6 @@
             </div>
           </q-expansion-item>
 
-          <div class="row justify-end q-gutter-sm">
-            <q-btn outline color="secondary" label="Guardar" @click="guardarYTerminar" />
-            <q-btn unelevated color="primary" type="submit" icon="playlist_add" :label="`Guardar y registrar otro en ${ambiente.nombre}`" />
-          </div>
         </q-form>
       </section-card>
 
@@ -152,7 +144,14 @@
         </section-card>
       </div>
     </div>
-  </detalle-panel>
+      </q-card-section>
+      <q-card-actions align="right" class="sg-dialog__footer q-pa-md q-gutter-sm">
+        <q-btn flat color="secondary" label="Cancelar" @click="cerrar" />
+        <q-btn outline color="secondary" label="Guardar" @click="guardarYTerminar" />
+        <q-btn unelevated color="primary" icon="playlist_add" :label="`Guardar y registrar otro en ${ambiente.nombre}`" @click="formulario?.submit()" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup>
@@ -160,7 +159,6 @@
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
-import DetallePanel from 'components/gestion/DetallePanel.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
@@ -184,8 +182,7 @@ const RESULTADOS = {
 const props = defineProps({
   ambiente: { type: Object, required: true },
   // Rótulo del bien del que el nuevo bien será componente; null = bien directo del ambiente.
-  asociarA: { type: String, default: null },
-  conVolver: { type: Boolean, default: false }
+  asociarA: { type: String, default: null }
 })
 
 // `registrado`: se creó un bien (siga o no el panel abierto). `terminar`: «Guardar» cierra el modo y muestra el bien creado.

@@ -22,18 +22,7 @@
         />
 
         <div v-if="!movil || vista === 'detalle'" class="sg-explorer__col">
-          <registro-bien-panel
-            v-if="modo === 'registro' && ambienteRegistro"
-            ref="registroRef"
-            :key="`${registro.ambienteId}|${registro.asociarA}`"
-            :ambiente="ambienteRegistro"
-            :asociar-a="registro.asociarA"
-            :con-volver="movil"
-            @registrado="alRegistrar"
-            @terminar="alTerminarRegistro"
-            @cerrar="modo = 'detalle'"
-          />
-          <template v-else-if="nodo">
+          <template v-if="nodo">
             <detalle-centro v-if="nodo.tipo === 'centro'" :key="seleccion" :centro="nodo.registro" :con-volver="movil" @seleccionar="seleccionar" @volver="vista = 'arbol'" />
             <detalle-ambiente
               v-else-if="nodo.tipo === 'ambiente'"
@@ -63,6 +52,16 @@
       </div>
     </div>
 
+    <registro-bien-panel
+      v-if="modo === 'registro' && ambienteRegistro"
+      ref="registroRef"
+      :key="`${registro.ambienteId}|${registro.asociarA}`"
+      :ambiente="ambienteRegistro"
+      :asociar-a="registro.asociarA"
+      @registrado="alRegistrar"
+      @terminar="alTerminarRegistro"
+      @cerrar="modo = 'detalle'"
+    />
     <centro-dialog v-model="dialogoCentro" @hecho="(id) => seleccionar(nodoCentroId(id))" />
     <bien-accion-dialog v-if="bien" v-model="accion.abierta" :modo="accion.modo" :bien="bien" @hecho="seleccionar" />
     <bien-edicion-dialog v-if="bien" v-model="edicion.abierta" :modo="edicion.modo" :bien="bien" @hecho="seleccionar" />
@@ -73,7 +72,7 @@
 
 <script setup>
 // «Gestión de centros»: explorador Centro › Ambiente › Bien › Componente. Elegir un nodo muestra su detalle y sus acciones;
-// el registro de bienes ocurre en el mismo panel (modo registro), sin cambiar de pantalla.
+// el registro de bienes se abre en un modal sobre el detalle seleccionado.
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
