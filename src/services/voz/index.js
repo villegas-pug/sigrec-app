@@ -2,8 +2,17 @@
 import { crear as crearNavegador, motorNavegadorSoportado } from './motorNavegador'
 import { motorWhisperSoportado } from './motorWhisper'
 
-// El micrófono solo está disponible en contextos seguros (HTTPS o localhost), con cualquier motor.
-export const dictadoDisponible = typeof window !== 'undefined' && window.isSecureContext && (motorNavegadorSoportado || motorWhisperSoportado)
+// iPadOS puede identificarse como Mac; el multitáctil permite reconocer esa señal sin solicitar permisos.
+const dispositivoAdmitido = () => {
+  if (typeof navigator === 'undefined') return false
+  const agente = navigator.userAgent || ''
+  if (/CrOS/i.test(agente)) return false
+  return /Android|iPhone|iPad|iPod/i.test(agente) ||
+    (/Macintosh/i.test(agente) && navigator.maxTouchPoints > 1)
+}
+
+// Se conserva la comprobación de contexto seguro y soporte de motor para ambos puntos de uso.
+export const dictadoDisponible = typeof window !== 'undefined' && window.isSecureContext && dispositivoAdmitido() && (motorNavegadorSoportado || motorWhisperSoportado)
 
 export const whisperDisponible = motorWhisperSoportado
 

@@ -1,10 +1,12 @@
-# SPEC 007 — Dictado por voz en todo el proyecto y en todo dispositivo
+# SPEC 007 — Dictado por voz en móviles y tabletas
 
 - Estado: implementada, pendiente de verificar en navegador. Prototipo en memoria con datos ficticios.
 - Objetivo: agilizar el registro desde dispositivos móviles dictando en lugar de escribir.
 - Dependencia nueva: `@huggingface/transformers@4.3.1` (solo se carga dentro de un Web Worker).
 
 ## Alcance
+
+- El dictado se ofrece solo en teléfonos y tabletas Android o iOS/iPadOS identificables, incluidos iPadOS con identificador de escritorio y capacidad multitáctil. Se oculta en computadoras y dispositivos ambiguos, sin solicitar permisos para detectarlos. La detección depende de las señales del navegador y puede no reconocer algunas tabletas.
 
 - **Con dictado:** todo `q-input` (texto, área de texto, número, fecha, mes, hora, teléfono) y todo `q-select`, además de los campos internos de `CampoAdquisicion`, el buscador de lugares del mapa y la selección de centro, ambiente y bien.
 - **Sin dictado:** controles de un solo toque (`q-checkbox`, `q-toggle`, `q-option-group`, `CondicionSelector`, `q-file`) y botones.
