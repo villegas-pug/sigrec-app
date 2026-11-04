@@ -20,7 +20,7 @@
       <q-separator />
       <q-tab-panels v-model="tab" class="sg-detalle__panels">
         <q-tab-panel v-for="t in tabs" :key="t.name" :name="t.name" class="sg-detalle__panel">
-          <div class="column q-gutter-y-md"><slot :name="t.name" /></div>
+          <div class="column q-gutter-y-md" :class="{ 'sg-ficha': t.name === 'ficha' }"><slot :name="t.name" /></div>
         </q-tab-panel>
       </q-tab-panels>
     </template>

@@ -22,6 +22,8 @@
 
 ## 2. Pantalla
 
+- Las fichas de centro, ambiente, bien y componente muestran un resumen visual con datos principales y secciones de detalle adaptables. Se conservan valores, notas, avisos y acciones existentes.
+
 - **Árbol** (izquierda): Centro › Ambiente › Bien › Componente. Todos los niveles se pueden seleccionar. Filtros: búsqueda, situación del bien y «Mostrar inactivos».
 - **Detalle** (derecha): cabecera con estado y acciones, y pestañas con scroll propio.
 - En escritorio la página ocupa el alto visible y cada columna se desplaza por separado. En móvil y tableta se muestra la lista o el detalle a pantalla completa, con «Volver al árbol».

@@ -23,7 +23,12 @@
       <note-banner v-if="ambiente.anulacion" tono="ne" icono="block">
         Ambiente anulado el {{ fecha(ambiente.anulacion.fecha) }} por {{ ambiente.anulacion.por }}. Motivo: {{ ambiente.anulacion.motivo }}
       </note-banner>
-      <section-card titulo="Datos del ambiente">
+      <section class="sg-ficha__summary" aria-label="Resumen del ambiente">
+        <div class="sg-ficha__item"><q-icon name="location_on" aria-hidden="true" /><key-value etiqueta="Ubicación"><template v-if="ambiente.ubicacion">{{ ambiente.ubicacion }}</template><status-chip v-else tono="si" label="No informada" /></key-value></div>
+        <div class="sg-ficha__item"><q-icon name="fact_check" aria-hidden="true" /><key-value etiqueta="Condición"><status-chip v-bind="condicion(ambiente.condicion)" /></key-value></div>
+        <div class="sg-ficha__item"><q-icon name="format_paint" aria-hidden="true" /><key-value etiqueta="Último pintado"><template v-if="ambiente.ultimoPintado">{{ fecha(ambiente.ultimoPintado) }}</template><status-chip v-else tono="si" label="Fecha no informada" /></key-value></div>
+      </section>
+      <section-card titulo="Datos del ambiente" icono="meeting_room">
         <div class="sg-kv-grid">
           <key-value etiqueta="Piso">
             <template v-if="ambiente.piso != null">{{ ambiente.piso }}</template>
@@ -33,16 +38,7 @@
             <template v-if="ambiente.bloque">{{ ambiente.bloque }}</template>
             <status-chip v-else tono="si" label="No informado" />
           </key-value>
-          <key-value etiqueta="Ubicación">
-            <template v-if="ambiente.ubicacion">{{ ambiente.ubicacion }}</template>
-            <status-chip v-else tono="si" label="No informada" />
-          </key-value>
           <key-value etiqueta="Características">{{ caracteristicas }}</key-value>
-          <key-value etiqueta="Condición"><status-chip v-bind="condicion(ambiente.condicion)" /></key-value>
-          <key-value etiqueta="Último pintado">
-            <template v-if="ambiente.ultimoPintado">{{ fecha(ambiente.ultimoPintado) }}</template>
-            <status-chip v-else tono="si" label="Fecha no informada" />
-          </key-value>
         </div>
       </section-card>
     </template>

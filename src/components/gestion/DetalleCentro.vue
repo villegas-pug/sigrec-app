@@ -14,17 +14,17 @@
       <note-banner v-if="centro.anulacion" tono="ne" icono="block">
         Centro anulado el {{ fecha(centro.anulacion.fecha) }} por {{ centro.anulacion.por }}. Motivo: {{ centro.anulacion.motivo }}
       </note-banner>
-      <section-card titulo="Centro e inmueble" subtitulo="Datos del centro y del inmueble donde funciona.">
+      <section class="sg-ficha__summary" aria-label="Resumen del centro">
+        <div class="sg-ficha__item"><q-icon name="location_on" aria-hidden="true" /><key-value etiqueta="Dirección"><template v-if="inmueble.direccion">{{ inmueble.direccion }}</template><status-chip v-else tono="si" label="No informada" /></key-value></div>
+        <div class="sg-ficha__item"><q-icon name="home_work" aria-hidden="true" /><key-value etiqueta="Condición del inmueble">{{ condicionInmueble(inmueble.condicion).label }}</key-value></div>
+        <div class="sg-ficha__item"><q-icon name="fact_check" aria-hidden="true" /><key-value etiqueta="Estado general"><status-chip v-bind="condicion(inmueble.construccion.estado)" /></key-value></div>
+      </section>
+      <section-card titulo="Centro e inmueble" icono="home_work" subtitulo="Datos del centro y del inmueble donde funciona.">
         <div class="sg-kv-grid">
-          <key-value etiqueta="Dirección">
-            <template v-if="inmueble.direccion">{{ inmueble.direccion }}</template>
-            <status-chip v-else tono="si" label="No informada" />
-          </key-value>
           <key-value etiqueta="Referencia de fundación" :nota="inmueble.fundacion.nota || ''">
             <template v-if="inmueble.fundacion.referencia">{{ inmueble.fundacion.referencia }}</template>
             <status-chip v-else tono="si" label="No informada" />
           </key-value>
-          <key-value etiqueta="Condición del inmueble">{{ condicionInmueble(inmueble.condicion).label }}</key-value>
           <template v-if="inmueble.condicion === 'alquilado'">
             <key-value etiqueta="Arrendador">
               <template v-if="inmueble.arrendador">{{ inmueble.arrendador }}</template>
@@ -42,14 +42,11 @@
         </div>
       </section-card>
 
-      <section-card titulo="Construcción e infraestructura">
+      <section-card titulo="Construcción e infraestructura" icono="construction">
         <div class="sg-kv-grid">
           <key-value v-for="campo in camposConstruccion" :key="campo.etiqueta" :etiqueta="campo.etiqueta" :nota="campo.nota || ''">
             <template v-if="campo.valor != null && campo.valor !== ''">{{ campo.valor }}</template>
             <status-chip v-else tono="si" label="No informado" />
-          </key-value>
-          <key-value etiqueta="Estado general">
-            <status-chip v-bind="condicion(inmueble.construccion.estado)" />
           </key-value>
           <key-value etiqueta="Última actualización" :nota="inmueble.actualizado.por">{{ fecha(inmueble.actualizado.fecha) }}</key-value>
         </div>

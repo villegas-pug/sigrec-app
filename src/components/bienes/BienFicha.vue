@@ -31,13 +31,21 @@
         No cuenta en las necesidades ni en los avisos.
       </note-banner>
 
+      <section class="sg-ficha__summary" :aria-label="esComponente ? 'Resumen del componente' : 'Resumen del bien'">
+        <div class="sg-ficha__item"><q-icon name="label" aria-hidden="true" /><key-value etiqueta="Rótulo SIGREC">{{ bien.id }}</key-value></div>
+        <div class="sg-ficha__item"><q-icon name="inventory_2" aria-hidden="true" /><key-value etiqueta="Código patrimonial" :nota="bien.codigoPatrimonial ? '' : 'Sin código patrimonial'">{{ bien.codigoPatrimonial ?? 'No aplica' }}</key-value></div>
+        <div class="sg-ficha__item"><q-icon name="event" aria-hidden="true" /><key-value etiqueta="Vida útil" nota="Valor de demostración, no es tabla oficial"><template v-if="bien.vidaUtilAnios != null">{{ plural(bien.vidaUtilAnios, 'año', 'años') }}<template v-if="fin"> · se cumple en {{ fin }}</template></template><status-chip v-else tono="si" label="Pendiente de definir" /></key-value></div>
+      </section>
+      <section-card titulo="Características" icono="category">
       <div class="sg-kv-grid">
-        <key-value etiqueta="Rótulo SIGREC">{{ bien.id }}</key-value>
-        <key-value etiqueta="Código patrimonial" :nota="bien.codigoPatrimonial ? '' : 'Sin código patrimonial'">{{ bien.codigoPatrimonial ?? 'No aplica' }}</key-value>
         <key-value v-if="(bien.cantidad ?? 1) > 1" etiqueta="Cantidad">{{ bien.cantidad }} unidades</key-value>
         <key-value etiqueta="Descripción">{{ bien.descripcion || '—' }}</key-value>
         <key-value v-if="bien.marcaModelo" etiqueta="Marca y modelo" :nota="bien.serie ? `Serie ${bien.serie}` : ''">{{ bien.marcaModelo }}</key-value>
         <key-value etiqueta="Deterioro observado">{{ bien.deterioro || 'Sin deterioro informado' }}</key-value>
+      </div>
+      </section-card>
+      <section-card titulo="Adquisición y valoración" icono="payments">
+      <div class="sg-kv-grid">
         <key-value etiqueta="Fecha de adquisición">
           <template v-if="bien.adquisicion?.fecha">{{ fecha(bien.adquisicion.fecha) }}</template>
           <status-chip v-else tono="si" label="No informada" />
@@ -46,17 +54,12 @@
           <template v-if="bien.adquisicion?.costo != null">{{ soles(bien.adquisicion.costo) }}</template>
           <status-chip v-else tono="si" label="No informado" />
         </key-value>
-        <key-value etiqueta="Vida útil" nota="Valor de demostración, no es tabla oficial">
-          <template v-if="bien.vidaUtilAnios != null">
-            {{ plural(bien.vidaUtilAnios, 'año', 'años') }}<template v-if="fin"> · se cumple en {{ fin }}</template>
-          </template>
-          <status-chip v-else tono="si" label="Pendiente de definir" />
-        </key-value>
         <key-value etiqueta="Precio referencial" :nota="tipo?.procedencia ? `${tipo.nombre} · ${tipo.procedencia}` : tipo?.nombre">
           <template v-if="tipo?.precio != null">{{ soles(tipo.precio) }}</template>
           <status-chip v-else tono="wa" label="Sin precio referencial" />
         </key-value>
       </div>
+      </section-card>
 
       <note-banner v-if="faltantes.length" tono="ne" icono="help">
         Antecedentes insuficientes: falta {{ faltantes.join(' y ') }}. No se calcula una renovación por vida útil.
