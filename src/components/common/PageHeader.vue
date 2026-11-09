@@ -7,7 +7,8 @@
         <ol class="sg-crumbs__list">
           <li v-for="(miga, i) in migas" :key="i" class="sg-crumbs__item">
             <q-icon v-if="i > 0" name="chevron_right" size="16px" class="sg-crumbs__sep" aria-hidden="true" />
-            <router-link v-if="miga.to" :to="miga.to" class="sg-crumbs__link">{{ miga.label }}</router-link>
+            <!-- Las migas son navegación jerárquica, como el menú: la pantalla a la que llevan no ofrece «Volver». -->
+            <router-link v-if="miga.to" :to="miga.to" class="sg-crumbs__link" @click="marcarNavegacionPrincipal">{{ miga.label }}</router-link>
             <span v-else-if="i === migas.length - 1" class="sg-crumbs__current" aria-current="page">{{ miga.label }}</span>
             <span v-else>{{ miga.label }}</span>
           </li>
@@ -30,6 +31,7 @@ import { useRoute } from 'vue-router'
 import { usePerfil } from 'src/composables/usePerfil'
 import AyudaContextual from 'components/common/AyudaContextual.vue'
 import VolverOrigen from 'components/layout/VolverOrigen.vue'
+import { marcarNavegacionPrincipal } from 'src/router/retorno'
 
 defineProps({
   titulo: { type: String, default: '' },

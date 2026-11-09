@@ -126,7 +126,7 @@
       </template>
     </div>
 
-    <combustible-dialog v-if="vehiculo" v-model="dialogo.abierto" :vehiculo="vehiculo" :registro="dialogo.registro" :itinerario-inicial="dialogo.itinerarioInicial" />
+    <combustible-dialog v-if="vehiculo" v-model="dialogo.abierto" :vehiculo="vehiculo" :registro="dialogo.registro" :itinerario-inicial="dialogo.itinerarioInicial" :con-retorno="dialogo.conRetorno" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
 </template>
@@ -154,6 +154,7 @@ import { anularCombustible, reactivarCombustible } from 'src/services/acciones'
 import { CHIP_ANULADO } from 'src/config/catalogos'
 import { fecha, litros } from 'src/utils/formato'
 import { parametro } from 'src/utils/navegacion'
+import { primeraVisita } from 'src/router/retorno'
 
 const route = useRoute()
 const { perfil, puedeAcceder, puedeHacer } = usePerfil()
@@ -176,8 +177,9 @@ const evaluados = computed(() =>
 const conConsumo = computed(() => evaluados.value.filter((e) => e.it.consumoDeclaradoL != null))
 const comparables = computed(() => conConsumo.value.filter((e) => e.ev.estado === 'comparable'))
 
-const dialogo = reactive({ abierto: false, registro: null, itinerarioInicial: null })
-const abrir = (registro, itinerarioInicial = null) => Object.assign(dialogo, { abierto: true, registro, itinerarioInicial })
+// `conRetorno`: el formulario lo abrió un enlace desde otra pantalla; al guardar se ofrece volver a ella.
+const dialogo = reactive({ abierto: false, registro: null, itinerarioInicial: null, conRetorno: false })
+const abrir = (registro, itinerarioInicial = null, conRetorno = false) => Object.assign(dialogo, { abierto: true, registro, itinerarioInicial, conRetorno })
 
 // El recorrido pedido debe pertenecer a un vehículo del ámbito; si no, no se muestra ni se elige otro.
 const itinerarioNoDisponible = ref(!!itinerarioPedido && (!itinerarioSolicitado || itinerarioSolicitado.vehiculoId !== vehiculoId.value))
@@ -192,9 +194,12 @@ const avisoRecorrido = computed(() => {
   return ''
 })
 
+// El formulario pedido por el enlace se abre una sola vez: al volver a esta entrada no se reabre (SPEC 011, Ola 5).
+// Si se abrió desde otra pantalla, al guardar se ofrece volver a ella.
+const llegadaNueva = primeraVisita()
 onMounted(() => {
   const it = itinerarioSolicitado
-  if (it && !itinerarioNoDisponible.value && !avisoRecorrido.value && vigente(it) && puedeHacer('combustible.informar')) abrir(null, it.id)
+  if (llegadaNueva && it && !itinerarioNoDisponible.value && !avisoRecorrido.value && vigente(it) && puedeHacer('combustible.informar')) abrir(null, it.id, true)
 })
 
 // La referencia de rendimiento se completa en los datos del vehículo.

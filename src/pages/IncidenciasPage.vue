@@ -50,7 +50,7 @@
                   <status-chip v-if="ev.anulacion" v-bind="CHIP_ANULADO" class="q-ml-xs" />
                 </td>
                 <td>{{ ubicacion(ev).car.nombre }} · {{ ubicacion(ev).ambiente.nombre }}</td>
-                <td><button type="button" class="sg-row-btn" @click="seleccionar(ev.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ ev.titulo }}</button><div class="sg-muted">{{ ev.bienIds.join(', ') }}</div></td>
+                <td><button type="button" class="sg-row-btn" @click="elegirDeLista(ev.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ ev.titulo }}</button><div class="sg-muted">{{ ev.bienIds.join(', ') }}</div></td>
                 <td><status-chip :tono="estadoNecesidad(ev).tono" :label="estadoNecesidad(ev).label" /></td>
               </tr>
               <tr v-if="!eventos.length"><td colspan="5" class="sg-muted">Sin hechos para los filtros seleccionados.</td></tr>
@@ -61,6 +61,8 @@
 
       <section-card v-if="evento" ref="detalleRef" :titulo="`${TIPOS_EVENTO[evento.tipo].label} · ${evento.titulo}`" :subtitulo="`${fecha(evento.fecha)} · ${ubicacion(evento).car.nombre} › ${ubicacion(evento).ambiente.nombre} · informado por ${evento.informadoPor}`">
         <template #acciones>
+          <!-- Tras saltar desde el historial de un bien, se ofrece volver al hecho anterior con sus filtros (SPEC 011, Ola 5). -->
+          <q-btn v-if="anteriorInterno" flat dense no-caps color="secondary" icon="undo" :label="`Volver al hecho ${anteriorInterno.etiqueta}`" @click="regresarAnterior" />
           <menu-acciones :items="accionesEvento" :etiqueta="`Acciones del hecho ${evento.titulo}`" />
         </template>
         <note-banner v-if="evento.anulacion" tono="ne" icono="block" class="q-mb-md">
@@ -170,7 +172,7 @@
 
 <script setup>
 import BotonDictado from 'components/common/BotonDictado.vue'
-import { computed, reactive, ref, toRef, watch } from 'vue'
+import { computed, nextTick, reactive, ref, toRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
@@ -187,6 +189,7 @@ import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
+import { useRecorridoInterno } from 'src/composables/useRecorridoInterno'
 import { db, ambientesDeCar, bienPorId, bienesDeAmbiente, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien, vigente } from 'src/services/datos'
 import { calcularNecesidades } from 'src/services/necesidades'
 import { siguientePaso } from 'src/services/bienes'
@@ -315,6 +318,10 @@ useEstadoNavegacion('incidencias', {
   eventoId
 })
 
+// Hechos visitados desde el historial de un bien, para «Volver al hecho ‹anterior›» (SPEC 011, Ola 5).
+const recorrido = useRecorridoInterno('incidencias')
+const anteriorInterno = recorrido.anterior
+
 // El ambiente pertenece a un centro: al cambiar de centro deja de aplicar.
 watch(carId, () => { filtros.ambienteId = TODOS })
 
@@ -369,9 +376,33 @@ function alRegistrarAccion () {
 }
 
 // Salta a un hecho del historial; si un filtro lo oculta, los limpia primero.
+// Antes de saltar se recuerdan el hecho y los filtros actuales, para «Volver al hecho ‹anterior›» (SPEC 011, Ola 5).
 function irAHecho (id) {
+  if (evento.value && id !== eventoId.value) {
+    recorrido.apilar(
+      { eventoId: eventoId.value, carId: carId.value, filtros: { ...filtros }, mostrarInactivos: mostrarInactivos.value },
+      `«${evento.value.titulo}»`
+    )
+  }
   if (!eventos.value.some((e) => e.id === id)) limpiarFiltros()
   seleccionar(id)
+}
+
+// Elegir un hecho en la tabla es la navegación principal de la pantalla: olvida los saltos anteriores.
+function elegirDeLista (id) {
+  recorrido.vaciar()
+  seleccionar(id)
+}
+
+// Restaura el hecho y los filtros previos al salto. El cambio de centro reinicia el ambiente, por eso los filtros van después.
+async function regresarAnterior () {
+  const previo = recorrido.regresar()
+  if (!previo) return
+  carId.value = previo.carId
+  mostrarInactivos.value = previo.mostrarInactivos
+  await nextTick()
+  Object.assign(filtros, previo.filtros)
+  seleccionar(previo.eventoId)
 }
 
 const verFicha = (bienId) => ({

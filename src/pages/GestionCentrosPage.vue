@@ -21,10 +21,14 @@
           :nodos="arbol"
           :seleccionado="seleccion"
           :nuevos="nuevos"
-          @seleccionar="seleccionar"
+          @seleccionar="seleccionarDesdeArbol"
         />
 
         <div v-if="!movil || vista === 'detalle'" class="sg-explorer__col">
+          <!-- Tras saltar de una ficha a otra por un enlace del contenido, se ofrece volver a la ficha anterior (SPEC 011, Ola 5). -->
+          <div v-if="nodo && anteriorInterno" class="sg-recorrido-anterior">
+            <q-btn flat dense no-caps color="secondary" icon="undo" :label="`Volver a ${anteriorInterno.etiqueta}`" @click="regresarAnterior" />
+          </div>
           <template v-if="nodo">
             <detalle-centro
               v-if="nodo.tipo === 'centro'"
@@ -35,7 +39,7 @@
               :mantenimiento-resaltado="mantenimientoResaltado"
               @registrar-bien="(ambienteId, tipoId) => iniciarRegistro(ambienteId, null, tipoId)"
               :con-volver="movil"
-              @seleccionar="seleccionar"
+              @seleccionar="irA"
               @volver="vista = 'arbol'"
             />
             <detalle-ambiente
@@ -46,7 +50,7 @@
               :tab-inicial="tabInicial"
               :novedad-resaltada="novedadResaltada"
               :con-volver="movil"
-              @seleccionar="seleccionar"
+              @seleccionar="irA"
               @registrar-bien="iniciarRegistro"
               @volver="vista = 'arbol'"
             />
@@ -56,7 +60,7 @@
               :bien="nodo.registro"
               :con-volver="movil"
               @accion="abrirAccion"
-              @seleccionar="seleccionar"
+              @seleccionar="irA"
               @mantener="mantener"
               @volver="vista = 'arbol'"
             />
@@ -73,13 +77,14 @@
       :ambiente="ambienteRegistro"
       :asociar-a="registro.asociarA"
       :tipo-inicial="registro.tipoId"
+      :con-retorno="registro.conRetorno"
       @registrado="alRegistrar"
       @terminar="alTerminarRegistro"
       @cerrar="modo = 'detalle'"
     />
-    <centro-dialog v-model="dialogoCentro" @hecho="(id) => seleccionar(nodoCentroId(id))" />
-    <bien-accion-dialog v-if="bien" v-model="accion.abierta" :modo="accion.modo" :bien="bien" @hecho="seleccionar" />
-    <bien-edicion-dialog v-if="bien" v-model="edicion.abierta" :modo="edicion.modo" :bien="bien" @hecho="seleccionar" />
+    <centro-dialog v-model="dialogoCentro" @hecho="(id) => irA(nodoCentroId(id))" />
+    <bien-accion-dialog v-if="bien" v-model="accion.abierta" :modo="accion.modo" :bien="bien" @hecho="irA" />
+    <bien-edicion-dialog v-if="bien" v-model="edicion.abierta" :modo="edicion.modo" :bien="bien" @hecho="irA" />
     <incidente-dialog v-model="incidente.abierto" :bien="bien" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
@@ -106,6 +111,8 @@ import VolverOrigen from 'components/layout/VolverOrigen.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
+import { useRecorridoInterno } from 'src/composables/useRecorridoInterno'
+import { primeraVisita } from 'src/router/retorno'
 import { ambientePorId, bienPorId, db, ambientesDeCar, mantenimientoPorId, ubicacionDeBien } from 'src/services/datos'
 import { antecesoresDeNodo, arbolDeCentros, idsExpandibles, nodoAmbienteId, nodoCentroId, resolverNodo, rutaHasta } from 'src/services/bienes'
 import { anularBien, cerrarRevision, dependenciasDeBien, desasociarBien, reactivarBien } from 'src/services/acciones'
@@ -185,7 +192,12 @@ const nuevos = ref([])
 // Al volver con «Atrás» o con «Volver a…» se recuperan el nodo elegido y los filtros del árbol (SPEC 011, Ola 4).
 // Lo guardado en esta entrada del historial refleja lo que el usuario eligió después del enlace, así que prevalece.
 useEstadoNavegacion('centros', { seleccion, texto, situacion, inactivos })
-if (seleccion.value !== (pedido.id ?? null)) pedidoNoDisponible.value = null
+const seleccionRestaurada = seleccion.value !== (pedido.id ?? null)
+if (seleccionRestaurada) pedidoNoDisponible.value = null
+
+// Fichas visitadas por enlaces del contenido, para «Volver a ‹ficha anterior›» (SPEC 011, Ola 5).
+const recorrido = useRecorridoInterno('centros')
+const anteriorInterno = recorrido.anterior
 
 // ---------- Árbol ----------
 const arbol = computed(() => arbolDeCentros(
@@ -224,24 +236,40 @@ const bien = computed(() => (nodo.value && (nodo.value.tipo === 'bien' || nodo.v
 const modo = ref('detalle')
 const registroRef = ref(null)
 
-// Cambiar de nodo con un registro a medias pide confirmación antes de descartarlo.
-async function seleccionar (id) {
-  if (!id) return
-  if (modo.value === 'registro' && !(await registroRef.value?.confirmarDescarte())) return
+// Nombre de la ficha para «Volver a ‹ficha›».
+const etiquetaNodo = (n) => (n.tipo === 'centro' || n.tipo === 'ambiente' ? n.registro.nombre : `${n.registro.nombre} · ${n.registro.id}`)
+
+// Cambiar de nodo con un registro a medias pide confirmación antes de descartarlo. Devuelve si se cambió.
+// `apilar`: salto desde el contenido de una ficha (se recuerda la anterior). `vaciar`: navegación principal (árbol).
+async function seleccionar (id, { apilar = false, vaciar = false } = {}) {
+  if (!id) return false
+  if (modo.value === 'registro' && !(await registroRef.value?.confirmarDescarte())) return false
+  if (vaciar) recorrido.vaciar()
+  else if (apilar && nodo.value && seleccion.value !== id) recorrido.apilar(seleccion.value, etiquetaNodo(nodo.value))
   pedidoNoDisponible.value = null
   modo.value = 'detalle'
   seleccion.value = id
   expandirHasta(id, { incluirNodo: true })
   vista.value = 'detalle'
+  return true
+}
+
+const seleccionarDesdeArbol = (id) => seleccionar(id, { vaciar: true })
+const irA = (id) => seleccionar(id, { apilar: true })
+
+async function regresarAnterior () {
+  const previo = anteriorInterno.value
+  if (previo && (await seleccionar(previo.valor))) recorrido.regresar()
 }
 
 // ---------- Modo registro ----------
-const registro = reactive({ ambienteId: null, asociarA: null, tipoId: null })
+// `conRetorno`: el registro lo abrió un enlace desde otra pantalla; al terminar se ofrece volver a ella (SPEC 011, Ola 5).
+const registro = reactive({ ambienteId: null, asociarA: null, tipoId: null, conRetorno: false })
 const ambienteRegistro = computed(() => (registro.ambienteId ? ambientePorId(registro.ambienteId) : null))
 
 function iniciarRegistro (ambienteId, asociarA = null, tipoId = null) {
   if (!puedeHacer('bien.registrar')) return
-  Object.assign(registro, { ambienteId, asociarA, tipoId })
+  Object.assign(registro, { ambienteId, asociarA, tipoId, conRetorno: false })
   modo.value = 'registro'
   vista.value = 'detalle'
 }
@@ -257,15 +285,19 @@ function alTerminarRegistro (nuevo) {
 }
 
 // ?registrar=1: abre el registro en el ambiente indicado (o en el bien del que será componente).
+// Solo la primera vez que se muestra esta entrada: al volver a ella se conserva la ficha (la restaurada, si el usuario eligió
+// otra) pero no se reabre el formulario (SPEC 011, Ola 5).
 if (registrarPedido && !pedidoNoDisponible.value) {
   const padre = asociarPedido ? bienPorId(asociarPedido) : null
   const padreValido = padre && padre.situacion === 'activo' && !padre.asociadoA && enAmbitoCar(ubicacionDeBien(padre).car.id)
   const ambienteId = padreValido ? padre.ambienteId : ambientePedido ?? ambientesDeCar(carPedido ?? carsDelAmbito()[0]?.id)[0]?.id
   if (ambienteId && ambientePorId(ambienteId) && enAmbitoCar(ambientePorId(ambienteId).carId)) {
-    seleccion.value = padreValido ? padre.id : nodoAmbienteId(ambienteId)
-    // ?tipo= preselecciona el tipo de bien (p. ej. ?registrar=1&car=AMA&tipo=extintor).
-    Object.assign(registro, { ambienteId, asociarA: padreValido ? padre.id : null, tipoId: parametro(route.query.tipo) })
-    modo.value = 'registro'
+    if (!seleccionRestaurada) seleccion.value = padreValido ? padre.id : nodoAmbienteId(ambienteId)
+    if (primeraVisita()) {
+      // ?tipo= preselecciona el tipo de bien (p. ej. ?registrar=1&car=AMA&tipo=extintor).
+      Object.assign(registro, { ambienteId, asociarA: padreValido ? padre.id : null, tipoId: parametro(route.query.tipo), conRetorno: true })
+      modo.value = 'registro'
+    }
   }
 }
 

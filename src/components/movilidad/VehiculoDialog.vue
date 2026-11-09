@@ -59,10 +59,10 @@
 <script setup>
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
-import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useRetorno } from 'src/composables/useRetorno'
 import { usePerfil } from 'src/composables/usePerfil'
 import { db } from 'src/services/datos'
 import { controlDeVehiculo } from 'src/services/mantenimientos'
@@ -75,11 +75,13 @@ import { opcionalMayorQueCero, requerido } from 'src/utils/validaciones'
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   // null = alta de un vehículo nuevo.
-  vehiculo: { type: Object, default: null }
+  vehiculo: { type: Object, default: null },
+  // La ficha se abrió desde un enlace de otra pantalla (p. ej. un recorrido): al guardar se ofrece volver (SPEC 011, Ola 5).
+  conRetorno: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:modelValue', 'hecho'])
-const $q = useQuasar()
+const { avisarGuardado } = useRetorno()
 const { carsEnAmbito } = usePerfil()
 
 const ultimaFecha = computed(() => (props.vehiculo ? controlDeVehiculo(props.vehiculo, FECHA_CORTE).ultimaFecha : null))
@@ -135,7 +137,7 @@ function guardar () {
   } else {
     id = registrarVehiculo({ id: vehiculoSugerido(form.carId), ...datos }).id
   }
-  $q.notify({ type: 'positive', message: props.vehiculo ? `Vehículo ${id} actualizado.` : `Vehículo ${id} registrado.` })
+  avisarGuardado(props.vehiculo ? `Vehículo ${id} actualizado.` : `Vehículo ${id} registrado.`, { conRetorno: props.conRetorno })
   emit('update:modelValue', false)
   emit('hecho', id)
 }

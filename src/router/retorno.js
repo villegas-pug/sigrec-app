@@ -5,6 +5,8 @@
 import { ref } from 'vue'
 
 const CLAVE = 'sigrecOrigen'
+// Marca de la entrada cuyo diálogo o modo pedido por el enlace ya se abrió una vez (SPEC 011, Ola 5).
+const ABIERTO = 'sigrecAbierto'
 
 // Origen de la entrada actual: { posicion, nombre, titulo } o null.
 export const origen = ref(null)
@@ -12,6 +14,8 @@ export const origen = ref(null)
 let enrutador = null
 let principal = false
 let posicionActual = null
+// La entrada actual se creó con la última navegación (no es Atrás, Adelante, recarga ni reemplazo).
+let entradaNueva = false
 
 /**
  * Origen de una entrada nueva del historial (función pura).
@@ -38,7 +42,8 @@ export function instalarRetorno (router) {
     principal = false
     if (failure || typeof window === 'undefined') return
     const estado = window.history.state ?? {}
-    if (CLAVE in estado) {
+    entradaNueva = !(CLAVE in estado)
+    if (!entradaNueva) {
       // Entrada ya visitada (Atrás, Adelante, recarga o reemplazo): se respeta su origen.
       origen.value = estado[CLAVE]
     } else {
@@ -48,6 +53,19 @@ export function instalarRetorno (router) {
     }
     posicionActual = typeof estado.position === 'number' ? estado.position : null
   })
+}
+
+/**
+ * Verdadero solo la primera vez que se muestra la entrada actual del historial. Un enlace profundo que abre un diálogo o un modo
+ * (p. ej. ?periodo=, ?registrar=1, ?itinerario=) lo abre una sola vez: al volver con «Volver», «Atrás» o al recargar, la pantalla
+ * conserva el registro elegido y su resaltado, pero no reabre el formulario (SPEC 011, Ola 5).
+ */
+export function primeraVisita () {
+  if (typeof window === 'undefined') return true
+  const estado = window.history.state ?? {}
+  if (estado[ABIERTO]) return false
+  window.history.replaceState({ ...estado, [ABIERTO]: true }, '')
+  return entradaNueva
 }
 
 // Vuelve por el historial hasta la entrada de origen; si no se puede, abre la pantalla de origen.

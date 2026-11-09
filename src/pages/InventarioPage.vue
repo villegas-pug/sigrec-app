@@ -61,7 +61,13 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="f in filas" :key="f.clave">
+              <tr
+                v-for="f in filas"
+                :id="`fila-${f.clave}`"
+                :key="f.clave"
+                :class="{ 'sg-row--selected': f.clave === tipoDesdeResumen }"
+                :aria-current="f.clave === tipoDesdeResumen ? 'true' : undefined"
+              >
                 <td>
                   <span class="text-weight-bold">{{ f.nombre }}</span>
                   <div v-if="agruparPor === 'tipo' && f.categoria" class="sg-muted">{{ CATEGORIAS[f.categoria] }}</div>
@@ -95,7 +101,14 @@
 
         <!-- Móvil y tableta: una tarjeta por fila. -->
         <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
-          <div v-for="f in filas" :key="f.clave" class="sg-box">
+          <div
+            v-for="f in filas"
+            :id="`fila-${f.clave}`"
+            :key="f.clave"
+            class="sg-box"
+            :class="{ 'sg-box--resaltada': f.clave === tipoDesdeResumen }"
+            :aria-current="f.clave === tipoDesdeResumen ? 'true' : undefined"
+          >
             <span class="text-weight-bold">{{ f.nombre }}</span>
             <span v-if="agruparPor === 'tipo' && f.categoria" class="sg-muted">{{ CATEGORIAS[f.categoria] }}</span>
             <span>Cantidad: <strong>{{ numero(f.cantidad) }}</strong></span>
@@ -127,6 +140,8 @@
       <!-- Consulta por equipo (antes en el «Tablero de control», SPEC 011). -->
       <section-card v-else titulo="Consulta por equipo" subtitulo="¿Qué centros tienen este equipo, en qué condición, cuándo recibió mantenimiento y dónde requiere atención?" sin-relleno>
         <div class="q-px-md q-pt-md sg-chips items-center">
+          <!-- Se llegó con «Ver por centro» desde el resumen: se ofrece volver a él, a la misma fila (SPEC 011, Ola 5). -->
+          <q-btn v-if="tipoDesdeResumen" flat dense no-caps color="secondary" icon="undo" label="Volver al resumen" @click="volverAlResumen" />
           <status-chip tono="in" :label="`${centrosConEquipo} de ${plural(equipo.length, 'centro', 'centros')} tienen este equipo`" />
           <status-chip v-if="centrosConAtencion" tono="da" :label="`${plural(centrosConAtencion, 'centro requiere', 'centros requieren')} atención`" />
           <status-chip tono="ne" :label="`${numero(unidadesEquipo)} unidades activas`" />
@@ -182,7 +197,7 @@
 
 <script setup>
 import BotonDictado from 'components/common/BotonDictado.vue'
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
@@ -202,7 +217,7 @@ import { CATEGORIAS, CONDICIONES, CONDICION_DESCONOCIDA, ESTADOS_CONTROL, OPCION
 import { ANIO_REVISION, ANIOS_REVISION, FECHA_CORTE } from 'src/config/demo'
 import { exportarCsv } from 'src/utils/csv'
 import { fecha, numero, plural, soles } from 'src/utils/formato'
-import { parametro } from 'src/utils/navegacion'
+import { mostrarDetalle, parametro } from 'src/utils/navegacion'
 
 const OPCIONES_AGRUPACION = [
   { label: 'Tipo de bien', value: 'tipo' },
@@ -239,15 +254,24 @@ const centrosConEquipo = computed(() => equipo.value.filter((e) => e.cantidad > 
 const centrosConAtencion = computed(() => equipo.value.filter(requiereAtencionEquipo).length)
 const unidadesEquipo = computed(() => equipo.value.reduce((suma, e) => suma + e.cantidad, 0))
 
-// Desde el resumen por tipo: «Ver por centro» abre la consulta con ese tipo.
+// Desde el resumen por tipo: «Ver por centro» abre la consulta con ese tipo y recuerda la fila de origen, para ofrecer
+// «Volver al resumen» y resaltarla al regresar (SPEC 011, Ola 5).
 const esTipo = (f) => !!tipoPorId(f.clave)
+const tipoDesdeResumen = ref(null)
 function verPorCentro (f) {
+  tipoDesdeResumen.value = f.clave
   tipoId.value = f.clave
   vista.value = 'equipo'
 }
 
-// Al volver con «Atrás» se conservan los filtros, la vista y el equipo consultado.
-useEstadoNavegacion('inventario', { anio, carId, agruparPor, categoria, vista, tipoId })
+async function volverAlResumen () {
+  vista.value = 'resumen'
+  await nextTick()
+  mostrarDetalle(document.getElementById(`fila-${tipoDesdeResumen.value}`))
+}
+
+// Al volver con «Atrás» se conservan los filtros, la vista, el equipo consultado y la fila de origen.
+useEstadoNavegacion('inventario', { anio, carId, agruparPor, categoria, vista, tipoId, tipoDesdeResumen })
 
 const compacto = computed(() => $q.screen.lt.md)
 const tituloAmbito = computed(() => (carId.value === TODOS ? perfil.value.ambito.descripcion : carPorId(carId.value)?.nombre ?? ''))

@@ -2,7 +2,8 @@
   <section class="sg-detalle" :aria-label="titulo">
     <header class="sg-detalle__head">
       <div class="sg-detalle__titulo">
-        <q-btn v-if="conVolver" flat round dense color="secondary" icon="arrow_back" aria-label="Volver al árbol" @click="$emit('volver')" />
+        <!-- En móvil: vuelve al árbol de la misma pantalla. Lleva texto e icono propios para no confundirse con «Volver a ‹pantalla›». -->
+        <q-btn v-if="conVolver" flat dense no-caps color="secondary" icon="account_tree" label="Árbol" aria-label="Volver al árbol de centros" @click="$emit('volver')" />
         <q-icon :name="icono" size="26px" color="secondary" aria-hidden="true" />
         <div class="sg-detalle__texto">
           <h2 class="sg-section-title">{{ titulo }}</h2>

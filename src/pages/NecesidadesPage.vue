@@ -70,11 +70,12 @@
             <tbody>
               <tr
                 v-for="fila in consolidado"
+                :id="`consolidado-${fila.car.id}`"
                 :key="fila.car.id"
-                :class="{ 'sg-row--selected': fila.car.id === carId }"
-                :aria-current="fila.car.id === carId ? 'true' : undefined"
+                :class="{ 'sg-row--selected': fila.car.id === centroDesdeConsolidado }"
+                :aria-current="fila.car.id === centroDesdeConsolidado ? 'true' : undefined"
               >
-                <td><button type="button" class="sg-row-btn" @click="carId = fila.car.id"><q-icon name="filter_alt" size="16px" aria-hidden="true" class="q-mr-xs" />{{ fila.car.nombre }}</button></td>
+                <td><button type="button" class="sg-row-btn" @click="elegirCentro(fila.car.id)"><q-icon name="filter_alt" size="16px" aria-hidden="true" class="q-mr-xs" />{{ fila.car.nombre }}</button></td>
                 <td class="sg-num">{{ fila.renovacion }}</td>
                 <td class="sg-num">{{ fila.reposicion }}</td>
                 <td class="sg-num text-weight-bold">{{ soles(fila.importeConocido) }}</td>
@@ -98,8 +99,10 @@
         </div>
       </section-card>
 
-      <section-card :titulo="`Detalle de necesidades · ${tituloAmbito}`" :subtitulo="`${plural(total.cantidad, 'necesidad', 'necesidades')} · ${soles(total.importeConocido)} conocido · ${total.sinValorar} sin valorar`" sin-relleno>
+      <section-card ref="detalleRef" :titulo="`Detalle de necesidades · ${tituloAmbito}`" :subtitulo="`${plural(total.cantidad, 'necesidad', 'necesidades')} · ${soles(total.importeConocido)} conocido · ${total.sinValorar} sin valorar`" sin-relleno>
         <template #acciones>
+          <!-- Se eligió el centro en el consolidado (que se oculta al filtrar): se ofrece volver a él, a la misma fila (SPEC 011, Ola 5). -->
+          <q-btn v-if="centroDesdeConsolidado && carId === centroDesdeConsolidado" flat dense no-caps color="secondary" icon="undo" label="Volver al consolidado por centro" @click="volverAlConsolidado" />
           <status-chip tono="pv" label="Una necesidad por bien, con todos sus motivos · Por validar" />
         </template>
         <div class="sg-table-wrap">
@@ -221,7 +224,7 @@
 
 <script setup>
 import BotonDictado from 'components/common/BotonDictado.vue'
-import { computed, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
@@ -243,7 +246,7 @@ import { SITUACIONES, TIPOS_EVENTO, TODOS, condicion } from 'src/config/catalogo
 import { ANIO_REVISION, ANIOS_REVISION } from 'src/config/demo'
 import { exportarCsv } from 'src/utils/csv'
 import { fecha, plural, soles } from 'src/utils/formato'
-import { parametro } from 'src/utils/navegacion'
+import { mostrarDetalle, parametro } from 'src/utils/navegacion'
 
 const CLASES = { renovacion: 'Renovación por vida útil', reposicion: 'Reposición por incidente' }
 
@@ -270,8 +273,24 @@ const tipoPedido = parametro(route.query.tipo)
 const tipoNoDisponible = !!tipoPedido && !opcionesTipo.value.some((o) => o.value === tipoPedido)
 const tipoId = ref(tipoPedido && !tipoNoDisponible ? tipoPedido : TODOS)
 
-// Al volver con «Atrás» desde un bien o desde el catálogo se conservan año, centro, tipo y clasificación.
-useEstadoNavegacion('necesidades', { anio, carId, clase, tipoId })
+// Centro elegido en el consolidado: al filtrar, el consolidado se oculta; se recuerda para ofrecer volver y resaltar su fila.
+const centroDesdeConsolidado = ref(null)
+const detalleRef = ref(null)
+
+function elegirCentro (id) {
+  centroDesdeConsolidado.value = id
+  carId.value = id
+  mostrarDetalle(detalleRef)
+}
+
+async function volverAlConsolidado () {
+  carId.value = TODOS
+  await nextTick()
+  mostrarDetalle(document.getElementById(`consolidado-${centroDesdeConsolidado.value}`))
+}
+
+// Al volver con «Atrás» desde un bien o desde el catálogo se conservan año, centro, tipo, clasificación y el centro elegido en el consolidado.
+useEstadoNavegacion('necesidades', { anio, carId, clase, tipoId, centroDesdeConsolidado })
 
 const puedeValorar = computed(() => puedeHacer('precio.informar'))
 

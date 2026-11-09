@@ -244,6 +244,7 @@ import { ANIOS_SERVICIOS, FECHA_CORTE } from 'src/config/demo'
 import { fecha, plural } from 'src/utils/formato'
 import { mostrarDetalle, parametro } from 'src/utils/navegacion'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
+import { primeraVisita } from 'src/router/retorno'
 
 const ETIQUETAS_AVISO = {
   pendiente_vence: { tono: 'da', label: 'Pendiente con vencimiento' },
@@ -340,9 +341,9 @@ const abrirServicio = (srv, tipo = null) => Object.assign(dialogoServicio, { abi
 const abrirPeriodo = (srv, celda) => Object.assign(periodo, { abierto: true, servicio: srv, celda })
 const abrirHecho = (hecho, tipo = 'interrupcion') => Object.assign(dialogoHecho, { abierto: true, hecho, tipo })
 
-// Con ?periodo= se abre el detalle de ese período al entrar.
+// Con ?periodo= se abre el detalle de ese período al entrar, una sola vez: al volver a esta entrada no se reabre (SPEC 011, Ola 5).
 const periodoPedido = Number(parametro(route.query.periodo))
-if (servicio.value && periodoPedido) {
+if (servicio.value && periodoPedido && primeraVisita()) {
   const celda = celdasDelServicio(servicio.value, anio.value, FECHA_CORTE).find((c) => c.numero === periodoPedido)
   if (celda) abrirPeriodo(servicio.value, celda)
 }

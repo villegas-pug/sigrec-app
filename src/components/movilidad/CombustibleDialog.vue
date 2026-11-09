@@ -47,11 +47,11 @@
 <script setup>
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
-import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useRetorno } from 'src/composables/useRetorno'
 import { actualizarCombustible, registrarCombustible } from 'src/services/acciones'
 import { itinerariosDeVehiculo } from 'src/services/combustible'
 import { FECHA_CORTE } from 'src/config/demo'
@@ -65,11 +65,13 @@ const props = defineProps({
   // null = registro nuevo.
   registro: { type: Object, default: null },
   // Recorrido cuyo consumo se declara (p. ej. desde Itinerarios): abre el formulario como consumo de ese recorrido.
-  itinerarioInicial: { type: String, default: null }
+  itinerarioInicial: { type: String, default: null },
+  // El formulario se abrió desde un enlace de otra pantalla: al guardar se ofrece volver a ella (SPEC 011, Ola 5).
+  conRetorno: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:modelValue'])
-const $q = useQuasar()
+const { avisarGuardado } = useRetorno()
 
 const { puedeAcceder } = usePerfil()
 const form = reactive({ tipo: 'carga', fecha: FECHA_CORTE, cantidad: null, itinerarioId: null, sustento: '' })
@@ -112,7 +114,10 @@ function guardar () {
   }
   if (props.registro) actualizarCombustible(props.registro, datos)
   else registrarCombustible({ vehiculoId: props.vehiculo.id, ...datos })
-  $q.notify({ type: 'positive', message: props.registro ? 'Registro de combustible actualizado.' : form.tipo === 'carga' ? 'Carga registrada.' : 'Consumo declarado registrado.' })
+  avisarGuardado(
+    props.registro ? 'Registro de combustible actualizado.' : form.tipo === 'carga' ? 'Carga registrada.' : 'Consumo declarado registrado.',
+    { conRetorno: props.conRetorno }
+  )
   emit('update:modelValue', false)
 }
 </script>

@@ -182,6 +182,7 @@ import CondicionSelector from 'components/common/CondicionSelector.vue'
 import CampoAdquisicion from 'components/common/CampoAdquisicion.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useRetorno } from 'src/composables/useRetorno'
 import { db, bienPorId, bienesDeAmbiente, textoUbicacion, tipoPorId, ubicacionDeAmbiente, vigentes } from 'src/services/datos'
 import { informarVerificacion, numeroONulo, registrarBien, rotuloSugerido } from 'src/services/acciones'
 import { OPCIONES_CATEGORIA, condicion } from 'src/config/catalogos'
@@ -201,7 +202,9 @@ const props = defineProps({
   // Rótulo del bien del que el nuevo bien será componente; null = bien directo del ambiente.
   asociarA: { type: String, default: null },
   // Tipo de bien preseleccionado (p. ej. «Registrar extintor» desde la pestaña de seguridad). Se mantiene al «registrar otro».
-  tipoInicial: { type: String, default: null }
+  tipoInicial: { type: String, default: null },
+  // El registro se abrió desde un enlace de otra pantalla (aviso, buscador): al terminar se ofrece volver (SPEC 011, Ola 5).
+  conRetorno: { type: Boolean, default: false }
 })
 
 // `registrado`: se creó un bien (siga o no el panel abierto). `terminar`: «Guardar» cierra el modo y muestra el bien creado.
@@ -210,6 +213,7 @@ const emit = defineEmits(['registrado', 'terminar', 'cerrar'])
 
 const $q = useQuasar()
 const { puedeHacer } = usePerfil()
+const { avisarGuardado } = useRetorno()
 
 const padre = computed(() => (props.asociarA ? bienPorId(props.asociarA) : null))
 const rotuloLibre = (v) => !bienPorId(v) || 'Ya existe un bien con ese rótulo'
@@ -350,7 +354,8 @@ const conteo = computed(() => ({
   pendiente: contraste.value.filter((f) => f.resultado === 'pendiente').length
 }))
 
-function guardar () {
+// `terminar`: «Guardar» cierra el modo registro; solo entonces se ofrece volver a la pantalla de origen.
+function guardar (_evento, { terminar = false } = {}) {
   if (!form.condicion) {
     $q.notify({ type: 'warning', message: 'Indique la condición constatada del bien.' })
     return null
@@ -385,7 +390,7 @@ function guardar () {
   Object.assign(form, vacio())
   fijar()
   formulario.value?.resetValidation()
-  $q.notify({ type: 'positive', message: `Bien ${bien.id} registrado en ${props.ambiente.nombre}.` })
+  avisarGuardado(`Bien ${bien.id} registrado en ${props.ambiente.nombre}.`, { conRetorno: terminar && props.conRetorno })
   emit('registrado', bien)
   return bien
 }
@@ -393,7 +398,7 @@ function guardar () {
 async function guardarYTerminar () {
   const valido = await formulario.value.validate()
   if (!valido) return
-  const bien = guardar()
+  const bien = guardar(null, { terminar: true })
   if (bien) emit('terminar', bien)
 }
 

@@ -15,7 +15,9 @@
       <registro-no-disponible v-if="vehiculoNoDisponible" entidad="El vehículo" :id="vehiculoPedido" :volver="{ name: 'vehiculos' }" etiqueta-volver="Ver todos los vehículos" />
       <note-banner v-else-if="itinerarioOrigen" tono="in" icono="route">
         Viene del recorrido <strong>{{ itinerarioOrigen.id }}</strong>: complete aquí el rendimiento de referencia del vehículo.
-        <router-link v-if="puedeAcceder('itinerarios')" :to="{ name: 'itinerarios', query: { vehiculo: itinerarioOrigen.vehiculoId, itinerario: itinerarioOrigen.id } }" class="text-weight-bold">Volver al recorrido</router-link>
+        <!-- Si se llegó desde Itinerarios, «Volver a Itinerarios» (junto a las migas) ya regresa con su estado; el enlace queda
+             solo para quien abrió esta dirección sin pasar por allí (p. ej. en una pestaña nueva). SPEC 011, Ola 5. -->
+        <router-link v-if="puedeAcceder('itinerarios') && destino?.nombre !== 'itinerarios'" :to="{ name: 'itinerarios', query: { vehiculo: itinerarioOrigen.vehiculoId, itinerario: itinerarioOrigen.id } }" class="text-weight-bold">Ver el recorrido</router-link>
       </note-banner>
 
       <div class="sg-kpi-panel">
@@ -139,7 +141,7 @@
 
     </div>
 
-    <vehiculo-dialog v-model="dialogo.abierto" :vehiculo="dialogo.vehiculo" />
+    <vehiculo-dialog v-model="dialogo.abierto" :vehiculo="dialogo.vehiculo" :con-retorno="dialogo.conRetorno" />
     <mantenimiento-dialog v-if="mantenimiento.centro" v-model="mantenimiento.abierto" :centro="mantenimiento.centro" tipo-inicial="mantenimiento_vehiculo" :vehiculo-id="mantenimiento.vehiculoId" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
@@ -174,11 +176,14 @@ import { CHIP_ANULADO, ESTADOS_CONTROL, ESTADOS_VEHICULO, OPCIONES_ESTADO_VEHICU
 import { FECHA_CORTE } from 'src/config/demo'
 import { fecha, plural, soles } from 'src/utils/formato'
 import { parametro } from 'src/utils/navegacion'
+import { primeraVisita } from 'src/router/retorno'
+import { useRetorno } from 'src/composables/useRetorno'
 
 const $q = useQuasar()
 const router = useRouter()
 const route = useRoute()
 const { perfil, carsEnAmbito, vehiculosDelAmbito, puedeAcceder, puedeHacer } = usePerfil()
+const { destino } = useRetorno()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
 // ?car= filtra por centro (p. ej. desde la situación por centro de Inicio); sin él se ven todos los del ámbito.
@@ -224,7 +229,8 @@ const vehiculoDestacado = vehiculoSolicitado.value?.id ?? null
 useEstadoNavegacion('vehiculos', { carId, estadoFiltro, mostrarInactivos })
 const itinerarioOrigen = !vehiculoNoDisponible && vehiculoPedido && parametro(route.query.itinerario) ? itinerarioPorId(parametro(route.query.itinerario)) : null
 
-const dialogo = reactive({ abierto: false, vehiculo: null })
+// `conRetorno`: la ficha la abrió un enlace desde un recorrido; al guardar se ofrece volver (SPEC 011, Ola 5).
+const dialogo = reactive({ abierto: false, vehiculo: null, conRetorno: false })
 
 // El control del vehículo combina la ficha y los mantenimientos registrados; el historial completo está en la ficha del centro.
 const controlVeh = (v) => controlDeVehiculo(v, FECHA_CORTE)
@@ -238,13 +244,14 @@ function registrarMantenimientoDe (v) {
   Object.assign(mantenimiento, { centro: carPorId(v.carId), vehiculoId: v.id, abierto: true })
 }
 
-function abrir (vehiculo) {
-  dialogo.vehiculo = vehiculo
-  dialogo.abierto = true
+function abrir (vehiculo, conRetorno = false) {
+  Object.assign(dialogo, { vehiculo, conRetorno, abierto: true })
 }
 
+// La ficha pedida por el enlace se abre una sola vez: al volver a esta entrada no se reabre (SPEC 011, Ola 5).
+const llegadaNueva = primeraVisita()
 onMounted(() => {
-  if (itinerarioOrigen && vehiculoSolicitado.value && vigente(vehiculoSolicitado.value) && puedeHacer('vehiculo.actualizar')) abrir(vehiculoSolicitado.value)
+  if (llegadaNueva && itinerarioOrigen && vehiculoSolicitado.value && vigente(vehiculoSolicitado.value) && puedeHacer('vehiculo.actualizar')) abrir(vehiculoSolicitado.value, true)
 })
 
 const accionesVehiculo = (v) => [

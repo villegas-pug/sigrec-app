@@ -699,6 +699,14 @@ tr {
   margin-left: -6px;
 }
 
+// «Volver a ‹ficha anterior›» dentro del explorador de Gestión de centros (SPEC 011, Ola 5).
+.sg-recorrido-anterior {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--sg-border-soft);
+  background: var(--sg-blue-soft);
+}
+
 // ---------- Listas de antecedentes ----------
 .sg-timeline {
   margin: 0;

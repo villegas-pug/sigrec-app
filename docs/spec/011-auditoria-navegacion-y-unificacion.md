@@ -1,6 +1,6 @@
 # SPEC 011 — Auditoría funcional: Inicio como panel único, enlaces con contexto y una sola fuente por dato
 
-- **Estado:** Olas 1 (M1–M6), 2 (M7–M12) y 3 (M13–M16 y M18) implementadas en el prototipo. M17 (persistencia local) no se implementa por decisión del usuario: los datos siguen ficticios y en memoria. Verificación en navegador realizada el 09/11/2026 (ver §9 bis), con una excepción: la lectura real de la cámara. Ola 4 (M19–M21: escaneo en PC, «Volver» a la pantalla de origen y resaltado de la selección) implementada; su verificación en navegador está pendiente de autorización (§10).
+- **Estado:** Olas 1 (M1–M6), 2 (M7–M12) y 3 (M13–M16 y M18) implementadas en el prototipo. M17 (persistencia local) no se implementa por decisión del usuario: los datos siguen ficticios y en memoria. Verificación en navegador realizada el 09/11/2026 (ver §9 bis), con una excepción: la lectura real de la cámara. Ola 4 (M19–M21: escaneo en PC, «Volver» a la pantalla de origen y resaltado de la selección) implementada; su verificación en navegador está pendiente de autorización (§10). Ola 5 (M22–M27: retorno en saltos internos, tareas y pantallas sin salida) implementada; verificación en navegador pendiente (§11).
 - **Fecha:** 2026-11-09
 - **Origen:** auditoría funcional posterior a la SPEC 010 (P0–P4). El usuario decidió fusionar el «Tablero de control» en Inicio y mover la «Consulta por equipo» a Inventario.
 - **Reemplaza:** SPEC 010 §5 (acceso al Tablero), §8 (pantalla Tablero) y §10 ítems 12, 14, 15 y 16, como se detalla abajo. En lo demás la SPEC 010 sigue vigente.
@@ -208,6 +208,14 @@ Otros riesgos:
 23. **Volver, casos límite:** al entrar por el menú no hay botón; tras recargar el botón sigue; desde Inicio › Servicios › Centros, «Volver» lleva a Servicios y, desde ahí, a Inicio.
 24. **Resaltado:** en Servicios, elegir «Agua» resalta su fila (o su tarjeta en móvil) y baja a la ficha si no está a la vista, también a 1280 px. En Necesidades › Consolidado, el centro elegido queda resaltado. En el árbol de Gestión de centros el nodo elegido tiene fondo.
 25. **Sin desbordes** a 390, 768 y 1280 px en las pantallas con el botón «Volver».
+26. **Sin reapertura (M22):** Inicio › aviso de pago › Servicios abre el período. Al cerrarlo, ir a Centros y pulsar «Volver a Servicios básicos y pagos»: el período **no** se reabre y el servicio sigue resaltado. Lo mismo al recargar.
+27. **Registro desde un enlace (M22, M24):** `centros?registrar=1&car=AMA&tipo=extintor`, abierto desde Inicio, abre el registro. «Guardar» avisa con «Volver a Inicio». Si luego se vuelve a esa entrada, se ve la ficha, sin el formulario.
+28. **Ficha anterior (M23):** en Gestión de centros, de un bien a su componente y luego a su reposición; «Volver a ‹ficha›» recorre el camino inverso. Un clic en el árbol quita el botón.
+29. **Hecho anterior (M23):** en Incidencias, con un filtro aplicado, el historial de un bien lleva a un hecho fuera del filtro, lo que limpia los filtros. «Volver al hecho ‹título›» restaura el hecho y los filtros.
+30. **Consumo y rendimiento (M24):** Itinerarios › «Registrar consumo» › guardar: el aviso ofrece «Volver a Itinerarios» y regresa al mismo recorrido. En Vehículos, con origen en Itinerarios, el enlace «Ver el recorrido» no aparece.
+31. **Sin salida (M25):** `centros?bien=NO-EXISTE`, abierto desde el buscador, muestra «Volver a ‹pantalla›» como acción principal; lo mismo en «Sin acceso» y en una dirección inexistente.
+32. **Cambio de vista (M26):** Inventario › «Ver por centro» › «Volver al resumen» deja resaltada la fila del tipo. En Necesidades › Consolidado, elegir un centro y luego «Volver al consolidado por centro» resalta su fila.
+33. **Pulido (M27):** desde la miga «Inicio» no aparece «Volver». En móvil, Gestión de centros muestra «Árbol» y «Volver a ‹pantalla›» como botones distintos. El botón «Volver» explica el atajo en su tooltip.
 
 ## 9 bis. Resultados de la verificación en navegador (09/11/2026)
 
@@ -275,3 +283,32 @@ Los SFC compilan con `@vue/compiler-sfc`.
 - **jsQR solo lee QR.** Los códigos de barras 1D en PC requieren el lector nativo o un lector USB.
 - **La cámara exige HTTPS** en cualquier despliegue que no sea `localhost`. No se cambió `quasar.config.js`.
 - **«Volver» depende del historial de la pestaña.** Un enlace abierto en una pestaña nueva no tiene origen.
+
+## 11. Ola 5: auditoría del retorno
+
+**Origen:** auditoría de los recorridos en los que el usuario también «se va» y necesita regresar, pero la Ola 4 no los cubría porque no cambian de ruta, o se comportaba mal.
+
+| # | Hallazgo | Mejora | Archivos |
+| --- | --- | --- | --- |
+| M22 | Al volver a una entrada con `?periodo=`, `?registrar=1` o `?itinerario=`, el diálogo o el modo registro se reabrían. | `primeraVisita()` es verdadera solo la primera vez que se muestra una entrada nueva del historial (marca `sigrecAbierto`). Las aperturas automáticas dependen de ella. Al volver o recargar se conservan la selección y el resaltado, pero no se reabre el formulario. | `router/retorno.js`, `ServiciosPage`, `GestionCentrosPage`, `CombustiblePage`, `VehiculosPage` |
+| M23 | Los saltos entre fichas dentro de una pantalla no tenían retorno: un bien que lleva a su padre, componente o reposición, un ambiente que lleva a un bien, un hecho que lleva a otro. En Incidencias, el salto podía limpiar los filtros. | Una pila corta de fichas anteriores (`useRecorridoInterno`, como máximo 10), guardada en la entrada del historial. En Gestión de centros, la barra «Volver a ‹ficha›» aparece sobre el detalle, y un clic en el árbol vacía la pila. En Incidencias, «Volver al hecho ‹título›» restaura el hecho **y los filtros**, y elegir en la tabla vacía la pila. | `composables/useRecorridoInterno.js`, `GestionCentrosPage`, `IncidenciasPage` |
+| M24 | Al terminar una tarea abierta por un enlace, no había un camino directo de vuelta. Vehículos tenía un «Volver al recorrido» propio que creaba otra entrada en el historial. | `useRetorno().avisarGuardado(mensaje, { conRetorno })`: cuando el formulario lo abrió un enlace, el aviso de guardado incluye «Volver a ‹origen›». Se aplica al terminar el registro de un bien, declarar un consumo y completar la ficha del vehículo. El enlace propio de Vehículos solo aparece si no se llegó desde Itinerarios. | `composables/useRetorno.js`, `RegistroBienPanel`, `CombustibleDialog`, `VehiculoDialog` |
+| M25 | «Registro no disponible», «Sin acceso» y «Página no encontrada» solo ofrecían ir al listado o al inicio. | Muestran «Volver a ‹origen›» como acción principal (`VolverOrigen destacado`). La salida anterior queda como alternativa. | `RegistroNoDisponible`, `SinAcceso`, `ErrorNotFound`, `VolverOrigen` |
+| M26 | Inventario › «Ver por centro» cambiaba de pestaña sin camino de vuelta. Necesidades › Consolidado › centro filtraba y **ocultaba el consolidado**, por lo que la fila resaltada en la Ola 4 nunca se veía. | «Volver al resumen» y «Volver al consolidado por centro» restauran la vista, bajan a la fila de origen y la dejan resaltada. El valor se recuerda en `useEstadoNavegacion`. | `InventarioPage`, `NecesidadesPage` |
+| M27 | Las migas ofrecían «Volver», y en móvil convivían dos flechas iguales con destinos distintos. | La miga «Inicio» es navegación principal. La flecha del panel pasa a «Árbol», con el icono `account_tree`. El tooltip de «Volver» recuerda «Atrás» y `Alt + ←`. | `PageHeader`, `DetallePanel`, `VolverOrigen` |
+
+**Dos niveles de retorno:**
+
+- «Volver a ‹pantalla›» va entre pantallas, junto a las migas o el título.
+- «Volver a ‹ficha›» va dentro de la pantalla, sobre el detalle, con el icono `undo`.
+
+**Verificación en Node:**
+
+- `retorno.js`, 11 escenarios: la apertura es verdadera solo en la entrada nueva; no se repite en la misma entrada, al volver ni al recargar; una entrada nueva de la misma pantalla sí abre.
+- `useRecorridoInterno`: tope de 10, regreso en orden inverso, se vacía y se recupera desde la entrada del historial.
+
+Los SFC compilan con `@vue/compiler-sfc`.
+
+**Pendiente en navegador:** pruebas 26–33 de §9.
+
+⚠️ Riesgo: «Atrás» ya no reabre los formularios abiertos por un enlace. Es el comportamiento buscado; conviene confirmarlo con los usuarios.
