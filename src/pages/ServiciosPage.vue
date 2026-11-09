@@ -13,6 +13,8 @@
         </template>
       </page-header>
 
+      <alertas-servicios v-if="['pendiente', 'sin_info', 'interrupcion', 'renovacion', 'recurrente'].includes(parametro(route.query.alerta))" />
+      <template v-else>
       <registro-no-disponible v-if="servicioNoDisponible" entidad="El servicio" :id="servicioPedido" :volver="{ name: 'servicios' }" etiqueta-volver="Ver los servicios del centro" />
 
       <div class="sg-filters">
@@ -199,6 +201,7 @@
           </ul>
         </section-card>
       </div>
+      </template>
     </div>
 
     <servicio-dialog
@@ -217,6 +220,7 @@
 </template>
 
 <script setup>
+import AlertasServicios from 'components/servicios/AlertasServicios.vue'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'

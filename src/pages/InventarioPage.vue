@@ -9,7 +9,7 @@
           y un equipo sin controles programados figura «Sin programar», no «Al día».
         </template>
         <template #acciones>
-          <q-btn outline color="secondary" icon="download" label="Exportar CSV" :disable="!filas.length" @click="exportar" />
+          <q-btn outline color="secondary" icon="download" label="Exportar CSV" :disable="vista === 'mal_estado' ? !bienesMalos.length : vista === 'detalle' ? !bienesDetalle.length : vista === 'equipo' ? !equipo.length : !filas.length" @click="exportar" />
           <q-btn v-if="puedeAcceder('necesidades')" unelevated color="primary" icon="assignment" label="Ver necesidades" :to="{ name: 'necesidades', query: carId === TODOS ? {} : { car: carId } }" />
         </template>
       </page-header>
@@ -19,13 +19,15 @@
       <q-tabs v-model="vista" dense no-caps align="left" active-color="primary" indicator-color="primary" class="q-mb-md">
         <q-tab name="resumen" icon="inventory_2" label="Resumen del inventario" />
         <q-tab name="equipo" icon="travel_explore" label="Consulta por equipo" />
+        <q-tab name="detalle" icon="list" label="Detalle de bienes" />
+        <q-tab name="mal_estado" icon="build_circle" label="Bienes en mal estado" />
       </q-tabs>
 
       <div class="sg-filters">
         <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
           <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
         </q-select>
-        <q-select v-if="vista === 'equipo'" v-model="tipoId" :options="opcionesTipo" emit-value map-options outlined dense label="Tipo de bien" style="min-width: min(280px, 100%)">
+        <q-select v-if="vista === 'equipo' || vista === 'detalle' || vista === 'mal_estado'" v-model="tipoId" :options="vista !== 'equipo' ? [{ label: 'Todos los tipos', value: TODOS }, ...opcionesTipo] : opcionesTipo" emit-value map-options outlined dense label="Tipo de bien" style="min-width: min(280px, 100%)">
           <template #append><boton-dictado v-model="tipoId" tipo="opcion" :opciones="opcionesTipo" emit-value /></template>
         </q-select>
         <q-select v-if="vista === 'resumen'" v-model="agruparPor" :options="OPCIONES_AGRUPACION" emit-value map-options outlined dense label="Agrupar por">
@@ -39,6 +41,10 @@
         </q-select>
       </div>
 
+      <div v-if="vista === 'detalle'" class="sg-filters">
+        <q-select v-model="verificacion" :options="opcionesVerificacion" emit-value map-options outlined dense label="Verificación" />
+        <q-select v-model="controlFiltro" :options="[{ label: 'Todos los controles', value: TODOS }, { label: 'Control vencido', value: 'vencido' }]" emit-value map-options outlined dense label="Control" />
+      </div>
       <template v-if="vista === 'resumen'">
 
       <div class="sg-kpi-panel">
@@ -138,7 +144,7 @@
       </template>
 
       <!-- Consulta por equipo (antes en el «Tablero de control», SPEC 011). -->
-      <section-card v-else titulo="Consulta por equipo" subtitulo="¿Qué centros tienen este equipo, en qué condición, cuándo recibió mantenimiento y dónde requiere atención?" sin-relleno>
+      <section-card v-else-if="vista === 'equipo'" titulo="Consulta por equipo" subtitulo="¿Qué centros tienen este equipo, en qué condición, cuándo recibió mantenimiento y dónde requiere atención?" sin-relleno>
         <div class="q-px-md q-pt-md sg-chips items-center">
           <!-- Se llegó con «Ver por centro» desde el resumen: se ofrece volver a él, a la misma fila (SPEC 011, Ola 5). -->
           <q-btn v-if="tipoDesdeResumen" flat dense no-caps color="secondary" icon="undo" label="Volver al resumen" @click="volverAlResumen" />
@@ -163,14 +169,19 @@
             <tbody>
               <tr v-for="e in equipo" :key="e.car.id">
                 <td>
-                  <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { car: e.car.id, tab: 'seguridad' } }" class="text-weight-bold">{{ e.car.nombre }}</router-link>
+                  <router-link v-if="puedeAcceder('centros')" :to="{ name: 'inventario', query: { car: e.car.id, tipo: tipoId, vista: 'detalle' } }" class="text-weight-bold">{{ e.car.nombre }}</router-link>
                   <span v-else class="text-weight-bold">{{ e.car.nombre }}</span>
                 </td>
                 <td class="sg-num">{{ e.cantidad }}</td>
                 <td><condicion-equipo :fila="e" /></td>
                 <td><template v-if="e.ultimoFecha">{{ fecha(e.ultimoFecha) }}</template><span v-else class="sg-muted">{{ e.cantidad ? 'Sin registro' : '—' }}</span></td>
                 <td><status-chip v-if="e.estadoControl" v-bind="ESTADOS_CONTROL[e.estadoControl]" /><span v-else class="sg-muted">—</span></td>
-                <td><atencion-equipo :fila="e" /></td>
+                <td><atencion-equipo :fila="e" />
+                  <div class="column">
+                    <router-link :to="{ name: 'inventario', query: { car: e.car.id, tipo: tipoId, vista: 'detalle' } }">Ver bienes del tipo</router-link>
+                    <router-link v-if="e.enMalEstado" :to="{ name: 'inventario', query: { car: e.car.id, tipo: tipoId, vista: 'mal_estado' } }">Ver bienes en mal estado</router-link>
+                    <router-link v-if="e.controlesVencidos" :to="{ name: 'inventario', query: { car: e.car.id, tipo: tipoId, vista: 'detalle', control: 'vencido' } }">Ver controles vencidos</router-link>
+                  </div></td>
               </tr>
               <tr v-if="!equipo.length"><td colspan="6" class="sg-muted">Elija un tipo de bien.</td></tr>
             </tbody>
@@ -186,18 +197,26 @@
             <div class="sg-chips">
               <status-chip v-if="e.estadoControl" v-bind="ESTADOS_CONTROL[e.estadoControl]" />
               <atencion-equipo :fila="e" />
+                  <div class="column">
+                    <router-link :to="{ name: 'inventario', query: { car: e.car.id, tipo: tipoId, vista: 'detalle' } }">Ver bienes del tipo</router-link>
+                    <router-link v-if="e.enMalEstado" :to="{ name: 'inventario', query: { car: e.car.id, tipo: tipoId, vista: 'mal_estado' } }">Ver bienes en mal estado</router-link>
+                    <router-link v-if="e.controlesVencidos" :to="{ name: 'inventario', query: { car: e.car.id, tipo: tipoId, vista: 'detalle', control: 'vencido' } }">Ver controles vencidos</router-link>
+                  </div>
             </div>
           </div>
           <p v-if="!equipo.length" class="sg-muted q-mb-none">Elija un tipo de bien.</p>
         </div>
       </section-card>
+      <bienes-mal-estado v-else :mal-estado="vista === 'mal_estado'" :titulo-detalle="controlFiltro === 'vencido' ? 'Bienes con controles vencidos' : verificacion === 'registrada' ? 'Bienes con verificación registrada' : verificacion === 'sin_registro' ? 'Bienes sin verificación registrada' : 'Detalle de bienes activos'" :filas="vista === 'mal_estado' ? bienesMalos : bienesDetalle" :unidades="vista === 'mal_estado' ? unidadesMalas : unidadesDetalle" :unidades-activas="unidadesActivas"
+                        :titulo-ambito="tituloAmbito" :compacto="compacto" :seleccionado="bienConsultado"
+                        @seleccionar="bienConsultado = $event" @resumen="vista = 'resumen'" />
     </div>
   </q-page>
 </template>
 
 <script setup>
 import BotonDictado from 'components/common/BotonDictado.vue'
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
@@ -208,11 +227,12 @@ import NecesidadInventario from 'components/common/NecesidadInventario.vue'
 import CondicionEquipo from 'components/common/CondicionEquipo.vue'
 import AtencionEquipo from 'components/common/AtencionEquipo.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
+import BienesMalEstado from 'components/bienes/BienesMalEstado.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
-import { carPorId, db, tipoPorId, vigentes } from 'src/services/datos'
-import { consultaPorTipo, estadoValoracion, requiereAtencionEquipo, resumenInventario, totalizarInventario } from 'src/services/inventario'
+import { bienesActivosDeCentros, carPorId, db, tipoPorId, vigentes } from 'src/services/datos'
+import { detalleInventario, consultaPorTipo, estadoValoracion, requiereAtencionEquipo, resumenInventario, totalizarInventario } from 'src/services/inventario'
 import { CATEGORIAS, CONDICIONES, CONDICION_DESCONOCIDA, ESTADOS_CONTROL, OPCIONES_CATEGORIA, TIPO_EXTINTOR, TODOS, condicion } from 'src/config/catalogos'
 import { ANIO_REVISION, ANIOS_REVISION, FECHA_CORTE } from 'src/config/demo'
 import { exportarCsv } from 'src/utils/csv'
@@ -247,7 +267,14 @@ const tipoPedido = parametro(route.query.tipo)
 const tipoNoDisponible = !!tipoPedido && !opcionesTipo.value.some((o) => o.value === tipoPedido)
 const tipoPorDefecto = opcionesTipo.value.some((o) => o.value === TIPO_EXTINTOR) ? TIPO_EXTINTOR : opcionesTipo.value[0]?.value ?? null
 const tipoId = ref(tipoPedido && !tipoNoDisponible ? tipoPedido : tipoPorDefecto)
-const vista = ref((tipoPedido && !tipoNoDisponible) || parametro(route.query.vista) === 'equipo' ? 'equipo' : 'resumen')
+const vistaPedida = parametro(route.query.vista)
+const vista = ref(['mal_estado', 'detalle'].includes(vistaPedida) ? vistaPedida :
+  (tipoPedido && !tipoNoDisponible) || parametro(route.query.vista) === 'equipo' ? 'equipo' : 'resumen')
+const bienConsultado = ref(null)
+const opcionesVerificacion = [{ label: 'Todas', value: TODOS }, { label: 'Con verificación registrada', value: 'registrada' }, { label: 'Sin verificación registrada', value: 'sin_registro' }]
+const verificacion = ref(opcionesVerificacion.some((o) => o.value === parametro(route.query.verificacion)) ? parametro(route.query.verificacion) : TODOS)
+const controlFiltro = ref(parametro(route.query.control) === 'vencido' ? 'vencido' : TODOS)
+if (['detalle', 'mal_estado'].includes(vista.value) && !tipoPedido) tipoId.value = TODOS
 
 const equipo = computed(() => (tipoId.value ? consultaPorTipo(tipoId.value, carIdsVisibles.value.map(carPorId), { anio: ANIO_REVISION, fechaCorte: FECHA_CORTE }) : []))
 const centrosConEquipo = computed(() => equipo.value.filter((e) => e.cantidad > 0).length)
@@ -271,7 +298,25 @@ async function volverAlResumen () {
 }
 
 // Al volver con «Atrás» se conservan los filtros, la vista, el equipo consultado y la fila de origen.
-useEstadoNavegacion('inventario', { anio, carId, agruparPor, categoria, vista, tipoId, tipoDesdeResumen })
+useEstadoNavegacion('inventario', { anio, carId, agruparPor, categoria, vista, tipoId, tipoDesdeResumen, bienConsultado, verificacion, controlFiltro })
+
+watch(vista, (valor, previo) => {
+  if (valor === 'equipo' && tipoId.value === TODOS) tipoId.value = tipoPorDefecto
+  if (['detalle', 'mal_estado'].includes(valor) && previo === 'resumen') tipoId.value = TODOS
+})
+
+const bienesMalos = computed(() => detalleInventario({ carIds: carIdsVisibles.value, tipoId: tipoId.value === TODOS ? null : tipoId.value, malEstado: true }))
+const bienesDetalle = computed(() => detalleInventario({ carIds: carIdsVisibles.value, tipoId: tipoId.value === TODOS ? null : tipoId.value, verificacion: verificacion.value === TODOS ? null : verificacion.value, control: controlFiltro.value, fechaCorte: FECHA_CORTE }))
+const unidadesDetalle = computed(() => bienesDetalle.value.reduce((suma, f) => suma + (f.bien.cantidad ?? 1), 0))
+const unidadesMalas = computed(() => bienesMalos.value.reduce((suma, f) => suma + (f.bien.cantidad ?? 1), 0))
+// El denominador usa el mismo ámbito que Inicio, independientemente de los filtros del resumen.
+const unidadesActivas = computed(() => bienesActivosDeCentros(carIdsVisibles.value).reduce((suma, b) => suma + (b.cantidad ?? 1), 0))
+
+onMounted(() => {
+  if (['mal_estado', 'detalle'].includes(vista.value) && bienConsultado.value) {
+    mostrarDetalle(document.getElementById(`bien-${bienConsultado.value}`))
+  }
+})
 
 const compacto = computed(() => $q.screen.lt.md)
 const tituloAmbito = computed(() => (carId.value === TODOS ? perfil.value.ambito.descripcion : carPorId(carId.value)?.nombre ?? ''))
@@ -287,6 +332,41 @@ const filas = computed(() =>
 const total = computed(() => totalizarInventario(filas.value))
 
 function exportar () {
+  if (vista.value === 'equipo') {
+    const columnas = [
+      { titulo: 'Centro', valor: (f) => f.car.nombre },
+      { titulo: 'Tipo', valor: () => tipoPorId(tipoId.value)?.nombre ?? tipoId.value },
+      { titulo: 'Cantidad', valor: (f) => f.cantidad },
+      ...COLUMNAS_CONDICION.map((c) => ({ titulo: c.label, valor: (f) => f.porCondicion?.[c.clave] ?? 0 })),
+      { titulo: 'Último mantenimiento', valor: (f) => f.ultimoFecha ?? 'Sin registro' },
+      { titulo: 'Control', valor: (f) => ESTADOS_CONTROL[f.estadoControl]?.label ?? 'Sin equipo' },
+      { titulo: 'Unidades en mal estado', valor: (f) => f.enMalEstado },
+      { titulo: 'Controles vencidos', valor: (f) => f.controlesVencidos }
+    ]
+    const ok = exportarCsv(`sigrec-equipo-${tipoId.value}-${carId.value}.csv`, columnas, equipo.value)
+    if (!ok) $q.notify({ type: 'negative', message: 'El navegador bloqueó la descarga del archivo.' })
+    return
+  }
+  if (vista.value === 'mal_estado' || vista.value === 'detalle') {
+    const columnas = [
+      { titulo: 'Bien', valor: (f) => f.bien.nombre },
+      { titulo: 'Identificador', valor: (f) => f.bien.id },
+      { titulo: 'Código patrimonial', valor: (f) => f.bien.codigoPatrimonial || 'Sin código patrimonial' },
+      { titulo: 'Centro', valor: (f) => f.car.nombre },
+      { titulo: 'Ambiente', valor: (f) => f.ambiente.nombre },
+      { titulo: 'Cantidad', valor: (f) => f.bien.cantidad ?? 1 },
+      { titulo: 'Condición', valor: (f) => condicion(f.bien.condicion).label },
+      { titulo: 'Verificación', valor: (f) => f.bien.verificacion ? `${f.bien.verificacion.fecha} · ${f.bien.verificacion.resultado}` : 'Sin verificación registrada' },
+      { titulo: 'Control', valor: (f) => f.control ? ESTADOS_CONTROL[f.control.estado].label : '' },
+      { titulo: 'Próxima fecha de control', valor: (f) => f.control?.proxima ?? '' },
+      { titulo: 'Deterioro informado', valor: (f) => f.bien.deterioro || 'Sin deterioro informado' },
+      { titulo: 'Bien principal', valor: (f) => f.principal?.nombre ?? '' },
+      { titulo: 'Identificador principal', valor: (f) => f.bien.asociadoA?.bienId ?? '' }
+    ]
+    const ok = exportarCsv(`sigrec-bienes-${vista.value}-${carId.value}.csv`, columnas, vista.value === 'mal_estado' ? bienesMalos.value : bienesDetalle.value)
+    if (!ok) $q.notify({ type: 'negative', message: 'El navegador bloqueó la descarga del archivo.' })
+    return
+  }
   const columnas = [
     { titulo: agruparPor.value === 'tipo' ? 'Tipo de bien' : 'Categoría', valor: (f) => f.nombre },
     { titulo: 'Categoría', valor: (f) => CATEGORIAS[f.categoria] ?? '' },

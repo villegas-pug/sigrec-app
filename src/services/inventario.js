@@ -1,9 +1,26 @@
 // Reporte de inventario para planificación (SPEC 010 §4): cantidades por tipo de bien o categoría, condición, valor aproximado
 // y necesidades del año. Solo cuenta bienes activos; no cambia las reglas de necesidades, las reutiliza.
-import { ambientesDeCar, tipoPorId, ubicacionDeBien, db } from './datos'
+import { ambientesDeCar, bienPorId, bienesActivosDeCentros, tipoPorId, ubicacionDeBien, db } from './datos'
 import { calcularNecesidades } from './necesidades'
 import { controlDeBien } from './mantenimientos'
-import { CATEGORIAS, CONDICIONES } from 'src/config/catalogos'
+import { CATEGORIAS, CONDICIONES, CONDICIONES_CRITICAS } from 'src/config/catalogos'
+
+// Mismo universo que Inicio: centros y ambientes vigentes; un componente activo cuenta por sí mismo.
+export function bienesEnMalEstado ({ carIds }) {
+  return detalleInventario({ carIds, malEstado: true })
+}
+
+export function detalleInventario ({ carIds, tipoId = null, verificacion = null, control = null, fechaCorte, malEstado = false }) {
+  return bienesActivosDeCentros(carIds)
+    .filter((bien) => (!tipoId || bien.tipoId === tipoId) &&
+      (!malEstado || CONDICIONES_CRITICAS.includes(bien.condicion)) &&
+      (!verificacion || (verificacion === 'registrada' ? !!bien.verificacion : !bien.verificacion)) &&
+      (control !== 'vencido' || controlDeBien(bien, fechaCorte).estado === 'vencido'))
+    .map((bien) => ({ bien, ...ubicacionDeBien(bien), principal: bien.asociadoA ? bienPorId(bien.asociadoA.bienId) : null, control: fechaCorte ? controlDeBien(bien, fechaCorte) : null }))
+    .sort((a, b) => a.car.nombre.localeCompare(b.car.nombre, 'es') ||
+      a.ambiente.nombre.localeCompare(b.ambiente.nombre, 'es') ||
+      a.bien.nombre.localeCompare(b.bien.nombre, 'es') || a.bien.id.localeCompare(b.bien.id, 'es'))
+}
 
 const CLAVES_CONDICION = [...Object.keys(CONDICIONES), 'sin_dato']
 
@@ -46,9 +63,7 @@ export function resumenInventario ({ carIds = null, agruparPor = 'tipo', anio, c
       : { clave: bien.tipoId ?? `sin_tipo:${bien.nombre}`, nombre: tipo?.nombre ?? bien.nombre, categoria: categoriaBien }
   }
 
-  for (const bien of db.bienes) {
-    if (bien.situacion !== 'activo') continue
-    if (carIds && !carIds.includes(ubicacionDeBien(bien).car.id)) continue
+  for (const bien of bienesActivosDeCentros(carIds)) {
     const tipo = tipoPorId(bien.tipoId)
     const { clave, nombre, categoria: categoriaFila } = claveDe(bien, tipo)
     if (categoria && categoriaFila !== categoria) continue

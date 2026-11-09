@@ -1,5 +1,5 @@
 <template>
-  <q-page class="sg-page sg-page--explorador" :style-fn="altoPagina">
+  <q-page class="sg-page" :class="{ 'sg-page--explorador': !esConsulta }" :style-fn="altoPagina">
     <div class="sg-page__inner">
       <div class="sg-page-head">
         <div class="sg-page-head__titulo">
@@ -9,6 +9,8 @@
         <q-btn v-if="puedeHacer('centro.registrar')" outline color="secondary" icon="add_business" label="Registrar centro" @click="dialogoCentro = true" />
       </div>
 
+      <consulta-infraestructura v-if="['ambientes_criticos', 'elementos_criticos', 'novedades'].includes(parametro(route.query.consulta))" />
+      <template v-else>
       <registro-no-disponible v-if="pedidoNoDisponible" :entidad="pedidoNoDisponible.entidad" :id="pedidoNoDisponible.id" :volver="{ name: 'centros' }" etiqueta-volver="Ver todos los centros" />
 
       <div class="sg-explorer">
@@ -68,6 +70,7 @@
           <div v-else class="q-pa-lg sg-muted">Seleccione un centro, ambiente, bien o componente del árbol para ver su detalle y sus acciones.</div>
         </div>
       </div>
+      </template>
     </div>
 
     <registro-bien-panel
@@ -91,6 +94,7 @@
 </template>
 
 <script setup>
+import ConsultaInfraestructura from 'components/gestion/ConsultaInfraestructura.vue'
 // «Gestión de centros»: explorador Centro › Ambiente › Bien › Componente. Elegir un nodo muestra su detalle y sus acciones;
 // el registro de bienes se abre en un modal sobre el detalle seleccionado.
 import { computed, reactive, ref, watch } from 'vue'
@@ -127,7 +131,8 @@ const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = use
 const movil = computed(() => $q.screen.lt.md)
 
 // En escritorio la página ocupa el alto visible y cada columna se desplaza por separado; en móvil se desplaza la página.
-const altoPagina = (offset) => (movil.value ? {} : { height: `calc(100vh - ${offset}px)`, overflow: 'hidden' })
+const esConsulta = ['ambientes_criticos', 'elementos_criticos', 'novedades'].includes(parametro(route.query.consulta))
+const altoPagina = (offset) => (movil.value || esConsulta ? {} : { height: `calc(100vh - ${offset}px)`, overflow: 'hidden' })
 
 // ---------- Enlaces profundos ----------
 // ?bien= | ?ambiente= | ?novedad= | ?car= | ?mantenimiento= seleccionan el nodo (con ?tab= para la pestaña); ?registrar=1 (con ?ambiente=,

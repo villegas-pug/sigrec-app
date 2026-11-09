@@ -25,6 +25,13 @@ let entradaNueva = false
  */
 export function origenDeNavegacion ({ to, from, principal: esPrincipal = false, origenPrevio = null, posicionPrevia = null }) {
   if (esPrincipal) return null
+  // Una consulta agregada y su ficha comparten ruta, pero son pasos distintos del recorrido (SPEC 013).
+  const consulta = from?.name === to?.name && (
+    (from.name === 'itinerarios' && from.query?.vista === 'ambito' && to.query?.itinerario) ||
+    (from.name === 'servicios' && from.query?.alerta && to.query?.servicio) ||
+    (from.name === 'centros' && from.query?.consulta && !to.query?.consulta) ||
+    (from.name === 'inventario' && to.query?.tipo && ['detalle', 'mal_estado'].includes(to.query?.vista)))
+  if (consulta) return { posicion: posicionPrevia, nombre: from.name, titulo: 'la consulta anterior', query: from.query }
   if (!from?.name || from.name === to?.name) return origenPrevio
   return { posicion: posicionPrevia, nombre: from.name, titulo: from.meta?.titulo ?? String(from.name) }
 }
@@ -75,6 +82,6 @@ export function volver () {
   if (typeof o.posicion === 'number' && typeof posicionActual === 'number' && o.posicion < posicionActual) {
     enrutador.go(o.posicion - posicionActual)
   } else {
-    enrutador.push({ name: o.nombre })
+    enrutador.push({ name: o.nombre, ...(o.query ? { query: o.query } : {}) })
   }
 }

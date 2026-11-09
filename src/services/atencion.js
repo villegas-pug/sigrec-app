@@ -101,10 +101,10 @@ function avisosControles (carIds, { fechaCorte }) {
     const car = carPorId(c.carId)
     const base = { id: `control-${c.clave}`, categoria: c.mantenimiento?.vehiculoId ? 'movilidad' : 'seguridad', carId: c.carId, horizonte: 'ahora', contexto: `${car.nombre} · ${c.clase === 'faltante' ? 'Extintores' : TIPOS_MANTENIMIENTO[c.tipo].label}` }
     if (c.clase === 'faltante') {
-      lista.push({ ...base, tono: 'wa', etiqueta: 'Extintores faltantes', texto: `Faltan ${plural(c.faltantes, 'extintor', 'extintores')} para completar la dotación requerida.`, destinos: [{ name: 'centros', query: { car: car.id, tab: 'seguridad' } }], enlace: 'Ver control de seguridad' })
+      lista.push({ ...base, tono: 'wa', tipoAviso: 'extintores_faltantes', etiqueta: 'Extintores faltantes', texto: `Faltan ${plural(c.faltantes, 'extintor', 'extintores')} para completar la dotación requerida.`, destinos: [{ name: 'centros', query: { car: car.id, tab: 'seguridad' } }], enlace: 'Ver control de seguridad' })
     } else if (c.clase === 'vencido') {
       const m = c.mantenimiento
-      lista.push({ ...base, tono: 'da', etiqueta: 'Control vencido', texto: `${c.objetivo}: venció el ${fecha(c.proxima)} (${plazo(c.dias)}).`, destinos: destinosMantenimiento(m), enlace: 'Ver registro', accion: accionMantenimiento(m.tipo, m.carId, m) })
+      lista.push({ ...base, tono: 'da', tipoAviso: 'control_vencido', etiqueta: 'Control vencido', texto: `${c.objetivo}: venció el ${fecha(c.proxima)} (${plazo(c.dias)}).`, destinos: destinosMantenimiento(m), enlace: 'Ver registro', accion: accionMantenimiento(m.tipo, m.carId, m) })
     }
     // «Por vencer» va al calendario de próximos vencimientos.
   }
@@ -117,6 +117,7 @@ function avisosControles (carIds, { fechaCorte }) {
       horizonte: 'proximo',
       dias: c.dias,
       tono: c.estado === 'por_vencer' ? 'wa' : 'in',
+      tipoAviso: c.estado === 'por_vencer' ? 'control_por_vencer' : 'control_programado',
       etiqueta: c.estado === 'por_vencer' ? 'Control por vencer' : 'Control programado',
       contexto: `${carPorId(c.carId).nombre} · ${TIPOS_MANTENIMIENTO[c.tipo].label}`,
       texto: `${c.objetivo}: vence el ${fecha(c.proxima)} (${plazo(c.dias)}).`,

@@ -40,10 +40,11 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="n in resultado.ordenadas" :key="n.id">
+            <tr v-for="n in resultado.ordenadas" :key="n.id" :id="`simulacion-${n.id}`" :class="{ 'sg-row--selected': seleccionado === n.id }">
               <td class="sg-num">{{ n.prioridad }}</td>
               <td>
-                <span class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</span>
+                <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: n.id } }" @click="seleccionado = n.id" class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</router-link>
+                <span v-else class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</span>
                 <div class="sg-muted">{{ n.ubicacion.car.nombre }} › {{ n.ubicacion.ambiente.nombre }}</div>
               </td>
               <td>{{ n.clase === 'reposicion' ? 'Reposición por incidente' : 'Renovación por vida útil' }}</td>
@@ -62,7 +63,9 @@
 
 <script setup>
 // Simulador de presupuesto (SPEC 011, Ola 3): ordena las necesidades por prioridad provisional y muestra cuáles cubre un techo.
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { usePerfil } from 'src/composables/usePerfil'
+import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { useQuasar } from 'quasar'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import SectionCard from 'components/common/SectionCard.vue'
@@ -71,6 +74,7 @@ import AyudaContextual from 'components/common/AyudaContextual.vue'
 import { simularTecho, totalizar } from 'src/services/necesidades'
 import { condicion } from 'src/config/catalogos'
 import { exportarCsv } from 'src/utils/csv'
+import { mostrarDetalle } from 'src/utils/navegacion'
 import { plural, soles } from 'src/utils/formato'
 
 const props = defineProps({
@@ -82,6 +86,10 @@ const props = defineProps({
 
 const $q = useQuasar()
 const techo = ref(null)
+const { puedeAcceder } = usePerfil()
+const seleccionado = ref(null)
+useEstadoNavegacion('simulador-presupuesto', { techo, seleccionado })
+onMounted(() => { if (seleccionado.value) mostrarDetalle(document.getElementById(`simulacion-${seleccionado.value}`)) })
 
 // Atajos: la mitad y el total del importe conocido (redondeados a centenas).
 const sugeridos = computed(() => {

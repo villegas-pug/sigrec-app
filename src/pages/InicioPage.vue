@@ -124,7 +124,7 @@ const noComparables = computed(() => recorridos.value.filter((ev) => ev.estado =
 const textoInmueble = (car) => (car.inmueble ? `Inmueble ${condicionInmueble(car.inmueble.condicion).label.toLowerCase()}` : 'Sin datos del inmueble')
 
 // Un indicador sin destino accesible se muestra igual, sin enlace. `#atencion` baja a la lista de avisos de esta misma pantalla.
-const ATENCION = { name: 'inicio', hash: '#atencion' }
+const ATENCION = { name: 'inicio', query: { aviso: 'control_vencido' }, hash: '#atencion' }
 const kpis = computed(() => {
   const t = total.value
   const ambientes = db.ambientes.filter((a) => vigente(a) && carsEnAmbito.value.some((c) => c.id === a.carId)).length
@@ -133,18 +133,18 @@ const kpis = computed(() => {
     { ruta: 'necesidades', icono: 'assignment_late', tono: 'rojo', valor: t.necesidades, etiqueta: `Necesidades pendientes ${ANIO_REVISION}`, nota: `${plural(t.infraestructura, 'de infraestructura', 'de infraestructura')} en evaluación · ${plural(t.atendidas, 'atendida', 'atendidas')}` },
     { ruta: 'necesidades', icono: 'payments', tono: 'verde', valor: soles(t.importeConocido), etiqueta: 'Importe estimado conocido', nota: t.sinValorar ? `Incompleto: ${plural(t.sinValorar, 'necesidad sin valorar', 'necesidades sin valorar')}` : 'Todas las necesidades tienen precio' },
     { destino: ATENCION, icono: 'error', tono: 'rojo', valor: t.controlesVencidos, etiqueta: 'Controles vencidos', nota: `${t.controlesPorVencer} por vencer · ${plural(t.extintoresFaltantes, 'extintor faltante', 'extintores faltantes')}` },
-    { ruta: 'inventario', icono: 'build_circle', tono: 'ambar', valor: `${numero(t.bienesMalos)} / ${numero(t.bienesActivos)}`, etiqueta: 'Bienes en mal estado', nota: 'Unidades en condición mala o inservible' },
-    { ruta: 'centros', icono: 'fact_check', tono: 'verde', valor: `${t.verificados} / ${t.registrosActivos}`, etiqueta: 'Bienes verificados físicamente', nota: `${porcentaje(t.verificados, t.registrosActivos)} % de los registros activos` },
-    { ruta: 'vehiculos', icono: 'directions_car', tono: 'morado', valor: t.vehiculosConAtencion, etiqueta: 'Vehículos con atención', nota: `${soles(t.presupuestoVehiculos)} estimados${t.vehiculosSinEstimar ? ` · ${t.vehiculosSinEstimar} sin estimar` : ''}` },
-    { ruta: 'itinerarios', icono: 'local_gas_station', tono: 'ambar', valor: recorridos.value.length, etiqueta: 'Recorridos registrados', nota: `${plural(noComparables.value, 'recorrido sin datos suficientes', 'recorridos sin datos suficientes')} para comparar combustible` }
+    { ruta: 'inventario', query: { vista: 'mal_estado' }, icono: 'build_circle', tono: 'ambar', valor: `${numero(t.bienesMalos)} / ${numero(t.bienesActivos)}`, etiqueta: 'Bienes en mal estado', nota: 'Unidades en condición mala o inservible' },
+    { ruta: 'inventario', query: { vista: 'detalle', verificacion: 'registrada' }, icono: 'fact_check', tono: 'verde', valor: `${t.verificados} / ${t.registrosActivos}`, etiqueta: 'Bienes verificados físicamente', nota: `${porcentaje(t.verificados, t.registrosActivos)} % de los registros activos` },
+    { ruta: 'vehiculos', query: { estado: 'con_atencion' }, icono: 'directions_car', tono: 'morado', valor: t.vehiculosConAtencion, etiqueta: 'Vehículos con atención', nota: `${soles(t.presupuestoVehiculos)} estimados${t.vehiculosSinEstimar ? ` · ${t.vehiculosSinEstimar} sin estimar` : ''}` },
+    { ruta: 'itinerarios', query: { vista: 'ambito' }, icono: 'local_gas_station', tono: 'ambar', valor: recorridos.value.length, etiqueta: 'Recorridos registrados', nota: `${plural(noComparables.value, 'recorrido sin datos suficientes', 'recorridos sin datos suficientes')} para comparar combustible` }
   ]
-  return lista.map((k) => ({ ...k, to: k.destino ?? (puedeAcceder(k.ruta) ? { name: k.ruta } : null) }))
+  return lista.map((k) => ({ ...k, to: k.destino ?? (puedeAcceder(k.ruta) ? { name: k.ruta, ...(k.query ? { query: k.query } : {}) } : null) }))
 })
 
 // Cada celda lista sus alertas como chips y enlaza al módulo que las sustenta (solo si el perfil puede acceder).
 function celdas (f) {
   const car = f.car.id
-  const enlace = (ruta, query = { car }) => (puedeAcceder(ruta) ? { name: ruta, query } : null)
+  const enlace = (ruta, query = { car }) => (puedeAcceder(ruta) ? { name: ruta, query, ...(ruta === 'inicio' ? { hash: '#atencion' } : {}) } : null)
   const chips = (...items) => {
     const lista = items.filter(Boolean)
     return lista.length ? lista : [{ tono: 'ok', label: 'Sin alertas' }]
@@ -155,59 +155,59 @@ function celdas (f) {
       to: enlace('necesidades'),
       items: [
         { tono: n.cantidad ? 'da' : 'ok', label: n.cantidad ? `${plural(n.cantidad, 'pendiente', 'pendientes')} · ${soles(n.importeConocido)}` : 'Ninguna pendiente' },
-        n.sinValorar ? { tono: 'wa', label: `${n.sinValorar} sin valorar` } : null
+        n.sinValorar ? { tono: 'wa', label: `${n.sinValorar} sin valorar`, to: enlace('necesidades', { car, vista: 'sin_valorar' }) } : null
       ].filter(Boolean)
     },
     infraestructura: {
       // Los ambientes y sus elementos críticos se ven en la pestaña Ambientes del centro; el estado general, en la ficha.
       to: enlace('centros', { car, tab: f.ambientesCriticos || f.elementosCriticos ? 'ambientes' : 'ficha' }),
       items: [
-        { ...condicion(f.estadoGeneral), label: `Estado general: ${condicion(f.estadoGeneral).label}` },
-        f.ambientesCriticos ? { tono: 'da', label: plural(f.ambientesCriticos, 'ambiente en mal estado', 'ambientes en mal estado') } : null,
-        f.elementosCriticos ? { tono: 'wa', label: plural(f.elementosCriticos, 'elemento crítico', 'elementos críticos') } : null
+        { ...condicion(f.estadoGeneral), label: `Estado general: ${condicion(f.estadoGeneral).label}`, to: enlace('centros', { car, tab: 'ficha' }) },
+        f.ambientesCriticos ? { tono: 'da', label: plural(f.ambientesCriticos, 'ambiente en mal estado', 'ambientes en mal estado'), to: enlace('centros', { car, consulta: 'ambientes_criticos' }) } : null,
+        f.elementosCriticos ? { tono: 'wa', label: plural(f.elementosCriticos, 'elemento crítico', 'elementos críticos'), to: enlace('centros', { car, consulta: 'elementos_criticos' }) } : null
       ].filter(Boolean)
     },
     novedades: {
       to: enlace('centros', { car, tab: 'ambientes' }),
-      items: [f.novedadesAbiertas ? { tono: 'da', label: plural(f.novedadesAbiertas, 'abierta', 'abiertas') } : { tono: 'ok', label: 'Ninguna abierta' }]
+      items: [f.novedadesAbiertas ? { tono: 'da', label: plural(f.novedadesAbiertas, 'abierta', 'abiertas'), to: enlace('centros', { car, consulta: 'novedades' }) } : { tono: 'ok', label: 'Ninguna abierta' }]
     },
     bienes: {
       to: enlace('inventario'),
       items: chips(
-        { tono: 'ne', label: `${numero(f.bienesActivos)} activos` },
-        f.bienesMalos ? { tono: 'wa', label: `${numero(f.bienesMalos)} en mal estado` } : null,
-        { tono: f.verificados === f.registrosActivos ? 'ok' : 'si', label: `${f.verificados} de ${f.registrosActivos} verificados` }
+        { tono: 'ne', label: `${numero(f.bienesActivos)} activos`, to: enlace('inventario', { car, vista: 'detalle' }) },
+        f.bienesMalos ? { tono: 'wa', label: `${numero(f.bienesMalos)} en mal estado`, to: enlace('inventario', { car, vista: 'mal_estado' }) } : null,
+        { tono: f.verificados === f.registrosActivos ? 'ok' : 'si', label: `${f.verificados} de ${f.registrosActivos} verificados`, to: f.verificados ? enlace('inventario', { car, vista: 'detalle', verificacion: 'registrada' }) : null }
       )
     },
     controles: {
       to: enlace('centros', { car, tab: 'seguridad' }),
       items: chips(
-        c.vencidos ? { tono: 'da', label: plural(c.vencidos, 'vencido', 'vencidos') } : null,
-        c.porVencer ? { tono: 'wa', label: `${c.porVencer} por vencer` } : null,
-        c.extintoresFaltantes ? { tono: 'wa', label: plural(c.extintoresFaltantes, 'extintor faltante', 'extintores faltantes') } : null,
-        f.fumigacion === 'sin_programar' ? { tono: 'si', label: 'Fumigación sin programar' } : null
+        c.vencidos ? { tono: 'da', label: plural(c.vencidos, 'vencido', 'vencidos'), to: enlace('inicio', { car, aviso: 'control_vencido' }) } : null,
+        c.porVencer ? { tono: 'wa', label: `${c.porVencer} por vencer`, to: enlace('inicio', { car, aviso: 'control_por_vencer' }) } : null,
+        c.extintoresFaltantes ? { tono: 'wa', label: plural(c.extintoresFaltantes, 'extintor faltante', 'extintores faltantes'), to: enlace('inicio', { car, aviso: 'extintores_faltantes' }) } : null,
+        f.fumigacion === 'sin_programar' ? { tono: 'si', label: 'Fumigación sin programar', to: enlace('centros', { car, tab: 'seguridad' }) } : null
       )
     },
     vehiculos: {
       to: enlace('vehiculos'),
       items: v.total
         ? chips(
-          v.requierenAtencion ? { tono: 'wa', label: plural(v.requierenAtencion, 'requiere atención', 'requieren atención') } : null,
-          v.detenidos ? { tono: 'da', label: plural(v.detenidos, 'detenido', 'detenidos') } : null,
+          v.requierenAtencion ? { tono: 'wa', label: plural(v.requierenAtencion, 'requiere atención', 'requieren atención'), to: enlace('vehiculos', { car, estado: 'con_atencion' }) } : null,
+          v.detenidos ? { tono: 'da', label: plural(v.detenidos, 'detenido', 'detenidos'), to: enlace('vehiculos', { car, estado: 'detenido' }) } : null,
           v.requierenAtencion ? { tono: 'ne', label: v.sinEstimar === v.requierenAtencion ? 'Presupuesto sin estimar' : `${soles(v.presupuestoEstimado)} estimados` } : null,
-          v.sinInformar ? { tono: 'si', label: `${v.sinInformar} sin estado` } : null,
-          !v.requierenAtencion && !v.sinInformar ? { tono: 'ok', label: plural(v.operativos, 'operativo', 'operativos') } : null
+          v.sinInformar ? { tono: 'si', label: `${v.sinInformar} sin estado`, to: enlace('vehiculos', { car, estado: 'sin_informar' }) } : null,
+          !v.requierenAtencion && !v.sinInformar ? { tono: 'ok', label: plural(v.operativos, 'operativo', 'operativos'), to: enlace('vehiculos', { car, estado: 'operativo' }) } : null
         )
         : [{ tono: 'si', label: 'Sin vehículos' }]
     },
     servicios: {
       to: enlace('servicios'),
       items: chips(
-        s.pendientes ? { tono: 'da', label: plural(s.pendientes, 'pendiente', 'pendientes') } : null,
-        s.interrupciones ? { tono: 'wa', label: plural(s.interrupciones, 'interrupción abierta', 'interrupciones abiertas') } : null,
-        s.renovaciones ? { tono: 'wa', label: plural(s.renovaciones, 'renovación', 'renovaciones') } : null,
-        s.recurrentes ? { tono: 'wa', label: plural(s.recurrentes, 'recurrente', 'recurrentes') } : null,
-        s.sinInfo ? { tono: 'si', label: `${s.sinInfo} sin información` } : null
+        s.pendientes ? { tono: 'da', label: plural(s.pendientes, 'pendiente', 'pendientes'), to: enlace('servicios', { car, anio: ANIO_SERVICIOS, alerta: 'pendiente' }) } : null,
+        s.interrupciones ? { tono: 'wa', label: plural(s.interrupciones, 'interrupción abierta', 'interrupciones abiertas'), to: enlace('servicios', { car, anio: ANIO_SERVICIOS, alerta: 'interrupcion' }) } : null,
+        s.renovaciones ? { tono: 'wa', label: plural(s.renovaciones, 'renovación', 'renovaciones'), to: enlace('servicios', { car, anio: ANIO_SERVICIOS, alerta: 'renovacion' }) } : null,
+        s.recurrentes ? { tono: 'wa', label: plural(s.recurrentes, 'recurrente', 'recurrentes'), to: enlace('servicios', { car, anio: ANIO_SERVICIOS, alerta: 'recurrente' }) } : null,
+        s.sinInfo ? { tono: 'si', label: `${s.sinInfo} sin información`, to: enlace('servicios', { car, anio: ANIO_SERVICIOS, alerta: 'sin_info' }) } : null
       )
     }
   }

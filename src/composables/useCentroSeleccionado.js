@@ -24,7 +24,8 @@ export function useCentroSeleccionado (inicial = null, { todos = false, fuente =
     ...cars.value.map((c) => ({ label: c.nombre, value: c.id }))
   ])
 
-  const carIdsVisibles = computed(() => (carId.value === TODOS ? cars.value.map((c) => c.id) : carId.value ? [carId.value] : []))
+  // El estado restaurado del historial también debe pertenecer al ámbito actual.
+  const carIdsVisibles = computed(() => cars.value.filter((c) => carId.value === TODOS || c.id === carId.value).map((c) => c.id))
 
   const car = computed(() => (carId.value && carId.value !== TODOS ? carPorId(carId.value) : null))
 

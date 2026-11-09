@@ -195,14 +195,17 @@ const vehiculos = computed(() => vehiculosDelAmbito(mostrarInactivos.value).filt
 // Filtro por estado operativo. «sin_informar» agrupa los vehículos sin estado registrado.
 const OPCIONES_FILTRO_ESTADO = [
   { label: 'Todos', value: TODOS },
+  { label: 'Con atención: mantenimiento o detenido', value: 'con_atencion' },
   ...OPCIONES_ESTADO_VEHICULO,
   { label: 'No informado', value: 'sin_informar' }
 ]
-const estadoFiltro = ref(TODOS)
+const estadoPedido = parametro(route.query.estado)
+const estadoFiltro = ref(OPCIONES_FILTRO_ESTADO.some((o) => o.value === estadoPedido) ? estadoPedido : TODOS)
 const vehiculosVisibles = computed(() =>
   estadoFiltro.value === TODOS
     ? vehiculos.value
-    : vehiculos.value.filter((v) => (estadoFiltro.value === 'sin_informar' ? !ESTADOS_VEHICULO[v.estadoOperativo] : v.estadoOperativo === estadoFiltro.value))
+    : estadoFiltro.value === 'con_atencion' ? vehiculos.value.filter(requiereAtencion)
+      : vehiculos.value.filter((v) => (estadoFiltro.value === 'sin_informar' ? !ESTADOS_VEHICULO[v.estadoOperativo] : v.estadoOperativo === estadoFiltro.value))
 )
 // El resumen no depende del filtro de estado: siempre describe todos los vehículos vigentes del ámbito.
 const resumen = computed(() => resumirEstadoVehiculos(vehiculos.value))

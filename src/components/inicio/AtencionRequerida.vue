@@ -6,6 +6,7 @@
     </q-tabs>
 
     <div class="sg-filters q-px-md q-pt-md">
+      <q-select v-model="avisoFiltro" :options="[{ label: 'Todos los avisos', value: TODOS }, { label: 'Controles vencidos', value: 'control_vencido' }, { label: 'Controles por vencer', value: 'control_por_vencer' }, { label: 'Extintores faltantes', value: 'extintores_faltantes' }]" emit-value map-options outlined dense label="Aviso" />
       <q-select v-model="categoria" :options="opcionesCategoria" emit-value map-options outlined dense label="Tema">
         <template #append><boton-dictado v-model="categoria" tipo="opcion" :opciones="opcionesCategoria" emit-value /></template>
       </q-select>
@@ -51,7 +52,9 @@
 <script setup>
 // «Atención requerida» de Inicio (SPEC 011): avisos de ahora y próximos vencimientos, filtrables por tema y centro.
 // Cada aviso ofrece su acción (si el perfil puede hacerla) y el enlace al registro exacto (si el perfil puede acceder).
-import { computed, nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { parametro } from 'src/utils/navegacion'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
@@ -74,14 +77,18 @@ const props = defineProps({
 
 const { carsEnAmbito, puedeAcceder, puedeHacer } = usePerfil()
 
-const horizonte = ref('ahora')
+const route = useRoute()
+const horizonte = ref(parametro(route.query.aviso) === 'control_por_vencer' ? 'proximo' : 'ahora')
+const avisoFiltro = ref(['control_vencido', 'control_por_vencer', 'extintores_faltantes'].includes(parametro(route.query.aviso)) ? parametro(route.query.aviso) : TODOS)
 const categoria = ref(TODOS)
-const carId = ref(TODOS)
-useEstadoNavegacion('atencion', { horizonte, categoria, carId })
+const carPedido = parametro(route.query.car)
+const carId = ref(carsEnAmbito.value.some((c) => c.id === carPedido) ? carPedido : TODOS)
+useEstadoNavegacion('atencion', { horizonte, categoria, carId, avisoFiltro })
+watch(avisoFiltro, (valor) => { if (valor !== TODOS) horizonte.value = valor === 'control_por_vencer' ? 'proximo' : 'ahora' })
 
 const lista = computed(() => (horizonte.value === 'ahora' ? props.avisos.ahora : props.avisos.proximos))
 const visibles = computed(() =>
-  lista.value.filter((a) => (categoria.value === TODOS || a.categoria === categoria.value) && (carId.value === TODOS || a.carId === carId.value))
+  lista.value.filter((a) => (avisoFiltro.value === TODOS || a.tipoAviso === avisoFiltro.value) && (categoria.value === TODOS || a.categoria === categoria.value) && (carId.value === TODOS || a.carId === carId.value))
 )
 
 const opcionesCategoria = [{ label: 'Todos los temas', value: TODOS }, ...Object.entries(CATEGORIAS_AVISO).map(([value, label]) => ({ value, label }))]

@@ -1,7 +1,10 @@
 <template>
   <div class="column q-gutter-y-xs items-start">
     <div class="sg-chips">
-      <status-chip v-for="(item, i) in celda.items" :key="i" v-bind="item" />
+      <template v-for="(item, i) in celda.items" :key="i">
+        <router-link v-if="item.to" :to="item.to" :aria-label="`Ver ${item.label}`"><status-chip :tono="item.tono" :label="item.label" /></router-link>
+        <status-chip v-else :tono="item.tono" :label="item.label" />
+      </template>
     </div>
     <router-link v-if="celda.to" :to="celda.to" class="text-weight-bold">Ver {{ titulo.toLowerCase() }}</router-link>
   </div>

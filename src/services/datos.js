@@ -47,6 +47,13 @@ export const ambientesDeCar = (carId, { inactivos = false } = {}) =>
   db.ambientes.filter((a) => a.carId === carId && (inactivos || vigente(a)))
 export const bienesDeAmbiente = (ambienteId) => db.bienes.filter((b) => b.ambienteId === ambienteId)
 
+// Universo compartido de inventario: componentes activos incluidos, aun con principal de baja.
+export function bienesActivosDeCentros (carIds = null) {
+  const centros = db.cars.filter((c) => vigente(c) && (!carIds || carIds.includes(c.id)))
+  const ambientes = new Set(centros.flatMap((c) => ambientesDeCar(c.id).map((a) => a.id)))
+  return db.bienes.filter((b) => b.situacion === 'activo' && ambientes.has(b.ambienteId))
+}
+
 export function ubicacionDeAmbiente (ambienteId) {
   const ambiente = ambientePorId(ambienteId)
   const car = carPorId(ambiente.carId)

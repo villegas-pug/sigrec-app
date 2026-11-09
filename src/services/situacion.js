@@ -1,7 +1,7 @@
 // Situación por centro (SPEC 011, antes «Tablero de control» de la SPEC 010 §8): una fila por centro que reúne necesidades,
 // infraestructura, bienes, controles preventivos, vehículos y servicios. No crea reglas nuevas: reutiliza las de cada módulo,
 // de modo que sus cifras coinciden con las pantallas de detalle. Inicio es la única pantalla que la muestra.
-import { db, ambientesDeCar, vigente } from './datos'
+import { db, ambientesDeCar, bienesActivosDeCentros, vigente } from './datos'
 import { conteoPorCondicion, elementosCriticos } from './infraestructura'
 import { calcularNecesidades, consolidarPorCar } from './necesidades'
 import { controlesPendientes, fumigacionDeCentro, resumirControles } from './mantenimientos'
@@ -23,10 +23,8 @@ export function resumenPorCentro (cars, { fechaCorte, anioServicios, anio }) {
 
   return cars.map((car, i) => {
     const ambientes = ambientesDeCar(car.id)
-    const idsAmbientes = new Set(ambientes.map((a) => a.id))
-    const bienes = db.bienes.filter((b) => idsAmbientes.has(b.ambienteId))
-    const activos = bienes.filter((b) => b.situacion === 'activo')
-    const condiciones = conteoPorCondicion(bienes)
+    const activos = bienesActivosDeCentros([car.id])
+    const condiciones = conteoPorCondicion(activos)
     const servicios = serviciosDeCar(car.id)
     const avisos = avisosDeServicios(servicios, anioServicios, fechaCorte)
     const construccion = car.inmueble.construccion ?? {}

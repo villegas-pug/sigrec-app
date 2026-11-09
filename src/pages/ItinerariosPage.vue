@@ -4,11 +4,13 @@
       <page-header>
         <template #acciones>
           <q-btn v-if="puedeAcceder('vehiculos')" outline color="secondary" icon="directions_car" label="Vehículos" :to="{ name: 'vehiculos' }" />
-          <q-btn v-if="puedeAcceder('combustible')" outline color="secondary" icon="local_gas_station" label="Combustible" :to="{ name: 'combustible', query: vehiculoId ? { vehiculo: vehiculoId } : {} }" />
-          <q-btn v-if="puedeHacer('itinerario.registrar')" unelevated color="primary" icon="add_road" label="Registrar itinerario" :disable="!vehiculo" @click="abrir('nuevo', null)" />
+          <q-btn v-if="parametro(route.query.vista) !== 'ambito' && puedeAcceder('combustible')" outline color="secondary" icon="local_gas_station" label="Combustible" :to="{ name: 'combustible', query: vehiculoId ? { vehiculo: vehiculoId } : {} }" />
+          <q-btn v-if="parametro(route.query.vista) !== 'ambito' && puedeHacer('itinerario.registrar')" unelevated color="primary" icon="add_road" label="Registrar itinerario" :disable="!vehiculo" @click="abrir('nuevo', null)" />
         </template>
       </page-header>
 
+      <recorridos-ambito v-if="parametro(route.query.vista) === 'ambito'" />
+      <template v-else>
       <registro-no-disponible v-if="itinerarioNoDisponible" entidad="El recorrido" :id="itinerarioPedido" :volver="{ name: 'itinerarios' }" etiqueta-volver="Ver los recorridos del vehículo" />
 
       <vehiculo-selector v-model="vehiculoId" :vehiculos="vehiculosEnAmbito" />
@@ -142,6 +144,7 @@
           </note-banner>
         </template>
       </section-card>
+      </template>
     </div>
 
     <combustible-dialog v-if="vehiculo" v-model="dialogoCombustible.abierto" :vehiculo="vehiculo" :itinerario-inicial="dialogoCombustible.itinerario" />
@@ -151,6 +154,7 @@
 </template>
 
 <script setup>
+import RecorridosAmbito from 'components/movilidad/RecorridosAmbito.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'

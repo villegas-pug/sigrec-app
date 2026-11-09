@@ -10,7 +10,7 @@
           Una necesidad sin precio referencial queda «sin valorar»: su costo es desconocido, no cero.</p>
         </template>
         <template #acciones>
-          <q-btn outline color="secondary" icon="download" label="Exportar CSV" :disable="!pendientes.length" @click="exportar" />
+          <q-btn outline color="secondary" icon="download" label="Exportar CSV" :disable="vista === 'infraestructura' ? !resultado.infraestructura.length : vista === 'atendidas' ? !resultado.atendidas.length : !pendientes.length" @click="exportar" />
           <q-btn v-if="puedeAcceder('precios')" unelevated color="primary" icon="sell" label="Tipos de bien y precios" :to="{ name: 'precios' }" />
         </template>
       </page-header>
@@ -18,6 +18,7 @@
       <registro-no-disponible v-if="tipoNoDisponible" entidad="El tipo de bien" :id="tipoPedido" :volver="{ name: 'necesidades' }" etiqueta-volver="Ver todas las necesidades" />
 
       <div class="sg-filters">
+        <q-select v-model="vista" :options="opcionesVista" emit-value map-options outlined dense label="Consulta" />
         <q-select v-model="anio" :options="ANIOS_REVISION" outlined dense label="Año a revisar">
           <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="ANIOS_REVISION" /></template>
         </q-select>
@@ -40,9 +41,9 @@
       <div class="sg-kpi-panel">
         <kpi-card icono="assignment_late" tono="rojo" :valor="total.cantidad" etiqueta="Necesidades de bienes pendientes" :nota="`${total.renovacion} renovación · ${total.reposicion} reposición`" />
         <kpi-card icono="payments" tono="verde" :valor="soles(total.importeConocido)" etiqueta="Importe estimado conocido" nota="Con precios referenciales" />
-        <kpi-card icono="money_off" tono="ambar" :valor="total.sinValorar" etiqueta="Sin valorar" nota="Sin precio referencial: costo desconocido, no cero" />
-        <kpi-card icono="foundation" tono="azul" :valor="resultado.infraestructura.length" etiqueta="Infraestructura en evaluación" nota="Sin costo estimado" />
-        <kpi-card icono="task_alt" tono="morado" :valor="resultado.atendidas.length" etiqueta="Atendidas por reposición" nota="No suman como pendientes" />
+        <kpi-card icono="money_off" tono="ambar" :valor="total.sinValorar" :to="total.sinValorar ? enlaceVista('sin_valorar') : null" etiqueta="Sin valorar" nota="Sin precio referencial: costo desconocido, no cero" />
+        <kpi-card icono="foundation" tono="azul" :valor="resultado.infraestructura.length" :to="resultado.infraestructura.length ? enlaceVista('infraestructura') : null" etiqueta="Infraestructura en evaluación" nota="Sin costo estimado" />
+        <kpi-card icono="task_alt" tono="morado" :valor="resultado.atendidas.length" :to="resultado.atendidas.length ? enlaceVista('atendidas') : null" etiqueta="Atendidas por reposición" nota="No suman como pendientes" />
       </div>
 
       <note-banner v-if="total.sinValorar || resultado.infraestructura.length" tono="wa" icono="warning">
@@ -52,7 +53,7 @@
         Registrar una necesidad no equivale a aprobar una compra.
       </note-banner>
 
-      <section-card v-if="carsVisibles.length > 1" :titulo="`Consolidado por centro · ${anio}`" subtitulo="Seleccione un centro para ver las necesidades que sustentan la cifra" sin-relleno>
+      <section-card v-if="vista === 'todas' && carsVisibles.length > 1" :titulo="`Consolidado por centro · ${anio}`" subtitulo="Seleccione un centro para ver las necesidades que sustentan la cifra" sin-relleno>
         <div class="sg-table-wrap">
           <table class="sg-table">
             <thead>
@@ -99,7 +100,7 @@
         </div>
       </section-card>
 
-      <section-card ref="detalleRef" :titulo="`Detalle de necesidades · ${tituloAmbito}`" :subtitulo="`${plural(total.cantidad, 'necesidad', 'necesidades')} · ${soles(total.importeConocido)} conocido · ${total.sinValorar} sin valorar`" sin-relleno>
+      <section-card v-if="vista === 'todas' || vista === 'sin_valorar'" ref="detalleRef" :titulo="`Detalle de necesidades · ${tituloAmbito}`" :subtitulo="`${plural(total.cantidad, 'necesidad', 'necesidades')} · ${soles(total.importeConocido)} conocido · ${total.sinValorar} sin valorar`" sin-relleno>
         <template #acciones>
           <!-- Se eligió el centro en el consolidado (que se oculta al filtrar): se ofrece volver a él, a la misma fila (SPEC 011, Ola 5). -->
           <q-btn v-if="centroDesdeConsolidado && carId === centroDesdeConsolidado" flat dense no-caps color="secondary" icon="undo" label="Volver al consolidado por centro" @click="volverAlConsolidado" />
@@ -119,9 +120,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="n in pendientes" :key="n.id">
+              <tr v-for="n in pendientes" :key="n.id" :id="`necesidad-${n.id}`" :class="{ 'sg-row--selected': registroConsultado === n.id }">
                 <td>
-                  <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: n.id } }" class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</router-link>
+                  <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: n.id } }" @click="registroConsultado = n.id" class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</router-link>
                   <span v-else class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</span>
                   <div class="sg-muted">{{ textoUbicacion(n.ubicacion) }}</div>
                   <status-chip :tono="n.clase === 'reposicion' ? 'da' : 'in'" :label="`Clasificación principal: ${CLASES[n.clase]}`" />
@@ -167,9 +168,9 @@
         </div>
       </section-card>
 
-      <simulador-presupuesto :pendientes="pendientes" :titulo-ambito="tituloAmbito" :anio="anio" />
+      <simulador-presupuesto v-if="vista === 'todas' || vista === 'sin_valorar'" :pendientes="pendientes" :titulo-ambito="tituloAmbito" :anio="anio" />
 
-      <section-card v-if="resultado.porReponer.length" titulo="Bajas pendientes de reposición" subtitulo="Informativo: ya salieron del cálculo de pendientes y no suman al total (regla por validar)">
+      <section-card v-if="vista === 'todas' && resultado.porReponer.length" titulo="Bajas pendientes de reposición" subtitulo="Informativo: ya salieron del cálculo de pendientes y no suman al total (regla por validar)">
         <div class="column q-gutter-y-sm">
           <div v-for="r in resultado.porReponer" :key="r.id" class="sg-box">
             <div class="sg-chips"><status-chip v-bind="SITUACIONES.baja" /><status-chip tono="si" label="Sin reposición" /></div>
@@ -184,34 +185,35 @@
         </div>
       </section-card>
 
+      <p class="sg-muted">Infraestructura, reposiciones atendidas y antecedentes insuficientes corresponden al centro y año seleccionados; no se restringen por tipo de bien ni clasificación.</p>
       <div class="sg-grid-2">
-        <section-card titulo="Infraestructura en evaluación" subtitulo="Se distingue de la reposición de bienes; no se le asigna un costo no sustentado">
+        <section-card v-if="vista === 'todas' || vista === 'infraestructura'" titulo="Infraestructura en evaluación" subtitulo="Se distingue de la reposición de bienes; no se le asigna un costo no sustentado">
           <div class="column q-gutter-y-sm">
-            <div v-for="i in resultado.infraestructura" :key="i.id" class="sg-box">
+            <div v-for="i in resultado.infraestructura" :key="i.id" :id="`necesidad-${i.id}`" class="sg-box" :class="{ 'sg-box--resaltada': registroConsultado === i.id }">
               <div class="sg-chips"><status-chip tono="in" label="Requiere evaluación" /><status-chip tono="si" label="Costo no estimado" /></div>
-              <span class="text-weight-bold">{{ i.novedad.titulo }}</span>
+              <span class="text-weight-bold">{{ i.novedad.titulo }} · {{ i.id }}</span>
               <span class="sg-muted">{{ textoUbicacion(i.ubicacion) }} · informada el {{ fecha(i.novedad.fecha) }}</span>
-              <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { car: i.ubicacion.car.id, ambiente: i.ubicacion.ambiente.id, novedad: i.id } }">Ver novedad en el ambiente</router-link>
+              <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { car: i.ubicacion.car.id, ambiente: i.ubicacion.ambiente.id, novedad: i.id } }" @click="registroConsultado = i.id">Ver novedad en el ambiente</router-link>
             </div>
             <p v-if="!resultado.infraestructura.length" class="sg-muted q-mb-none">Sin necesidades de infraestructura.</p>
           </div>
         </section-card>
 
-        <section-card titulo="Atendidas y antecedentes insuficientes">
+        <section-card v-if="vista === 'todas' || vista === 'atendidas'" :titulo="vista === 'atendidas' ? 'Atendidas por reposición' : 'Atendidas y antecedentes insuficientes'">
           <div class="column q-gutter-y-sm">
-            <div v-for="a in resultado.atendidas" :key="a.id" class="sg-box">
+            <div v-for="a in resultado.atendidas" :key="a.id" :id="`necesidad-${a.id}`" class="sg-box" :class="{ 'sg-box--resaltada': registroConsultado === a.id }">
               <div class="sg-chips"><status-chip tono="ok" label="Atendida por reposición" /><status-chip tono="ne" label="No suma" /></div>
               <span class="text-weight-bold">{{ a.anterior.nombre }} · {{ a.anterior.id }}</span>
               <span class="sg-muted">Repuesto por {{ a.nuevo.id }} el {{ fecha(a.evento.fecha) }}</span>
-              <router-link v-if="puedeAcceder('incidencias')" :to="{ name: 'incidencias', query: { car: a.ubicacion.car.id, hecho: a.id } }">Ver reposición</router-link>
+              <router-link v-if="puedeAcceder('incidencias')" :to="{ name: 'incidencias', query: { car: a.ubicacion.car.id, hecho: a.id } }" @click="registroConsultado = a.id">Ver reposición</router-link>
             </div>
-            <div v-for="i in resultado.insuficientes" :key="i.bien.id" class="sg-box sg-box--dashed">
+            <div v-for="i in (vista === 'atendidas' ? [] : resultado.insuficientes)" :key="i.bien.id" class="sg-box sg-box--dashed">
               <div class="sg-chips"><status-chip tono="si" label="Antecedentes insuficientes" /></div>
               <span class="text-weight-bold">{{ i.bien.nombre }} · {{ i.bien.id }}</span>
               <span class="sg-muted">Falta {{ i.faltantes.join(' y ') }}: no se calcula renovación por vida útil.</span>
               <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: i.bien.id } }">Completar en la ficha del bien</router-link>
             </div>
-            <p v-if="!resultado.atendidas.length && !resultado.insuficientes.length" class="sg-muted q-mb-none">Sin registros.</p>
+            <p v-if="!resultado.atendidas.length && (vista === 'atendidas' || !resultado.insuficientes.length)" class="sg-muted q-mb-none">Sin registros.</p>
           </div>
         </section-card>
       </div>
@@ -224,7 +226,7 @@
 
 <script setup>
 import BotonDictado from 'components/common/BotonDictado.vue'
-import { computed, nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
@@ -261,7 +263,10 @@ const route = useRoute()
 const { perfil, puedeAcceder, puedeHacer } = usePerfil()
 const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(route.query.car, { todos: true })
 
-const anio = ref(ANIO_REVISION)
+const anio = ref(ANIOS_REVISION.find((a) => String(a) === parametro(route.query.anio)) ?? ANIO_REVISION)
+const opcionesVista = [{ value: 'todas', label: 'Todas las secciones' }, { value: 'sin_valorar', label: 'Necesidades sin valorar' }, { value: 'infraestructura', label: 'Infraestructura en evaluación' }, { value: 'atendidas', label: 'Atendidas por reposición' }]
+const vista = ref(opcionesVista.some((o) => o.value === parametro(route.query.vista)) ? parametro(route.query.vista) : 'todas')
+const enlaceVista = (valor) => ({ name: 'necesidades', query: { vista: valor, car: carId.value, anio: anio.value, ...(tipoId.value === TODOS ? {} : { tipo: tipoId.value }) } })
 const clase = ref(TODOS)
 
 // ?tipo= filtra por tipo de bien (p. ej. desde Inventario o la ficha del bien); un tipo inexistente se avisa y no filtra.
@@ -276,6 +281,7 @@ const tipoId = ref(tipoPedido && !tipoNoDisponible ? tipoPedido : TODOS)
 // Centro elegido en el consolidado: al filtrar, el consolidado se oculta; se recuerda para ofrecer volver y resaltar su fila.
 const centroDesdeConsolidado = ref(null)
 const detalleRef = ref(null)
+const registroConsultado = ref(null)
 
 function elegirCentro (id) {
   centroDesdeConsolidado.value = id
@@ -290,7 +296,9 @@ async function volverAlConsolidado () {
 }
 
 // Al volver con «Atrás» desde un bien o desde el catálogo se conservan año, centro, tipo, clasificación y el centro elegido en el consolidado.
-useEstadoNavegacion('necesidades', { anio, carId, clase, tipoId, centroDesdeConsolidado })
+useEstadoNavegacion('necesidades', { anio, carId, clase, tipoId, centroDesdeConsolidado, vista, registroConsultado })
+
+onMounted(() => { if (registroConsultado.value) mostrarDetalle(document.getElementById(`necesidad-${registroConsultado.value}`)) })
 
 const puedeValorar = computed(() => puedeHacer('precio.informar'))
 
@@ -318,7 +326,7 @@ const tituloAmbito = computed(() => (carId.value === TODOS ? perfil.value.ambito
 
 const resultado = computed(() => calcularNecesidades({ anio: anio.value, carIds: carsVisibles.value.map((c) => c.id) }))
 const pendientes = computed(() =>
-  resultado.value.pendientes.filter((n) => (clase.value === TODOS || n.clase === clase.value) && (tipoId.value === TODOS || n.tipo?.id === tipoId.value))
+  resultado.value.pendientes.filter((n) => (clase.value === TODOS || n.clase === clase.value) && (tipoId.value === TODOS || n.tipo?.id === tipoId.value) && (vista.value !== 'sin_valorar' || n.importe == null))
 )
 const total = computed(() => totalizar(pendientes.value))
 // El consolidado usa las mismas necesidades filtradas que el detalle para que las cifras coincidan.
@@ -337,6 +345,12 @@ const COLUMNAS_CSV = [
 ]
 
 function exportar () {
+  if (vista.value === 'infraestructura' || vista.value === 'atendidas') {
+    const filas = vista.value === 'infraestructura' ? resultado.value.infraestructura.map((i) => ({ id: i.id, nombre: i.novedad.titulo, ubicacion: i.ubicacion })) : resultado.value.atendidas.map((a) => ({ id: a.id, nombre: a.anterior.nombre, ubicacion: a.ubicacion }))
+    const ok = exportarCsv(`sigrec-necesidades-${vista.value}-${anio.value}.csv`, [{ titulo: 'Identificador', valor: (f) => f.id }, { titulo: 'Descripción', valor: (f) => f.nombre }, { titulo: 'Ubicación', valor: (f) => textoUbicacion(f.ubicacion) }], filas)
+    if (!ok) $q.notify({ type: 'negative', message: 'El navegador bloqueó la descarga del archivo.' })
+    return
+  }
   const ok = exportarCsv(`sigrec-necesidades-${anio.value}-${carId.value}-${tipoId.value}-${clase.value}.csv`, COLUMNAS_CSV, pendientes.value)
   if (!ok) $q.notify({ type: 'negative', message: 'El navegador bloqueó la descarga del archivo.' })
 }
