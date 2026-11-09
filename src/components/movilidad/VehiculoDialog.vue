@@ -34,9 +34,13 @@
       <q-select v-model="form.estadoOperativo" class="col-12 col-sm-6" :options="OPCIONES_ESTADO_VEHICULO" emit-value map-options clearable outlined dense label="Estado operativo" hint="Vacío si no se ha informado">
         <template #append><boton-dictado v-model="form.estadoOperativo" tipo="opcion" :opciones="OPCIONES_ESTADO_VEHICULO" emit-value /></template>
       </q-select>
-      <q-input v-model="form.ultimoMantenimiento" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Último mantenimiento" hint="Vacío si no se conoce. Si se registran mantenimientos, se muestra el más reciente" :rules="[noFutura]">
-        <template #append><boton-dictado v-model="form.ultimoMantenimiento" tipo="fecha" /></template>
-      </q-input>
+      <!-- El último mantenimiento no se captura aquí: sale de los mantenimientos registrados (SPEC 011). -->
+      <div class="col-12 col-sm-6 column justify-center">
+        <span class="sg-kv__label">Último mantenimiento</span>
+        <span v-if="ultimaFecha">{{ fecha(ultimaFecha) }}</span>
+        <span v-else class="sg-muted">Sin mantenimientos registrados</span>
+        <span class="sg-muted">Se actualiza con «Registrar mantenimiento» del vehículo.</span>
+      </div>
       <template v-if="requiereAtencion">
         <q-input v-model="form.motivoMantenimiento" class="col-12 col-sm-8" outlined dense label="Motivo del mantenimiento o de la detención" hint="Ej.: frenos, caja de cambios, falta de presupuesto">
           <template #append><boton-dictado v-model="form.motivoMantenimiento" /></template>
@@ -61,9 +65,12 @@ import NoteBanner from 'components/common/NoteBanner.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { usePerfil } from 'src/composables/usePerfil'
 import { db } from 'src/services/datos'
+import { controlDeVehiculo } from 'src/services/mantenimientos'
+import { FECHA_CORTE } from 'src/config/demo'
+import { fecha } from 'src/utils/formato'
 import { actualizarVehiculo, numeroONulo, registrarVehiculo, vehiculoSugerido } from 'src/services/acciones'
 import { ESTADOS_VEHICULO_CON_ATENCION, OPCIONES_ESTADO_VEHICULO } from 'src/config/catalogos'
-import { noFutura, opcionalMayorQueCero, requerido } from 'src/utils/validaciones'
+import { opcionalMayorQueCero, requerido } from 'src/utils/validaciones'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -74,6 +81,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'hecho'])
 const $q = useQuasar()
 const { carsEnAmbito } = usePerfil()
+
+const ultimaFecha = computed(() => (props.vehiculo ? controlDeVehiculo(props.vehiculo, FECHA_CORTE).ultimaFecha : null))
 
 const opcionesCar = computed(() => carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id })))
 const normalizarPlaca = (v) => String(v ?? '').trim().toUpperCase()
@@ -97,7 +106,6 @@ watch(() => props.modelValue, (abierto) => {
     combustible: v?.combustible ?? '',
     rendimientoKmL: v?.rendimientoKmL ?? null,
     estadoOperativo: v?.estadoOperativo ?? null,
-    ultimoMantenimiento: v?.mantenimiento?.ultimoFecha ?? '',
     motivoMantenimiento: v?.mantenimiento?.motivo ?? '',
     presupuestoEstimado: v?.mantenimiento?.presupuestoEstimado ?? null
   })
@@ -108,8 +116,7 @@ function guardar () {
   const conAtencion = requiereAtencion.value
   const mantenimiento = {
     motivo: conAtencion ? form.motivoMantenimiento?.trim() || null : null,
-    presupuestoEstimado: conAtencion ? numeroONulo(form.presupuestoEstimado) : null,
-    ultimoFecha: form.ultimoMantenimiento || null
+    presupuestoEstimado: conAtencion ? numeroONulo(form.presupuestoEstimado) : null
   }
   const datos = {
     carId: form.carId,

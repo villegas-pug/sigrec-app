@@ -83,7 +83,7 @@
       <note-banner v-if="necesidad" tono="wa" icono="event_repeat">
         <strong>Necesidad para revisión en {{ ANIO_REVISION }}:</strong> {{ necesidad.motivos.map((m) => m.texto).join(' · ') }}.
         No constituye autorización de baja ni de compra.
-        <router-link v-if="puedeAcceder('necesidades')" :to="{ name: 'necesidades' }" class="text-weight-bold">Ver necesidades</router-link>
+        <router-link v-if="puedeAcceder('necesidades')" :to="{ name: 'necesidades', query: { car: ubicacion.car.id, ...(bien.tipoId ? { tipo: bien.tipoId } : {}) } }" class="text-weight-bold">Ver necesidades</router-link>
       </note-banner>
       <note-banner v-if="reposicion" tono="ok" icono="swap_horiz">
         Repuesto por
@@ -179,7 +179,7 @@ import { db, bienPorId, tipoPorId, textoUbicacion, ubicacionDeBien } from 'src/s
 import { asociacionesDeBien } from 'src/services/bienes'
 import { antecedentesFaltantes, calcularNecesidades, finVidaUtil } from 'src/services/necesidades'
 import { reposicionDe } from 'src/services/acciones'
-import { controlDe } from 'src/services/mantenimientos'
+import { controlDeBien } from 'src/services/mantenimientos'
 import { CATEGORIAS, ESTADOS_CONTROL, SITUACIONES, TIPO_EXTINTOR, condicion } from 'src/config/catalogos'
 import { ANIO_REVISION, FECHA_CORTE } from 'src/config/demo'
 import { fecha, plural, soles } from 'src/utils/formato'
@@ -207,7 +207,8 @@ const reposicion = computed(() => reposicionDe(props.bien.id))
 // Mantenimiento: lo muestran los equipos y los extintores (y cualquier bien que ya tenga registros).
 const dialogoMantenimiento = ref(false)
 const esExtintor = computed(() => props.bien.tipoId === TIPO_EXTINTOR)
-const control = computed(() => controlDe({ bienId: props.bien.id }, FECHA_CORTE))
+// Control único del bien (SPEC 011): recarga si es extintor; mantenimiento de equipo en lo demás.
+const control = computed(() => controlDeBien(props.bien, FECHA_CORTE))
 const muestraMantenimiento = computed(() => !anulado.value && (props.bien.categoria === 'equipo' || esExtintor.value || !!control.value.ultimo))
 const reemplazaA = computed(() => db.eventos.find((e) => !e.anulacion && e.tipo === 'reposicion' && e.bienNuevoId === props.bien.id) ?? null)
 

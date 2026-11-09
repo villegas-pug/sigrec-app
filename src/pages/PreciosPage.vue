@@ -2,6 +2,10 @@
   <q-page class="sg-page">
     <div class="sg-page__inner">
       <page-header>
+        <template #ayuda>
+          El precio referencial es el precio esperado de reposición y no el costo original de adquisición. Su fuente y vigencia están por definir.
+          El catálogo de tipos de bien lo administra el equipo central.
+        </template>
         <template #acciones>
           <q-btn v-if="puedeHacer('tipoBien.registrar')" unelevated color="primary" icon="add" label="Registrar tipo de bien" @click="abrirTipo(null)" />
         </template>
@@ -9,10 +13,7 @@
 
       <registro-no-disponible v-if="tipoNoDisponible" entidad="El tipo de bien" :id="tipoPedido" :volver="{ name: 'precios' }" etiqueta-volver="Ver todos los tipos" />
 
-      <note-banner tono="in">
-        El precio referencial es el precio esperado de reposición y no el costo original de adquisición. Su fuente y vigencia están por definir.
-        El catálogo de tipos de bien lo administra el equipo central.
-      </note-banner>
+
 
       <div class="sg-filters">
         <q-input v-model="texto" outlined dense clearable label="Buscar tipo de bien">
@@ -110,7 +111,6 @@ import { useRoute } from 'vue-router'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
-import NoteBanner from 'components/common/NoteBanner.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import MenuAcciones from 'components/common/MenuAcciones.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
@@ -188,7 +188,8 @@ const accionesTipo = (tipo) => [
       dependencias: dependenciasDeTipoBien(tipo),
       aviso: 'Los bienes activos de este tipo deben cambiar de tipo o darse de baja antes de anularlo. Un tipo anulado ya no se ofrece al registrar bienes.',
       mensaje: 'Tipo de bien anulado.',
-      ejecutar: (datos) => anular(tipo, datos)
+      ejecutar: (datos) => anular(tipo, datos),
+      registro: tipo
     })
   },
   {

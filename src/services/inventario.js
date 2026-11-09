@@ -1,7 +1,8 @@
 // Reporte de inventario para planificación (SPEC 010 §4): cantidades por tipo de bien o categoría, condición, valor aproximado
 // y necesidades del año. Solo cuenta bienes activos; no cambia las reglas de necesidades, las reutiliza.
-import { tipoPorId, ubicacionDeBien, db } from './datos'
+import { ambientesDeCar, tipoPorId, ubicacionDeBien, db } from './datos'
 import { calcularNecesidades } from './necesidades'
+import { controlDeBien } from './mantenimientos'
 import { CATEGORIAS, CONDICIONES } from 'src/config/catalogos'
 
 const CLAVES_CONDICION = [...Object.keys(CONDICIONES), 'sin_dato']
@@ -97,3 +98,33 @@ export const estadoValoracion = (f) => {
   if (!f.unidadesSinValorar) return 'completa'
   return f.valorConocido > 0 ? 'parcial' : 'sin_valorar'
 }
+
+// De peor a mejor: el estado de un conjunto de controles es el de su peor integrante.
+const ORDEN_ESTADOS = ['vencido', 'por_vencer', 'sin_programar', 'al_dia']
+
+/**
+ * Consulta por equipo (SPEC 011): «¿qué centros tienen este tipo de bien, en qué condición, cuándo recibió mantenimiento
+ * y dónde requiere atención?». Un centro sin el equipo figura con cantidad cero (no se omite). Si tiene el equipo pero
+ * ningún control programado, el estado es «sin programar», no «al día». El control de cada bien es `controlDeBien`.
+ */
+export function consultaPorTipo (tipoId, cars, { anio, fechaCorte }) {
+  return cars.map((car) => {
+    const fila = resumenInventario({ carIds: [car.id], agruparPor: 'tipo', anio }).find((f) => f.clave === tipoId) ?? null
+    const bienes = ambientesDeCar(car.id).flatMap((a) => db.bienes.filter((b) => b.ambienteId === a.id && b.situacion === 'activo' && b.tipoId === tipoId))
+    const controles = bienes.map((b) => controlDeBien(b, fechaCorte))
+    const estados = controles.map((c) => c.estado)
+    const ultimas = controles.map((c) => c.ultimo?.fecha).filter(Boolean).sort()
+    return {
+      car,
+      cantidad: fila?.cantidad ?? 0,
+      porCondicion: fila?.porCondicion ?? null,
+      enMalEstado: fila ? fila.porCondicion.malo + fila.porCondicion.inservible : 0,
+      ultimoFecha: ultimas.at(-1) ?? null,
+      estadoControl: estados.length ? ORDEN_ESTADOS.find((e) => estados.includes(e)) : null,
+      controlesVencidos: estados.filter((e) => e === 'vencido').length
+    }
+  })
+}
+
+// Un equipo requiere atención si hay unidades en mal estado o controles vencidos.
+export const requiereAtencionEquipo = (fila) => fila.enMalEstado > 0 || fila.controlesVencidos > 0

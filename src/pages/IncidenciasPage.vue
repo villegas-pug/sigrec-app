@@ -447,7 +447,8 @@ const accionesEvento = computed(() => {
         subtitulo: e.titulo,
         aviso: 'Un incidente anulado deja de generar necesidades. La condición de los bienes no se revierte: corríjala desde la ficha del bien.',
         mensaje: 'Incidente anulado.',
-        ejecutar: (datos) => anular(e, datos)
+        ejecutar: (datos) => anular(e, datos),
+      registro: e
       })
     },
     {

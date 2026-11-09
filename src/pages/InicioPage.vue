@@ -20,257 +20,193 @@
         />
       </div>
 
-      <note-banner v-if="total.sinValorar || necesidades.infraestructura.length" tono="wa" icono="warning">
+      <note-banner v-if="total.sinValorar || total.infraestructura" tono="wa" icono="warning">
         El importe conocido de {{ soles(total.importeConocido) }} no es el presupuesto completo:
         {{ plural(total.sinValorar, 'necesidad no tiene', 'necesidades no tienen') }} precio referencial y
-        {{ plural(necesidades.infraestructura.length, 'necesidad', 'necesidades') }} de infraestructura requieren evaluación.
-        <router-link :to="{ name: 'necesidades' }" class="text-weight-bold">Revisar necesidades</router-link>
+        {{ plural(total.infraestructura, 'necesidad', 'necesidades') }} de infraestructura requieren evaluación.
+        <router-link v-if="puedeAcceder('necesidades')" :to="{ name: 'necesidades' }" class="text-weight-bold">Revisar necesidades</router-link>
       </note-banner>
 
-      <div class="sg-grid-2">
-        <section-card titulo="Atención requerida" subtitulo="Avisos consultados dentro de SIGREC; destinatarios y otros canales por definir">
-          <ul class="sg-timeline">
-            <li v-for="aviso in avisos" :key="aviso.id" class="sg-timeline__item">
-              <div class="column q-gutter-y-xs" style="min-width: 0">
-                <div class="sg-chips items-center">
-                  <status-chip :tono="aviso.tono" :label="aviso.etiqueta" />
-                  <span class="sg-muted">{{ aviso.contexto }}</span>
-                </div>
-                <span>{{ aviso.texto }}</span>
-                <router-link v-if="aviso.to" :to="aviso.to" class="text-weight-bold">{{ aviso.enlace }}</router-link>
-              </div>
-            </li>
-            <li v-if="!avisos.length" class="sg-timeline__item sg-muted">Sin avisos para el ámbito seleccionado.</li>
-          </ul>
-        </section-card>
+      <atencion-requerida :avisos="avisos" />
 
-        <section-card titulo="Situación por CAR" subtitulo="Cada cifra abre el detalle que la sustenta" sin-relleno>
-          <div class="sg-table-wrap">
-            <table class="sg-table">
-              <thead>
-                <tr>
-                  <th scope="col">Centro</th>
-                  <th scope="col" class="sg-num">Necesidades</th>
-                  <th scope="col" class="sg-num">Importe conocido</th>
-                  <th scope="col">Sin valorar</th>
-                  <th scope="col">Servicios</th>
-                  <th scope="col" class="sg-num">Verificados</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="fila in filasCar" :key="fila.car.id">
-                  <td>
-                    <router-link :to="{ name: 'centros', query: { car: fila.car.id } }" class="text-weight-bold">{{ fila.car.nombre }}</router-link>
-                    <div class="sg-muted">{{ fila.inmueble }}</div>
-                  </td>
-                  <td class="sg-num">
-                    <router-link :to="{ name: 'necesidades', query: { car: fila.car.id } }">{{ fila.cantidad }}</router-link>
-                  </td>
-                  <td class="sg-num">{{ soles(fila.importeConocido) }}</td>
-                  <td>
-                    <status-chip :tono="fila.sinValorar ? 'wa' : 'ne'" :label="String(fila.sinValorar)" />
-                  </td>
-                  <td>
-                    <div class="sg-chips">
-                      <status-chip v-if="fila.servicios.pendientes" tono="da" :label="plural(fila.servicios.pendientes, 'pendiente', 'pendientes')" />
-                      <status-chip v-if="fila.servicios.interrupciones" tono="wa" :label="plural(fila.servicios.interrupciones, 'interrupción', 'interrupciones')" />
-                      <status-chip v-if="fila.servicios.sinInfo" tono="si" :label="`${fila.servicios.sinInfo} sin inf.`" />
-                      <status-chip v-if="!fila.servicios.pendientes && !fila.servicios.interrupciones && !fila.servicios.sinInfo" tono="ok" label="Al día" />
-                    </div>
-                  </td>
-                  <td class="sg-num">{{ fila.verificados }} de {{ fila.activos }}</td>
-                </tr>
-              </tbody>
-            </table>
+      <section-card titulo="Situación por centro" subtitulo="Necesidades, infraestructura, bienes, controles preventivos, vehículos y servicios. Cada cifra abre el detalle que la sustenta." sin-relleno>
+        <div v-if="!compacto" class="sg-table-wrap">
+          <table class="sg-table">
+            <thead>
+              <tr>
+                <th scope="col">Centro</th>
+                <th v-for="c in COLUMNAS" :key="c.clave" scope="col">{{ c.titulo }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="f in filas" :key="f.car.id">
+                <td>
+                  <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { car: f.car.id } }" class="text-weight-bold">{{ f.car.nombre }}</router-link>
+                  <span v-else class="text-weight-bold">{{ f.car.nombre }}</span>
+                  <div class="sg-muted">{{ textoInmueble(f.car) }}</div>
+                </td>
+                <td v-for="c in COLUMNAS" :key="c.clave">
+                  <celda-tablero :celda="celdas(f)[c.clave]" :titulo="c.titulo" />
+                </td>
+              </tr>
+              <tr v-if="!filas.length"><td :colspan="COLUMNAS.length + 1" class="sg-muted">Sin centros en el ámbito del perfil.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pantallas estrechas: una tarjeta por centro. -->
+        <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
+          <div v-for="f in filas" :key="f.car.id" class="sg-box">
+            <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { car: f.car.id } }" class="text-weight-bold">{{ f.car.nombre }}</router-link>
+            <span v-else class="text-weight-bold">{{ f.car.nombre }}</span>
+            <span class="sg-muted">{{ textoInmueble(f.car) }}</span>
+            <div v-for="c in COLUMNAS" :key="c.clave" class="column">
+              <span class="sg-kv__label">{{ c.titulo }}</span>
+              <celda-tablero :celda="celdas(f)[c.clave]" :titulo="c.titulo" />
+            </div>
           </div>
-        </section-card>
-      </div>
+          <p v-if="!filas.length" class="sg-muted q-mb-none">Sin centros en el ámbito del perfil.</p>
+        </div>
+      </section-card>
     </div>
   </q-page>
 </template>
 
 <script setup>
+// Inicio (SPEC 011): panel único. Reúne los indicadores, la atención requerida y la situación por centro que antes se
+// repartían entre Inicio y el «Tablero de control». Ninguna cifra ni aviso se calcula aquí: vienen de services/situacion.js
+// y services/atencion.js.
 import { computed } from 'vue'
+import { useQuasar } from 'quasar'
 import KpiCard from 'components/common/KpiCard.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import SectionCard from 'components/common/SectionCard.vue'
-import StatusChip from 'components/common/StatusChip.vue'
+import CeldaTablero from 'components/common/CeldaTablero.vue'
+import AtencionRequerida from 'components/inicio/AtencionRequerida.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { db, carPorId, ubicacionDeBien, vigente } from 'src/services/datos'
-import { calcularNecesidades, consolidarPorCar, totalizar } from 'src/services/necesidades'
-import { avisosDeServicios, resumirAvisos, serviciosDeCar } from 'src/services/servicios'
+import { ANIO_SERVICIOS, useAtencion } from 'src/composables/useAtencion'
+import { db, vigente } from 'src/services/datos'
+import { resumenPorCentro, totalizarSituacion } from 'src/services/situacion'
 import { evaluarItinerario, itinerariosDeVehiculo } from 'src/services/combustible'
-import { controlesPendientes } from 'src/services/mantenimientos'
+import { condicion, condicionInmueble } from 'src/config/catalogos'
 import { ANIO_REVISION, FECHA_CORTE } from 'src/config/demo'
-import { INCIDENTES, TIPOS_EVENTO, TIPOS_MANTENIMIENTO, condicionInmueble } from 'src/config/catalogos'
-import { fecha, plural, porcentaje, soles } from 'src/utils/formato'
+import { numero, plural, porcentaje, soles } from 'src/utils/formato'
 
-const { perfil, carsEnAmbito, carIdsEnAmbito, vehiculosEnAmbito, enAmbitoCar, puedeAcceder } = usePerfil()
-const anioServicios = Number(FECHA_CORTE.slice(0, 4))
+const COLUMNAS = [
+  { clave: 'necesidades', titulo: 'Necesidades' },
+  { clave: 'infraestructura', titulo: 'Infraestructura' },
+  { clave: 'novedades', titulo: 'Novedades abiertas' },
+  { clave: 'bienes', titulo: 'Bienes' },
+  { clave: 'controles', titulo: 'Controles preventivos' },
+  { clave: 'vehiculos', titulo: 'Vehículos' },
+  { clave: 'servicios', titulo: 'Servicios' }
+]
 
-const necesidades = computed(() => calcularNecesidades({ anio: ANIO_REVISION, carIds: carIdsEnAmbito.value }))
-const total = computed(() => totalizar(necesidades.value.pendientes))
-const consolidado = computed(() => consolidarPorCar(necesidades.value, carsEnAmbito.value))
+const $q = useQuasar()
+const { perfil, carsEnAmbito, vehiculosEnAmbito, puedeAcceder } = usePerfil()
+const { avisos } = useAtencion()
 
-const servicios = computed(() => carsEnAmbito.value.flatMap((c) => serviciosDeCar(c.id)))
-const avisosServicios = computed(() => avisosDeServicios(servicios.value, anioServicios, FECHA_CORTE))
-const resumenServicios = computed(() => resumirAvisos(avisosServicios.value))
-const controlesDeMantenimiento = computed(() => controlesPendientes(carsEnAmbito.value.map((c) => c.id), FECHA_CORTE))
+const compacto = computed(() => $q.screen.lt.lg)
 
-const bienesActivos = computed(() =>
-  db.bienes.filter((b) => b.situacion === 'activo' && enAmbitoCar(ubicacionDeBien(b).car.id))
-)
-const verificados = computed(() => bienesActivos.value.filter((b) => b.verificacion).length)
+const filas = computed(() => resumenPorCentro(carsEnAmbito.value, { fechaCorte: FECHA_CORTE, anioServicios: ANIO_SERVICIOS, anio: ANIO_REVISION }))
+const total = computed(() => {
+  const t = totalizarSituacion(filas.value)
+  const sumar = (clave) => filas.value.reduce((suma, f) => suma + f.necesidades[clave], 0)
+  return { ...t, infraestructura: sumar('infraestructura'), atendidas: sumar('atendidas') }
+})
 
-const evaluaciones = computed(() =>
-  vehiculosEnAmbito.value.flatMap((v) => itinerariosDeVehiculo(v.id).map((it) => ({ it, v, ev: evaluarItinerario(it, v) })))
-)
-const noComparables = computed(() => evaluaciones.value.filter((e) => e.ev.estado === 'no_comparable'))
+const recorridos = computed(() => vehiculosEnAmbito.value.flatMap((v) => itinerariosDeVehiculo(v.id).map((it) => evaluarItinerario(it, v))))
+const noComparables = computed(() => recorridos.value.filter((ev) => ev.estado === 'no_comparable').length)
 
+const textoInmueble = (car) => (car.inmueble ? `Inmueble ${condicionInmueble(car.inmueble.condicion).label.toLowerCase()}` : 'Sin datos del inmueble')
+
+// Un indicador sin destino accesible se muestra igual, sin enlace. `#atencion` baja a la lista de avisos de esta misma pantalla.
+const ATENCION = { name: 'inicio', hash: '#atencion' }
 const kpis = computed(() => {
+  const t = total.value
+  const ambientes = db.ambientes.filter((a) => vigente(a) && carsEnAmbito.value.some((c) => c.id === a.carId)).length
   const lista = [
-    {
-      ruta: 'centros',
-      icono: 'home_work',
-      tono: 'azul',
-      valor: carsEnAmbito.value.length,
-      etiqueta: carsEnAmbito.value.length === 1 ? 'Centro de Acogida Residencial' : 'Centros de Acogida Residencial',
-      nota: plural(db.ambientes.filter((a) => vigente(a) && enAmbitoCar(a.carId)).length, 'ambiente registrado', 'ambientes registrados')
-    },
-    {
-      ruta: 'necesidades',
-      icono: 'assignment_late',
-      tono: 'rojo',
-      valor: total.value.cantidad,
-      etiqueta: `Necesidades pendientes ${ANIO_REVISION}`,
-      nota: `${plural(necesidades.value.infraestructura.length, 'de infraestructura', 'de infraestructura')} en evaluación · ${plural(necesidades.value.atendidas.length, 'atendida', 'atendidas')}`
-    },
-    {
-      ruta: 'necesidades',
-      icono: 'payments',
-      tono: 'verde',
-      valor: soles(total.value.importeConocido),
-      etiqueta: 'Importe estimado conocido',
-      nota: total.value.sinValorar ? `Incompleto: ${plural(total.value.sinValorar, 'necesidad sin valorar', 'necesidades sin valorar')}` : 'Todas las necesidades tienen precio'
-    },
-    {
-      ruta: 'servicios',
-      icono: 'receipt_long',
-      tono: 'morado',
-      valor: resumenServicios.value.pendientes,
-      etiqueta: 'Pagos pendientes informados',
-      nota: `${plural(resumenServicios.value.interrupciones, 'interrupción abierta', 'interrupciones abiertas')} · ${resumenServicios.value.sinInfo} períodos sin información`
-    },
-    {
-      ruta: 'centros',
-      icono: 'fact_check',
-      tono: 'verde',
-      valor: `${verificados.value} / ${bienesActivos.value.length}`,
-      etiqueta: 'Bienes verificados físicamente',
-      nota: `${porcentaje(verificados.value, bienesActivos.value.length)} % de los bienes activos`
-    },
-    {
-      ruta: 'itinerarios',
-      icono: 'local_gas_station',
-      tono: 'ambar',
-      valor: evaluaciones.value.length,
-      etiqueta: 'Recorridos registrados',
-      nota: `${plural(noComparables.value.length, 'recorrido sin datos suficientes', 'recorridos sin datos suficientes')} para comparar combustible`
-    }
+    { ruta: 'centros', icono: 'home_work', tono: 'azul', valor: t.centros, etiqueta: t.centros === 1 ? 'Centro de Acogida Residencial' : 'Centros de Acogida Residencial', nota: plural(ambientes, 'ambiente registrado', 'ambientes registrados') },
+    { ruta: 'necesidades', icono: 'assignment_late', tono: 'rojo', valor: t.necesidades, etiqueta: `Necesidades pendientes ${ANIO_REVISION}`, nota: `${plural(t.infraestructura, 'de infraestructura', 'de infraestructura')} en evaluación · ${plural(t.atendidas, 'atendida', 'atendidas')}` },
+    { ruta: 'necesidades', icono: 'payments', tono: 'verde', valor: soles(t.importeConocido), etiqueta: 'Importe estimado conocido', nota: t.sinValorar ? `Incompleto: ${plural(t.sinValorar, 'necesidad sin valorar', 'necesidades sin valorar')}` : 'Todas las necesidades tienen precio' },
+    { destino: ATENCION, icono: 'error', tono: 'rojo', valor: t.controlesVencidos, etiqueta: 'Controles vencidos', nota: `${t.controlesPorVencer} por vencer · ${plural(t.extintoresFaltantes, 'extintor faltante', 'extintores faltantes')}` },
+    { ruta: 'inventario', icono: 'build_circle', tono: 'ambar', valor: `${numero(t.bienesMalos)} / ${numero(t.bienesActivos)}`, etiqueta: 'Bienes en mal estado', nota: 'Unidades en condición mala o inservible' },
+    { ruta: 'centros', icono: 'fact_check', tono: 'verde', valor: `${t.verificados} / ${t.registrosActivos}`, etiqueta: 'Bienes verificados físicamente', nota: `${porcentaje(t.verificados, t.registrosActivos)} % de los registros activos` },
+    { ruta: 'vehiculos', icono: 'directions_car', tono: 'morado', valor: t.vehiculosConAtencion, etiqueta: 'Vehículos con atención', nota: `${soles(t.presupuestoVehiculos)} estimados${t.vehiculosSinEstimar ? ` · ${t.vehiculosSinEstimar} sin estimar` : ''}` },
+    { ruta: 'itinerarios', icono: 'local_gas_station', tono: 'ambar', valor: recorridos.value.length, etiqueta: 'Recorridos registrados', nota: `${plural(noComparables.value, 'recorrido sin datos suficientes', 'recorridos sin datos suficientes')} para comparar combustible` }
   ]
-  return lista.filter((k) => puedeAcceder(k.ruta)).map((k) => ({ ...k, to: { name: k.ruta } }))
+  return lista.map((k) => ({ ...k, to: k.destino ?? (puedeAcceder(k.ruta) ? { name: k.ruta } : null) }))
 })
 
-const contextoServicio = (servicio, nombre) => `${carPorId(servicio.carId).nombre} · ${nombre}`
-
-// El enlace lleva al servicio y, si el aviso se refiere a un período, a ese período.
-const queryServicio = (a) => ({
-  car: a.servicio.carId,
-  servicio: a.servicio.id,
-  ...(a.clase !== 'interrupcion' && a.celdas[0] ? { anio: anioServicios, periodo: a.celdas[0].numero } : {})
-})
-
-const avisos = computed(() => {
-  const lista = []
-  for (const a of avisosServicios.value) {
-    const base = { id: `${a.servicio.id}-${a.clase}-${a.celdas[0]?.numero ?? 0}`, contexto: contextoServicio(a.servicio, a.nombre), to: puedeAcceder('servicios') ? { name: 'servicios', query: queryServicio(a) } : null, enlace: 'Revisar servicio' }
-    if (a.clase === 'pendiente_vence') lista.push({ ...base, tono: 'da', etiqueta: 'Pendiente con vencimiento', texto: `${a.celdas[0].etiqueta} ${anioServicios} pendiente de pago. Vence el ${fecha(a.celdas[0].vence)}.` })
-    if (a.clase === 'pendiente_sin_fecha') lista.push({ ...base, tono: 'wa', etiqueta: 'Pendiente sin fecha', texto: `${a.celdas[0].etiqueta} pendiente. Sin fecha aplicable no se señala vencimiento.` })
-    if (a.clase === 'interrupcion') lista.push({ ...base, tono: 'wa', etiqueta: 'Interrupción abierta', texto: `Interrupción informada el ${fecha(a.interrupcion.fecha)}. Restablecimiento no informado.` })
-    if (a.clase === 'renovacion_proxima') lista.push({ ...base, tono: 'wa', etiqueta: 'Renovación próxima', texto: `Renovación o vencimiento el ${fecha(a.renovacion.fecha)} (en ${plural(a.renovacion.dias, 'día', 'días')}).` })
-    if (a.clase === 'renovacion_vencida') lista.push({ ...base, tono: 'da', etiqueta: 'Renovación vencida', texto: `La fecha de renovación o vencimiento (${fecha(a.renovacion.fecha)}) ya pasó. Confirme la renovación o actualice la ficha.` })
-    if (a.clase === 'sin_info') lista.push({ ...base, tono: 'si', etiqueta: 'Sin información', texto: `${a.celdas.map((c) => c.etiqueta).join(', ')} sin información de pago. No equivale a un pendiente confirmado.` })
+// Cada celda lista sus alertas como chips y enlaza al módulo que las sustenta (solo si el perfil puede acceder).
+function celdas (f) {
+  const car = f.car.id
+  const enlace = (ruta, query = { car }) => (puedeAcceder(ruta) ? { name: ruta, query } : null)
+  const chips = (...items) => {
+    const lista = items.filter(Boolean)
+    return lista.length ? lista : [{ tono: 'ok', label: 'Sin alertas' }]
   }
-
-  // Controles preventivos: fumigación, recarga de extintores y mantenimientos vencidos o por vencer, y extintores faltantes.
-  for (const c of controlesDeMantenimiento.value) {
-    const car = carPorId(c.carId)
-    const base = { id: `control-${c.clave}`, contexto: `${car.nombre} · ${TIPOS_MANTENIMIENTO[c.tipo].label}` }
-    if (c.clase === 'faltante') {
-      lista.push({ ...base, tono: 'wa', etiqueta: 'Extintores faltantes', texto: `Faltan ${plural(c.faltantes, 'extintor', 'extintores')} para completar la dotación requerida.`, to: puedeAcceder('centros') ? { name: 'centros', query: { car: car.id, seguridad: '1' } } : null, enlace: 'Ver control de seguridad' })
-      continue
+  const { necesidades: n, controles: c, vehiculos: v, servicios: s } = f
+  return {
+    necesidades: {
+      to: enlace('necesidades'),
+      items: [
+        { tono: n.cantidad ? 'da' : 'ok', label: n.cantidad ? `${plural(n.cantidad, 'pendiente', 'pendientes')} · ${soles(n.importeConocido)}` : 'Ninguna pendiente' },
+        n.sinValorar ? { tono: 'wa', label: `${n.sinValorar} sin valorar` } : null
+      ].filter(Boolean)
+    },
+    infraestructura: {
+      // Los ambientes y sus elementos críticos se ven en la pestaña Ambientes del centro; el estado general, en la ficha.
+      to: enlace('centros', { car, tab: f.ambientesCriticos || f.elementosCriticos ? 'ambientes' : 'ficha' }),
+      items: [
+        { ...condicion(f.estadoGeneral), label: `Estado general: ${condicion(f.estadoGeneral).label}` },
+        f.ambientesCriticos ? { tono: 'da', label: plural(f.ambientesCriticos, 'ambiente en mal estado', 'ambientes en mal estado') } : null,
+        f.elementosCriticos ? { tono: 'wa', label: plural(f.elementosCriticos, 'elemento crítico', 'elementos críticos') } : null
+      ].filter(Boolean)
+    },
+    novedades: {
+      to: enlace('centros', { car, tab: 'ambientes' }),
+      items: [f.novedadesAbiertas ? { tono: 'da', label: plural(f.novedadesAbiertas, 'abierta', 'abiertas') } : { tono: 'ok', label: 'Ninguna abierta' }]
+    },
+    bienes: {
+      to: enlace('inventario'),
+      items: chips(
+        { tono: 'ne', label: `${numero(f.bienesActivos)} activos` },
+        f.bienesMalos ? { tono: 'wa', label: `${numero(f.bienesMalos)} en mal estado` } : null,
+        { tono: f.verificados === f.registrosActivos ? 'ok' : 'si', label: `${f.verificados} de ${f.registrosActivos} verificados` }
+      )
+    },
+    controles: {
+      to: enlace('centros', { car, tab: 'seguridad' }),
+      items: chips(
+        c.vencidos ? { tono: 'da', label: plural(c.vencidos, 'vencido', 'vencidos') } : null,
+        c.porVencer ? { tono: 'wa', label: `${c.porVencer} por vencer` } : null,
+        c.extintoresFaltantes ? { tono: 'wa', label: plural(c.extintoresFaltantes, 'extintor faltante', 'extintores faltantes') } : null,
+        f.fumigacion === 'sin_programar' ? { tono: 'si', label: 'Fumigación sin programar' } : null
+      )
+    },
+    vehiculos: {
+      to: enlace('vehiculos'),
+      items: v.total
+        ? chips(
+          v.requierenAtencion ? { tono: 'wa', label: plural(v.requierenAtencion, 'requiere atención', 'requieren atención') } : null,
+          v.detenidos ? { tono: 'da', label: plural(v.detenidos, 'detenido', 'detenidos') } : null,
+          v.requierenAtencion ? { tono: 'ne', label: v.sinEstimar === v.requierenAtencion ? 'Presupuesto sin estimar' : `${soles(v.presupuestoEstimado)} estimados` } : null,
+          v.sinInformar ? { tono: 'si', label: `${v.sinInformar} sin estado` } : null,
+          !v.requierenAtencion && !v.sinInformar ? { tono: 'ok', label: plural(v.operativos, 'operativo', 'operativos') } : null
+        )
+        : [{ tono: 'si', label: 'Sin vehículos' }]
+    },
+    servicios: {
+      to: enlace('servicios'),
+      items: chips(
+        s.pendientes ? { tono: 'da', label: plural(s.pendientes, 'pendiente', 'pendientes') } : null,
+        s.interrupciones ? { tono: 'wa', label: plural(s.interrupciones, 'interrupción abierta', 'interrupciones abiertas') } : null,
+        s.renovaciones ? { tono: 'wa', label: plural(s.renovaciones, 'renovación', 'renovaciones') } : null,
+        s.recurrentes ? { tono: 'wa', label: plural(s.recurrentes, 'recurrente', 'recurrentes') } : null,
+        s.sinInfo ? { tono: 'si', label: `${s.sinInfo} sin información` } : null
+      )
     }
-    const vencido = c.clase === 'vencido'
-    const plazo = vencido ? `venció el ${fecha(c.proxima)} (hace ${plural(-c.dias, 'día', 'días')})` : `vence el ${fecha(c.proxima)} (en ${plural(c.dias, 'día', 'días')})`
-    // Un vehículo se revisa en Vehículos; lo demás, en la pestaña de seguridad del centro.
-    const to = c.mantenimiento.vehiculoId
-      ? (puedeAcceder('vehiculos') ? { name: 'vehiculos', query: { vehiculo: c.mantenimiento.vehiculoId } } : null)
-      : (puedeAcceder('centros') ? { name: 'centros', query: { mantenimiento: c.mantenimiento.id } } : null)
-    lista.push({ ...base, tono: vencido ? 'da' : 'wa', etiqueta: vencido ? 'Control vencido' : 'Control por vencer', texto: `${c.objetivo}: ${plazo}.`, to, enlace: 'Ver mantenimiento' })
   }
-
-  const incidentes = db.eventos.filter((e) => vigente(e) && INCIDENTES.includes(e.tipo) && e.reportaNecesidad)
-  for (const evento of incidentes) {
-    const abiertas = necesidades.value.pendientes.filter((n) => evento.bienIds.includes(n.id))
-    if (!abiertas.length) continue
-    const ubicacion = ubicacionDeBien(abiertas[0].bien)
-    lista.push({
-      id: evento.id,
-      tono: 'da',
-      etiqueta: TIPOS_EVENTO[evento.tipo].label,
-      contexto: `${ubicacion.car.nombre} · ${ubicacion.ambiente.nombre}`,
-      texto: `${evento.titulo} (${fecha(evento.fecha)}): ${plural(abiertas.length, 'necesidad abierta', 'necesidades abiertas')}.`,
-      to: puedeAcceder('incidencias') ? { name: 'incidencias', query: { car: ubicacion.car.id, hecho: evento.id } } : null,
-      enlace: 'Ver antecedentes'
-    })
-  }
-
-  for (const item of necesidades.value.infraestructura) {
-    lista.push({
-      id: item.id,
-      tono: 'in',
-      etiqueta: 'Infraestructura en evaluación',
-      contexto: `${item.ubicacion.car.nombre} · ${item.ubicacion.ambiente.nombre}`,
-      texto: `${item.novedad.titulo}. Sin costo estimado hasta su evaluación.`,
-      to: puedeAcceder('centros') ? { name: 'centros', query: { car: item.ubicacion.car.id, ambiente: item.ubicacion.ambiente.id, novedad: item.novedad.id } } : null,
-      enlace: 'Ver ambiente'
-    })
-  }
-
-  for (const { it, v, ev } of noComparables.value) {
-    lista.push({
-      id: it.id,
-      tono: 'in',
-      etiqueta: 'Datos insuficientes',
-      contexto: `Movilidad ${v.id}`,
-      texto: `Recorrido ${it.id}: falta ${ev.faltantes.join(' y ')}. No se puede comparar su combustible.`,
-      to: puedeAcceder('itinerarios') ? { name: 'itinerarios', query: { vehiculo: v.id, itinerario: it.id } } : null,
-      enlace: 'Ver recorrido'
-    })
-  }
-  return lista
-})
-
-const filasCar = computed(() =>
-  consolidado.value.map((fila) => {
-    const activos = bienesActivos.value.filter((b) => ubicacionDeBien(b).car.id === fila.car.id)
-    return {
-      ...fila,
-      inmueble: fila.car.inmueble ? `Inmueble ${condicionInmueble(fila.car.inmueble.condicion).label.toLowerCase()}` : 'Sin datos del inmueble',
-      servicios: resumirAvisos(avisosDeServicios(serviciosDeCar(fila.car.id), anioServicios, FECHA_CORTE)),
-      activos: activos.length,
-      verificados: activos.filter((b) => b.verificacion).length
-    }
-  })
-)
+}
 </script>

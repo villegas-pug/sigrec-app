@@ -9,7 +9,8 @@ export default defineRouter(() => {
 
   return createRouter({
     // Al volver con «Atrás» se recupera la posición; en cualquier otra navegación se abre arriba.
-    scrollBehavior: (to, from, savedPosition) => savedPosition ?? { left: 0, top: 0 },
+    // Un enlace con ancla (p. ej. Inicio › #atencion) baja a esa sección, descontando la cabecera fija.
+    scrollBehavior: (to, from, savedPosition) => savedPosition ?? (to.hash ? { el: to.hash, top: 80 } : { left: 0, top: 0 }),
     routes,
     // Se configura en quasar.config.js › build › vueRouterMode y publicPath.
     history: createHistory(process.env.VUE_ROUTER_BASE)

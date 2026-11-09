@@ -13,6 +13,15 @@
 
       <vehiculo-selector v-model="vehiculoId" :vehiculos="vehiculosEnAmbito" />
 
+      <mi-jornada
+        v-if="vehiculo && vigente(vehiculo)"
+        :vehiculo="vehiculo"
+        :itinerarios="itinerariosDeVehiculo(vehiculo.id)"
+        @registrar="abrir('nuevo', null)"
+        @ejecucion="(it) => abrir('ejecucion', it)"
+        @combustible="(it) => Object.assign(dialogoCombustible, { abierto: true, itinerario: it?.id ?? null })"
+      />
+
       <section-card v-if="vehiculo" titulo="Itinerarios" subtitulo="Previsto y realizado se muestran por separado cuando ambos se informan" sin-relleno>
         <template #acciones>
           <filtro-inactivos v-model="mostrarInactivos" />
@@ -135,6 +144,7 @@
       </section-card>
     </div>
 
+    <combustible-dialog v-if="vehiculo" v-model="dialogoCombustible.abierto" :vehiculo="vehiculo" :itinerario-inicial="dialogoCombustible.itinerario" />
     <itinerario-dialog v-if="vehiculo" v-model="dialogo.abierto" :vehiculo="vehiculo" :modo="dialogo.modo" :itinerario="dialogo.itinerario" @hecho="seleccionar" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
@@ -154,6 +164,8 @@ import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import VehiculoSelector from 'components/movilidad/VehiculoSelector.vue'
 import ItinerarioDialog from 'components/movilidad/ItinerarioDialog.vue'
+import CombustibleDialog from 'components/movilidad/CombustibleDialog.vue'
+import MiJornada from 'components/movilidad/MiJornada.vue'
 import MapaItinerario from 'components/movilidad/MapaItinerario.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useVehiculoSeleccionado } from 'src/composables/useVehiculoSeleccionado'
@@ -226,6 +238,8 @@ function etiquetaEvaluacion (ev) {
 }
 
 const dialogo = reactive({ abierto: false, modo: 'nuevo', itinerario: null })
+// «Mi jornada»: el consumo de un recorrido (o una carga) se informa aquí mismo, sin ir a Combustible.
+const dialogoCombustible = reactive({ abierto: false, itinerario: null })
 const abrir = (modo, itinerario) => Object.assign(dialogo, { abierto: true, modo, itinerario })
 
 const accionesItinerario = (it) => [
@@ -243,7 +257,8 @@ const accionesItinerario = (it) => [
       dependencias: dependenciasDeItinerario(it),
       aviso: 'Para anular un itinerario con consumo declarado, anule primero ese consumo en Combustible.',
       mensaje: 'Itinerario anulado.',
-      ejecutar: (datos) => anular(it, datos)
+      ejecutar: (datos) => anular(it, datos),
+      registro: it
     })
   },
   {

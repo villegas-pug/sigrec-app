@@ -30,6 +30,7 @@
               :inactivos="inactivos"
               :tab-inicial="tabInicialCentro"
               :mantenimiento-resaltado="mantenimientoResaltado"
+              @registrar-bien="(ambienteId, tipoId) => iniciarRegistro(ambienteId, null, tipoId)"
               :con-volver="movil"
               @seleccionar="seleccionar"
               @volver="vista = 'arbol'"
@@ -65,9 +66,10 @@
     <registro-bien-panel
       v-if="modo === 'registro' && ambienteRegistro"
       ref="registroRef"
-      :key="`${registro.ambienteId}|${registro.asociarA}`"
+      :key="`${registro.ambienteId}|${registro.asociarA}|${registro.tipoId}`"
       :ambiente="ambienteRegistro"
       :asociar-a="registro.asociarA"
+      :tipo-inicial="registro.tipoId"
       @registrado="alRegistrar"
       @terminar="alTerminarRegistro"
       @cerrar="modo = 'detalle'"
@@ -116,7 +118,8 @@ const movil = computed(() => $q.screen.lt.md)
 const altoPagina = (offset) => (movil.value ? {} : { height: `calc(100vh - ${offset}px)`, overflow: 'hidden' })
 
 // ---------- Enlaces profundos ----------
-// ?bien= | ?ambiente= | ?novedad= | ?car= seleccionan el nodo; ?registrar=1 (con ?ambiente= y ?asociar=) abre el modo registro.
+// ?bien= | ?ambiente= | ?novedad= | ?car= | ?mantenimiento= seleccionan el nodo (con ?tab= para la pestaña); ?registrar=1 (con ?ambiente=,
+// ?asociar= y ?tipo=) abre el modo registro.
 // Lo pedido solo se acepta dentro del ámbito del perfil; si no existe se avisa y no se elige otro registro.
 const bienPedido = parametro(route.query.bien)
 const novedadPedida = parametro(route.query.novedad)
@@ -125,9 +128,11 @@ const ambientePedido = ambienteDeNovedad?.id ?? parametro(route.query.ambiente)
 const carPedido = parametro(route.query.car)
 const asociarPedido = parametro(route.query.asociar)
 const registrarPedido = parametro(route.query.registrar) === '1' && puedeHacer('bien.registrar')
-// ?mantenimiento= abre la pestaña «Seguridad y mantenimiento» del centro y resalta el registro; ?seguridad=1 solo abre la pestaña.
+// ?mantenimiento= abre la pestaña «Seguridad y mantenimiento» del centro y resalta el registro.
+// ?tab= elige la pestaña del centro (ficha | fotos | seguridad | ambientes) o del ambiente (ficha | fotos | bienes | novedades |
+// intervenciones); una pestaña desconocida se ignora. ?seguridad=1 se conserva como alias de ?tab=seguridad (SPEC 011).
 const mantenimientoPedido = parametro(route.query.mantenimiento)
-const seguridadPedida = parametro(route.query.seguridad) === '1'
+const tabPedida = parametro(route.query.tab) ?? (parametro(route.query.seguridad) === '1' ? 'seguridad' : null)
 const mantenimientoSolicitado = mantenimientoPedido ? mantenimientoPorId(mantenimientoPedido) : null
 
 function inicial () {
@@ -155,9 +160,9 @@ function inicial () {
 const pedido = inicial()
 const pedidoNoDisponible = ref(pedido.noDisponible ?? null)
 const seleccion = ref(pedido.id ?? null)
-const tabInicial = novedadPedida && !pedidoNoDisponible.value ? 'novedades' : null
+const tabInicial = pedidoNoDisponible.value ? null : novedadPedida ? 'novedades' : tabPedida
 const novedadResaltada = pedidoNoDisponible.value ? null : novedadPedida
-const tabInicialCentro = !pedidoNoDisponible.value && (mantenimientoPedido || (seguridadPedida && carPedido)) ? 'seguridad' : null
+const tabInicialCentro = pedidoNoDisponible.value ? null : mantenimientoPedido ? 'seguridad' : tabPedida
 const mantenimientoResaltado = pedidoNoDisponible.value ? null : mantenimientoPedido
 
 // Registros anulados pedidos por enlace: se muestran activando «Mostrar inactivos» y el filtro de situación correspondiente.
@@ -221,12 +226,12 @@ async function seleccionar (id) {
 }
 
 // ---------- Modo registro ----------
-const registro = reactive({ ambienteId: null, asociarA: null })
+const registro = reactive({ ambienteId: null, asociarA: null, tipoId: null })
 const ambienteRegistro = computed(() => (registro.ambienteId ? ambientePorId(registro.ambienteId) : null))
 
-function iniciarRegistro (ambienteId, asociarA = null) {
+function iniciarRegistro (ambienteId, asociarA = null, tipoId = null) {
   if (!puedeHacer('bien.registrar')) return
-  Object.assign(registro, { ambienteId, asociarA })
+  Object.assign(registro, { ambienteId, asociarA, tipoId })
   modo.value = 'registro'
   vista.value = 'detalle'
 }
@@ -248,7 +253,8 @@ if (registrarPedido && !pedidoNoDisponible.value) {
   const ambienteId = padreValido ? padre.ambienteId : ambientePedido ?? ambientesDeCar(carPedido ?? carsDelAmbito()[0]?.id)[0]?.id
   if (ambienteId && ambientePorId(ambienteId) && enAmbitoCar(ambientePorId(ambienteId).carId)) {
     seleccion.value = padreValido ? padre.id : nodoAmbienteId(ambienteId)
-    Object.assign(registro, { ambienteId, asociarA: padreValido ? padre.id : null })
+    // ?tipo= preselecciona el tipo de bien (p. ej. ?registrar=1&car=AMA&tipo=extintor).
+    Object.assign(registro, { ambienteId, asociarA: padreValido ? padre.id : null, tipoId: parametro(route.query.tipo) })
     modo.value = 'registro'
   }
 }
@@ -288,7 +294,8 @@ function abrirAccion (tipo) {
       dependencias: dependenciasDeBien(actual),
       aviso: 'Anular corrige un registro erróneo: el bien deja de contar en necesidades y avisos. Para retirar un bien que existió, use «Dar de baja».',
       mensaje: 'Registro del bien anulado.',
-      ejecutar: (datos) => anularBien(actual, datos)
+      ejecutar: (datos) => anularBien(actual, datos),
+      deshacer: () => reactivarBien(actual)
     })
     return
   }

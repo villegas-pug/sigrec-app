@@ -10,7 +10,6 @@ const routes = [
       // La raíz lleva a la primera pantalla a la que el perfil activo tiene acceso.
       { path: '', name: 'raiz', redirect: () => ({ name: usePerfil().rutaInicial.value }) },
       { path: 'inicio', name: 'inicio', component: () => import('pages/InicioPage.vue'), meta: { titulo: 'Inicio' } },
-      { path: 'tablero', name: 'tablero', component: () => import('pages/TableroCentrosPage.vue'), meta: { titulo: 'Tablero de control' } },
       { path: 'centros', name: 'centros', component: () => import('pages/GestionCentrosPage.vue'), meta: { titulo: 'Gestión de centros' } },
       { path: 'incidencias', name: 'incidencias', component: () => import('pages/IncidenciasPage.vue'), meta: { titulo: 'Incidencias, bajas y reposiciones' } },
       { path: 'necesidades', name: 'necesidades', component: () => import('pages/NecesidadesPage.vue'), meta: { grupo: 'Necesidades y presupuesto', titulo: 'Necesidades' } },
@@ -26,7 +25,9 @@ const routes = [
       { path: 'ambientes', redirect: (to) => ({ name: 'centros', query: to.query }) },
       { path: 'bienes', redirect: (to) => ({ name: 'centros', query: to.query }) },
       { path: 'bienes/registro', redirect: (to) => ({ name: 'centros', query: { ...to.query, registrar: '1' } }) },
-      { path: 'movilidad', redirect: (to) => ({ name: 'itinerarios', query: to.query }) }
+      { path: 'movilidad', redirect: (to) => ({ name: 'itinerarios', query: to.query }) },
+      // El «Tablero de control» se fusionó en Inicio (SPEC 011); su consulta por equipo (?tipo=) vive en Inventario.
+      { path: 'tablero', redirect: (to) => (to.query.tipo ? { name: 'inventario', query: { ...to.query, vista: 'equipo' } } : { name: 'inicio', query: to.query }) }
     ]
   },
   {

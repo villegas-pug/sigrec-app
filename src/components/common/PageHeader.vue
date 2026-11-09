@@ -10,7 +10,10 @@
         </li>
       </ol>
     </nav>
-    <h1 class="sg-page-title">{{ titulo || route.meta.titulo }}</h1>
+    <h1 class="sg-page-title">
+      {{ titulo || route.meta.titulo }}
+      <ayuda-contextual v-if="$slots.ayuda" :etiqueta="etiquetaAyuda"><slot name="ayuda" /></ayuda-contextual>
+    </h1>
     <div v-if="$slots.acciones" class="sg-page-actions">
       <slot name="acciones" />
     </div>
@@ -21,9 +24,12 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePerfil } from 'src/composables/usePerfil'
+import AyudaContextual from 'components/common/AyudaContextual.vue'
 
 defineProps({
-  titulo: { type: String, default: '' }
+  titulo: { type: String, default: '' },
+  // Con el slot «ayuda», un botón junto al título despliega las reglas de la pantalla.
+  etiquetaAyuda: { type: String, default: '¿Cómo se interpreta esta pantalla?' }
 })
 
 const route = useRoute()

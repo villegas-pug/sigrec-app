@@ -3,6 +3,7 @@ import { db, bienPorId, tipoPorId, ubicacionDeBien, ubicacionDeAmbiente, vigente
 import { reposicionDe } from './bienes'
 import { plural } from 'src/utils/formato'
 import { INCIDENTES, TIPOS_EVENTO } from 'src/config/catalogos'
+import { PARAMETROS_PRIORIDAD } from 'src/config/demo'
 
 const enAmbito = (carIds, carId) => !carIds || carIds.includes(carId)
 const anioDe = (fechaIso) => Number(fechaIso.slice(0, 4))
@@ -139,4 +140,46 @@ export function consolidarPorCar (resultado, cars) {
       insuficientes: delCar(resultado.insuficientes).length
     }
   })
+}
+
+/**
+ * Orden de prioridad provisional (PARAMETROS_PRIORIDAD, por validar): primero la reposición por incidente, luego la peor condición
+ * y, a igualdad, la vida útil cumplida hace más tiempo. Devuelve una copia ordenada con su posición (`prioridad`, desde 1).
+ */
+export function priorizar (pendientes, parametros = PARAMETROS_PRIORIDAD) {
+  const puntaje = (n) => [
+    parametros.clase[n.clase] ?? 9,
+    parametros.condicion[n.bien.condicion] ?? parametros.condicion.sin_dato,
+    finVidaUtil(n.bien) ?? 9999
+  ]
+  return [...pendientes]
+    .sort((a, b) => {
+      const [pa, pb] = [puntaje(a), puntaje(b)]
+      return pa[0] - pb[0] || pa[1] - pb[1] || pa[2] - pb[2] || a.id.localeCompare(b.id)
+    })
+    .map((n, i) => ({ ...n, prioridad: i + 1 }))
+}
+
+/**
+ * Simula qué necesidades cubre un techo presupuestal (en soles), en orden de prioridad.
+ * - Se recorre la lista priorizada: si el importe cabe en el saldo, se cubre; si no, queda «sin saldo» y se sigue con la siguiente
+ *   (una necesidad menor puede cubrirse aunque otra de mayor prioridad no quepa).
+ * - Las necesidades sin valorar no se cubren ni se descuentan: se informan aparte, nunca como cero.
+ * - Es una simulación: no aprueba compras ni reserva presupuesto.
+ */
+export function simularTecho (pendientes, techo) {
+  const ordenadas = priorizar(pendientes)
+  let saldo = Number.isFinite(techo) && techo > 0 ? techo : 0
+  const cubiertas = []
+  const sinSaldo = []
+  const sinValorar = []
+  for (const n of ordenadas) {
+    if (n.importe == null) sinValorar.push(n)
+    else if (n.importe <= saldo) {
+      saldo -= n.importe
+      cubiertas.push(n)
+    } else sinSaldo.push(n)
+  }
+  const suma = (lista) => lista.reduce((s, n) => s + n.importe, 0)
+  return { ordenadas, cubiertas, sinSaldo, sinValorar, importeCubierto: suma(cubiertas), importeSinSaldo: suma(sinSaldo), saldo }
 }

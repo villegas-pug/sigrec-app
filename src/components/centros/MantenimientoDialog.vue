@@ -18,20 +18,31 @@
     <note-banner v-if="!mantenimiento && tipoActual && tipoActual.objetivo !== 'centro' && !opcionesObjetivo.length" tono="wa" icono="warning">
       El centro no tiene {{ textoSinObjetivo }}. Regístrelo primero para poder registrar su mantenimiento.
     </note-banner>
+    <!-- Al registrar se pueden elegir varios objetivos (p. ej. todos los extintores recargados el mismo día): un registro por objetivo. -->
     <q-select
       v-if="tipoActual && tipoActual.objetivo !== 'centro'"
-      v-model="form.objetivoId"
+      v-model="form.objetivos"
       :options="opcionesObjetivo"
       emit-value
       map-options
+      multiple
+      use-chips
       outlined
       dense
       :label="`${etiquetaObjetivo} *`"
+      :hint="mantenimiento ? '' : 'Puede elegir varios: se registra un mantenimiento por cada uno, con los mismos datos'"
       :disable="!!mantenimiento"
-      :rules="[requerido]"
+      :rules="[(v) => (v && v.length > 0) || 'Elija al menos uno']"
     >
-      <template #append><boton-dictado v-model="form.objetivoId" tipo="opcion" :opciones="opcionesObjetivo" emit-value :disable="!!mantenimiento" /></template>
+      <template #after>
+        <q-btn v-if="!mantenimiento && opcionesObjetivo.length > 1 && form.objetivos.length < opcionesObjetivo.length" flat dense no-caps color="secondary" icon="done_all" label="Todos" @click="form.objetivos = opcionesObjetivo.map((o) => o.value)" />
+      </template>
     </q-select>
+    <q-checkbox
+      v-if="vehiculoConAtencion && puedeHacer('vehiculo.actualizar')"
+      v-model="form.quedaOperativo"
+      :label="`El vehículo ${vehiculoConAtencion.id} queda operativo (hoy: ${estadoVehiculo(vehiculoConAtencion.estadoOperativo).label.toLowerCase()})`"
+    />
 
     <div class="row q-col-gutter-md">
       <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha realizada *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
@@ -72,14 +83,17 @@ import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { useBorrador } from 'src/composables/useBorrador'
-import { db, vigentes } from 'src/services/datos'
-import { actualizarMantenimiento, registrarMantenimiento } from 'src/services/acciones'
+import { usePerfil } from 'src/composables/usePerfil'
+import { db, vehiculoPorId, vigentes } from 'src/services/datos'
+import { actualizarMantenimiento, actualizarVehiculo, registrarMantenimiento } from 'src/services/acciones'
+import { requiereAtencion } from 'src/services/vehiculos'
 import { extintoresDeCentro } from 'src/services/mantenimientos'
-import { OPCIONES_TIPO_MANTENIMIENTO, TIPOS_MANTENIMIENTO, TIPO_EXTINTOR } from 'src/config/catalogos'
+import { OPCIONES_TIPO_MANTENIMIENTO, TIPOS_MANTENIMIENTO, TIPO_EXTINTOR, estadoVehiculo } from 'src/config/catalogos'
 import { FECHA_CORTE } from 'src/config/demo'
 import { sumarMeses } from 'src/utils/fechas'
 import { fecha } from 'src/utils/formato'
 import { HINT_FECHA_CORTE, noAnteriorA, noFutura, opcionalMayorQueCero, requerido } from 'src/utils/validaciones'
+import { plural } from 'src/utils/formato'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -89,11 +103,14 @@ const props = defineProps({
   // Tipo y objetivo precargados (p. ej. «Registrar recarga» desde un extintor). Con tipoInicial el tipo no se cambia.
   tipoInicial: { type: String, default: null },
   bienId: { type: String, default: null },
-  vehiculoId: { type: String, default: null }
+  vehiculoId: { type: String, default: null },
+  // Varios bienes precargados (p. ej. «Registrar recarga de todos» los extintores del centro).
+  bienIds: { type: Array, default: null }
 })
 
 const emit = defineEmits(['update:modelValue', 'hecho'])
 const $q = useQuasar()
+const { puedeHacer } = usePerfil()
 
 const form = reactive({})
 const { modificado, fijar } = useBorrador(form)
@@ -123,10 +140,17 @@ const TEXTOS_SIN_OBJETIVO = { extintor: 'extintores activos', equipo: 'equipos a
 const etiquetaObjetivo = computed(() => ETIQUETAS_OBJETIVO[tipoActual.value?.objetivo] ?? '')
 const textoSinObjetivo = computed(() => TEXTOS_SIN_OBJETIVO[tipoActual.value?.objetivo] ?? '')
 
-// Al cambiar el tipo, un objetivo que ya no corresponde se descarta.
+// Al cambiar el tipo, los objetivos que ya no corresponden se descartan.
 watch(() => form.tipo, () => {
-  if (props.mantenimiento) return
-  if (!opcionesObjetivo.value.some((o) => o.value === form.objetivoId)) form.objetivoId = null
+  if (props.mantenimiento || !form.objetivos) return
+  form.objetivos = form.objetivos.filter((id) => opcionesObjetivo.value.some((o) => o.value === id))
+})
+
+// Un único vehículo que requiere mantenimiento o está detenido: se ofrece dejarlo operativo al registrar (SPEC 011, Ola 2).
+const vehiculoConAtencion = computed(() => {
+  if (props.mantenimiento || tipoActual.value?.objetivo !== 'vehiculo' || form.objetivos?.length !== 1) return null
+  const v = vehiculoPorId(form.objetivos[0])
+  return v && requiereAtencion(v) ? v : null
 })
 
 // `immediate`: la página de vehículos monta este diálogo al elegir el vehículo, ya abierto.
@@ -135,7 +159,8 @@ watch(() => props.modelValue, (abierto) => {
   const m = props.mantenimiento
   Object.assign(form, {
     tipo: m?.tipo ?? props.tipoInicial ?? null,
-    objetivoId: m ? m.bienId ?? m.vehiculoId ?? null : props.bienId ?? props.vehiculoId ?? null,
+    objetivos: m ? [m.bienId ?? m.vehiculoId].filter(Boolean) : props.bienIds?.length ? [...props.bienIds] : [props.bienId ?? props.vehiculoId].filter(Boolean),
+    quedaOperativo: false,
     fecha: m?.fecha ?? FECHA_CORTE,
     proxima: m?.proxima ?? '',
     detalle: m?.detalle ?? '',
@@ -146,22 +171,29 @@ watch(() => props.modelValue, (abierto) => {
 
 function guardar () {
   const datos = { fecha: form.fecha, proxima: form.proxima || null, detalle: form.detalle?.trim() || null, importe: form.importe }
-  let id
   if (props.mantenimiento) {
     actualizarMantenimiento(props.mantenimiento, datos)
-    id = props.mantenimiento.id
-  } else {
-    const objetivo = tipoActual.value.objetivo
-    id = registrarMantenimiento({
-      tipo: form.tipo,
-      carId: props.centro.id,
-      bienId: objetivo === 'extintor' || objetivo === 'equipo' ? form.objetivoId : null,
-      vehiculoId: objetivo === 'vehiculo' ? form.objetivoId : null,
-      ...datos
-    }).id
+    $q.notify({ type: 'positive', message: 'Mantenimiento actualizado.' })
+    emit('update:modelValue', false)
+    emit('hecho', props.mantenimiento.id)
+    return
   }
-  $q.notify({ type: 'positive', message: props.mantenimiento ? 'Mantenimiento actualizado.' : `Mantenimiento registrado: ${tipoActual.value.label}.` })
+  const objetivo = tipoActual.value.objetivo
+  const registrar = (objetivoId) => registrarMantenimiento({
+    tipo: form.tipo,
+    carId: props.centro.id,
+    bienId: objetivo === 'extintor' || objetivo === 'equipo' ? objetivoId : null,
+    vehiculoId: objetivo === 'vehiculo' ? objetivoId : null,
+    ...datos
+  }).id
+  const ids = objetivo === 'centro' ? [registrar(null)] : form.objetivos.map(registrar)
+  let mensaje = ids.length > 1 ? `${plural(ids.length, 'mantenimiento registrado', 'mantenimientos registrados')}: ${tipoActual.value.label}.` : `Mantenimiento registrado: ${tipoActual.value.label}.`
+  if (vehiculoConAtencion.value && form.quedaOperativo && puedeHacer('vehiculo.actualizar')) {
+    actualizarVehiculo(vehiculoConAtencion.value, { estadoOperativo: 'operativo', mantenimiento: null })
+    mensaje += ' El vehículo queda operativo.'
+  }
+  $q.notify({ type: 'positive', message: mensaje })
   emit('update:modelValue', false)
-  emit('hecho', id)
+  emit('hecho', ids[0])
 }
 </script>

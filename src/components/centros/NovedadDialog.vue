@@ -45,7 +45,9 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   ambiente: { type: Object, required: true },
   // null = novedad nueva.
-  novedad: { type: Object, default: null }
+  novedad: { type: Object, default: null },
+  // Datos sugeridos para una novedad nueva (p. ej. desde un elemento de infraestructura en mal estado).
+  sugerencia: { type: Object, default: null }
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -57,13 +59,14 @@ const { modificado, fijar } = useBorrador(form)
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
   const n = props.novedad
+  const s = n ? {} : props.sugerencia ?? {}
   Object.assign(form, {
-    tipo: n?.tipo ?? 'dano',
+    tipo: n?.tipo ?? s.tipo ?? 'dano',
     fecha: n?.fecha ?? FECHA_CORTE,
-    titulo: n?.titulo ?? '',
-    detalle: n?.detalle ?? '',
+    titulo: n?.titulo ?? s.titulo ?? '',
+    detalle: n?.detalle ?? s.detalle ?? '',
     ubicacion: n && n.ubicacion !== 'No informada' ? n.ubicacion : '',
-    requiereEvaluacion: n?.requiereEvaluacion ?? false
+    requiereEvaluacion: n?.requiereEvaluacion ?? s.requiereEvaluacion ?? false
   })
   fijar()
 })

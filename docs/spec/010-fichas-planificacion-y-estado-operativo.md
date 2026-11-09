@@ -4,6 +4,7 @@
 - **Fecha:** 2026-11-09
 - **Origen:** reunión con la jefa de unidad y el jefe de proyecto del 30/10/2026 ([aportes funcionales](../reuniones/2026-10-30_1234_reunion-jefa-unidad-jefe-proyecto/2026-10-30_1234_transcripcion_reunion-jefa-unidad-jefe-proyecto.md)) contrastada con el prototipo y las SPEC 001–009.
 - **Complementa:** SPEC 003 (mantenedores), SPEC 005 (servicios y captura rápida) y SPEC 008 (fichas del explorador). Donde difieran, prevalece esta SPEC.
+- **Actualizada por:** [SPEC 011](011-auditoria-navegacion-y-unificacion.md): el «Tablero de control» se fusionó en Inicio y la «Consulta por equipo» pasó a Inventario (§5, §8 y §10 ítems 12, 14, 15 y 16).
 - **Reemplaza:** SPEC 003 §8 únicamente en el punto «estado de vehículos (SOAT, revisión técnica, odómetro)»: el **estado operativo y el presupuesto de mantenimiento** pasan a estar dentro del alcance. SOAT, revisión técnica y odómetro siguen fuera.
 
 ## 0. Contrato
@@ -72,7 +73,7 @@
 - **Acciones nuevas:** `mantenimiento.registrar`, `mantenimiento.actualizar` y `mantenimiento.anular`, incluidas en el mantenimiento que comparten Equipo central y Personal del CAR. Verificación física y Chofer no las tienen. ⚠️ Por validar (por ejemplo, si el chofer debe registrar el mantenimiento de su vehículo).
 - Sin acciones nuevas para el resto: el estado por elemento se edita con `centro.actualizar` y `ambiente.actualizar`; los datos del servicio, con `servicio.actualizar`; los del vehículo, con `vehiculo.actualizar`. La dotación de extintores se edita en la ficha del centro.
 - **Inventario para planificación** (`inventario`, grupo «Necesidades y presupuesto»): Equipo central y Personal del CAR, limitada a su ámbito.
-- **Tablero de control** (`tablero`): solo Equipo central (acceso total). El perfil Personal del CAR no la ve. ⚠️ Por validar quiénes la usan.
+- ~~**Tablero de control** (`tablero`): solo Equipo central.~~ Reemplazado por la SPEC 011 §5: la situación por centro está en Inicio y `/tablero` redirige allí.
 
 ## 6. ⚠️ Por validar con el jefe de proyecto y las direcciones de los centros
 
@@ -106,7 +107,7 @@ Siguen abiertos: el catálogo de servicios (fumigación como servicio o como con
 
 ## 8. Vista ejecutiva de control (P3)
 
-- Pantalla «Tablero de control» (solo Equipo central). No reemplaza a Inicio.
+- **Actualizado por la SPEC 011 §2:** la matriz por centro es ahora la «Situación por centro» de Inicio y la «Consulta por equipo» está en Inventario. Las reglas de esta sección se mantienen.
 - **Estado por centro:** una fila por centro con infraestructura (estado general, ambientes en mal estado, elementos críticos), novedades abiertas, bienes (activos y en mal estado), controles preventivos (vencidos, por vencer, extintores faltantes, fumigación sin programar), vehículos (que requieren atención, detenidos, presupuesto estimado) y servicios (pendientes, interrupciones abiertas, renovaciones, recurrentes, sin información). Cada celda enlaza a su detalle. En pantallas estrechas cada centro es una tarjeta.
 - **Consulta por equipo:** se elige un tipo de bien y se ve, por centro, cuántas unidades hay, en qué condición, cuándo recibió mantenimiento, el estado de su control y la atención requerida. Un centro sin el equipo figura como «No tiene este equipo». El estado de un conjunto de controles es el de su peor integrante; un equipo con unidades pero sin controles programados figura «Sin programar».
 - Las cifras salen de las mismas funciones que usan los módulos de origen (`conteoPorCondicion`, `resumenInventario`, `controlesPendientes`, `resumirEstadoVehiculos`, `resumirAvisos`), por lo que coinciden con ellos.

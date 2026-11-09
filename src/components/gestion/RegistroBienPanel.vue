@@ -12,6 +12,22 @@
           <q-btn flat dense color="secondary" icon="close" label="Quitar inventario previo" @click="quitarPrevio" />
         </template>
         <q-form ref="formulario" class="column q-gutter-y-md" @submit="guardar">
+          <!-- Registro rápido (SPEC 011, Ola 3): una frase dictada o escrita completa tipo, condición, cantidad y adquisición. -->
+          <q-input
+            v-model="rapido"
+            outlined
+            dense
+            autogrow
+            label="Registro rápido (opcional)"
+            hint="Dicte o escriba, p. ej.: «silla de estudio, buena, 4 unidades, del 2019». Se revisa antes de aplicar."
+            @keydown.enter.prevent="completarRapido"
+          >
+            <template #prepend><q-icon name="bolt" aria-hidden="true" /></template>
+            <template #append>
+              <boton-dictado v-model="rapido" />
+              <q-btn flat dense no-caps color="primary" icon="auto_fix_high" label="Completar" :disable="!rapido?.trim()" @click="completarRapido" />
+            </template>
+          </q-input>
           <div class="row q-col-gutter-md">
             <q-select v-model="form.tipoId" class="col-12 col-sm-6" :options="opcionesTipo" emit-value map-options outlined dense label="Tipo de bien *" :rules="[requerido]" @update:model-value="alCambiarTipo">
               <template #append><boton-dictado v-model="form.tipoId" tipo="opcion" :opciones="opcionesTipo" emit-value /></template>
@@ -169,6 +185,7 @@ import { useBorrador } from 'src/composables/useBorrador'
 import { db, bienPorId, bienesDeAmbiente, textoUbicacion, tipoPorId, ubicacionDeAmbiente, vigentes } from 'src/services/datos'
 import { informarVerificacion, numeroONulo, registrarBien, rotuloSugerido } from 'src/services/acciones'
 import { OPCIONES_CATEGORIA, condicion } from 'src/config/catalogos'
+import { interpretarRegistro } from 'src/utils/interpretacionVoz'
 import { minimo, requerido } from 'src/utils/validaciones'
 import { fecha, plural, soles } from 'src/utils/formato'
 
@@ -182,7 +199,9 @@ const RESULTADOS = {
 const props = defineProps({
   ambiente: { type: Object, required: true },
   // Rótulo del bien del que el nuevo bien será componente; null = bien directo del ambiente.
-  asociarA: { type: String, default: null }
+  asociarA: { type: String, default: null },
+  // Tipo de bien preseleccionado (p. ej. «Registrar extintor» desde la pestaña de seguridad). Se mantiene al «registrar otro».
+  tipoInicial: { type: String, default: null }
 })
 
 // `registrado`: se creó un bien (siga o no el panel abierto). `terminar`: «Guardar» cierra el modo y muestra el bien creado.
@@ -206,6 +225,13 @@ const opcionesAsociar = computed(() =>
 const formulario = ref(null)
 const previo = ref(null)
 
+// Datos que aporta el tipo preseleccionado: forman parte del estado base, así que no cuentan como cambios sin guardar.
+function datosDelTipoInicial () {
+  const tipo = props.tipoInicial ? tipoPorId(props.tipoInicial) : null
+  if (!tipo || tipo.anulacion) return {}
+  return { tipoId: tipo.id, nombre: tipo.nombre, categoria: tipo.categoria, vidaUtilAnios: tipo.vidaUtilSugerida ?? null, rotulo: rotuloSugerido(props.ambiente.id, tipo.id) }
+}
+
 const vacio = () => ({
   tipoId: null,
   nombre: '',
@@ -221,7 +247,8 @@ const vacio = () => ({
   costo: null,
   vidaUtilAnios: null,
   asociadoA: opcionesAsociar.value.some((o) => o.value === props.asociarA) ? props.asociarA : null,
-  posicion: ''
+  posicion: '',
+  ...datosDelTipoInicial()
 })
 const form = reactive(vacio())
 
@@ -243,6 +270,38 @@ function alCambiarTipo (tipoId) {
   if (!form.nombre || !previo.value) form.nombre = tipo.nombre
   if (form.vidaUtilAnios == null && tipo.vidaUtilSugerida != null) form.vidaUtilAnios = tipo.vidaUtilSugerida
   form.rotulo = rotuloSugerido(props.ambiente.id, tipoId)
+}
+
+// ---------- Registro rápido ----------
+// Se muestra lo entendido y se aplica solo si la persona confirma; lo no reconocido no cambia el formulario.
+const rapido = ref('')
+function completarRapido () {
+  const r = interpretarRegistro(rapido.value, { tipos: opcionesTipo.value })
+  const lineas = [
+    r.tipoId ? `Tipo de bien: ${tipoPorId(r.tipoId).nombre}` : null,
+    r.condicion ? `Condición: ${condicion(r.condicion).label}` : null,
+    r.cantidad ? `Cantidad: ${r.cantidad}` : null,
+    r.fechaAdquisicion ? `Adquisición: ${fecha(r.fechaAdquisicion)}` : null
+  ].filter(Boolean)
+  if (!lineas.length) {
+    $q.notify({ type: 'warning', message: 'No se reconoció ningún dato. Pruebe con el nombre del tipo de bien, su condición, la cantidad y el año.' })
+    return
+  }
+  $q.dialog({
+    title: 'Aplicar el registro rápido',
+    message: `Se entendió: ${lineas.join(' · ')}. Revise el resultado antes de guardar; lo no reconocido queda como está.`,
+    cancel: { flat: true, icon: 'close', label: 'Cancelar', color: 'secondary' },
+    ok: { unelevated: true, icon: 'check', label: 'Aplicar', color: 'primary' }
+  }).onOk(() => {
+    if (r.tipoId) {
+      form.tipoId = r.tipoId
+      alCambiarTipo(r.tipoId)
+    }
+    if (r.condicion) form.condicion = r.condicion
+    if (r.cantidad) form.cantidad = r.cantidad
+    if (r.fechaAdquisicion) form.fechaAdquisicion = r.fechaAdquisicion
+    rapido.value = ''
+  })
 }
 
 const disponibles = computed(() => db.inventarioPrevio.filter((i) => i.carId === props.ambiente.carId && !i.bienId))

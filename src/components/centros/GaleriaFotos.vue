@@ -117,7 +117,8 @@ const accionesFoto = (foto) => [
       titulo: 'Anular fotografía',
       subtitulo: foto.titulo,
       mensaje: 'Fotografía anulada.',
-      ejecutar: (datos) => anular(foto, datos)
+      ejecutar: (datos) => anular(foto, datos),
+      registro: foto
     })
   },
   {

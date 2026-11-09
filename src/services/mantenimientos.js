@@ -43,12 +43,18 @@ export function controlDe (filtro, fechaCorte) {
   return { ultimo, proxima, estado: estadoControl(proxima, fechaCorte), dias: proxima ? diasEntre(fechaCorte, proxima) : null }
 }
 
-// Control de un vehículo. La fecha del último mantenimiento es la más reciente entre la ficha del vehículo y los registros.
+// Control de un vehículo. El último mantenimiento sale de los registros (fuente única, SPEC 011).
+// `mantenimiento.ultimoFecha` de la ficha ya no se captura: solo se lee como respaldo de datos anteriores sin registro.
 export function controlDeVehiculo (vehiculo, fechaCorte) {
   const control = controlDe({ vehiculoId: vehiculo.id, tipo: 'mantenimiento_vehiculo' }, fechaCorte)
-  const fichas = [vehiculo.mantenimiento?.ultimoFecha, control.ultimo?.fecha].filter(Boolean).sort()
-  return { ...control, ultimaFecha: fichas.at(-1) ?? null }
+  return { ...control, ultimaFecha: control.ultimo?.fecha ?? vehiculo.mantenimiento?.ultimoFecha ?? null }
 }
+
+// Tipo de mantenimiento que rige el control de un bien: la recarga para un extintor; el mantenimiento de equipo para lo demás.
+export const tipoMantenimientoDeBien = (bien) => (bien.tipoId === TIPO_EXTINTOR ? 'recarga_extintor' : 'mantenimiento_equipo')
+
+// Control único de un bien (SPEC 011): lo usan la ficha del bien, la pestaña de seguridad y la consulta por equipo.
+export const controlDeBien = (bien, fechaCorte) => controlDe({ bienId: bien.id, tipo: tipoMantenimientoDeBien(bien) }, fechaCorte)
 
 const esExtintor = (bien) => bien.tipoId === TIPO_EXTINTOR && bien.situacion === 'activo'
 const unidades = (bien) => bien.cantidad ?? 1
@@ -63,7 +69,7 @@ export function extintoresDeCentro (carId, fechaCorte) {
     db.bienes.filter((b) => b.ambienteId === ambiente.id && esExtintor(b)).map((bien) => ({
       bien,
       ambiente,
-      ...controlDe({ bienId: bien.id, tipo: 'recarga_extintor' }, fechaCorte)
+      ...controlDeBien(bien, fechaCorte)
     }))
   )
   const requeridos = car?.inmueble?.seguridad?.extintoresRequeridos ?? null
@@ -117,7 +123,7 @@ function objetivoVigente (m) {
 /**
  * Controles que requieren atención en los centros indicados (null = todos): vencidos, por vencer y extintores faltantes.
  * Cada elemento: { clave, clase: 'vencido' | 'por_vencer' | 'faltante', carId, tipo, objetivo, mantenimiento, proxima, dias, faltantes }.
- * Un control «sin programar» no se lista aquí (se ve en la ficha del centro y en el tablero).
+ * Un control «sin programar» no se lista aquí (se ve en la ficha del centro y en la situación por centro de Inicio).
  */
 export function controlesPendientes (carIds, fechaCorte) {
   const lista = []
@@ -134,6 +140,18 @@ export function controlesPendientes (carIds, fechaCorte) {
   }
   const peso = { vencido: 0, faltante: 1, por_vencer: 2 }
   return lista.sort((a, b) => peso[a.clase] - peso[b.clase] || (a.dias ?? 0) - (b.dias ?? 0))
+}
+
+/**
+ * Controles cuya próxima fecha cae entre la fecha de corte y `dias` días después (calendario de vencimientos).
+ * Cada elemento: { clave, carId, tipo, objetivo, mantenimiento, proxima, dias, estado }. No incluye los vencidos.
+ */
+export function proximosControles (carIds, fechaCorte, dias) {
+  return ultimosPorObjetivo(carIds)
+    .filter((m) => m.proxima && objetivoVigente(m) && carPorId(m.carId) && !carPorId(m.carId).anulacion)
+    .map((m) => ({ clave: m.id, carId: m.carId, tipo: m.tipo, objetivo: objetivoDe(m), mantenimiento: m, proxima: m.proxima, dias: diasEntre(fechaCorte, m.proxima), estado: estadoControl(m.proxima, fechaCorte) }))
+    .filter((c) => c.dias >= 0 && c.dias <= dias)
+    .sort((a, b) => a.dias - b.dias)
 }
 
 export function resumirControles (pendientes) {

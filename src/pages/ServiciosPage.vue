@@ -2,6 +2,12 @@
   <q-page class="sg-page">
     <div class="sg-page__inner">
       <page-header>
+        <template #ayuda>
+          Informar un pago registra su situación para el control del servicio; no ejecuta el pago ni restablece el suministro.
+          Un período sin información no equivale a un pendiente confirmado. Un servicio con 3 o más interrupciones en 12 meses se señala
+          como recurrente, y la renovación se avisa con 60 días de anticipación (umbrales provisionales).
+          Seleccione una celda del calendario para informar la situación del período (si su perfil puede hacerlo) o consultar su detalle.
+        </template>
         <template #acciones>
           <q-btn v-if="puedeHacer('servicio.registrar')" unelevated color="primary" icon="add" label="Registrar servicio" :disable="!car || !noRegistrados.length" @click="abrirServicio(null)" />
         </template>
@@ -19,12 +25,6 @@
         <div class="row items-center"><filtro-inactivos v-model="mostrarInactivos" /></div>
       </div>
 
-      <note-banner tono="in">
-        Informar un pago registra su situación para el control del servicio; no ejecuta el pago.
-        Un período sin información no equivale a un pendiente confirmado.
-        <template v-if="puedeHacer('servicio.periodo')">Seleccione una celda para informar su situación.</template>
-        <template v-else>Seleccione una celda para consultar el detalle del período.</template>
-      </note-banner>
 
       <section-card :titulo="`Períodos de pago · ${anio}`" sin-relleno>
         <template #acciones>
@@ -341,7 +341,8 @@ const accionesServicio = computed(() => {
         subtitulo: `${TIPOS_SERVICIO[s.tipo]} · ${car.value.nombre}`,
         aviso: 'Sus períodos y hechos se conservan como antecedente. Podrá registrarse de nuevo un servicio del mismo tipo.',
         mensaje: 'Servicio anulado.',
-        ejecutar: (datos) => anular(s, datos)
+        ejecutar: (datos) => anular(s, datos),
+      registro: s
       })
     },
     {
@@ -372,7 +373,8 @@ const accionesHecho = (h) => [
         ? 'La situación del suministro se recalcula con los hechos vigentes.'
         : 'El hecho se conserva como antecedente. La situación del período no cambia: corríjala desde la celda.',
       mensaje: 'Hecho anulado.',
-      ejecutar: (datos) => anular(h, datos)
+      ejecutar: (datos) => anular(h, datos),
+      registro: h
     })
   },
   {

@@ -206,3 +206,50 @@ export function unirDictado (actual, dictado) {
   if (!recorte || /[.!?]$/.test(recorte)) texto = texto.charAt(0).toLocaleUpperCase('es-PE') + texto.slice(1)
   return recorte ? `${recorte} ${texto}` : texto
 }
+
+// Condición dicha en masculino o femenino, singular o plural.
+const CONDICION_DICHA = [[/\binservibles?\b/, 'inservible'], [/\bmal[oa]s?\b/, 'malo'], [/\bregular(es)?\b/, 'regular'], [/\bbuen[oa]s?\b/, 'bueno']]
+
+/**
+ * Registro rápido de un bien en una sola frase (SPEC 011, Ola 3), dictada o escrita. Ejemplo:
+ * «silla de plástico, buena, cuatro unidades, del 2019» → { tipoId, condicion: 'bueno', cantidad: 4, fechaAdquisicion: '2019' }.
+ * - `tipos`: [{ value, label }] de los tipos de bien vigentes; el tipo se elige con lo que queda tras quitar los demás datos.
+ * - La adquisición acepta año («del 2019», «año dos mil diecinueve») o mes y año («de marzo de 2019»).
+ * - Lo que no se entiende queda en null: nunca se inventa un valor. Devuelve también `texto` (lo interpretado).
+ */
+export function interpretarRegistro (texto, { tipos = [] } = {}) {
+  let resto = ` ${normalizar(texto).replace(/,/g, ' , ')} `
+  const quitar = (fragmento) => { resto = resto.replace(fragmento, ' , ') }
+
+  let condicion = null
+  for (const [patron, valor] of CONDICION_DICHA) {
+    const m = resto.match(patron)
+    if (m) {
+      condicion = valor
+      quitar(m[0])
+      break
+    }
+  }
+
+  let cantidad = null
+  const mc = resto.match(/(?:cantidad\s+)?((?:[a-z0-9]+\s+y\s+)?[a-z0-9]+)\s+unidad(?:es)?\b/) ?? resto.match(/cantidad\s+((?:[a-z0-9]+\s+y\s+)?[a-z0-9]+)/)
+  if (mc) {
+    const n = aNumero(mc[1])
+    if (n != null && Number.isInteger(n) && n > 0) {
+      cantidad = n
+      quitar(mc[0])
+    }
+  }
+
+  let fechaAdquisicion = null
+  const mf = resto.match(/(?:\bdel?\b|\bano\b|adquirid[oa]s?\s+en|comprad[oa]s?\s+en|\ben\b)\s+((?:[a-z]+\s+(?:de(?:l)?\s+)?)?(?:\d{4}|dos mil(?:\s+[a-z]+)*|mil novecientos(?:\s+[a-z]+)*))/)
+  if (mf) {
+    const fragmento = mf[1].trim()
+    fechaAdquisicion = aMes(fragmento) ?? aAnio(fragmento.replace(/^[a-z]+\s+(?:del?\s+)?(?=\d|dos|mil)/, '')) ?? aAnio(fragmento)
+    if (fechaAdquisicion) quitar(mf[0])
+  }
+
+  const nombre = resto.replace(/\s*,\s*/g, ' ').replace(/\s+/g, ' ').trim()
+  const tipoId = nombre ? elegirOpcion(nombre, tipos) : null
+  return { tipoId, condicion, cantidad, fechaAdquisicion, texto: normalizar(texto) }
+}

@@ -2,11 +2,20 @@
   <q-page class="sg-page">
     <div class="sg-page__inner">
       <page-header>
+        <template #ayuda>
+          <p><strong>Clasificación principal.</strong> Cada bien cuenta una sola vez y conserva todos sus motivos.
+          Si tiene un incidente vigente que reporta necesidad, su clasificación principal es reposición aunque también haya cumplido su vida útil
+          (regla provisional: se muestran ambos motivos).</p>
+          <p class="q-mb-none">La reposición exige la baja previa del bien. Ninguno de los dos pasos se ejecuta automáticamente al registrar una necesidad.
+          Una necesidad sin precio referencial queda «sin valorar»: su costo es desconocido, no cero.</p>
+        </template>
         <template #acciones>
           <q-btn outline color="secondary" icon="download" label="Exportar CSV" :disable="!pendientes.length" @click="exportar" />
           <q-btn v-if="puedeAcceder('precios')" unelevated color="primary" icon="sell" label="Tipos de bien y precios" :to="{ name: 'precios' }" />
         </template>
       </page-header>
+
+      <registro-no-disponible v-if="tipoNoDisponible" entidad="El tipo de bien" :id="tipoPedido" :volver="{ name: 'necesidades' }" etiqueta-volver="Ver todas las necesidades" />
 
       <div class="sg-filters">
         <q-select v-model="anio" :options="ANIOS_REVISION" outlined dense label="Año a revisar">
@@ -15,20 +24,18 @@
         <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
           <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
         </q-select>
+        <q-select v-model="tipoId" :options="opcionesTipo" emit-value map-options outlined dense label="Tipo de bien">
+          <template #append><boton-dictado v-model="tipoId" tipo="opcion" :opciones="opcionesTipo" emit-value /></template>
+        </q-select>
         <q-select v-model="clase" :options="OPCIONES_CLASE" emit-value map-options outlined dense label="Clasificación principal">
           <template #append><boton-dictado v-model="clase" tipo="opcion" :opciones="OPCIONES_CLASE" emit-value /></template>
         </q-select>
         <div class="row items-center sg-chips">
           <status-chip tono="pv" label="Regla de vida útil · Por validar" />
-          <status-chip tono="pv" label="Priorización · ampliación posterior" />
+          <status-chip tono="pv" label="Priorización provisional · ver simulador" />
         </div>
       </div>
 
-      <note-banner tono="in">
-        <strong>Clasificación principal.</strong> Cada bien cuenta una sola vez y conserva todos sus motivos.
-        Si tiene un incidente vigente que reporta necesidad, su clasificación principal es reposición aunque también haya cumplido su vida útil
-        (regla provisional: se muestran ambos motivos).
-      </note-banner>
 
       <div class="sg-kpi-panel">
         <kpi-card icono="assignment_late" tono="rojo" :valor="total.cantidad" etiqueta="Necesidades de bienes pendientes" :nota="`${total.renovacion} renovación · ${total.reposicion} reposición`" />
@@ -124,7 +131,7 @@
                   <template v-else>
                     <status-chip tono="wa" label="Sin precio" />
                     <div v-if="n.tipo">
-                      <router-link v-if="puedeValorar" :to="{ name: 'precios', query: { tipo: n.tipo.id } }" class="text-weight-bold">Valorar {{ n.tipo.nombre }}</router-link>
+                      <q-btn v-if="puedeValorar" flat dense no-caps color="primary" icon="sell" :label="`Valorar ${n.tipo.nombre}`" @click="valorar(n.tipo)" />
                       <span v-else class="sg-muted">Pendiente de valoración por equipo central</span>
                     </div>
                   </template>
@@ -150,10 +157,9 @@
             </tbody>
           </table>
         </div>
-        <note-banner tono="ne" icono="info" class="q-ma-md">
-          La reposición exige la baja previa del bien. Ninguno de los dos pasos se ejecuta automáticamente al registrar una necesidad.
-        </note-banner>
       </section-card>
+
+      <simulador-presupuesto :pendientes="pendientes" :titulo-ambito="tituloAmbito" :anio="anio" />
 
       <section-card v-if="resultado.porReponer.length" titulo="Bajas pendientes de reposición" subtitulo="Informativo: ya salieron del cálculo de pendientes y no suman al total (regla por validar)">
         <div class="column q-gutter-y-sm">
@@ -204,6 +210,7 @@
     </div>
 
     <bien-accion-dialog v-model="dialogoAccion.abierto" :modo="dialogoAccion.modo" :bien="dialogoAccion.bien" />
+    <precio-dialog v-if="dialogoPrecio.tipo" v-model="dialogoPrecio.abierto" :tipo="dialogoPrecio.tipo" />
   </q-page>
 </template>
 
@@ -218,16 +225,20 @@ import StatusChip from 'components/common/StatusChip.vue'
 import KpiCard from 'components/common/KpiCard.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import BienAccionDialog from 'components/bienes/BienAccionDialog.vue'
+import PrecioDialog from 'components/precios/PrecioDialog.vue'
+import SimuladorPresupuesto from 'components/necesidades/SimuladorPresupuesto.vue'
+import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
-import { carPorId, textoUbicacion } from 'src/services/datos'
+import { carPorId, db, textoUbicacion, vigentes } from 'src/services/datos'
 import { calcularNecesidades, consolidarPorCar, totalizar } from 'src/services/necesidades'
 import { siguientePaso } from 'src/services/bienes'
 import { SITUACIONES, TIPOS_EVENTO, TODOS, condicion } from 'src/config/catalogos'
 import { ANIO_REVISION, ANIOS_REVISION } from 'src/config/demo'
 import { exportarCsv } from 'src/utils/csv'
 import { fecha, plural, soles } from 'src/utils/formato'
+import { parametro } from 'src/utils/navegacion'
 
 const CLASES = { renovacion: 'Renovación por vida útil', reposicion: 'Reposición por incidente' }
 
@@ -245,10 +256,23 @@ const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(route.query
 const anio = ref(ANIO_REVISION)
 const clase = ref(TODOS)
 
-// Al volver con «Atrás» desde un bien o desde el catálogo se conservan año, centro y clasificación.
-useEstadoNavegacion('necesidades', { anio, carId, clase })
+// ?tipo= filtra por tipo de bien (p. ej. desde Inventario o la ficha del bien); un tipo inexistente se avisa y no filtra.
+const opcionesTipo = computed(() => [
+  { label: 'Todos los tipos', value: TODOS },
+  ...vigentes(db.tiposBien).map((t) => ({ label: t.nombre, value: t.id })).sort((a, b) => a.label.localeCompare(b.label, 'es'))
+])
+const tipoPedido = parametro(route.query.tipo)
+const tipoNoDisponible = !!tipoPedido && !opcionesTipo.value.some((o) => o.value === tipoPedido)
+const tipoId = ref(tipoPedido && !tipoNoDisponible ? tipoPedido : TODOS)
 
-const puedeValorar = computed(() => puedeHacer('precio.informar') && puedeAcceder('precios'))
+// Al volver con «Atrás» desde un bien o desde el catálogo se conservan año, centro, tipo y clasificación.
+useEstadoNavegacion('necesidades', { anio, carId, clase, tipoId })
+
+const puedeValorar = computed(() => puedeHacer('precio.informar'))
+
+// Valoración en línea (SPEC 011, Ola 2): el precio se informa sin salir de Necesidades y los importes se recalculan al guardar.
+const dialogoPrecio = reactive({ abierto: false, tipo: null })
+const valorar = (tipo) => Object.assign(dialogoPrecio, { tipo, abierto: true })
 
 // Siguiente paso de la atención (baja o reposición) si el perfil puede darlo; el paso abre el formulario con el bien ya elegido.
 const pasoDe = (n) => {
@@ -269,7 +293,9 @@ const carsVisibles = computed(() => carIdsVisibles.value.map(carPorId))
 const tituloAmbito = computed(() => (carId.value === TODOS ? perfil.value.ambito.descripcion : carPorId(carId.value).nombre))
 
 const resultado = computed(() => calcularNecesidades({ anio: anio.value, carIds: carsVisibles.value.map((c) => c.id) }))
-const pendientes = computed(() => resultado.value.pendientes.filter((n) => clase.value === TODOS || n.clase === clase.value))
+const pendientes = computed(() =>
+  resultado.value.pendientes.filter((n) => (clase.value === TODOS || n.clase === clase.value) && (tipoId.value === TODOS || n.tipo?.id === tipoId.value))
+)
 const total = computed(() => totalizar(pendientes.value))
 // El consolidado usa las mismas necesidades filtradas que el detalle para que las cifras coincidan.
 const consolidado = computed(() => consolidarPorCar({ ...resultado.value, pendientes: pendientes.value }, carsVisibles.value))
@@ -287,7 +313,7 @@ const COLUMNAS_CSV = [
 ]
 
 function exportar () {
-  const ok = exportarCsv(`sigrec-necesidades-${anio.value}-${carId.value}-${clase.value}.csv`, COLUMNAS_CSV, pendientes.value)
+  const ok = exportarCsv(`sigrec-necesidades-${anio.value}-${carId.value}-${tipoId.value}-${clase.value}.csv`, COLUMNAS_CSV, pendientes.value)
   if (!ok) $q.notify({ type: 'negative', message: 'El navegador bloqueó la descarga del archivo.' })
 }
 </script>

@@ -15,6 +15,7 @@
     </template>
     <template #acciones>
       <q-btn v-if="puedeHacer('bien.registrar')" unelevated color="primary" icon="playlist_add" label="Registrar bien" :disable="!activo" @click="$emit('registrar-bien', ambiente.id)" />
+      <q-btn v-if="puedeHacer('bien.verificar')" :unelevated="!puedeHacer('bien.registrar')" :outline="puedeHacer('bien.registrar')" :color="puedeHacer('bien.registrar') ? 'secondary' : 'primary'" icon="fact_check" :label="`Verificar ambiente${porVerificar ? ` (${porVerificar} sin verificar)` : ''}`" :disable="!activo || !totalActivos" @click="dialogos.recorrido = true" />
       <q-btn v-if="puedeHacer('ambiente.actualizar')" outline color="secondary" icon="edit" label="Actualizar ambiente" :disable="!activo" @click="dialogos.ambiente = true" />
       <menu-acciones :items="accionesAmbiente" :etiqueta="`Acciones de ${ambiente.nombre}`" />
     </template>
@@ -46,7 +47,7 @@
         icono="fact_check"
         :subtitulo="evaluados ? `${evaluados} de ${ELEMENTOS_INFRAESTRUCTURA.length} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
       >
-        <estado-elementos :model-value="ambiente.estadoElementos" solo-lectura sugerir-novedad />
+        <estado-elementos :model-value="ambiente.estadoElementos" solo-lectura sugerir-novedad :accion-novedad="activo && puedeHacer('novedad.registrar')" @registrar-novedad="novedadDesdeElementos" />
       </section-card>
       <section-card titulo="Mobiliario y equipos" icono="chair" subtitulo="Se calcula con los bienes activos del ambiente; no se captura aparte">
         <div v-if="totalActivos" class="sg-chips">
@@ -135,7 +136,8 @@
   </detalle-panel>
 
   <ambiente-dialog v-model="dialogos.ambiente" :centro="centro" :ambiente="ambiente" @hecho="(id) => $emit('seleccionar', nodoAmbienteId(id))" />
-  <novedad-dialog v-model="dialogoNovedad.abierto" :ambiente="ambiente" :novedad="dialogoNovedad.novedad" />
+  <recorrido-verificacion v-model="dialogos.recorrido" :ambiente="ambiente" @seleccionar="(id) => $emit('seleccionar', id)" />
+  <novedad-dialog v-model="dialogoNovedad.abierto" :ambiente="ambiente" :novedad="dialogoNovedad.novedad" :sugerencia="dialogoNovedad.sugerencia" />
   <intervencion-dialog v-model="dialogoIntervencion.abierto" :ambiente="ambiente" :intervencion="dialogoIntervencion.intervencion" />
   <atencion-dialog v-if="dialogoAtencion.novedad" v-model="dialogoAtencion.abierto" :novedad="dialogoAtencion.novedad" />
   <pendientes-ambiente-dialog v-model="dialogos.pendientes" :ambiente="ambiente" @continuar="pedirAnulacionAmbiente" />
@@ -158,6 +160,7 @@ import AtencionDialog from 'components/centros/AtencionDialog.vue'
 import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
 import PendientesAmbienteDialog from 'components/centros/PendientesAmbienteDialog.vue'
 import EstadoElementos from 'components/common/EstadoElementos.vue'
+import RecorridoVerificacion from 'components/bienes/RecorridoVerificacion.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { bienesDeAmbiente, carPorId, textoUbicacion, ubicacionDeAmbiente, vigente } from 'src/services/datos'
@@ -210,12 +213,20 @@ const caracteristicas = computed(() => {
   ].filter(Boolean).join(', ') || 'No informadas'
 })
 
-const dialogos = reactive({ ambiente: false, pendientes: false })
-const dialogoNovedad = reactive({ abierto: false, novedad: null })
+const dialogos = reactive({ ambiente: false, pendientes: false, recorrido: false })
+// Bienes activos sin ninguna verificación: invitan a hacer el recorrido.
+const porVerificar = computed(() => bienesDeAmbiente(props.ambiente.id).filter((b) => b.situacion === 'activo' && !b.verificacion).length)
+const dialogoNovedad = reactive({ abierto: false, novedad: null, sugerencia: null })
 const dialogoIntervencion = reactive({ abierto: false, intervencion: null })
 const dialogoAtencion = reactive({ abierto: false, novedad: null })
 
-const abrirNovedad = (novedad) => Object.assign(dialogoNovedad, { abierto: true, novedad })
+const abrirNovedad = (novedad, sugerencia = null) => Object.assign(dialogoNovedad, { abierto: true, novedad, sugerencia })
+// Desde los elementos en mal estado: la novedad se precarga, pero la persona la revisa y la registra.
+const novedadDesdeElementos = (criticos) => abrirNovedad(null, {
+  titulo: `${criticos.map((c) => c.label).join(', ')} en mal estado`,
+  detalle: `Elementos evaluados en condición mala o inservible: ${criticos.map((c) => `${c.label} (${condicion(props.ambiente.estadoElementos[c.key]).label.toLowerCase()})`).join(', ')}.`,
+  requiereEvaluacion: true
+})
 const abrirIntervencion = (intervencion) => Object.assign(dialogoIntervencion, { abierto: true, intervencion })
 const abrirAtencion = (novedad) => Object.assign(dialogoAtencion, { abierto: true, novedad })
 
@@ -243,7 +254,8 @@ const pedirAnulacionAmbiente = () => {
     dependencias: dependenciasDeAmbiente(amb),
     aviso: 'El ambiente y su historial se conservan; deja de ofrecerse para registrar bienes y puede reactivarse con «Mostrar inactivos».',
     mensaje: 'Ambiente anulado.',
-    ejecutar: (datos) => anularAmbiente(amb, datos)
+    ejecutar: (datos) => anularAmbiente(amb, datos),
+    registro: amb
   })
 }
 
@@ -276,7 +288,8 @@ const accionesNovedad = (n) => [
       subtitulo: n.titulo,
       aviso: 'Una novedad anulada deja de generar necesidad de infraestructura.',
       mensaje: 'Novedad anulada.',
-      ejecutar: (datos) => anular(n, datos)
+      ejecutar: (datos) => anular(n, datos),
+      registro: n
     })
   },
   { label: 'Reactivar novedad', icono: 'restore', visible: puedeHacer('novedad.anular') && !vigente(n), accion: () => pedirReactivacion({ entidad: 'novedad', registro: n, nombre: 'Novedad' }) }
@@ -293,7 +306,8 @@ const accionesIntervencion = (i) => [
       titulo: 'Anular intervención',
       subtitulo: i.descripcion,
       mensaje: 'Intervención anulada.',
-      ejecutar: (datos) => anular(i, datos)
+      ejecutar: (datos) => anular(i, datos),
+      registro: i
     })
   },
   { label: 'Reactivar intervención', icono: 'restore', visible: puedeHacer('intervencion.anular') && !vigente(i), accion: () => pedirReactivacion({ entidad: 'intervencion', registro: i, nombre: 'Intervención' }) }

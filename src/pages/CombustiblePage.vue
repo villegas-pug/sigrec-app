@@ -2,6 +2,10 @@
   <q-page class="sg-page">
     <div class="sg-page__inner">
       <page-header>
+        <template #ayuda>
+          Todas las cantidades se expresan en litros. Cargas y consumos se muestran por separado y no se restan entre sí sin una regla acordada.
+          Un recorrido solo es comparable si tiene distancia, rendimiento de referencia y consumo declarado.
+        </template>
         <template #acciones>
           <q-btn v-if="puedeAcceder('itinerarios')" outline color="secondary" icon="route" label="Itinerarios" :to="{ name: 'itinerarios', query: vehiculoId ? { vehiculo: vehiculoId } : {} }" />
           <q-btn v-if="puedeHacer('combustible.informar')" unelevated color="primary" icon="local_gas_station" label="Informar combustible" :disable="!vehiculo" @click="abrir(null)" />
@@ -23,9 +27,6 @@
           <kpi-card icono="rule" tono="verde" :valor="`${comparables.length} de ${conConsumo.length}`" etiqueta="Recorridos comparables" nota="Con distancia, rendimiento y consumo declarado" />
         </div>
 
-        <note-banner tono="ne" icono="straighten">
-          Todas las cantidades se expresan en litros. Cargas y consumos se muestran por separado y no se restan entre sí sin una regla acordada.
-        </note-banner>
 
         <section-card titulo="Registros de combustible" sin-relleno>
           <template #acciones>
@@ -217,7 +218,8 @@ const accionesRegistro = (r) => [
         ? 'El consumo se desvincula del recorrido, que queda libre para declarar otro consumo.'
         : 'La carga deja de sumarse al total cargado al vehículo.',
       mensaje: 'Registro de combustible anulado.',
-      ejecutar: (datos) => anularCombustible(r, datos)
+      ejecutar: (datos) => anularCombustible(r, datos),
+      deshacer: () => reactivarCombustible(r)
     })
   },
   {

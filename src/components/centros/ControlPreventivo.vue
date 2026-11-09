@@ -1,14 +1,26 @@
 <template>
-  <note-banner tono="in">
-    Control preventivo del centro: extintores, fumigación y el historial de mantenimientos (también de equipos y vehículos).
-    Los plazos son provisionales, por validar con las direcciones de los centros. Un control «sin programar» no está al día: falta su próxima fecha.
-  </note-banner>
-
-  <section-card titulo="Extintores" icono="fire_extinguisher" subtitulo="Son bienes del tipo «Extintor»: se registran desde el ambiente con «Registrar bien»">
+  <section-card titulo="Extintores" icono="fire_extinguisher" subtitulo="Son bienes del tipo «Extintor» de los ambientes del centro">
+    <template #acciones>
+      <ayuda-contextual etiqueta="¿Cómo se calcula el control preventivo?">
+        Extintores, fumigación y el historial de mantenimientos (también de equipos y vehículos). Los faltantes se calculan contra la dotación requerida;
+        si no se definió, no se calculan. Los plazos son provisionales, por validar con las direcciones de los centros. Un control «sin programar»
+        no está al día: falta su próxima fecha.
+      </ayuda-contextual>
+      <q-btn v-if="puedeHacer('mantenimiento.registrar') && activo && extintores.lista.length > 1" outline color="secondary" icon="done_all" label="Registrar recarga de todos" @click="abrirLote" />
+      <q-btn-dropdown v-if="puedeHacer('bien.registrar') && activo && ambientes.length" outline color="secondary" icon="add" label="Registrar extintor">
+        <q-list dense>
+          <q-item-label header>¿En qué ambiente?</q-item-label>
+          <q-item v-for="a in ambientes" :key="a.id" v-close-popup clickable @click="$emit('registrar-extintor', a.id)">
+            <q-item-section>{{ a.nombre }}</q-item-section>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>
+    </template>
     <div class="sg-kv-grid">
-      <key-value etiqueta="Requeridos" nota="Se define en «Actualizar ficha»">
+      <key-value etiqueta="Requeridos">
         <template v-if="extintores.requeridos != null">{{ extintores.requeridos }}</template>
         <status-chip v-else tono="si" label="No informado" />
+        <q-btn v-if="puedeHacer('centro.actualizar') && activo" flat dense no-caps color="secondary" icon="edit" :label="extintores.requeridos != null ? 'Cambiar dotación' : 'Definir dotación'" class="q-ml-xs" @click="dialogoFicha = true" />
       </key-value>
       <key-value etiqueta="Activos">{{ extintores.activos }}</key-value>
       <key-value etiqueta="Dotación">
@@ -91,22 +103,25 @@
     :mantenimiento="dialogo.mantenimiento"
     :tipo-inicial="dialogo.tipo"
     :bien-id="dialogo.bienId"
+    :bien-ids="dialogo.bienIds"
   />
+  <centro-ficha-dialog v-model="dialogoFicha" :centro="centro" />
   <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, reactive } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import KeyValue from 'components/common/KeyValue.vue'
-import NoteBanner from 'components/common/NoteBanner.vue'
+import AyudaContextual from 'components/common/AyudaContextual.vue'
+import CentroFichaDialog from 'components/centros/CentroFichaDialog.vue'
 import MenuAcciones from 'components/common/MenuAcciones.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import MantenimientoDialog from 'components/centros/MantenimientoDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { vigente } from 'src/services/datos'
+import { ambientesDeCar, vigente } from 'src/services/datos'
 import { anular } from 'src/services/acciones'
 import { extintoresDeCentro, fumigacionDeCentro, mantenimientosDe, objetivoDe } from 'src/services/mantenimientos'
 import { CHIP_ANULADO, ESTADOS_CONTROL, TIPOS_MANTENIMIENTO } from 'src/config/catalogos'
@@ -120,7 +135,8 @@ const props = defineProps({
   resaltado: { type: String, default: null }
 })
 
-defineEmits(['seleccionar'])
+// `registrar-extintor` (ambienteId): la página abre el registro de bien en ese ambiente con el tipo «Extintor» elegido.
+defineEmits(['seleccionar', 'registrar-extintor'])
 
 const { puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
@@ -132,8 +148,13 @@ const historial = computed(() => mantenimientosDe({ carId: props.centro.id }, { 
 
 const plazo = (dias) => (dias >= 0 ? `en ${plural(dias, 'día', 'días')}` : `hace ${plural(-dias, 'día', 'días')}`)
 
-const dialogo = reactive({ abierto: false, mantenimiento: null, tipo: null, bienId: null })
-const abrir = (mantenimiento, tipo, bienId = null) => Object.assign(dialogo, { abierto: true, mantenimiento, tipo, bienId })
+const ambientes = computed(() => ambientesDeCar(props.centro.id))
+const dialogoFicha = ref(false)
+
+const dialogo = reactive({ abierto: false, mantenimiento: null, tipo: null, bienId: null, bienIds: null })
+const abrir = (mantenimiento, tipo, bienId = null) => Object.assign(dialogo, { abierto: true, mantenimiento, tipo, bienId, bienIds: null })
+// Recarga en lote: todos los extintores activos del centro, con la misma fecha y próxima fecha (se puede quitar alguno).
+const abrirLote = () => Object.assign(dialogo, { abierto: true, mantenimiento: null, tipo: 'recarga_extintor', bienId: null, bienIds: extintores.value.lista.map((e) => e.bien.id) })
 
 // Con ?mantenimiento= se baja hasta el registro resaltado.
 onMounted(async () => {
@@ -154,7 +175,8 @@ const acciones = (m) => [
       subtitulo: `${TIPOS_MANTENIMIENTO[m.tipo]?.label ?? m.tipo} · ${fecha(m.fecha)}`,
       aviso: 'El registro se conserva como antecedente; la próxima fecha vuelve a ser la del mantenimiento anterior, si lo hay.',
       mensaje: 'Mantenimiento anulado.',
-      ejecutar: (datos) => anular(m, datos)
+      ejecutar: (datos) => anular(m, datos),
+      registro: m
     })
   },
   { label: 'Reactivar mantenimiento', icono: 'restore', visible: puedeHacer('mantenimiento.anular') && !vigente(m), accion: () => pedirReactivacion({ entidad: 'mantenimiento', registro: m, nombre: 'Mantenimiento' }) }

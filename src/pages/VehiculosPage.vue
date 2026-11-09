@@ -2,6 +2,11 @@
   <q-page class="sg-page">
     <div class="sg-page__inner">
       <page-header>
+        <template #ayuda>
+          El rendimiento de referencia es orientativo y solo sirve para estimar el combustible de un recorrido; no es una norma de consumo.
+          Un vehículo sin estado informado no cuenta como operativo, y un presupuesto sin estimar no suma como cero. El último mantenimiento
+          sale de los mantenimientos registrados.
+        </template>
         <template #acciones>
           <q-btn v-if="puedeHacer('vehiculo.registrar')" unelevated color="primary" icon="add" label="Registrar vehículo" :disable="!carsEnAmbito.length" @click="abrir(null)" />
         </template>
@@ -20,6 +25,9 @@
       </div>
 
       <div class="sg-filters">
+        <q-select v-if="opcionesCar.length > 1" v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
+          <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
+        </q-select>
         <q-select v-model="estadoFiltro" :options="OPCIONES_FILTRO_ESTADO" emit-value map-options outlined dense label="Estado operativo">
           <template #append><boton-dictado v-model="estadoFiltro" tipo="opcion" :opciones="OPCIONES_FILTRO_ESTADO" emit-value /></template>
         </q-select>
@@ -64,6 +72,7 @@
                   </div>
                   <div v-if="controlVeh(v).ultimaFecha" class="sg-muted">Último mantenimiento: {{ fecha(controlVeh(v).ultimaFecha) }}</div>
                   <status-chip v-if="controlVeh(v).proxima" v-bind="ESTADOS_CONTROL[controlVeh(v).estado]" :label="`Próximo: ${fecha(controlVeh(v).proxima)}`" />
+                  <div v-if="registroMantenimiento(v)"><router-link :to="registroMantenimiento(v)">Ver registro</router-link></div>
                 </td>
                 <td>{{ v.combustible }} · {{ v.unidad === 'L' ? 'litros' : v.unidad }}</td>
                 <td>
@@ -110,6 +119,7 @@
             </span>
             <span v-if="controlVeh(v).ultimaFecha" class="sg-muted">Último mantenimiento: {{ fecha(controlVeh(v).ultimaFecha) }}</span>
             <div v-if="controlVeh(v).proxima" class="sg-chips"><status-chip v-bind="ESTADOS_CONTROL[controlVeh(v).estado]" :label="`Próximo: ${fecha(controlVeh(v).proxima)}`" /></div>
+            <router-link v-if="registroMantenimiento(v)" :to="registroMantenimiento(v)">Ver registro del mantenimiento</router-link>
             <span v-if="v.chofer" class="sg-muted">Chofer: {{ v.chofer }}</span>
             <span class="sg-muted">{{ v.combustible }} · {{ v.unidad === 'L' ? 'litros' : v.unidad }}<template v-if="v.rendimientoKmL"> · {{ v.rendimientoKmL }} km/L</template></span>
             <span class="sg-muted">{{ plural(itinerariosDeVehiculo(v.id).length, 'itinerario', 'itinerarios') }}</span>
@@ -127,9 +137,6 @@
         </div>
       </section-card>
 
-      <note-banner tono="in">
-        El rendimiento de referencia es orientativo y solo sirve para estimar el combustible de un recorrido; no es una norma de consumo.
-      </note-banner>
     </div>
 
     <vehiculo-dialog v-model="dialogo.abierto" :vehiculo="dialogo.vehiculo" />
@@ -155,6 +162,7 @@ import AnularDialog from 'components/common/AnularDialog.vue'
 import VehiculoDialog from 'components/movilidad/VehiculoDialog.vue'
 import MantenimientoDialog from 'components/centros/MantenimientoDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
+import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { carPorId, itinerarioPorId, vigente } from 'src/services/datos'
 import { itinerariosDeVehiculo } from 'src/services/combustible'
@@ -172,8 +180,11 @@ const route = useRoute()
 const { perfil, carsEnAmbito, vehiculosDelAmbito, puedeAcceder, puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
+// ?car= filtra por centro (p. ej. desde la situación por centro de Inicio); sin él se ven todos los del ámbito.
+const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(parametro(route.query.car), { todos: true })
+
 const mostrarInactivos = ref(false)
-const vehiculos = computed(() => vehiculosDelAmbito(mostrarInactivos.value))
+const vehiculos = computed(() => vehiculosDelAmbito(mostrarInactivos.value).filter((v) => carIdsVisibles.value.includes(v.carId)))
 
 // Filtro por estado operativo. «sin_informar» agrupa los vehículos sin estado registrado.
 const OPCIONES_FILTRO_ESTADO = [
@@ -192,7 +203,7 @@ const resumen = computed(() => resumirEstadoVehiculos(vehiculos.value))
 
 // Un perfil limitado a ciertos vehículos (chofer) no ve los centros sin movilidad.
 const centrosSinMovilidad = computed(() =>
-  perfil.value.ambito.vehiculoIds || estadoFiltro.value !== TODOS ? [] : carsEnAmbito.value.filter((c) => !vehiculos.value.some((v) => v.carId === c.id && vigente(v)))
+  perfil.value.ambito.vehiculoIds || estadoFiltro.value !== TODOS ? [] : carsEnAmbito.value.filter((c) => carIdsVisibles.value.includes(c.id)).filter((c) => !vehiculos.value.some((v) => v.carId === c.id && vigente(v)))
 )
 
 // En móvil y tableta las tablas anchas pasan a tarjetas, para no desplazar la página en horizontal.
@@ -202,6 +213,8 @@ const compacto = computed(() => $q.screen.lt.md)
 // el rendimiento y se ofrece volver a ese recorrido. Un vehículo fuera del ámbito del perfil no se muestra ni se sustituye por otro.
 const vehiculoPedido = parametro(route.query.vehiculo)
 const vehiculoSolicitado = computed(() => (vehiculoPedido ? vehiculosDelAmbito(true).find((v) => v.id === vehiculoPedido) ?? null : null))
+// Un vehículo pedido de otro centro que el filtrado muestra su centro, para no ocultarlo.
+if (vehiculoSolicitado.value && carId.value !== TODOS && carId.value !== vehiculoSolicitado.value.carId) carId.value = vehiculoSolicitado.value.carId
 if (vehiculoSolicitado.value?.anulacion) mostrarInactivos.value = true
 const vehiculoNoDisponible = !!vehiculoPedido && !vehiculoSolicitado.value
 const vehiculoDestacado = vehiculoSolicitado.value?.id ?? null
@@ -211,6 +224,11 @@ const dialogo = reactive({ abierto: false, vehiculo: null })
 
 // El control del vehículo combina la ficha y los mantenimientos registrados; el historial completo está en la ficha del centro.
 const controlVeh = (v) => controlDeVehiculo(v, FECHA_CORTE)
+// El registro y el historial del mantenimiento están en la pestaña de seguridad del centro (si el perfil accede a ella).
+const registroMantenimiento = (v) => {
+  const ultimo = controlVeh(v).ultimo
+  return ultimo && puedeAcceder('centros') ? { name: 'centros', query: { mantenimiento: ultimo.id } } : null
+}
 const mantenimiento = reactive({ abierto: false, centro: null, vehiculoId: null })
 function registrarMantenimientoDe (v) {
   Object.assign(mantenimiento, { centro: carPorId(v.carId), vehiculoId: v.id, abierto: true })
@@ -241,7 +259,8 @@ const accionesVehiculo = (v) => [
       subtitulo: `${v.tipo} · ${v.id} · placa ${v.placa}`,
       aviso: 'Sus itinerarios y registros de combustible se conservan como antecedente, pero dejan de contar mientras el vehículo esté anulado.',
       mensaje: 'Vehículo anulado.',
-      ejecutar: (datos) => anular(v, datos)
+      ejecutar: (datos) => anular(v, datos),
+      registro: v
     })
   },
   {

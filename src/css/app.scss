@@ -578,6 +578,13 @@ a {
   line-height: 22px;
 }
 
+// Una etiqueta larga dentro de una ficha se ajusta al ancho de su celda en lugar de desbordar la página.
+.sg-kv__value .sg-chip {
+  max-width: 100%;
+  white-space: normal;
+  border-radius: 14px;
+}
+
 .sg-kv__note,
 .sg-muted {
   color: var(--sg-muted);

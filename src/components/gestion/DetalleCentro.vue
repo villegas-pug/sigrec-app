@@ -68,11 +68,11 @@
     </template>
 
     <template #seguridad>
-      <control-preventivo :centro="centro" :inactivos="inactivos" :resaltado="mantenimientoResaltado" @seleccionar="(id) => $emit('seleccionar', id)" />
+      <control-preventivo :centro="centro" :inactivos="inactivos" :resaltado="mantenimientoResaltado" @seleccionar="(id) => $emit('seleccionar', id)" @registrar-extintor="(ambienteId) => $emit('registrar-bien', ambienteId, TIPO_EXTINTOR)" />
     </template>
 
     <template #ambientes>
-      <section-card :titulo="`Ambientes del centro (${ambientes.length})`" subtitulo="Seleccione un ambiente para ver su ficha, galería, novedades y bienes" sin-relleno>
+      <section-card :titulo="`Ambientes del centro (${ambientes.length})`" subtitulo="Condición, novedades abiertas y elementos críticos de cada ambiente; selecciónelo para ver el detalle" sin-relleno>
         <div v-for="amb in ambientes" :key="amb.id" class="sg-borde-superior row items-center justify-between q-px-md q-py-sm">
           <div class="column">
             <button type="button" class="sg-row-btn text-weight-bold self-start" @click="$emit('seleccionar', nodoAmbienteId(amb.id))"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ amb.nombre }}</button>
@@ -81,6 +81,8 @@
           <div class="sg-chips">
             <status-chip v-bind="condicion(amb.condicion)" />
             <status-chip v-if="amb.anulacion" v-bind="CHIP_ANULADO" />
+            <status-chip v-if="novedadesAbiertas(amb).length" tono="da" :label="plural(novedadesAbiertas(amb).length, 'novedad abierta', 'novedades abiertas')" />
+            <status-chip v-if="elementosCriticos(amb.estadoElementos).length" tono="wa" :label="plural(elementosCriticos(amb.estadoElementos).length, 'elemento crítico', 'elementos críticos')" />
             <status-chip tono="ne" :label="plural(bienesDeAmbiente(amb.id).filter((b) => b.situacion === 'activo').length, 'bien activo', 'bienes activos')" />
           </div>
         </div>
@@ -113,10 +115,11 @@ import { useAnulacion } from 'src/composables/useAnulacion'
 import { ambientesDeCar, bienesDeAmbiente, vigente } from 'src/services/datos'
 import { nodoAmbienteId } from 'src/services/bienes'
 import { anular, dependenciasDeCentro } from 'src/services/acciones'
-import { cantidadEvaluados } from 'src/services/infraestructura'
+import { cantidadEvaluados, elementosCriticos } from 'src/services/infraestructura'
+import { novedadesAbiertas } from 'src/services/situacion'
 import { controlesPendientes, resumirControles } from 'src/services/mantenimientos'
 import { FECHA_CORTE } from 'src/config/demo'
-import { CHIP_ANULADO, ELEMENTOS_INFRAESTRUCTURA, condicion, condicionInmueble } from 'src/config/catalogos'
+import { CHIP_ANULADO, ELEMENTOS_INFRAESTRUCTURA, TIPO_EXTINTOR, condicion, condicionInmueble } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
 
 const props = defineProps({
@@ -128,7 +131,7 @@ const props = defineProps({
   conVolver: { type: Boolean, default: false }
 })
 
-defineEmits(['seleccionar', 'volver'])
+defineEmits(['seleccionar', 'volver', 'registrar-bien'])
 
 const { puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
@@ -173,7 +176,8 @@ const accionesCentro = computed(() => {
         subtitulo: `${c.nombre} · ${c.id}`,
         dependencias: dependenciasDeCentro(c),
         mensaje: 'Centro anulado.',
-        ejecutar: (datos) => anular(c, datos)
+        ejecutar: (datos) => anular(c, datos),
+      registro: c
       })
     },
     {
