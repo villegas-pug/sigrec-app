@@ -1,5 +1,5 @@
 <template>
-  <div class="column q-gutter-sm">
+  <div class="sg-itinerary-map">
     <template v-if="!soloLectura">
       <q-select ref="selectorBusqueda" v-model="resultadoElegido" outlined dense clearable use-input hide-selected fill-input
         input-debounce="500" :options="resultados" :loading="buscando" label="Buscar dirección o lugar"
@@ -7,11 +7,11 @@
         <template #append><boton-dictado :model-value="consultaBusqueda" @update:model-value="dictarBusqueda" /></template>
         <template #no-option><q-item><q-item-section class="text-grey">{{ mensajeBusqueda }}</q-item-section></q-item></template>
       </q-select>
-      <div v-if="errorBusqueda" class="row items-center q-gutter-sm" role="status">
+      <div v-if="errorBusqueda" class="sg-itinerary-map__actions" role="status">
         <span>No se pudo conectar con el servicio de búsqueda.</span>
         <q-btn flat dense color="secondary" icon="refresh" label="Reintentar" @click="reintentarBusqueda" />
       </div>
-      <div class="row items-center q-gutter-sm">
+      <div class="sg-itinerary-map__actions">
         <q-btn outline color="secondary" icon="my_location" label="Mi ubicación" :loading="ubicando" @click="localizar(false)" />
         <q-btn v-if="previsualizacion" unelevated color="primary" icon="add_location" label="Añadir punto" @click="anadirPunto" />
         <span v-if="previsualizacion" class="sg-muted">{{ previsualizacion.nombre }}</span>
@@ -19,32 +19,36 @@
       <div v-if="avisoUbicacion" role="status" class="sg-muted">{{ avisoUbicacion }}</div>
       <div class="sg-muted">Seleccione una dirección o haga clic en el mapa y pulse «Añadir punto». Arrastre los puntos para ajustarlos.</div>
     </template>
-    <div class="row q-gutter-sm">
+    <div class="sg-itinerary-map__actions">
       <q-btn outline dense color="secondary" icon="zoom_out_map" label="Ver todos los puntos" :disable="!puntos.length" @click="verTodos" />
       <q-btn outline dense color="secondary" icon="location_on" label="Ir al origen" :disable="!puntos.length" @click="centrarPunto(puntos[0])" />
     </div>
     <div class="sg-map-layout">
-    <div class="sg-map-layout__map"><div ref="contenedor" style="height: 320px; width: 100%" aria-label="Mapa del itinerario" /></div>
-    <div class="sg-map-layout__points column q-gutter-sm">
-      <div v-for="(p, i) in puntos" :key="p.id" class="sg-map-point">
-        <div class="sg-map-point__field">
-        <span>{{ i + 1 }}</span>
-        <q-input v-if="!soloLectura" v-model="p.nombre" dense outlined class="col" :label="i === 0 ? 'Origen' : i === puntos.length - 1 ? 'Destino' : 'Parada'">
-          <template #append><boton-dictado v-model="p.nombre" /></template>
-        </q-input>
-        <span v-else class="col">{{ p.nombre }}</span>
+      <div class="sg-map-layout__map"><div ref="contenedor" class="sg-map-layout__canvas" aria-label="Mapa del itinerario" /></div>
+      <div class="sg-map-layout__points">
+        <div v-if="puntos.length" class="sg-map-layout__list" role="region" aria-label="Puntos del itinerario" tabindex="0">
+          <div v-for="(p, i) in puntos" :key="p.id" class="sg-map-point">
+            <div class="sg-map-point__field">
+              <span>{{ i + 1 }}</span>
+              <q-input v-if="!soloLectura" v-model="p.nombre" dense outlined class="col" :label="i === 0 ? 'Origen' : i === puntos.length - 1 ? 'Destino' : 'Parada'">
+              <template #append><boton-dictado v-model="p.nombre" /></template>
+              </q-input>
+              <span v-else class="col">{{ p.nombre }}</span>
+            </div>
+            <div class="sg-map-point__actions">
+              <q-btn flat dense icon="center_focus_strong" :aria-label="`Centrar punto ${i + 1}: ${p.nombre}`" @click="centrarPunto(p)" />
+              <q-btn v-if="!soloLectura" flat dense icon="arrow_upward" :disable="i === 0" aria-label="Subir punto" @click="mover(i, -1)" />
+              <q-btn v-if="!soloLectura" flat dense icon="arrow_downward" :disable="i === puntos.length - 1" aria-label="Bajar punto" @click="mover(i, 1)" />
+              <q-btn v-if="!soloLectura" flat dense icon="delete" aria-label="Eliminar punto" @click="puntos.splice(i, 1)" />
+            </div>
+          </div>
         </div>
-        <div class="sg-map-point__actions">
-        <q-btn flat dense icon="center_focus_strong" :aria-label="`Centrar punto ${i + 1}: ${p.nombre}`" @click="centrarPunto(p)" />
-        <q-btn v-if="!soloLectura" flat dense icon="arrow_upward" :disable="i === 0" aria-label="Subir punto" @click="mover(i, -1)" />
-        <q-btn v-if="!soloLectura" flat dense icon="arrow_downward" :disable="i === puntos.length - 1" aria-label="Bajar punto" @click="mover(i, 1)" />
-        <q-btn v-if="!soloLectura" flat dense icon="delete" aria-label="Eliminar punto" @click="puntos.splice(i, 1)" />
+        <div v-if="!soloLectura" class="sg-map-layout__controls">
+          <q-btn v-if="!soloLectura && puntos.length" flat color="secondary" icon="keyboard_return" label="Volver al origen" @click="volver" />
+          <div v-if="!soloLectura" class="sg-map-layout__status" role="status">{{ estadoTexto }}</div>
+          <q-btn v-if="!soloLectura && estado === 'error'" outline color="secondary" icon="refresh" label="Reintentar" @click="calcular" />
         </div>
       </div>
-      <q-btn v-if="!soloLectura && puntos.length" flat color="secondary" icon="keyboard_return" label="Volver al origen" @click="volver" />
-      <div v-if="!soloLectura" class="sg-map-layout__status" role="status">{{ estadoTexto }}</div>
-      <q-btn v-if="!soloLectura && estado === 'error'" outline color="secondary" icon="refresh" label="Reintentar" @click="calcular" />
-    </div>
     </div>
   </div>
 </template>

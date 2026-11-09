@@ -1035,10 +1035,34 @@ tr {
   border-bottom: 1px solid var(--sg-border-soft);
   padding-bottom: 6px;
 }
-.sg-map-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; min-width: 0; }
+.sg-itinerary-map {
+  container: itinerary-map / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.sg-itinerary-map__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.sg-itinerary-map__actions > * { min-width: 0; }
+.sg-map-layout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 16px; min-width: 0; }
 .sg-map-layout__map, .sg-map-layout__points { min-width: 0; }
-.sg-map-layout__points.column { flex-wrap: nowrap; }
+.sg-map-layout__canvas { height: 320px; width: 100%; }
+.sg-map-layout__points, .sg-map-layout__list, .sg-map-layout__controls { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.sg-map-layout__list > *, .sg-map-layout__controls, .sg-map-layout__controls > * { flex-shrink: 0; }
+.sg-map-layout__list:focus-visible { outline: 2px solid var(--sg-blue); outline-offset: -2px; }
 .sg-map-layout__status { padding: 8px 12px; border-radius: var(--sg-radius); background: var(--sg-blue-soft); overflow-wrap: anywhere; }
+
+// El ancho del componente, también fuera de un diálogo, determina la disposición del mapa.
+@container itinerary-map (min-width: 616px) {
+  .sg-map-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sg-map-layout__points { height: 320px; }
+  .sg-map-layout__list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+  }
+}
 
 @container (max-width: 520px) {
   .sg-dialog__body .row > [class*='col-sm-'],
