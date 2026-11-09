@@ -4,6 +4,7 @@
 - **Fecha:** 2026-11-03
 - **Origen:** diagnóstico ejecutivo de SIGREC (hallazgos L01–L13) y plan priorizado P0–P6.
 - **Complementa:** SPEC 001 §8 (valores que no cambian), SPEC 003 (mantenedores) y SPEC 004 (Incidencias). Donde difieran, prevalece esta SPEC.
+- **Ampliada por:** [`010-fichas-planificacion-y-estado-operativo.md`](010-fichas-planificacion-y-estado-operativo.md) (antigüedad, renovación y recurrencia en la ficha del servicio; inventario para planificación). Los indicadores gerenciales y la gestión de personal siguen fuera de alcance.
 
 ## 0. Contrato
 

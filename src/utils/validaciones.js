@@ -9,7 +9,10 @@ export const requerido = (v) => (v !== null && v !== undefined && v !== '') || '
 
 export const mayorQueCero = (v) => (Number.isFinite(v) && v > 0) || 'Indique un valor mayor que cero'
 
-export const minimo = (min) => (v) => (Number.isFinite(v) && v >= min) || `Mínimo ${min}`
+// Campo opcional: vacío es válido; si se informa debe ser mayor que cero.
+export const opcionalMayorQueCero = (v) => v === null || v === undefined || v === '' || (Number.isFinite(v) && v > 0) || 'Indique un valor mayor que cero'
+
+export const minimo =(min) => (v) => (Number.isFinite(v) && v >= min) || `Mínimo ${min}`
 
 // Acepta 'AAAA-MM-DD' o 'AAAA-MM': los hechos no pueden ser posteriores a la fecha de corte.
 export const noFutura = (v) => !v || v <= FECHA_CORTE.slice(0, v.length) || `No puede ser posterior a la fecha de corte (${fecha(FECHA_CORTE)})`

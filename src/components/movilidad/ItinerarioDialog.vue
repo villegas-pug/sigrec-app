@@ -10,6 +10,10 @@
     @enviar="guardar"
   >
     <template v-if="modo !== 'ejecucion'">
+      <note-banner v-if="vehiculo.estadoOperativo === 'detenido'" tono="wa" icono="warning">
+        El vehículo {{ vehiculo.id }} figura como <strong>detenido</strong><template v-if="vehiculo.mantenimiento?.motivo"> ({{ vehiculo.mantenimiento.motivo }})</template>.
+        Puede registrar el itinerario, pero confirme que el recorrido es posible; el aviso no bloquea el registro.
+      </note-banner>
       <div class="sg-itinerary-heading">Datos generales</div>
       <div class="row q-col-gutter-md">
         <q-input v-model="form.fecha" class="col-12 col-sm-4" outlined dense type="date" stack-label label="Fecha *" :rules="[requerido, fechaCoherente]">
@@ -62,6 +66,7 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
+import NoteBanner from 'components/common/NoteBanner.vue'
 import MapaItinerario from 'components/movilidad/MapaItinerario.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarItinerario, informarEjecucion, numeroONulo, registrarItinerario } from 'src/services/acciones'

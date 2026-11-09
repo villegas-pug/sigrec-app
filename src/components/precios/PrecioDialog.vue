@@ -5,6 +5,7 @@
     :subtitulo="tipo.nombre"
     :ancho="480"
     etiqueta-enviar="Guardar precio"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -34,6 +35,7 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { informarPrecio } from 'src/services/acciones'
 import { FECHA_CORTE } from 'src/config/demo'
 import { fecha, soles } from 'src/utils/formato'
@@ -48,16 +50,17 @@ const emit = defineEmits(['update:modelValue'])
 const $q = useQuasar()
 
 const form = reactive({ precio: null, fechaPrecio: '', procedencia: '' })
+const { modificado, fijar } = useBorrador(form)
 
 // `immediate`: la página monta este diálogo al elegir el primer tipo, ya abierto.
 watch(() => props.modelValue, (abierto) => {
-  if (abierto) {
-    Object.assign(form, {
-      precio: props.tipo.precio,
-      fechaPrecio: props.tipo.fechaPrecio ?? FECHA_CORTE.slice(0, 7),
-      procedencia: props.tipo.procedencia ?? ''
-    })
-  }
+  if (!abierto) return
+  Object.assign(form, {
+    precio: props.tipo.precio,
+    fechaPrecio: props.tipo.fechaPrecio ?? FECHA_CORTE.slice(0, 7),
+    procedencia: props.tipo.procedencia ?? ''
+  })
+  fijar()
 }, { immediate: true })
 
 function guardar () {

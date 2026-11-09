@@ -51,6 +51,14 @@
           <key-value etiqueta="Última actualización" :nota="inmueble.actualizado.por">{{ fecha(inmueble.actualizado.fecha) }}</key-value>
         </div>
       </section-card>
+
+      <section-card
+        titulo="Estado de la infraestructura"
+        icono="fact_check"
+        :subtitulo="evaluados ? `${evaluados} de ${ELEMENTOS_INFRAESTRUCTURA.length} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
+      >
+        <estado-elementos :model-value="inmueble.construccion.estadoElementos" solo-lectura />
+      </section-card>
     </template>
 
     <template #fotos>
@@ -92,12 +100,14 @@ import AnularDialog from 'components/common/AnularDialog.vue'
 import CentroFichaDialog from 'components/centros/CentroFichaDialog.vue'
 import AmbienteDialog from 'components/centros/AmbienteDialog.vue'
 import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
+import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { ambientesDeCar, bienesDeAmbiente, vigente } from 'src/services/datos'
 import { nodoAmbienteId } from 'src/services/bienes'
 import { anular, dependenciasDeCentro } from 'src/services/acciones'
-import { CHIP_ANULADO, condicion, condicionInmueble } from 'src/config/catalogos'
+import { cantidadEvaluados } from 'src/services/infraestructura'
+import { CHIP_ANULADO, ELEMENTOS_INFRAESTRUCTURA, condicion, condicionInmueble } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
 
 const props = defineProps({
@@ -115,6 +125,7 @@ const dialogos = reactive({ ficha: false, ambiente: false })
 const inmueble = computed(() => props.centro.inmueble)
 const activo = computed(() => vigente(props.centro))
 const ambientes = computed(() => ambientesDeCar(props.centro.id, { inactivos: true }))
+const evaluados = computed(() => cantidadEvaluados(inmueble.value.construccion.estadoElementos))
 
 const tabs = computed(() => [
   { name: 'ficha', label: 'Ficha' },
@@ -129,6 +140,7 @@ const camposConstruccion = computed(() => {
     { etiqueta: 'Antigüedad', valor: c.antiguedad, nota: c.antiguedadNota },
     { etiqueta: 'Pisos', valor: c.pisos },
     { etiqueta: 'Área construida', valor: c.areaM2 ? `${c.areaM2} m²` : null },
+    { etiqueta: 'Área del terreno', valor: c.areaTerrenoM2 ? `${c.areaTerrenoM2} m²` : null },
     { etiqueta: 'Características', valor: c.caracteristicas }
   ]
 })

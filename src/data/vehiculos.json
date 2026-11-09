@@ -1,4 +1,4 @@
 [
-  { "id": "AMA-V01", "carId": "AMA", "tipo": "Camioneta", "placa": "DMO-101", "chofer": "Chofer de demostración CH-01", "combustible": "Gasohol 90", "unidad": "L", "rendimientoKmL": 8 },
-  { "id": "HOR-V01", "carId": "HOR", "tipo": "Minivan", "placa": "DMO-202", "chofer": "Chofer de demostración CH-02", "combustible": "Diésel B5", "unidad": "L", "rendimientoKmL": null }
+  { "id": "AMA-V01", "carId": "AMA", "tipo": "Camioneta", "placa": "DMO-101", "chofer": "Chofer de demostración CH-01", "combustible": "Gasohol 90", "unidad": "L", "rendimientoKmL": 8, "estadoOperativo": "operativo", "mantenimiento": { "motivo": null, "presupuestoEstimado": null, "ultimoFecha": "2026-08-14" } },
+  { "id": "HOR-V01", "carId": "HOR", "tipo": "Minivan", "placa": "DMO-202", "chofer": "Chofer de demostración CH-02", "combustible": "Diésel B5", "unidad": "L", "rendimientoKmL": null, "estadoOperativo": "requiereMantenimiento", "mantenimiento": { "motivo": "Revisión de frenos y cambio de llantas", "presupuestoEstimado": 1800, "ultimoFecha": "2025-11-12" } }
 ]

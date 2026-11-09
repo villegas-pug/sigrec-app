@@ -116,7 +116,8 @@
               <div class="column q-gutter-y-xs">
                 <status-chip v-bind="ETIQUETAS_AVISO[a.clase]" />
                 <span><strong>{{ a.nombre }}</strong> · {{ describir(a) }}</span>
-                <button v-if="a.clase !== 'interrupcion'" type="button" class="sg-row-btn self-start" @click="abrirPeriodo(a.servicio, a.celdas[0])"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />Ver detalle del período</button>
+                <button v-if="!a.celdas.length && a.servicio.id !== servicioId" type="button" class="sg-row-btn self-start" @click="seleccionarServicio(a.servicio.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />Ver ficha del servicio</button>
+                <button v-if="a.celdas.length" type="button" class="sg-row-btn self-start" @click="abrirPeriodo(a.servicio, a.celdas[0])"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />Ver detalle del período</button>
               </div>
             </li>
             <li v-if="!avisos.length" class="sg-timeline__item sg-muted">Sin pendientes ni problemas informados.</li>
@@ -149,6 +150,22 @@
             <key-value etiqueta="Situación del suministro">
               <status-chip v-if="interrupcionAbierta(servicio)" tono="wa" label="Interrumpido · restablecimiento no informado" />
               <status-chip v-else tono="ok" label="Sin interrupción abierta" />
+            </key-value>
+            <key-value etiqueta="Antigüedad del servicio" :nota="servicio.inicio ? `Desde ${fecha(servicio.inicio)}` : ''">
+              <template v-if="antiguedad">{{ antiguedad }}</template>
+              <status-chip v-else tono="si" label="Antigüedad no informada" />
+            </key-value>
+            <key-value etiqueta="Renovación o vencimiento" :nota="servicio.renovacion?.detalle || ''">
+              <template v-if="renovacion">
+                {{ fecha(renovacion.fecha) }}
+                <status-chip v-if="renovacion.vencida" tono="da" label="Fecha vencida" />
+                <status-chip v-else-if="renovacion.proxima" tono="wa" :label="`En ${plural(renovacion.dias, 'día', 'días')}`" />
+              </template>
+              <status-chip v-else tono="si" label="No informada" />
+            </key-value>
+            <key-value etiqueta="Problemas recurrentes" :nota="`Umbral provisional: ${recurrencia.umbral} o más interrupciones en ${recurrencia.meses} meses`">
+              <status-chip v-if="recurrencia.recurrente" tono="wa" :label="`Recurrente: ${plural(recurrencia.cantidad, 'interrupción', 'interrupciones')} en ${recurrencia.meses} meses`" />
+              <template v-else>{{ plural(recurrencia.cantidad, 'interrupción', 'interrupciones') }} en {{ recurrencia.meses }} meses</template>
             </key-value>
             <key-value etiqueta="Observaciones de instalación">{{ servicio.observaciones || 'Sin observaciones' }}</key-value>
           </div>
@@ -209,7 +226,7 @@ import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { servicioPorId, vigente } from 'src/services/datos'
-import { avisosDeServicios, celdasDelServicio, interrupcionAbierta, serviciosDeCar, tiposNoRegistrados } from 'src/services/servicios'
+import { antiguedadServicio, avisosDeServicios, celdasDelServicio, estadoRenovacion, interrupcionAbierta, problemasRecurrentes, serviciosDeCar, tiposNoRegistrados } from 'src/services/servicios'
 import { anular } from 'src/services/acciones'
 import { CHIP_ANULADO, ESTADOS_PERIODO, HECHOS_SERVICIO, MESES_CORTOS, PERIODICIDADES, TIPOS_SERVICIO } from 'src/config/catalogos'
 import { ANIOS_SERVICIOS, FECHA_CORTE } from 'src/config/demo'
@@ -220,7 +237,9 @@ const ETIQUETAS_AVISO = {
   pendiente_vence: { tono: 'da', label: 'Pendiente con vencimiento' },
   pendiente_sin_fecha: { tono: 'wa', label: 'Pendiente sin fecha' },
   interrupcion: { tono: 'wa', label: 'Interrupción abierta' },
-  sin_info: { tono: 'si', label: 'Sin información' }
+  sin_info: { tono: 'si', label: 'Sin información' },
+  renovacion_proxima: { tono: 'wa', label: 'Renovación próxima' },
+  renovacion_vencida: { tono: 'da', label: 'Renovación vencida' }
 }
 
 const route = useRoute()
@@ -266,6 +285,8 @@ function describir (aviso) {
   if (aviso.clase === 'pendiente_vence') return `${celda.etiqueta} pendiente. Vence el ${fecha(celda.vence)}.${motivo}`
   if (aviso.clase === 'pendiente_sin_fecha') return `${celda.etiqueta} pendiente. Sin fecha aplicable no se señala vencimiento.${motivo}`
   if (aviso.clase === 'interrupcion') return `Interrupción desde el ${fecha(aviso.interrupcion.fecha)}, sin restablecimiento informado.`
+  if (aviso.clase === 'renovacion_proxima') return `Renovación o vencimiento el ${fecha(aviso.renovacion.fecha)} (en ${plural(aviso.renovacion.dias, 'día', 'días')}).`
+  if (aviso.clase === 'renovacion_vencida') return `La fecha de renovación o vencimiento (${fecha(aviso.renovacion.fecha)}) ya pasó: confirme la renovación o actualice la ficha.`
   return `${plural(aviso.celdas.length, 'período sin información', 'períodos sin información')}: ${aviso.celdas.map((c) => c.etiqueta).join(', ')}.`
 }
 
@@ -280,6 +301,9 @@ watch(servicios, (lista) => {
   }
 }, { immediate: true })
 const servicio = computed(() => (servicioId.value ? servicioPorId(servicioId.value) : null))
+const antiguedad = computed(() => (servicio.value ? antiguedadServicio(servicio.value, FECHA_CORTE) : null))
+const renovacion = computed(() => (servicio.value ? estadoRenovacion(servicio.value, FECHA_CORTE) : null))
+const recurrencia = computed(() => problemasRecurrentes(servicio.value, FECHA_CORTE))
 const hechosOrdenados = computed(() =>
   [...(servicio.value?.hechos ?? [])].filter((h) => mostrarInactivos.value || vigente(h)).sort((a, b) => b.fecha.localeCompare(a.fecha))
 )

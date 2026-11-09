@@ -195,6 +195,8 @@ const avisos = computed(() => {
     if (a.clase === 'pendiente_vence') lista.push({ ...base, tono: 'da', etiqueta: 'Pendiente con vencimiento', texto: `${a.celdas[0].etiqueta} ${anioServicios} pendiente de pago. Vence el ${fecha(a.celdas[0].vence)}.` })
     if (a.clase === 'pendiente_sin_fecha') lista.push({ ...base, tono: 'wa', etiqueta: 'Pendiente sin fecha', texto: `${a.celdas[0].etiqueta} pendiente. Sin fecha aplicable no se señala vencimiento.` })
     if (a.clase === 'interrupcion') lista.push({ ...base, tono: 'wa', etiqueta: 'Interrupción abierta', texto: `Interrupción informada el ${fecha(a.interrupcion.fecha)}. Restablecimiento no informado.` })
+    if (a.clase === 'renovacion_proxima') lista.push({ ...base, tono: 'wa', etiqueta: 'Renovación próxima', texto: `Renovación o vencimiento el ${fecha(a.renovacion.fecha)} (en ${plural(a.renovacion.dias, 'día', 'días')}).` })
+    if (a.clase === 'renovacion_vencida') lista.push({ ...base, tono: 'da', etiqueta: 'Renovación vencida', texto: `La fecha de renovación o vencimiento (${fecha(a.renovacion.fecha)}) ya pasó. Confirme la renovación o actualice la ficha.` })
     if (a.clase === 'sin_info') lista.push({ ...base, tono: 'si', etiqueta: 'Sin información', texto: `${a.celdas.map((c) => c.etiqueta).join(', ')} sin información de pago. No equivale a un pendiente confirmado.` })
   }
 

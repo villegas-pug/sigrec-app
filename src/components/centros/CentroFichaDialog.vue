@@ -5,6 +5,7 @@
     :subtitulo="`${centro.id} · los campos vacíos quedan como información pendiente.`"
     :ancho="680"
     etiqueta-enviar="Guardar cambios"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -48,16 +49,22 @@
       <q-input v-model.number="form.pisos" class="col-6 col-sm-3" outlined dense type="number" min="1" label="Pisos">
         <template #append><boton-dictado v-model="form.pisos" tipo="numero" /></template>
       </q-input>
-      <q-input v-model.number="form.areaM2" class="col-6 col-sm-3" outlined dense type="number" min="0" label="Área (m²)">
+      <q-input v-model.number="form.areaM2" class="col-6 col-sm-3" outlined dense type="number" min="0" label="Área construida (m²)">
         <template #append><boton-dictado v-model="form.areaM2" tipo="numero" /></template>
       </q-input>
-      <q-select v-model="form.estado" class="col-12 col-sm-6" :options="OPCIONES_CONDICION" emit-value map-options clearable outlined dense label="Estado general">
+      <q-input v-model.number="form.areaTerrenoM2" class="col-6 col-sm-3" outlined dense type="number" min="0" label="Área del terreno (m²)">
+        <template #append><boton-dictado v-model="form.areaTerrenoM2" tipo="numero" /></template>
+      </q-input>
+      <q-select v-model="form.estado" class="col-12 col-sm-3":options="OPCIONES_CONDICION" emit-value map-options clearable outlined dense label="Estado general">
         <template #append><boton-dictado v-model="form.estado" tipo="opcion" :opciones="OPCIONES_CONDICION" emit-value /></template>
       </q-select>
     </div>
     <q-input v-model="form.caracteristicas" outlined dense type="textarea" autogrow label="Características">
       <template #append><boton-dictado v-model="form.caracteristicas" /></template>
     </q-input>
+
+    <div class="sg-kv__label">Estado de la infraestructura por elemento</div>
+    <estado-elementos v-model="form.estadoElementos" />
   </form-dialog>
 </template>
 
@@ -66,7 +73,10 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
+import EstadoElementos from 'components/common/EstadoElementos.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarCentro, numeroONulo } from 'src/services/acciones'
+import { completarElementos, normalizarElementos } from 'src/services/infraestructura'
 import { OPCIONES_CONDICION, OPCIONES_INMUEBLE } from 'src/config/catalogos'
 import { requerido } from 'src/utils/validaciones'
 
@@ -79,6 +89,7 @@ const emit = defineEmits(['update:modelValue'])
 const $q = useQuasar()
 
 const form = reactive({})
+const { modificado, fijar } = useBorrador(form)
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
@@ -98,9 +109,12 @@ watch(() => props.modelValue, (abierto) => {
     antiguedad: c.antiguedad ?? '',
     pisos: c.pisos,
     areaM2: c.areaM2,
+    areaTerrenoM2: c.areaTerrenoM2 ?? null,
     estado: c.estado,
-    caracteristicas: c.caracteristicas ?? ''
+    caracteristicas: c.caracteristicas ?? '',
+    estadoElementos: completarElementos(c.estadoElementos)
   })
+  fijar()
 })
 
 function guardar () {
@@ -120,8 +134,10 @@ function guardar () {
         antiguedad: form.antiguedad || null,
         pisos: numeroONulo(form.pisos),
         areaM2: numeroONulo(form.areaM2) || null,
+        areaTerrenoM2: numeroONulo(form.areaTerrenoM2) || null,
         estado: form.estado || null,
-        caracteristicas: form.caracteristicas || null
+        caracteristicas: form.caracteristicas || null,
+        estadoElementos: normalizarElementos(form.estadoElementos)
       }
     }
   })

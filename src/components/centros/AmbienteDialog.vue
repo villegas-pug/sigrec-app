@@ -36,6 +36,8 @@
     <q-input v-model="form.ultimoPintado" outlined dense type="month" stack-label label="Último pintado" hint="Vacío si no se conoce" :rules="[noFutura]">
       <template #append><boton-dictado v-model="form.ultimoPintado" tipo="mes" /></template>
     </q-input>
+    <div class="sg-kv__label">Estado de la infraestructura</div>
+    <estado-elementos v-model="form.estadoElementos" sugerir-novedad />
   </form-dialog>
 </template>
 
@@ -45,8 +47,10 @@ import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import CondicionSelector from 'components/common/CondicionSelector.vue'
+import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarAmbiente, numeroONulo, registrarAmbiente } from 'src/services/acciones'
+import { completarElementos, normalizarElementos } from 'src/services/infraestructura'
 import { noFutura, requerido } from 'src/utils/validaciones'
 
 const props = defineProps({
@@ -74,7 +78,8 @@ watch(() => props.modelValue, (abierto) => {
     puertas: a?.puertas ?? null,
     ventanas: a?.ventanas ?? null,
     condicion: a?.condicion ?? 'bueno',
-    ultimoPintado: a?.ultimoPintado ?? ''
+    ultimoPintado: a?.ultimoPintado ?? '',
+    estadoElementos: completarElementos(a?.estadoElementos)
   })
   fijar()
 })
@@ -89,7 +94,8 @@ function guardar () {
     puertas: numeroONulo(form.puertas),
     ventanas: numeroONulo(form.ventanas),
     condicion: form.condicion,
-    ultimoPintado: form.ultimoPintado || null
+    ultimoPintado: form.ultimoPintado || null,
+    estadoElementos: normalizarElementos(form.estadoElementos)
   }
   let id
   if (props.ambiente) {

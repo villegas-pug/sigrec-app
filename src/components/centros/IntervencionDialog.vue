@@ -6,6 +6,7 @@
     :subtitulo="ambiente.nombre"
     :ancho="480"
     :etiqueta-enviar="intervencion ? 'Guardar cambios' : 'Registrar'"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -24,6 +25,7 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarIntervencion, registrarIntervencion } from 'src/services/acciones'
 import { noFutura, requerido } from 'src/utils/validaciones'
 
@@ -38,11 +40,13 @@ const emit = defineEmits(['update:modelValue'])
 const $q = useQuasar()
 
 const form = reactive({})
+const { modificado, fijar } = useBorrador(form)
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
   const i = props.intervencion
   Object.assign(form, { descripcion: i?.descripcion ?? '', fecha: i?.fecha ?? '', esPintado: i?.esPintado ?? false })
+  fijar()
 })
 
 function guardar () {

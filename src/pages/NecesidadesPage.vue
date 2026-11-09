@@ -211,7 +211,7 @@
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { exportFile, useQuasar } from 'quasar'
+import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
@@ -226,6 +226,7 @@ import { calcularNecesidades, consolidarPorCar, totalizar } from 'src/services/n
 import { siguientePaso } from 'src/services/bienes'
 import { SITUACIONES, TIPOS_EVENTO, TODOS, condicion } from 'src/config/catalogos'
 import { ANIO_REVISION, ANIOS_REVISION } from 'src/config/demo'
+import { exportarCsv } from 'src/utils/csv'
 import { fecha, plural, soles } from 'src/utils/formato'
 
 const CLASES = { renovacion: 'Renovación por vida útil', reposicion: 'Reposición por incidente' }
@@ -273,24 +274,20 @@ const total = computed(() => totalizar(pendientes.value))
 // El consolidado usa las mismas necesidades filtradas que el detalle para que las cifras coincidan.
 const consolidado = computed(() => consolidarPorCar({ ...resultado.value, pendientes: pendientes.value }, carsVisibles.value))
 
+const COLUMNAS_CSV = [
+  { titulo: 'Rótulo', valor: (n) => n.id },
+  { titulo: 'Bien', valor: (n) => n.bien.nombre },
+  { titulo: 'CAR', valor: (n) => n.ubicacion.car.nombre },
+  { titulo: 'Ambiente', valor: (n) => n.ubicacion.ambiente.nombre },
+  { titulo: 'Clasificación principal', valor: (n) => CLASES[n.clase] },
+  { titulo: 'Motivos', valor: (n) => n.motivos.map((m) => m.texto).join(' | ') },
+  { titulo: 'Cantidad', valor: (n) => n.cantidad },
+  { titulo: 'Precio referencial', valor: (n) => n.precioUnitario ?? 'Sin precio' },
+  { titulo: 'Importe', valor: (n) => n.importe ?? 'Sin valorar' }
+]
+
 function exportar () {
-  const escapar = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
-  const filas = [
-    ['Rótulo', 'Bien', 'CAR', 'Ambiente', 'Clasificación principal', 'Motivos', 'Cantidad', 'Precio referencial', 'Importe'],
-    ...pendientes.value.map((n) => [
-      n.id,
-      n.bien.nombre,
-      n.ubicacion.car.nombre,
-      n.ubicacion.ambiente.nombre,
-      CLASES[n.clase],
-      n.motivos.map((m) => m.texto).join(' | '),
-      n.cantidad,
-      n.precioUnitario ?? 'Sin precio',
-      n.importe ?? 'Sin valorar'
-    ])
-  ]
-  const csv = '﻿' + filas.map((f) => f.map(escapar).join(';')).join('\r\n')
-  const ok = exportFile(`sigrec-necesidades-${anio.value}-${carId.value}-${clase.value}.csv`, csv, 'text/csv;charset=utf-8')
-  if (ok !== true) $q.notify({ type: 'negative', message: 'El navegador bloqueó la descarga del archivo.' })
+  const ok = exportarCsv(`sigrec-necesidades-${anio.value}-${carId.value}-${clase.value}.csv`, COLUMNAS_CSV, pendientes.value)
+  if (!ok) $q.notify({ type: 'negative', message: 'El navegador bloqueó la descarga del archivo.' })
 }
 </script>

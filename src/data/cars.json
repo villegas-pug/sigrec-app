@@ -15,6 +15,8 @@
         "antiguedadNota": "Estimación informada por el CAR",
         "pisos": 2,
         "areaM2": null,
+        "areaTerrenoM2": null,
+        "estadoElementos": { "techo": "regular", "estructura": "bueno", "electricas": "regular", "sanitarias": "bueno" },
         "estado": "regular",
         "caracteristicas": "Techo aligerado, escalera interior, cisterna de 5 m³, patio techado"
       },
@@ -42,6 +44,8 @@
         "antiguedadNota": "Estimación informada por el CAR",
         "pisos": 1,
         "areaM2": 640,
+        "areaTerrenoM2": 900,
+        "estadoElementos": { "techo": "regular", "estructura": "bueno", "electricas": "malo", "sanitarias": "regular" },
         "estado": "regular",
         "caracteristicas": "Un piso, patio central, cocina con instalaciones a gas"
       },
@@ -68,6 +72,7 @@
         "antiguedadNota": null,
         "pisos": 2,
         "areaM2": 820,
+        "areaTerrenoM2": 1100,
         "estado": "bueno",
         "caracteristicas": "Dos pisos, lavandería independiente, áreas verdes"
       },

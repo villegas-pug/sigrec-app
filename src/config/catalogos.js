@@ -110,6 +110,38 @@ export const HECHOS_SERVICIO = {
   correccion: { tono: 'si', label: 'Corrección de período' }
 }
 
+// Elementos cuya condición se evalúa en un ambiente y en la construcción de un centro (SPEC 010 §3; lista por validar).
+// El mobiliario y los equipos no se evalúan aquí: su estado se obtiene de los bienes registrados en el ambiente.
+export const ELEMENTOS_INFRAESTRUCTURA = [
+  { key: 'puertas', label: 'Puertas', icono: 'door_front' },
+  { key: 'ventanas', label: 'Ventanas', icono: 'window' },
+  { key: 'pintura', label: 'Pintura', icono: 'format_paint' },
+  { key: 'pisos', label: 'Pisos', icono: 'grid_on' },
+  { key: 'techo', label: 'Techo', icono: 'roofing' },
+  { key: 'estructura', label: 'Estructura', icono: 'foundation' },
+  { key: 'electricas', label: 'Instalaciones eléctricas', icono: 'electrical_services' },
+  { key: 'sanitarias', label: 'Instalaciones sanitarias', icono: 'plumbing' }
+]
+
+// Condiciones que justifican sugerir el registro de una novedad.
+export const CONDICIONES_CRITICAS = ['malo', 'inservible']
+
+// Estado operativo de un vehículo (SPEC 010 §3; criterio de «detenido» por validar).
+export const ESTADOS_VEHICULO = {
+  operativo: { label: 'Operativo', tono: 'ok', icono: 'check_circle' },
+  requiereMantenimiento: { label: 'Requiere mantenimiento', tono: 'wa', icono: 'build' },
+  detenido: { label: 'Detenido', tono: 'da', icono: 'block' }
+}
+
+export const ESTADO_VEHICULO_DESCONOCIDO = { label: 'No informado', tono: 'si', icono: 'help' }
+
+export const estadoVehiculo = (clave) => ESTADOS_VEHICULO[clave] ?? ESTADO_VEHICULO_DESCONOCIDO
+
+export const OPCIONES_ESTADO_VEHICULO = Object.entries(ESTADOS_VEHICULO).map(([value, e]) => ({ value, label: e.label }))
+
+// Estados que requieren atención (mantenimiento pendiente o vehículo detenido).
+export const ESTADOS_VEHICULO_CON_ATENCION = ['requiereMantenimiento', 'detenido']
+
 export const EVALUACIONES_COMBUSTIBLE = {
   comparable: { label: 'Comparable', tono: 'ok' },
   solo_previsto: { label: 'Solo previsto', tono: 'ne' },

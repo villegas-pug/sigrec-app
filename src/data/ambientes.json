@@ -2,6 +2,7 @@
   {
     "id": "AMA-D1", "carId": "AMA", "nombre": "Dormitorio 1", "piso": 1, "areaM2": 18, "puertas": 1, "ventanas": 2,
     "condicion": "regular", "ultimoPintado": "2023-03",
+    "estadoElementos": { "puertas": "bueno", "ventanas": "malo", "pintura": "regular", "pisos": "bueno", "estructura": "bueno" },
     "intervenciones": [
       { "descripcion": "Pintado de muros y techo", "fecha": "2023-03" },
       { "descripcion": "Cambio de chapa de la puerta", "fecha": null }
@@ -26,6 +27,7 @@
   {
     "id": "AMA-COC", "carId": "AMA", "nombre": "Cocina", "piso": 1, "areaM2": 16, "puertas": 1, "ventanas": 1,
     "condicion": "regular", "ultimoPintado": null, "intervenciones": [],
+    "estadoElementos": { "puertas": "regular", "pintura": "regular", "pisos": "bueno", "electricas": "bueno", "sanitarias": "bueno" },
     "novedades": [
       {
         "id": "NOV-002", "fecha": "2026-09-18", "tipo": "dano", "titulo": "Puerta con bisagra floja",
@@ -51,6 +53,7 @@
   {
     "id": "HOR-COC", "carId": "HOR", "nombre": "Cocina", "piso": 1, "areaM2": 20, "puertas": 1, "ventanas": 1,
     "condicion": "malo", "ultimoPintado": null, "intervenciones": [],
+    "estadoElementos": { "pintura": "malo", "pisos": "regular", "electricas": "malo", "sanitarias": "regular" },
     "novedades": [
       {
         "id": "NOV-003", "fecha": "2026-09-02", "tipo": "incendio", "titulo": "Instalaciones eléctricas afectadas por incendio",

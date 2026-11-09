@@ -4,6 +4,11 @@
     "carId": "AMA",
     "tipo": "luz",
     "periodicidad": "mensual",
+    "inicio": "2018-05",
+    "renovacion": {
+      "fecha": "2026-12-15",
+      "detalle": "Renovación anual del contrato de suministro"
+    },
     "proveedor": "Proveedor eléctrico demo",
     "suministro": "DEMO-LUZ-0011",
     "contratacion": "Suministro a nombre del arrendador; pago por el CAR",
@@ -82,7 +87,38 @@
         }
       }
     },
-    "hechos": []
+    "hechos": [
+      {
+        "fecha": "2026-02-10",
+        "tipo": "interrupcion",
+        "detalle": "Corte de energía durante la tarde."
+      },
+      {
+        "fecha": "2026-02-11",
+        "tipo": "restablecimiento",
+        "detalle": "Servicio normal."
+      },
+      {
+        "fecha": "2026-06-05",
+        "tipo": "interrupcion",
+        "detalle": "Corte de energía por la noche."
+      },
+      {
+        "fecha": "2026-06-06",
+        "tipo": "restablecimiento",
+        "detalle": "Servicio normal."
+      },
+      {
+        "fecha": "2026-09-14",
+        "tipo": "interrupcion",
+        "detalle": "Corte de energía de varias horas."
+      },
+      {
+        "fecha": "2026-09-15",
+        "tipo": "restablecimiento",
+        "detalle": "Servicio normal."
+      }
+    ]
   },
   {
     "id": "SRV-AMA-AGUA",
@@ -151,6 +187,11 @@
     "carId": "AMA",
     "tipo": "internet",
     "periodicidad": "mensual",
+    "inicio": "2024",
+    "renovacion": {
+      "fecha": "2027-02-28",
+      "detalle": "Vencimiento del plan contratado"
+    },
     "proveedor": "Proveedor de internet demo",
     "suministro": "DEMO-INT-0042",
     "contratacion": "Plan mensual contratado por el CAR",

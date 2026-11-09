@@ -1,6 +1,9 @@
 // Reglas de servicios básicos y pagos (RF-13, RF-14, RF-15).
 import { db, vigente, vigentes } from './datos'
 import { MESES_CORTOS, ORDINALES_TRIMESTRE, TIPOS_SERVICIO } from 'src/config/catalogos'
+import { PARAMETROS_SERVICIOS } from 'src/config/demo'
+import { diasEntre, mesesEntre, restarMeses } from 'src/utils/fechas'
+import { plural } from 'src/utils/formato'
 
 const PERIODOS_POR_ANIO = { mensual: 12, trimestral: 4 }
 
@@ -69,6 +72,10 @@ export function avisosDeServicios (servicios, anio, fechaCorte) {
     if (sinInfo.length) avisos.push({ clase: 'sin_info', servicio, nombre, celdas: sinInfo })
     const interrupcion = interrupcionAbierta(servicio)
     if (interrupcion) avisos.push({ clase: 'interrupcion', servicio, nombre, interrupcion, celdas: [] })
+    const renovacion = estadoRenovacion(servicio, fechaCorte)
+    if (renovacion?.proxima || renovacion?.vencida) {
+      avisos.push({ clase: renovacion.vencida ? 'renovacion_vencida' : 'renovacion_proxima', servicio, nombre, renovacion, celdas: [] })
+    }
   }
   return avisos
 }
@@ -84,3 +91,33 @@ export function resumirAvisos (avisos) {
 // Tipos de servicio sin un servicio vigente en el centro (los anulados pueden registrarse de nuevo).
 export const tiposNoRegistrados = (servicios) =>
   Object.keys(TIPOS_SERVICIO).filter((tipo) => !vigentes(servicios).some((s) => s.tipo === tipo))
+
+/**
+ * Interrupciones vigentes informadas en los últimos `meses` meses hasta la fecha de corte (inclusive).
+ * Un servicio es recurrente cuando alcanza el umbral. Se deriva de los hechos: no es un dato que se capture.
+ */
+export function problemasRecurrentes (servicio, fechaCorte, { meses = PARAMETROS_SERVICIOS.mesesRecurrencia, umbral = PARAMETROS_SERVICIOS.umbralRecurrencia } = {}) {
+  const desde = restarMeses(fechaCorte, meses)
+  const interrupciones = vigentes(servicio.hechos ?? []).filter((h) => h.tipo === 'interrupcion' && h.fecha > desde && h.fecha <= fechaCorte)
+  return { cantidad: interrupciones.length, meses, umbral, recurrente: interrupciones.length >= umbral }
+}
+
+// Antigüedad del servicio a la fecha de corte a partir de `inicio` ('AAAA' o 'AAAA-MM'); null si no se informó.
+export function antiguedadServicio (servicio, fechaCorte) {
+  if (!servicio.inicio) return null
+  const meses = Math.max(0, mesesEntre(servicio.inicio, fechaCorte.slice(0, 7)))
+  const anios = Math.floor(meses / 12)
+  const resto = meses % 12
+  if (!anios && !resto) return 'Menos de un mes'
+  // Con solo el año conocido se omiten los meses: no se inventa precisión.
+  if (servicio.inicio.length === 4) return plural(anios, 'año', 'años')
+  return [anios ? plural(anios, 'año', 'años') : null, resto ? plural(resto, 'mes', 'meses') : null].filter(Boolean).join(' y ')
+}
+
+// Estado de la renovación a la fecha de corte: días que faltan (negativos si ya pasó) y si corresponde avisar.
+export function estadoRenovacion (servicio, fechaCorte, { diasAviso = PARAMETROS_SERVICIOS.diasAvisoRenovacion } = {}) {
+  const fecha = servicio.renovacion?.fecha
+  if (!fecha) return null
+  const dias = diasEntre(fechaCorte, fecha)
+  return { fecha, dias, vencida: dias < 0, proxima: dias >= 0 && dias <= diasAviso }
+}

@@ -13,7 +13,19 @@
         <router-link v-if="puedeAcceder('itinerarios')" :to="{ name: 'itinerarios', query: { vehiculo: itinerarioOrigen.vehiculoId, itinerario: itinerarioOrigen.id } }" class="text-weight-bold">Volver al recorrido</router-link>
       </note-banner>
 
-      <section-card titulo="Movilidad por centro" :subtitulo="`${plural(vehiculos.length, 'vehículo', 'vehículos')} · ${perfil.ambito.descripcion}`" sin-relleno>
+      <div class="sg-kpi-panel">
+        <kpi-card icono="check_circle" tono="verde" :valor="resumen.operativos" etiqueta="Vehículos operativos" :nota="resumen.sinInformar ? `${plural(resumen.sinInformar, 'vehículo', 'vehículos')} sin estado informado` : `de ${resumen.total} vigentes`" />
+        <kpi-card icono="build" tono="ambar" :valor="resumen.requierenAtencion" etiqueta="Requieren atención" :nota="`${plural(resumen.detenidos, 'detenido', 'detenidos')} · ${resumen.requierenMantenimiento} por mantenimiento`" />
+        <kpi-card icono="payments" tono="azul" :valor="soles(resumen.presupuestoEstimado)" etiqueta="Presupuesto estimado" :nota="resumen.sinEstimar ? `${plural(resumen.sinEstimar, 'vehículo', 'vehículos')} sin estimar: no suman` : 'Mantenimiento de los vehículos con atención'" />
+      </div>
+
+      <div class="sg-filters">
+        <q-select v-model="estadoFiltro" :options="OPCIONES_FILTRO_ESTADO" emit-value map-options outlined dense label="Estado operativo">
+          <template #append><boton-dictado v-model="estadoFiltro" tipo="opcion" :opciones="OPCIONES_FILTRO_ESTADO" emit-value /></template>
+        </q-select>
+      </div>
+
+      <section-card titulo="Movilidad por centro" :subtitulo="`${plural(vehiculosVisibles.length, 'vehículo', 'vehículos')} · ${perfil.ambito.descripcion}`" sin-relleno>
         <template #acciones>
           <filtro-inactivos v-model="mostrarInactivos" />
         </template>
@@ -24,6 +36,7 @@
                 <th scope="col">Vehículo</th>
                 <th scope="col">Centro</th>
                 <th scope="col">Chofer relacionado</th>
+                <th scope="col">Estado operativo</th>
                 <th scope="col">Combustible</th>
                 <th scope="col">Rendimiento de referencia</th>
                 <th scope="col" class="sg-num">Itinerarios</th>
@@ -31,7 +44,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="v in vehiculos" :key="v.id" :class="{ 'sg-row--selected': v.id === vehiculoDestacado }">
+              <tr v-for="v in vehiculosVisibles" :key="v.id" :class="{ 'sg-row--selected': v.id === vehiculoDestacado }">
                 <td>
                   <span class="text-weight-bold">{{ v.tipo }} · {{ v.id }}</span>
                   <div class="sg-muted">Placa {{ v.placa }}</div>
@@ -41,6 +54,15 @@
                 <td>
                   <template v-if="v.chofer">{{ v.chofer }}</template>
                   <status-chip v-else tono="si" label="No asignado" />
+                </td>
+                <td>
+                  <status-chip v-bind="estadoVehiculo(v.estadoOperativo)" />
+                  <div v-if="requiereAtencion(v)" class="sg-muted">
+                    <template v-if="v.mantenimiento?.motivo">{{ v.mantenimiento.motivo }} · </template>
+                    <template v-if="v.mantenimiento?.presupuestoEstimado != null">{{ soles(v.mantenimiento.presupuestoEstimado) }}</template>
+                    <template v-else>Presupuesto sin estimar</template>
+                  </div>
+                  <div v-if="v.mantenimiento?.ultimoFecha" class="sg-muted">Último mantenimiento: {{ fecha(v.mantenimiento.ultimoFecha) }}</div>
                 </td>
                 <td>{{ v.combustible }} · {{ v.unidad === 'L' ? 'litros' : v.unidad }}</td>
                 <td>
@@ -57,16 +79,16 @@
               <tr v-for="c in centrosSinMovilidad" :key="c.id">
                 <td><status-chip tono="si" label="Sin movilidad registrada" /></td>
                 <td>{{ c.nombre }}</td>
-                <td colspan="5" class="sg-muted">No se ha informado ningún vehículo para este centro.</td>
+                <td colspan="6" class="sg-muted">No se ha informado ningún vehículo para este centro.</td>
               </tr>
-              <tr v-if="!vehiculos.length && !centrosSinMovilidad.length"><td colspan="7" class="sg-muted">Sin vehículos en el ámbito del perfil.</td></tr>
+              <tr v-if="!vehiculosVisibles.length && !centrosSinMovilidad.length"><td colspan="8" class="sg-muted">{{ estadoFiltro === TODOS ? 'Sin vehículos en el ámbito del perfil.' : 'Ningún vehículo tiene el estado seleccionado.' }}</td></tr>
             </tbody>
           </table>
         </div>
 
         <!-- Móvil y tableta: una tarjeta por vehículo, con sus accesos a la vista. -->
         <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
-          <div v-for="v in vehiculos" :key="v.id" class="sg-box" :class="{ 'sg-box--resaltada': v.id === vehiculoDestacado }">
+          <div v-for="v in vehiculosVisibles" :key="v.id" class="sg-box" :class="{ 'sg-box--resaltada': v.id === vehiculoDestacado }">
             <div class="row items-start no-wrap justify-between">
               <div class="column">
                 <span class="text-weight-bold">{{ v.tipo }} · {{ v.id }}</span>
@@ -76,9 +98,16 @@
             </div>
             <div class="sg-chips">
               <status-chip v-if="v.anulacion" v-bind="CHIP_ANULADO" />
+              <status-chip v-bind="estadoVehiculo(v.estadoOperativo)" />
               <status-chip v-if="!v.chofer" tono="si" label="Chofer no asignado" />
               <status-chip v-if="!v.rendimientoKmL" tono="si" label="Rendimiento no informado" />
             </div>
+            <span v-if="requiereAtencion(v)" class="sg-muted">
+              <template v-if="v.mantenimiento?.motivo">{{ v.mantenimiento.motivo }} · </template>
+              <template v-if="v.mantenimiento?.presupuestoEstimado != null">{{ soles(v.mantenimiento.presupuestoEstimado) }} estimados</template>
+              <template v-else>Presupuesto sin estimar</template>
+            </span>
+            <span v-if="v.mantenimiento?.ultimoFecha" class="sg-muted">Último mantenimiento: {{ fecha(v.mantenimiento.ultimoFecha) }}</span>
             <span v-if="v.chofer" class="sg-muted">Chofer: {{ v.chofer }}</span>
             <span class="sg-muted">{{ v.combustible }} · {{ v.unidad === 'L' ? 'litros' : v.unidad }}<template v-if="v.rendimientoKmL"> · {{ v.rendimientoKmL }} km/L</template></span>
             <span class="sg-muted">{{ plural(itinerariosDeVehiculo(v.id).length, 'itinerario', 'itinerarios') }}</span>
@@ -92,7 +121,7 @@
             <span class="text-weight-bold">{{ c.nombre }}</span>
             <span class="sg-muted">No se ha informado ningún vehículo para este centro.</span>
           </div>
-          <p v-if="!vehiculos.length && !centrosSinMovilidad.length" class="sg-muted q-mb-none">Sin vehículos en el ámbito del perfil.</p>
+          <p v-if="!vehiculosVisibles.length && !centrosSinMovilidad.length" class="sg-muted q-mb-none">{{ estadoFiltro === TODOS ? 'Sin vehículos en el ámbito del perfil.' : 'Ningún vehículo tiene el estado seleccionado.' }}</p>
         </div>
       </section-card>
 
@@ -107,12 +136,14 @@
 </template>
 
 <script setup>
+import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
+import KpiCard from 'components/common/KpiCard.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import MenuAcciones from 'components/common/MenuAcciones.vue'
@@ -124,8 +155,9 @@ import { useAnulacion } from 'src/composables/useAnulacion'
 import { carPorId, itinerarioPorId, vigente } from 'src/services/datos'
 import { itinerariosDeVehiculo } from 'src/services/combustible'
 import { anular } from 'src/services/acciones'
-import { CHIP_ANULADO } from 'src/config/catalogos'
-import { plural } from 'src/utils/formato'
+import { requiereAtencion, resumirEstadoVehiculos } from 'src/services/vehiculos'
+import { CHIP_ANULADO, ESTADOS_VEHICULO, OPCIONES_ESTADO_VEHICULO, TODOS, estadoVehiculo } from 'src/config/catalogos'
+import { fecha, plural, soles } from 'src/utils/formato'
 import { parametro } from 'src/utils/navegacion'
 
 const $q = useQuasar()
@@ -137,9 +169,24 @@ const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = use
 const mostrarInactivos = ref(false)
 const vehiculos = computed(() => vehiculosDelAmbito(mostrarInactivos.value))
 
+// Filtro por estado operativo. «sin_informar» agrupa los vehículos sin estado registrado.
+const OPCIONES_FILTRO_ESTADO = [
+  { label: 'Todos', value: TODOS },
+  ...OPCIONES_ESTADO_VEHICULO,
+  { label: 'No informado', value: 'sin_informar' }
+]
+const estadoFiltro = ref(TODOS)
+const vehiculosVisibles = computed(() =>
+  estadoFiltro.value === TODOS
+    ? vehiculos.value
+    : vehiculos.value.filter((v) => (estadoFiltro.value === 'sin_informar' ? !ESTADOS_VEHICULO[v.estadoOperativo] : v.estadoOperativo === estadoFiltro.value))
+)
+// El resumen no depende del filtro de estado: siempre describe todos los vehículos vigentes del ámbito.
+const resumen = computed(() => resumirEstadoVehiculos(vehiculos.value))
+
 // Un perfil limitado a ciertos vehículos (chofer) no ve los centros sin movilidad.
 const centrosSinMovilidad = computed(() =>
-  perfil.value.ambito.vehiculoIds ? [] : carsEnAmbito.value.filter((c) => !vehiculos.value.some((v) => v.carId === c.id && vigente(v)))
+  perfil.value.ambito.vehiculoIds || estadoFiltro.value !== TODOS ? [] : carsEnAmbito.value.filter((c) => !vehiculos.value.some((v) => v.carId === c.id && vigente(v)))
 )
 
 // En móvil y tableta las tablas anchas pasan a tarjetas, para no desplazar la página en horizontal.

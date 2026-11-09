@@ -6,6 +6,7 @@
     :subtitulo="novedad.titulo"
     :ancho="480"
     etiqueta-enviar="Marcar como atendida"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -27,6 +28,7 @@ import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { atenderNovedad } from 'src/services/acciones'
 import { FECHA_CORTE } from 'src/config/demo'
 import { noFutura, requerido } from 'src/utils/validaciones'
@@ -40,10 +42,13 @@ const emit = defineEmits(['update:modelValue'])
 const $q = useQuasar()
 
 const form = reactive({ fecha: FECHA_CORTE, detalle: '' })
+const { modificado, fijar } = useBorrador(form)
 
 // `immediate`: la página monta este diálogo al elegir la primera novedad, ya abierto.
 watch(() => props.modelValue, (abierto) => {
-  if (abierto) Object.assign(form, { fecha: FECHA_CORTE, detalle: '' })
+  if (!abierto) return
+  Object.assign(form, { fecha: FECHA_CORTE, detalle: '' })
+  fijar()
 }, { immediate: true })
 
 function guardar () {

@@ -5,6 +5,7 @@
     :titulo="novedad ? 'Actualizar novedad' : 'Registrar novedad'"
     :subtitulo="ambiente.nombre"
     :etiqueta-enviar="novedad ? 'Guardar cambios' : 'Registrar'"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -34,6 +35,7 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarNovedad, registrarNovedad } from 'src/services/acciones'
 import { OPCIONES_NOVEDAD } from 'src/config/catalogos'
 import { FECHA_CORTE } from 'src/config/demo'
@@ -50,6 +52,7 @@ const emit = defineEmits(['update:modelValue'])
 const $q = useQuasar()
 
 const form = reactive({})
+const { modificado, fijar } = useBorrador(form)
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
@@ -62,6 +65,7 @@ watch(() => props.modelValue, (abierto) => {
     ubicacion: n && n.ubicacion !== 'No informada' ? n.ubicacion : '',
     requiereEvaluacion: n?.requiereEvaluacion ?? false
   })
+  fijar()
 })
 
 function guardar () {

@@ -29,6 +29,23 @@
         <template #append><boton-dictado v-model="form.rendimientoKmL" tipo="numero" /></template>
       </q-input>
     </div>
+    <div class="sg-kv__label">Estado y mantenimiento</div>
+    <div class="row q-col-gutter-md">
+      <q-select v-model="form.estadoOperativo" class="col-12 col-sm-6" :options="OPCIONES_ESTADO_VEHICULO" emit-value map-options clearable outlined dense label="Estado operativo" hint="Vacío si no se ha informado">
+        <template #append><boton-dictado v-model="form.estadoOperativo" tipo="opcion" :opciones="OPCIONES_ESTADO_VEHICULO" emit-value /></template>
+      </q-select>
+      <q-input v-model="form.ultimoMantenimiento" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Último mantenimiento" hint="Vacío si no se conoce" :rules="[noFutura]">
+        <template #append><boton-dictado v-model="form.ultimoMantenimiento" tipo="fecha" /></template>
+      </q-input>
+      <template v-if="requiereAtencion">
+        <q-input v-model="form.motivoMantenimiento" class="col-12 col-sm-8" outlined dense label="Motivo del mantenimiento o de la detención" hint="Ej.: frenos, caja de cambios, falta de presupuesto">
+          <template #append><boton-dictado v-model="form.motivoMantenimiento" /></template>
+        </q-input>
+        <q-input v-model.number="form.presupuestoEstimado" class="col-12 col-sm-4" outlined dense type="number" min="0" step="0.01" label="Presupuesto estimado (S/)" hint="Vacío si aún no se estimó" :rules="[opcionalMayorQueCero]">
+          <template #append><boton-dictado v-model="form.presupuestoEstimado" tipo="numero" /></template>
+        </q-input>
+      </template>
+    </div>
     <note-banner v-if="vehiculo && form.carId !== vehiculo.carId" tono="in">
       Al cambiar de centro el vehículo conserva su código ({{ vehiculo.id }}) y sus itinerarios.
     </note-banner>
@@ -45,7 +62,8 @@ import { useBorrador } from 'src/composables/useBorrador'
 import { usePerfil } from 'src/composables/usePerfil'
 import { db } from 'src/services/datos'
 import { actualizarVehiculo, numeroONulo, registrarVehiculo, vehiculoSugerido } from 'src/services/acciones'
-import { requerido } from 'src/utils/validaciones'
+import { ESTADOS_VEHICULO_CON_ATENCION, OPCIONES_ESTADO_VEHICULO } from 'src/config/catalogos'
+import { noFutura, opcionalMayorQueCero, requerido } from 'src/utils/validaciones'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -65,6 +83,9 @@ const placaLibre = (v) =>
 const form = reactive({})
 const { modificado, fijar } = useBorrador(form)
 
+// El motivo y el presupuesto solo aplican si el vehículo requiere mantenimiento o está detenido.
+const requiereAtencion = computed(() => ESTADOS_VEHICULO_CON_ATENCION.includes(form.estadoOperativo))
+
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
   const v = props.vehiculo
@@ -74,19 +95,31 @@ watch(() => props.modelValue, (abierto) => {
     placa: v?.placa ?? '',
     chofer: v?.chofer ?? '',
     combustible: v?.combustible ?? '',
-    rendimientoKmL: v?.rendimientoKmL ?? null
+    rendimientoKmL: v?.rendimientoKmL ?? null,
+    estadoOperativo: v?.estadoOperativo ?? null,
+    ultimoMantenimiento: v?.mantenimiento?.ultimoFecha ?? '',
+    motivoMantenimiento: v?.mantenimiento?.motivo ?? '',
+    presupuestoEstimado: v?.mantenimiento?.presupuestoEstimado ?? null
   })
   fijar()
 })
 
 function guardar () {
+  const conAtencion = requiereAtencion.value
+  const mantenimiento = {
+    motivo: conAtencion ? form.motivoMantenimiento?.trim() || null : null,
+    presupuestoEstimado: conAtencion ? numeroONulo(form.presupuestoEstimado) : null,
+    ultimoFecha: form.ultimoMantenimiento || null
+  }
   const datos = {
     carId: form.carId,
     tipo: form.tipo,
     placa: normalizarPlaca(form.placa),
     chofer: form.chofer || null,
     combustible: form.combustible,
-    rendimientoKmL: numeroONulo(form.rendimientoKmL)
+    rendimientoKmL: numeroONulo(form.rendimientoKmL),
+    estadoOperativo: form.estadoOperativo || null,
+    mantenimiento: Object.values(mantenimiento).some((x) => x != null) ? mantenimiento : null
   }
   let id
   if (props.vehiculo) {

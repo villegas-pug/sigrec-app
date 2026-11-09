@@ -2,7 +2,7 @@
 
 Prototipo funcional para la USPNNA – INABIF. Permite administrar y revisar centros, ambientes, bienes, necesidades y presupuesto, servicios básicos, movilidad y combustible de los CAR con **datos ficticios**. No contiene información de NNA ni de personal del INABIF.
 
-- Especificación (SDD): [`001`](docs/spec/001-prototipo-sigrec.md), [`002`](docs/spec/002-acciones-y-jerarquia.md) y [`003`](docs/spec/003-centros-mantenedores-y-ux.md) (centros sin «Local», mantenedores completos y UI adaptable)
+- Especificación (SDD), en orden: [`001`](docs/spec/001-prototipo-sigrec.md) prototipo, [`002`](docs/spec/002-acciones-y-jerarquia.md) acciones y jerarquía, [`003`](docs/spec/003-centros-mantenedores-y-ux.md) centros sin «Local», mantenedores y UI adaptable, [`004`](docs/spec/004-incidencias-contexto-y-recorrido.md) incidencias, [`005`](docs/spec/005-navegacion-contexto-y-captura.md) navegación y captura rápida, [`006`](docs/spec/006-fotografias-pagos-itinerarios.md) fotografías, pagos e itinerarios, [`007`](docs/spec/007-dictado-por-voz.md) dictado por voz, [`008`](docs/spec/008-gestion-de-centros-unificada.md) gestión de centros unificada, [`009`](docs/spec/009-responsabilidad-combustible.md) responsabilidad del combustible y [`010`](docs/spec/010-fichas-planificacion-y-estado-operativo.md) fichas ampliadas, inventario para planificación y estado de vehículos. Donde difieran, prevalecen las posteriores.
 - Jerarquía: Centro › Ambiente › Bien › Componente (bien asociado a otro, p. ej. el colchón de una cama). El inmueble donde funciona el centro es parte de su ficha; no existe el nivel «Local».
 - Mantenedores: cada módulo permite registrar, actualizar y anular (baja lógica con motivo, reversible con «Mostrar inactivos»).
 - Stack: Vue 3.5 + Quasar 2.35 (`@quasar/app-vite` 2.4.1 + Vite 7, compatible con Node 22.12 o superior). Las versiones 2.5+ de `@quasar/app-vite` exigen Node 22.22.
@@ -34,8 +34,8 @@ El perfil se elige al pie del menú lateral y se recuerda en el navegador. Los a
 | Perfil | Accede a | Puede registrar o actualizar | Ámbito |
 | --- | --- | --- | --- |
 | Equipo central USPNNA (acceso total) | Todo (rutas y acciones derivadas del menú y del catálogo `TODAS_LAS_ACCIONES`) | Todos los mantenimientos (altas, ediciones y bajas lógicas); además registra y anula centros, administra los tipos de bien y sus precios y anula bajas y reposiciones registradas por error | Todos los CAR |
-| Personal del CAR | Todo salvo «Tipos de bien y precios» | Los mismos mantenimientos, sobre su centro | CAR Demo Amanecer |
-| Verificación física | Bienes, Incidencias | Verificaciones e incidentes desde la ficha del bien | CAR Demo Amanecer |
+| Personal del CAR | Todo salvo «Tipos de bien y precios» (incluye «Inventario para planificación») | Los mismos mantenimientos, sobre su centro | CAR Demo Amanecer |
+| Verificación física | Gestión de centros (solo consulta de centro y ambiente), Incidencias | Verificaciones e incidentes desde la ficha del bien | CAR Demo Amanecer |
 | Chofer | Itinerarios, Vehículos (consulta), Combustible | Itinerarios y combustible | Vehículo AMA-V01 |
 
 ## Limitaciones

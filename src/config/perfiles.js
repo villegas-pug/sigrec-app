@@ -47,7 +47,7 @@ export const PERFILES = [
     id: 'car',
     nombre: 'Personal del CAR',
     ambito: { descripcion: 'CAR Demo Amanecer', carIds: ['AMA'], vehiculoIds: null },
-    accesos: ['inicio', 'centros', 'incidencias', 'necesidades', 'servicios', 'vehiculos', 'itinerarios', 'combustible'],
+    accesos: ['inicio', 'centros', 'incidencias', 'necesidades', 'inventario', 'servicios', 'vehiculos', 'itinerarios', 'combustible'],
     acciones: ACCIONES_MANTENIMIENTO
   },
   {

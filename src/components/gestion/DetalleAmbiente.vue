@@ -41,6 +41,21 @@
           <key-value etiqueta="Características">{{ caracteristicas }}</key-value>
         </div>
       </section-card>
+      <section-card
+        titulo="Estado de la infraestructura"
+        icono="fact_check"
+        :subtitulo="evaluados ? `${evaluados} de ${ELEMENTOS_INFRAESTRUCTURA.length} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
+      >
+        <estado-elementos :model-value="ambiente.estadoElementos" solo-lectura sugerir-novedad />
+      </section-card>
+      <section-card titulo="Mobiliario y equipos" icono="chair" subtitulo="Se calcula con los bienes activos del ambiente; no se captura aparte">
+        <div v-if="totalActivos" class="sg-chips">
+          <template v-for="(cantidad, clave) in conteoBienes" :key="clave">
+            <status-chip v-if="cantidad" v-bind="condicion(clave === 'sin_dato' ? null : clave)" :label="`${condicion(clave === 'sin_dato' ? null : clave).label}: ${cantidad}`" />
+          </template>
+        </div>
+        <p v-else class="sg-muted q-mb-none">El ambiente no tiene bienes activos registrados.</p>
+      </section-card>
     </template>
 
     <template #fotos>
@@ -142,12 +157,14 @@ import IntervencionDialog from 'components/centros/IntervencionDialog.vue'
 import AtencionDialog from 'components/centros/AtencionDialog.vue'
 import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
 import PendientesAmbienteDialog from 'components/centros/PendientesAmbienteDialog.vue'
+import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { bienesDeAmbiente, carPorId, textoUbicacion, ubicacionDeAmbiente, vigente } from 'src/services/datos'
 import { nodoAmbienteId } from 'src/services/bienes'
 import { anular, anularAmbiente, dependenciasDeAmbiente, pendientesDeAmbiente } from 'src/services/acciones'
-import { CHIP_ANULADO, SITUACIONES, TIPOS_NOVEDAD, condicion } from 'src/config/catalogos'
+import { cantidadEvaluados, conteoPorCondicion } from 'src/services/infraestructura'
+import { CHIP_ANULADO, ELEMENTOS_INFRAESTRUCTURA, SITUACIONES, TIPOS_NOVEDAD, condicion } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
 
 const props = defineProps({
@@ -171,6 +188,10 @@ const bienes = computed(() => bienesDeAmbiente(props.ambiente.id).filter((b) => 
 const novedades = computed(() => (props.ambiente.novedades ?? []).filter((n) => props.inactivos || vigente(n)))
 const intervenciones = computed(() => (props.ambiente.intervenciones ?? []).filter((i) => props.inactivos || vigente(i)))
 const abiertas = computed(() => (props.ambiente.novedades ?? []).filter((n) => vigente(n) && !n.atendida))
+const evaluados = computed(() => cantidadEvaluados(props.ambiente.estadoElementos))
+// Unidades activas por condición, ponderadas por cantidad (los componentes cuentan como bienes del ambiente).
+const conteoBienes = computed(() => conteoPorCondicion(bienesDeAmbiente(props.ambiente.id)))
+const totalActivos = computed(() => Object.values(conteoBienes.value).reduce((suma, n) => suma + n, 0))
 
 const tabs = computed(() => [
   { name: 'ficha', label: 'Ficha' },

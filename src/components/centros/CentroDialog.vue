@@ -6,6 +6,7 @@
     subtitulo="Se registra el centro con los datos de su inmueble. Los datos faltantes quedan como información pendiente."
     :ancho="600"
     etiqueta-enviar="Registrar centro"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -47,6 +48,7 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { carPorId } from 'src/services/datos'
 import { registrarCentro } from 'src/services/acciones'
 import { OPCIONES_INMUEBLE } from 'src/config/catalogos'
@@ -63,9 +65,12 @@ const codigoValido = (v) => /^[A-Z]{3}$/.test(v) || 'Use 3 letras'
 const codigoLibre = (v) => !carPorId(v) || 'Ya existe un centro con ese código'
 
 const form = reactive({})
+const { modificado, fijar } = useBorrador(form)
 
 watch(() => props.modelValue, (abierto) => {
-  if (abierto) Object.assign(form, { nombre: '', id: '', direccion: '', condicion: 'propio', arrendador: '', contratoHasta: '' })
+  if (!abierto) return
+  Object.assign(form, { nombre: '', id: '', direccion: '', condicion: 'propio', arrendador: '', contratoHasta: '' })
+  fijar()
 })
 
 function guardar () {

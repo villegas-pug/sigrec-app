@@ -6,6 +6,7 @@
     :subtitulo="tipo ? tipo.id : 'El precio referencial se informa después'"
     :ancho="480"
     :etiqueta-enviar="tipo ? 'Guardar cambios' : 'Registrar tipo'"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -33,6 +34,7 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { db } from 'src/services/datos'
 import { actualizarTipoBien, registrarTipoBien } from 'src/services/acciones'
 import { OPCIONES_CATEGORIA } from 'src/config/catalogos'
@@ -52,15 +54,16 @@ const nombreLibre = (v) =>
   !db.tiposBien.some((t) => t.id !== props.tipo?.id && !t.anulacion && normalizar(t.nombre) === normalizar(v)) || 'Ya existe un tipo de bien con ese nombre'
 
 const form = reactive({ nombre: '', categoria: null, vidaUtilSugerida: null })
+const { modificado, fijar } = useBorrador(form)
 
 watch(() => props.modelValue, (abierto) => {
-  if (abierto) {
-    Object.assign(form, {
-      nombre: props.tipo?.nombre ?? '',
-      categoria: props.tipo?.categoria ?? null,
-      vidaUtilSugerida: props.tipo?.vidaUtilSugerida ?? null
-    })
-  }
+  if (!abierto) return
+  Object.assign(form, {
+    nombre: props.tipo?.nombre ?? '',
+    categoria: props.tipo?.categoria ?? null,
+    vidaUtilSugerida: props.tipo?.vidaUtilSugerida ?? null
+  })
+  fijar()
 })
 
 function guardar () {

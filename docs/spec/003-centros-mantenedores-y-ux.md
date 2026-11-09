@@ -3,7 +3,7 @@
 - **Estado:** implementado en el prototipo (verificación en navegador pendiente de autorización)
 - **Fecha:** 2026-11-02
 - **Origen:** revisión integral del prototipo (SPEC 001 y 002) y aclaraciones del solicitante.
-- **Actualizada por:** [`004-incidencias-contexto-y-recorrido.md`](004-incidencias-contexto-y-recorrido.md) (baja y reposición, condición y traslado de componentes) y [`005-navegacion-contexto-y-captura.md`](005-navegacion-contexto-y-captura.md) (inactivación de ambientes con bienes por resolver, galería por ambiente, tablas adaptables).
+- **Actualizada por:** [`004-incidencias-contexto-y-recorrido.md`](004-incidencias-contexto-y-recorrido.md) (baja y reposición, condición y traslado de componentes) y [`005-navegacion-contexto-y-captura.md`](005-navegacion-contexto-y-captura.md) (inactivación de ambientes con bienes por resolver, galería por ambiente, tablas adaptables) y [`010-fichas-planificacion-y-estado-operativo.md`](010-fichas-planificacion-y-estado-operativo.md) (estado operativo y presupuesto de mantenimiento de vehículos, que salen del §8).
 - **Reemplaza:** de la SPEC 002 §1 («el local se consulta como ficha del inmueble») y §5 («CAR con varios locales»).
 
 ## 1. Decisiones confirmadas
@@ -110,7 +110,7 @@ Accesos: Verificación física deja de tener la pantalla «Registro de bienes» 
 
 ## 8. Fuera de alcance (validar con el jefe de proyecto)
 
-Verificación por ambiente en lote, rótulos con código QR, avisos de contrato por vencer y verificaciones antiguas, estado de vehículos (SOAT, revisión técnica, odómetro), importes y comprobantes de servicios, datos institucionales del centro, modo sin conexión, ESLint/Vitest y alojar la fuente localmente (requieren instalar dependencias).
+Verificación por ambiente en lote, rótulos con código QR, avisos de contrato por vencer y verificaciones antiguas, estado de vehículos (SOAT, revisión técnica, odómetro; el estado operativo y el presupuesto de mantenimiento pasaron al alcance con la SPEC 010), importes y comprobantes de servicios, datos institucionales del centro, modo sin conexión, ESLint/Vitest y alojar la fuente localmente (requieren instalar dependencias).
 
 ## 9. Riesgos
 

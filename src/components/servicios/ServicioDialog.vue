@@ -44,6 +44,18 @@
     <q-input v-model="form.contratacion" outlined dense label="Contratación" hint="Ej.: a nombre del arrendador, pago por el CAR">
       <template #append><boton-dictado v-model="form.contratacion" /></template>
     </q-input>
+    <div class="sg-kv__label">Antigüedad y renovación</div>
+    <div class="row q-col-gutter-md">
+      <campo-adquisicion v-model="form.inicio" class="col-12 col-sm-6" label="Inicio del servicio" hint="Vacío si se desconoce; con él se calcula la antigüedad" />
+      <div class="col-12 col-sm-6 column q-gutter-y-sm">
+        <q-input v-model="form.renovacionFecha" outlined dense type="date" stack-label label="Próxima renovación o vencimiento" hint="Vacío si no aplica o no se conoce">
+          <template #append><boton-dictado v-model="form.renovacionFecha" tipo="fecha" /></template>
+        </q-input>
+        <q-input v-if="form.renovacionFecha" v-model="form.renovacionDetalle" outlined dense label="Detalle de la renovación" hint="Opcional. Ej.: renovación anual del contrato">
+          <template #append><boton-dictado v-model="form.renovacionDetalle" /></template>
+        </q-input>
+      </div>
+    </div>
     <q-input v-model="form.observaciones" outlined dense type="textarea" autogrow label="Observaciones de instalación">
       <template #append><boton-dictado v-model="form.observaciones" /></template>
     </q-input>
@@ -55,6 +67,7 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
+import CampoAdquisicion from 'components/common/CampoAdquisicion.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarServicio, registrarServicio } from 'src/services/acciones'
 import { tienePeriodosInformados } from 'src/services/servicios'
@@ -92,6 +105,9 @@ watch(() => props.modelValue, (abierto) => {
     contactoNombre: s?.contacto?.nombre ?? '',
     suministro: s?.suministro && s.suministro !== 'No informado' ? s.suministro : '',
     contratacion: s?.contratacion && s.contratacion !== 'No informada' ? s.contratacion : '',
+    inicio: s?.inicio ?? '',
+    renovacionFecha: s?.renovacion?.fecha ?? '',
+    renovacionDetalle: s?.renovacion?.detalle ?? '',
     observaciones: s?.observaciones ?? ''
   })
   fijar()
@@ -103,6 +119,8 @@ function guardar () {
     contacto: form.telefono?.trim() || form.contactoNombre?.trim() ? { telefono: form.telefono?.trim() || null, nombre: form.contactoNombre?.trim() || null } : null,
     suministro: form.suministro || 'No informado',
     contratacion: form.contratacion || 'No informada',
+    inicio: form.inicio || null,
+    renovacion: form.renovacionFecha ? { fecha: form.renovacionFecha, detalle: form.renovacionDetalle?.trim() || null } : null,
     observaciones: form.observaciones || null
   }
   let id

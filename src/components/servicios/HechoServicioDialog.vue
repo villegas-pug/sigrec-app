@@ -6,6 +6,7 @@
     :subtitulo="subtitulo"
     :ancho="460"
     :etiqueta-enviar="hecho ? 'Guardar cambios' : 'Registrar'"
+    :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -24,6 +25,7 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
+import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarHechoServicio, informarHechoServicio } from 'src/services/acciones'
 import { HECHOS_SERVICIO, TIPOS_SERVICIO } from 'src/config/catalogos'
 import { FECHA_CORTE } from 'src/config/demo'
@@ -46,6 +48,7 @@ const emit = defineEmits(['update:modelValue'])
 const $q = useQuasar()
 
 const form = reactive({ tipo: 'interrupcion', fecha: FECHA_CORTE, detalle: '' })
+const { modificado, fijar } = useBorrador(form)
 
 // Los pagos y las correcciones de período los genera la situación del período; solo se corrigen su fecha y detalle.
 const tipoEditable = computed(() => ['interrupcion', 'restablecimiento'].includes(form.tipo))
@@ -56,6 +59,7 @@ watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
   const h = props.hecho
   Object.assign(form, { tipo: h?.tipo ?? props.tipoInicial, fecha: h?.fecha ?? FECHA_CORTE, detalle: h?.detalle ?? '' })
+  fijar()
 })
 
 function guardar () {
