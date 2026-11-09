@@ -34,7 +34,7 @@
 4. ¿Debe impedirse registrar un itinerario con un vehículo detenido, o basta con un aviso? [Aviso]
 5. ¿Se necesitan SOAT, revisión técnica y odómetro? (Hoy están fuera de alcance.)
 
-## 5. Control preventivo (aún sin implementar)
+## 5. Control preventivo (implementado con supuestos provisionales)
 
 1. Extintores: ¿cuántos requiere cada centro? ¿Quién lo define y con qué norma?
 2. ¿Cada cuánto se recargan o renuevan y quién lo ejecuta?
@@ -42,7 +42,7 @@
 4. ¿Qué otros controles preventivos se necesitan (botiquines, señalización, simulacros)?
 5. ¿Qué aviso se espera cuando algo está por vencer y a quién va dirigido?
 
-## 6. Vista ejecutiva
+## 6. Vista ejecutiva (implementada con indicadores de partida)
 
 1. ¿Qué preguntas debe responder la vista? Ejemplos de la reunión: cuántos centros tienen determinado equipo, en qué condición, cuándo recibió mantenimiento y dónde se requiere atención.
 2. ¿Quién la usa (unidad central, jefatura, direcciones) y qué ve cada perfil?

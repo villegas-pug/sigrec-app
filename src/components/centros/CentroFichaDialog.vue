@@ -65,6 +65,11 @@
 
     <div class="sg-kv__label">Estado de la infraestructura por elemento</div>
     <estado-elementos v-model="form.estadoElementos" />
+
+    <div class="sg-kv__label">Seguridad</div>
+    <q-input v-model.number="form.extintoresRequeridos" outlined dense type="number" min="0" label="Extintores requeridos" hint="Dotación que debe tener el centro; vacío si no se ha definido. Con ella se calculan los faltantes.">
+      <template #append><boton-dictado v-model="form.extintoresRequeridos" tipo="numero" /></template>
+    </q-input>
   </form-dialog>
 </template>
 
@@ -112,7 +117,8 @@ watch(() => props.modelValue, (abierto) => {
     areaTerrenoM2: c.areaTerrenoM2 ?? null,
     estado: c.estado,
     caracteristicas: c.caracteristicas ?? '',
-    estadoElementos: completarElementos(c.estadoElementos)
+    estadoElementos: completarElementos(c.estadoElementos),
+    extintoresRequeridos: i.seguridad?.extintoresRequeridos ?? null
   })
   fijar()
 })
@@ -128,6 +134,7 @@ function guardar () {
       arrendador: alquilado ? form.arrendador || null : null,
       contratoHasta: alquilado ? form.contratoHasta || null : null,
       litigios: form.litigios || null,
+      seguridad: { ...props.centro.inmueble.seguridad, extintoresRequeridos: numeroONulo(form.extintoresRequeridos) },
       construccion: {
         ...props.centro.inmueble.construccion,
         material: form.material || null,

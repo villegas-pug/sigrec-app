@@ -1,7 +1,7 @@
 // Consultas de bienes: árbol de ubicación, componentes y antecedentes (RF-01, RF-04, RF-08, RF-20).
 import { db, ambientePorId, bienPorId, carPorId, ambientesDeCar, bienesDeAmbiente, vigente } from './datos'
-import { condicionInmueble } from 'src/config/catalogos'
-import { plural } from 'src/utils/formato'
+import { TIPOS_MANTENIMIENTO, condicionInmueble } from 'src/config/catalogos'
+import { fecha, plural } from 'src/utils/formato'
 
 const coincide = (bien, texto) => {
   if (!texto) return true
@@ -131,8 +131,19 @@ export function antecedentesDeBien (bien) {
   const alta = bien.adquisicion?.fecha
     ? [{ id: `ALTA-${bien.id}`, fecha: bien.adquisicion.fecha, tipo: 'alta', titulo: 'Adquisición', detalle: 'Fecha de adquisición registrada.', informadoPor: null }]
     : []
+  // Los mantenimientos vigentes del bien (recarga de extintor, mantenimiento de equipo) también son antecedentes.
+  const mantenimientos = db.mantenimientos
+    .filter((m) => vigente(m) && m.bienId === bien.id)
+    .map((m) => ({
+      id: m.id,
+      fecha: m.fecha,
+      tipo: 'mantenimiento',
+      titulo: TIPOS_MANTENIMIENTO[m.tipo]?.label ?? 'Mantenimiento',
+      detalle: [m.detalle, m.proxima ? `Próximo: ${fecha(m.proxima)}` : null].filter(Boolean).join(' · ') || null,
+      informadoPor: m.informadoPor
+    }))
   // Se invierte antes de ordenar para que, en una misma fecha, el hecho registrado después aparezca primero.
-  return [...eventos.reverse(), ...alta].sort((a, b) => b.fecha.localeCompare(a.fecha))
+  return [...eventos.reverse(), ...mantenimientos, ...alta].sort((a, b) => b.fecha.localeCompare(a.fecha))
 }
 
 // Baja patrimonial y reposición vigentes de un bien (null si no tiene).

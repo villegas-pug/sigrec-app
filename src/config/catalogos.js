@@ -55,7 +55,8 @@ export const TIPOS_EVENTO = {
   condicion: { label: 'Condición actualizada', tono: 'wa', icono: 'update' },
   asociacion: { label: 'Componente actualizado', tono: 'ne', icono: 'account_tree' },
   traslado: { label: 'Traslado', tono: 'in', icono: 'moving' },
-  alta: { label: 'Alta', tono: 'in', icono: 'add_circle' }
+  alta: { label: 'Alta', tono: 'in', icono: 'add_circle' },
+  mantenimiento: { label: 'Mantenimiento', tono: 'in', icono: 'build' }
 }
 
 // Hechos que pueden originar una necesidad antes del fin de la vida útil (RF-19).
@@ -141,6 +142,28 @@ export const OPCIONES_ESTADO_VEHICULO = Object.entries(ESTADOS_VEHICULO).map(([v
 
 // Estados que requieren atención (mantenimiento pendiente o vehículo detenido).
 export const ESTADOS_VEHICULO_CON_ATENCION = ['requiereMantenimiento', 'detenido']
+
+// Control preventivo y mantenimientos (SPEC 010 §7). Un único registro cubre todos los tipos; `objetivo` indica a qué se aplica.
+// `meses` es la periodicidad sugerida (provisional, por validar con las direcciones de los centros): solo propone la próxima fecha.
+export const TIPOS_MANTENIMIENTO = {
+  fumigacion: { label: 'Fumigación', icono: 'pest_control', objetivo: 'centro', meses: 6 },
+  recarga_extintor: { label: 'Recarga de extintor', icono: 'fire_extinguisher', objetivo: 'extintor', meses: 12 },
+  mantenimiento_equipo: { label: 'Mantenimiento de equipo', icono: 'handyman', objetivo: 'equipo', meses: 12 },
+  mantenimiento_vehiculo: { label: 'Mantenimiento de vehículo', icono: 'car_repair', objetivo: 'vehiculo', meses: 6 }
+}
+
+export const OPCIONES_TIPO_MANTENIMIENTO = Object.entries(TIPOS_MANTENIMIENTO).map(([value, t]) => ({ value, label: t.label }))
+
+// Los extintores son bienes de este tipo: su cantidad sale del inventario, no de un contador aparte.
+export const TIPO_EXTINTOR = 'extintor'
+
+// Estado de un control según su próxima fecha frente a la fecha de corte.
+export const ESTADOS_CONTROL = {
+  al_dia: { label: 'Al día', tono: 'ok', icono: 'check_circle' },
+  por_vencer: { label: 'Por vencer', tono: 'wa', icono: 'schedule' },
+  vencido: { label: 'Vencido', tono: 'da', icono: 'error' },
+  sin_programar: { label: 'Sin programar', tono: 'si', icono: 'help' }
+}
 
 export const EVALUACIONES_COMBUSTIBLE = {
   comparable: { label: 'Comparable', tono: 'ok' },

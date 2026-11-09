@@ -62,7 +62,8 @@
                     <template v-if="v.mantenimiento?.presupuestoEstimado != null">{{ soles(v.mantenimiento.presupuestoEstimado) }}</template>
                     <template v-else>Presupuesto sin estimar</template>
                   </div>
-                  <div v-if="v.mantenimiento?.ultimoFecha" class="sg-muted">Último mantenimiento: {{ fecha(v.mantenimiento.ultimoFecha) }}</div>
+                  <div v-if="controlVeh(v).ultimaFecha" class="sg-muted">Último mantenimiento: {{ fecha(controlVeh(v).ultimaFecha) }}</div>
+                  <status-chip v-if="controlVeh(v).proxima" v-bind="ESTADOS_CONTROL[controlVeh(v).estado]" :label="`Próximo: ${fecha(controlVeh(v).proxima)}`" />
                 </td>
                 <td>{{ v.combustible }} · {{ v.unidad === 'L' ? 'litros' : v.unidad }}</td>
                 <td>
@@ -107,7 +108,8 @@
               <template v-if="v.mantenimiento?.presupuestoEstimado != null">{{ soles(v.mantenimiento.presupuestoEstimado) }} estimados</template>
               <template v-else>Presupuesto sin estimar</template>
             </span>
-            <span v-if="v.mantenimiento?.ultimoFecha" class="sg-muted">Último mantenimiento: {{ fecha(v.mantenimiento.ultimoFecha) }}</span>
+            <span v-if="controlVeh(v).ultimaFecha" class="sg-muted">Último mantenimiento: {{ fecha(controlVeh(v).ultimaFecha) }}</span>
+            <div v-if="controlVeh(v).proxima" class="sg-chips"><status-chip v-bind="ESTADOS_CONTROL[controlVeh(v).estado]" :label="`Próximo: ${fecha(controlVeh(v).proxima)}`" /></div>
             <span v-if="v.chofer" class="sg-muted">Chofer: {{ v.chofer }}</span>
             <span class="sg-muted">{{ v.combustible }} · {{ v.unidad === 'L' ? 'litros' : v.unidad }}<template v-if="v.rendimientoKmL"> · {{ v.rendimientoKmL }} km/L</template></span>
             <span class="sg-muted">{{ plural(itinerariosDeVehiculo(v.id).length, 'itinerario', 'itinerarios') }}</span>
@@ -131,6 +133,7 @@
     </div>
 
     <vehiculo-dialog v-model="dialogo.abierto" :vehiculo="dialogo.vehiculo" />
+    <mantenimiento-dialog v-if="mantenimiento.centro" v-model="mantenimiento.abierto" :centro="mantenimiento.centro" tipo-inicial="mantenimiento_vehiculo" :vehiculo-id="mantenimiento.vehiculoId" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
 </template>
@@ -150,13 +153,16 @@ import MenuAcciones from 'components/common/MenuAcciones.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import VehiculoDialog from 'components/movilidad/VehiculoDialog.vue'
+import MantenimientoDialog from 'components/centros/MantenimientoDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { carPorId, itinerarioPorId, vigente } from 'src/services/datos'
 import { itinerariosDeVehiculo } from 'src/services/combustible'
 import { anular } from 'src/services/acciones'
 import { requiereAtencion, resumirEstadoVehiculos } from 'src/services/vehiculos'
-import { CHIP_ANULADO, ESTADOS_VEHICULO, OPCIONES_ESTADO_VEHICULO, TODOS, estadoVehiculo } from 'src/config/catalogos'
+import { controlDeVehiculo } from 'src/services/mantenimientos'
+import { CHIP_ANULADO, ESTADOS_CONTROL, ESTADOS_VEHICULO, OPCIONES_ESTADO_VEHICULO, TODOS, estadoVehiculo } from 'src/config/catalogos'
+import { FECHA_CORTE } from 'src/config/demo'
 import { fecha, plural, soles } from 'src/utils/formato'
 import { parametro } from 'src/utils/navegacion'
 
@@ -203,6 +209,13 @@ const itinerarioOrigen = !vehiculoNoDisponible && vehiculoPedido && parametro(ro
 
 const dialogo = reactive({ abierto: false, vehiculo: null })
 
+// El control del vehículo combina la ficha y los mantenimientos registrados; el historial completo está en la ficha del centro.
+const controlVeh = (v) => controlDeVehiculo(v, FECHA_CORTE)
+const mantenimiento = reactive({ abierto: false, centro: null, vehiculoId: null })
+function registrarMantenimientoDe (v) {
+  Object.assign(mantenimiento, { centro: carPorId(v.carId), vehiculoId: v.id, abierto: true })
+}
+
 function abrir (vehiculo) {
   dialogo.vehiculo = vehiculo
   dialogo.abierto = true
@@ -217,6 +230,7 @@ const accionesVehiculo = (v) => [
   { label: 'Ver itinerarios', icono: 'route', visible: !compacto.value && $q.screen.lt.sm && puedeAcceder('itinerarios') && !v.anulacion, accion: () => router.push({ name: 'itinerarios', query: { vehiculo: v.id } }) },
   { label: 'Ver combustible', icono: 'local_gas_station', visible: !compacto.value && $q.screen.lt.sm && puedeAcceder('combustible') && !v.anulacion, accion: () => router.push({ name: 'combustible', query: { vehiculo: v.id } }) },
   { label: 'Actualizar vehículo', icono: 'edit', visible: puedeHacer('vehiculo.actualizar') && vigente(v), accion: () => abrir(v) },
+  { label: 'Registrar mantenimiento', icono: 'build', visible: puedeHacer('mantenimiento.registrar') && vigente(v), accion: () => registrarMantenimientoDe(v) },
   {
     label: 'Anular vehículo',
     icono: 'block',

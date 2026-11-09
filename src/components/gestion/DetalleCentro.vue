@@ -1,8 +1,10 @@
 <template>
-  <detalle-panel :titulo="centro.nombre" :ruta="`${centro.id} · Centro`" icono="home_work" :tabs="tabs" :con-volver="conVolver" @volver="$emit('volver')">
+  <detalle-panel :titulo="centro.nombre" :ruta="`${centro.id} · Centro`" icono="home_work" :tabs="tabs" :tab-inicial="tabInicial" :con-volver="conVolver" @volver="$emit('volver')">
     <template #chips>
       <status-chip v-bind="condicionInmueble(inmueble.condicion)" />
       <status-chip v-if="centro.anulacion" v-bind="CHIP_ANULADO" />
+      <status-chip v-if="resumenControles.vencidos" tono="da" :label="plural(resumenControles.vencidos, 'control vencido', 'controles vencidos')" />
+      <status-chip v-if="resumenControles.extintoresFaltantes" tono="wa" :label="plural(resumenControles.extintoresFaltantes, 'extintor faltante', 'extintores faltantes')" />
     </template>
     <template #acciones>
       <q-btn v-if="puedeHacer('ambiente.registrar')" outline color="secondary" icon="add_home" label="Registrar ambiente" :disable="!activo" @click="dialogos.ambiente = true" />
@@ -65,6 +67,10 @@
       <galeria-fotos :centro="centro" titulo="Fotografías del centro" />
     </template>
 
+    <template #seguridad>
+      <control-preventivo :centro="centro" :inactivos="inactivos" :resaltado="mantenimientoResaltado" @seleccionar="(id) => $emit('seleccionar', id)" />
+    </template>
+
     <template #ambientes>
       <section-card :titulo="`Ambientes del centro (${ambientes.length})`" subtitulo="Seleccione un ambiente para ver su ficha, galería, novedades y bienes" sin-relleno>
         <div v-for="amb in ambientes" :key="amb.id" class="sg-borde-superior row items-center justify-between q-px-md q-py-sm">
@@ -100,6 +106,7 @@ import AnularDialog from 'components/common/AnularDialog.vue'
 import CentroFichaDialog from 'components/centros/CentroFichaDialog.vue'
 import AmbienteDialog from 'components/centros/AmbienteDialog.vue'
 import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
+import ControlPreventivo from 'components/centros/ControlPreventivo.vue'
 import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
@@ -107,11 +114,17 @@ import { ambientesDeCar, bienesDeAmbiente, vigente } from 'src/services/datos'
 import { nodoAmbienteId } from 'src/services/bienes'
 import { anular, dependenciasDeCentro } from 'src/services/acciones'
 import { cantidadEvaluados } from 'src/services/infraestructura'
+import { controlesPendientes, resumirControles } from 'src/services/mantenimientos'
+import { FECHA_CORTE } from 'src/config/demo'
 import { CHIP_ANULADO, ELEMENTOS_INFRAESTRUCTURA, condicion, condicionInmueble } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
 
 const props = defineProps({
   centro: { type: Object, required: true },
+  // Con «Mostrar inactivos» el historial de mantenimientos incluye los anulados.
+  inactivos: { type: Boolean, default: false },
+  tabInicial: { type: String, default: null },
+  mantenimientoResaltado: { type: String, default: null },
   conVolver: { type: Boolean, default: false }
 })
 
@@ -126,10 +139,12 @@ const inmueble = computed(() => props.centro.inmueble)
 const activo = computed(() => vigente(props.centro))
 const ambientes = computed(() => ambientesDeCar(props.centro.id, { inactivos: true }))
 const evaluados = computed(() => cantidadEvaluados(inmueble.value.construccion.estadoElementos))
+const resumenControles = computed(() => resumirControles(controlesPendientes([props.centro.id], FECHA_CORTE)))
 
 const tabs = computed(() => [
   { name: 'ficha', label: 'Ficha' },
   { name: 'fotos', label: 'Fotografías' },
+  { name: 'seguridad', label: 'Seguridad y mantenimiento' },
   { name: 'ambientes', label: `Ambientes (${ambientes.value.length})` }
 ])
 

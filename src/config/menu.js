@@ -2,6 +2,7 @@
 // «Gestión de centros» es una sola pantalla: un explorador Centro › Ambiente › Bien › Componente con detalle y acciones por nivel.
 export const MENU = [
   { key: 'inicio', label: 'Inicio', icon: 'home' },
+  { key: 'tablero', label: 'Tablero de control', icon: 'monitoring' },
   { key: 'centros', label: 'Gestión de centros', icon: 'home_work' },
   { key: 'incidencias', label: 'Incidencias, bajas y reposiciones', icon: 'history' },
   {

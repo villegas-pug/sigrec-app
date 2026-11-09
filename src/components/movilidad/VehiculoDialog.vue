@@ -34,7 +34,7 @@
       <q-select v-model="form.estadoOperativo" class="col-12 col-sm-6" :options="OPCIONES_ESTADO_VEHICULO" emit-value map-options clearable outlined dense label="Estado operativo" hint="Vacío si no se ha informado">
         <template #append><boton-dictado v-model="form.estadoOperativo" tipo="opcion" :opciones="OPCIONES_ESTADO_VEHICULO" emit-value /></template>
       </q-select>
-      <q-input v-model="form.ultimoMantenimiento" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Último mantenimiento" hint="Vacío si no se conoce" :rules="[noFutura]">
+      <q-input v-model="form.ultimoMantenimiento" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Último mantenimiento" hint="Vacío si no se conoce. Si se registran mantenimientos, se muestra el más reciente" :rules="[noFutura]">
         <template #append><boton-dictado v-model="form.ultimoMantenimiento" tipo="fecha" /></template>
       </q-input>
       <template v-if="requiereAtencion">

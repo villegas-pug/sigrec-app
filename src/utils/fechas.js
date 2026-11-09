@@ -26,3 +26,6 @@ export function mesesEntre (desde, hasta) {
   const [a2, m2 = 1] = hasta.split('-').map(Number)
   return (a2 - a1) * 12 + (m2 - m1)
 }
+
+// Fecha ISO resultante de avanzar `meses` meses (mismo criterio de día que `restarMeses`).
+export const sumarMeses = (iso, meses) => restarMeses(iso, -meses)

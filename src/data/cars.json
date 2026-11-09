@@ -9,6 +9,7 @@
       "arrendador": "Inmobiliaria Demostración S.A.C.",
       "contratoHasta": "2027-12-31",
       "litigios": null,
+      "seguridad": { "extintoresRequeridos": 4 },
       "construccion": {
         "material": "Concreto armado y albañilería",
         "antiguedad": "Aprox. 30 años",
@@ -38,6 +39,7 @@
       "arrendador": null,
       "contratoHasta": null,
       "litigios": "Sin litigios informados",
+      "seguridad": { "extintoresRequeridos": 2 },
       "construccion": {
         "material": "Albañilería confinada",
         "antiguedad": "Aprox. 20 años",

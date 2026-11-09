@@ -23,7 +23,17 @@
 
         <div v-if="!movil || vista === 'detalle'" class="sg-explorer__col">
           <template v-if="nodo">
-            <detalle-centro v-if="nodo.tipo === 'centro'" :key="seleccion" :centro="nodo.registro" :con-volver="movil" @seleccionar="seleccionar" @volver="vista = 'arbol'" />
+            <detalle-centro
+              v-if="nodo.tipo === 'centro'"
+              :key="seleccion"
+              :centro="nodo.registro"
+              :inactivos="inactivos"
+              :tab-inicial="tabInicialCentro"
+              :mantenimiento-resaltado="mantenimientoResaltado"
+              :con-volver="movil"
+              @seleccionar="seleccionar"
+              @volver="vista = 'arbol'"
+            />
             <detalle-ambiente
               v-else-if="nodo.tipo === 'ambiente'"
               :key="seleccion"
@@ -89,7 +99,7 @@ import AnularDialog from 'components/common/AnularDialog.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { ambientePorId, bienPorId, db, ambientesDeCar, ubicacionDeBien } from 'src/services/datos'
+import { ambientePorId, bienPorId, db, ambientesDeCar, mantenimientoPorId, ubicacionDeBien } from 'src/services/datos'
 import { antecesoresDeNodo, arbolDeCentros, idsExpandibles, nodoAmbienteId, nodoCentroId, resolverNodo, rutaHasta } from 'src/services/bienes'
 import { anularBien, cerrarRevision, dependenciasDeBien, desasociarBien, reactivarBien } from 'src/services/acciones'
 import { TODOS } from 'src/config/catalogos'
@@ -115,8 +125,17 @@ const ambientePedido = ambienteDeNovedad?.id ?? parametro(route.query.ambiente)
 const carPedido = parametro(route.query.car)
 const asociarPedido = parametro(route.query.asociar)
 const registrarPedido = parametro(route.query.registrar) === '1' && puedeHacer('bien.registrar')
+// ?mantenimiento= abre la pestaña «Seguridad y mantenimiento» del centro y resalta el registro; ?seguridad=1 solo abre la pestaña.
+const mantenimientoPedido = parametro(route.query.mantenimiento)
+const seguridadPedida = parametro(route.query.seguridad) === '1'
+const mantenimientoSolicitado = mantenimientoPedido ? mantenimientoPorId(mantenimientoPedido) : null
 
 function inicial () {
+  if (mantenimientoPedido) {
+    return mantenimientoSolicitado && enAmbitoCar(mantenimientoSolicitado.carId)
+      ? { id: nodoCentroId(mantenimientoSolicitado.carId) }
+      : { noDisponible: { entidad: 'El mantenimiento', id: mantenimientoPedido } }
+  }
   if (bienPedido) {
     const b = bienPorId(bienPedido)
     return b && enAmbitoCar(ubicacionDeBien(b).car.id) ? { id: b.id } : { noDisponible: { entidad: 'El bien', id: bienPedido } }
@@ -138,12 +157,14 @@ const pedidoNoDisponible = ref(pedido.noDisponible ?? null)
 const seleccion = ref(pedido.id ?? null)
 const tabInicial = novedadPedida && !pedidoNoDisponible.value ? 'novedades' : null
 const novedadResaltada = pedidoNoDisponible.value ? null : novedadPedida
+const tabInicialCentro = !pedidoNoDisponible.value && (mantenimientoPedido || (seguridadPedida && carPedido)) ? 'seguridad' : null
+const mantenimientoResaltado = pedidoNoDisponible.value ? null : mantenimientoPedido
 
 // Registros anulados pedidos por enlace: se muestran activando «Mostrar inactivos» y el filtro de situación correspondiente.
 const nodoPedido = resolverNodo(seleccion.value)
 const ambienteDelNodo = !nodoPedido || nodoPedido.tipo === 'centro' ? null : nodoPedido.tipo === 'ambiente' ? nodoPedido.registro : ambientePorId(nodoPedido.registro.ambienteId)
 const novedadAnulada = !!ambienteDeNovedad?.novedades.find((n) => n.id === novedadPedida)?.anulacion
-const anuladoPedido = !!(ambienteDelNodo?.anulacion || novedadAnulada || (nodoPedido?.tipo === 'centro' && nodoPedido.registro.anulacion))
+const anuladoPedido = !!(ambienteDelNodo?.anulacion || novedadAnulada || mantenimientoSolicitado?.anulacion || (nodoPedido?.tipo === 'centro' && nodoPedido.registro.anulacion))
 
 const texto = ref('')
 const situacion = ref(nodoPedido?.registro.situacion === 'anulado' ? 'anulado' : TODOS)

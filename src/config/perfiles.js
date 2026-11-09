@@ -17,7 +17,8 @@ const ACCIONES_MANTENIMIENTO = [
   'hecho.registrar', 'hecho.actualizar', 'hecho.anular',
   'vehiculo.registrar', 'vehiculo.actualizar', 'vehiculo.anular',
   'itinerario.registrar', 'itinerario.actualizar', 'itinerario.ejecucion', 'itinerario.anular',
-  'combustible.informar', 'combustible.actualizar', 'combustible.anular'
+  'combustible.informar', 'combustible.actualizar', 'combustible.anular',
+  'mantenimiento.registrar', 'mantenimiento.actualizar', 'mantenimiento.anular'
 ]
 
 // Catálogo completo de acciones del sistema: toda acción nueva se añade aquí (o en ACCIONES_MANTENIMIENTO).

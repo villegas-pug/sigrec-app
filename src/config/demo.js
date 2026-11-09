@@ -4,6 +4,9 @@ export const ANIO_REVISION = 2027
 export const ANIOS_REVISION = [2026, 2027, 2028]
 export const ANIOS_SERVICIOS = [2026]
 
+// Umbral provisional de los controles preventivos: se avisa «por vencer» cuando faltan, como máximo, estos días.
+export const PARAMETROS_CONTROL = { diasPorVencer: 30 }
+
 // Umbrales provisionales de servicios (SPEC 010 §6, por validar con las direcciones de los centros).
 export const PARAMETROS_SERVICIOS = {
   // Un servicio con al menos `umbralRecurrencia` interrupciones en los últimos `mesesRecurrencia` meses se señala como recurrente.

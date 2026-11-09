@@ -100,8 +100,9 @@ import { db, carPorId, ubicacionDeBien, vigente } from 'src/services/datos'
 import { calcularNecesidades, consolidarPorCar, totalizar } from 'src/services/necesidades'
 import { avisosDeServicios, resumirAvisos, serviciosDeCar } from 'src/services/servicios'
 import { evaluarItinerario, itinerariosDeVehiculo } from 'src/services/combustible'
+import { controlesPendientes } from 'src/services/mantenimientos'
 import { ANIO_REVISION, FECHA_CORTE } from 'src/config/demo'
-import { INCIDENTES, TIPOS_EVENTO, condicionInmueble } from 'src/config/catalogos'
+import { INCIDENTES, TIPOS_EVENTO, TIPOS_MANTENIMIENTO, condicionInmueble } from 'src/config/catalogos'
 import { fecha, plural, porcentaje, soles } from 'src/utils/formato'
 
 const { perfil, carsEnAmbito, carIdsEnAmbito, vehiculosEnAmbito, enAmbitoCar, puedeAcceder } = usePerfil()
@@ -114,6 +115,7 @@ const consolidado = computed(() => consolidarPorCar(necesidades.value, carsEnAmb
 const servicios = computed(() => carsEnAmbito.value.flatMap((c) => serviciosDeCar(c.id)))
 const avisosServicios = computed(() => avisosDeServicios(servicios.value, anioServicios, FECHA_CORTE))
 const resumenServicios = computed(() => resumirAvisos(avisosServicios.value))
+const controlesDeMantenimiento = computed(() => controlesPendientes(carsEnAmbito.value.map((c) => c.id), FECHA_CORTE))
 
 const bienesActivos = computed(() =>
   db.bienes.filter((b) => b.situacion === 'activo' && enAmbitoCar(ubicacionDeBien(b).car.id))
@@ -198,6 +200,23 @@ const avisos = computed(() => {
     if (a.clase === 'renovacion_proxima') lista.push({ ...base, tono: 'wa', etiqueta: 'Renovación próxima', texto: `Renovación o vencimiento el ${fecha(a.renovacion.fecha)} (en ${plural(a.renovacion.dias, 'día', 'días')}).` })
     if (a.clase === 'renovacion_vencida') lista.push({ ...base, tono: 'da', etiqueta: 'Renovación vencida', texto: `La fecha de renovación o vencimiento (${fecha(a.renovacion.fecha)}) ya pasó. Confirme la renovación o actualice la ficha.` })
     if (a.clase === 'sin_info') lista.push({ ...base, tono: 'si', etiqueta: 'Sin información', texto: `${a.celdas.map((c) => c.etiqueta).join(', ')} sin información de pago. No equivale a un pendiente confirmado.` })
+  }
+
+  // Controles preventivos: fumigación, recarga de extintores y mantenimientos vencidos o por vencer, y extintores faltantes.
+  for (const c of controlesDeMantenimiento.value) {
+    const car = carPorId(c.carId)
+    const base = { id: `control-${c.clave}`, contexto: `${car.nombre} · ${TIPOS_MANTENIMIENTO[c.tipo].label}` }
+    if (c.clase === 'faltante') {
+      lista.push({ ...base, tono: 'wa', etiqueta: 'Extintores faltantes', texto: `Faltan ${plural(c.faltantes, 'extintor', 'extintores')} para completar la dotación requerida.`, to: puedeAcceder('centros') ? { name: 'centros', query: { car: car.id, seguridad: '1' } } : null, enlace: 'Ver control de seguridad' })
+      continue
+    }
+    const vencido = c.clase === 'vencido'
+    const plazo = vencido ? `venció el ${fecha(c.proxima)} (hace ${plural(-c.dias, 'día', 'días')})` : `vence el ${fecha(c.proxima)} (en ${plural(c.dias, 'día', 'días')})`
+    // Un vehículo se revisa en Vehículos; lo demás, en la pestaña de seguridad del centro.
+    const to = c.mantenimiento.vehiculoId
+      ? (puedeAcceder('vehiculos') ? { name: 'vehiculos', query: { vehiculo: c.mantenimiento.vehiculoId } } : null)
+      : (puedeAcceder('centros') ? { name: 'centros', query: { mantenimiento: c.mantenimiento.id } } : null)
+    lista.push({ ...base, tono: vencido ? 'da' : 'wa', etiqueta: vencido ? 'Control vencido' : 'Control por vencer', texto: `${c.objetivo}: ${plazo}.`, to, enlace: 'Ver mantenimiento' })
   }
 
   const incidentes = db.eventos.filter((e) => vigente(e) && INCIDENTES.includes(e.tipo) && e.reportaNecesidad)

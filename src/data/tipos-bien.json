@@ -22,5 +22,6 @@
   { "id": "monitor", "nombre": "Monitor", "categoria": "equipo", "precio": null, "fechaPrecio": null, "procedencia": null },
   { "id": "impresora", "nombre": "Impresora multifuncional", "categoria": "equipo", "precio": null, "fechaPrecio": null, "procedencia": null },
   { "id": "proyector", "nombre": "Proyector multimedia", "categoria": "equipo", "precio": null, "fechaPrecio": null, "procedencia": null },
-  { "id": "alfombra", "nombre": "Alfombra de juego", "categoria": "fungible", "precio": null, "fechaPrecio": null, "procedencia": null }
+  { "id": "alfombra", "nombre": "Alfombra de juego", "categoria": "fungible", "precio": null, "fechaPrecio": null, "procedencia": null },
+  { "id": "extintor", "nombre": "Extintor PQS 6 kg", "categoria": "equipo", "precio": 150, "fechaPrecio": "2026-09", "procedencia": "Cotización de demostración", "vidaUtilSugerida": 10 }
 ]

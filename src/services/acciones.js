@@ -638,3 +638,30 @@ export function reactivarCombustible (registro) {
   reactivar(registro)
   vincularConsumo(registro)
 }
+
+// ---------- Mantenimientos y controles preventivos ----------
+
+// Un mantenimiento se aplica al centro (fumigación), a un bien (extintor o equipo) o a un vehículo.
+// `proxima` es la fecha que programa el control siguiente; vacía = sin programar.
+export function registrarMantenimiento ({ tipo, carId, bienId = null, vehiculoId = null, fecha, proxima = null, detalle = null, importe = null }) {
+  const mantenimiento = {
+    id: nuevoId('MAN'),
+    tipo,
+    carId,
+    bienId,
+    vehiculoId,
+    fecha,
+    proxima: proxima || null,
+    detalle: detalle || null,
+    importe: numeroONulo(importe),
+    informadoPor: autorActual(),
+    registradoEl: FECHA_CORTE
+  }
+  db.mantenimientos.push(mantenimiento)
+  return mantenimiento
+}
+
+// Corregir un mantenimiento no cambia su tipo, su objetivo ni su autor.
+export function actualizarMantenimiento (mantenimiento, { fecha, proxima, detalle, importe }) {
+  Object.assign(mantenimiento, { fecha, proxima: proxima || null, detalle: detalle || null, importe: numeroONulo(importe) })
+}

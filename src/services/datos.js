@@ -12,6 +12,7 @@ import vehiculos from 'src/data/vehiculos.json'
 import itinerarios from 'src/data/itinerarios.json'
 import combustible from 'src/data/combustible.json'
 import inventarioPrevio from 'src/data/inventario-previo.json'
+import mantenimientos from 'src/data/mantenimientos.json'
 
 export const db = reactive({
   cars,
@@ -23,7 +24,8 @@ export const db = reactive({
   vehiculos,
   itinerarios,
   combustible,
-  inventarioPrevio
+  inventarioPrevio,
+  mantenimientos
 })
 
 const porId = (lista, id) => lista.find((item) => item.id === id) ?? null
@@ -35,6 +37,7 @@ export const tipoPorId = (id) => porId(db.tiposBien, id)
 export const vehiculoPorId = (id) => porId(db.vehiculos, id)
 export const servicioPorId = (id) => porId(db.servicios, id)
 export const itinerarioPorId = (id) => porId(db.itinerarios, id)
+export const mantenimientoPorId = (id) => porId(db.mantenimientos, id)
 
 // Baja lógica: un registro anulado lleva `anulacion` y deja de contar en los cálculos.
 export const vigente = (registro) => !registro.anulacion
