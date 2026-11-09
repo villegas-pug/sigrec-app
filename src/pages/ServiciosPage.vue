@@ -43,7 +43,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="fila in filas" :key="fila.servicio.id">
+              <tr
+                v-for="fila in filas"
+                :key="fila.servicio.id"
+                :class="{ 'sg-row--selected': fila.servicio.id === servicioId }"
+                :aria-current="fila.servicio.id === servicioId ? 'true' : undefined"
+              >
                 <th scope="row" class="sg-periodos__servicio">
                   <button type="button" class="sg-row-btn" @click="seleccionarServicio(fila.servicio.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ TIPOS_SERVICIO[fila.servicio.tipo] }}</button>
                   <div class="sg-muted">
@@ -75,7 +80,13 @@
 
         <!-- Móvil: una tarjeta por servicio con sus períodos. -->
         <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
-          <div v-for="fila in filas" :key="fila.servicio.id" class="sg-box">
+          <div
+            v-for="fila in filas"
+            :key="fila.servicio.id"
+            class="sg-box"
+            :class="{ 'sg-box--resaltada': fila.servicio.id === servicioId }"
+            :aria-current="fila.servicio.id === servicioId ? 'true' : undefined"
+          >
             <div class="row items-center justify-between no-wrap">
               <button type="button" class="sg-row-btn" @click="seleccionarServicio(fila.servicio.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ TIPOS_SERVICIO[fila.servicio.tipo] }}</button>
               <span class="sg-muted">{{ PERIODICIDADES[fila.servicio.periodicidad] }}</span>
@@ -231,7 +242,8 @@ import { anular } from 'src/services/acciones'
 import { CHIP_ANULADO, ESTADOS_PERIODO, HECHOS_SERVICIO, MESES_CORTOS, PERIODICIDADES, TIPOS_SERVICIO } from 'src/config/catalogos'
 import { ANIOS_SERVICIOS, FECHA_CORTE } from 'src/config/demo'
 import { fecha, plural } from 'src/utils/formato'
-import { parametro } from 'src/utils/navegacion'
+import { mostrarDetalle, parametro } from 'src/utils/navegacion'
+import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 
 const ETIQUETAS_AVISO = {
   pendiente_vence: { tono: 'da', label: 'Pendiente con vencimiento' },
@@ -294,6 +306,12 @@ function describir (aviso) {
 const servicioNoDisponible = ref(!!servicioPedido && !servicios.value.some((s) => s.id === servicioPedido))
 const servicioId = ref(servicioNoDisponible.value ? null : servicioPedido)
 watch([carId, anio], () => { servicioNoDisponible.value = false }, { flush: 'sync' })
+
+// Al volver con «Atrás» o con «Volver a…» se recuperan el centro, el año y el servicio elegido (SPEC 011, Ola 4).
+const servicioInicial = servicioId.value
+useEstadoNavegacion('servicios', { carId, anio, mostrarInactivos, servicioId })
+if (servicioId.value !== servicioInicial) servicioNoDisponible.value = false
+
 watch(servicios, (lista) => {
   if (servicioNoDisponible.value) return
   if (!lista.some((s) => s.id === servicioId.value)) {
@@ -312,9 +330,11 @@ const dialogoServicio = reactive({ abierto: false, servicio: null, tipo: null })
 const periodo = reactive({ abierto: false, servicio: null, celda: null })
 const dialogoHecho = reactive({ abierto: false, hecho: null, tipo: 'interrupcion' })
 
+// La fila elegida queda resaltada y, si la ficha no está a la vista, se baja hasta ella.
 const seleccionarServicio = (id) => {
   servicioNoDisponible.value = false
   servicioId.value = id
+  mostrarDetalle(fichaRef)
 }
 const abrirServicio = (srv, tipo = null) => Object.assign(dialogoServicio, { abierto: true, servicio: srv, tipo })
 const abrirPeriodo = (srv, celda) => Object.assign(periodo, { abierto: true, servicio: srv, celda })

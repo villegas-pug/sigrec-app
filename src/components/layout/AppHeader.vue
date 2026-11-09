@@ -12,7 +12,7 @@
         aria-controls="menu-principal"
         @click="$emit('alternar-menu')"
       />
-      <router-link :to="{ name: rutaInicial }" class="sg-header__home" aria-label="Ir al inicio">
+      <router-link :to="{ name: rutaInicial }" class="sg-header__home" aria-label="Ir al inicio" @click="marcarNavegacionPrincipal">
         <span class="sg-logo" role="img" aria-label="Logo INABIF (archivo oficial pendiente)">Logo INABIF</span>
       </router-link>
       <div class="sg-header__identity">
@@ -51,6 +51,8 @@ import BuscadorGlobal from 'components/layout/BuscadorGlobal.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAtencion } from 'src/composables/useAtencion'
 import { plural } from 'src/utils/formato'
+// El logo es navegación principal; la lupa y la campana sí permiten volver a la pantalla en la que se estaba.
+import { marcarNavegacionPrincipal } from 'src/router/retorno'
 
 defineProps({
   drawerAbierto: { type: Boolean, default: false }

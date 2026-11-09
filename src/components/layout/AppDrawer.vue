@@ -19,6 +19,7 @@
             active-class="sg-nav__item--active"
             class="sg-nav__item"
             :class="{ 'sg-nav__item--root': entrada.key === 'inicio' }"
+            @click="marcarNavegacionPrincipal"
           >
             <q-item-section avatar>
               <q-icon :name="entrada.icon" size="24px" aria-hidden="true" />
@@ -43,6 +44,7 @@
               :active="rutaActiva === hoja.key"
               active-class="sg-nav__item--active"
               class="sg-nav__item sg-nav__item--leaf"
+              @click="marcarNavegacionPrincipal"
             >
               <q-item-section avatar>
                 <q-icon :name="hoja.icon" size="20px" aria-hidden="true" />
@@ -78,6 +80,8 @@ import { computed, reactive } from 'vue'
 import { useRoute } from 'vue-router'
 import { MENU } from 'src/config/menu'
 import { usePerfil } from 'src/composables/usePerfil'
+// El menú es navegación principal: la pantalla a la que lleva no ofrece «Volver».
+import { marcarNavegacionPrincipal } from 'src/router/retorno'
 
 defineProps({
   modelValue: { type: Boolean, default: false }

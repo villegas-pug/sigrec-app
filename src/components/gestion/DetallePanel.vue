@@ -32,8 +32,11 @@
 // Contenedor común del detalle de un nodo del explorador: cabecera con título, estado y acciones; pestañas con scroll propio.
 // Cada pestaña se rellena con un slot que lleva su mismo `name`.
 import { ref, watch } from 'vue'
+import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 
 const props = defineProps({
+  // Identificador del nodo: con él se recuerda la pestaña al volver a esta pantalla (SPEC 011, Ola 4).
+  nodo: { type: String, default: null },
   titulo: { type: String, required: true },
   // Ruta jerárquica del nodo (Centro › Ambiente › …).
   ruta: { type: String, default: '' },
@@ -48,6 +51,12 @@ const props = defineProps({
 defineEmits(['volver'])
 
 const tab = ref(props.tabs.some((t) => t.name === props.tabInicial) ? props.tabInicial : props.tabs[0]?.name)
+
+// Al volver con «Atrás» o con «Volver a…», el nodo abre en la pestaña en la que se dejó.
+if (props.nodo) {
+  useEstadoNavegacion(`pestana-${props.nodo}`, { tab })
+  if (!props.tabs.some((t) => t.name === tab.value)) tab.value = props.tabs[0]?.name
+}
 
 // Si la pestaña activa deja de existir (p. ej. un bien que pasa a ser componente), se vuelve a la primera.
 watch(() => props.tabs, (lista) => {

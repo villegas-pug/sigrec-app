@@ -2,7 +2,10 @@
   <q-page class="sg-page sg-page--explorador" :style-fn="altoPagina">
     <div class="sg-page__inner">
       <div class="sg-page-head">
-        <h1 class="sg-page-title">Gestión de centros</h1>
+        <div class="sg-page-head__titulo">
+          <volver-origen />
+          <h1 class="sg-page-title">Gestión de centros</h1>
+        </div>
         <q-btn v-if="puedeHacer('centro.registrar')" outline color="secondary" icon="add_business" label="Registrar centro" @click="dialogoCentro = true" />
       </div>
 
@@ -99,8 +102,10 @@ import IncidenteDialog from 'components/bienes/IncidenteDialog.vue'
 import CentroDialog from 'components/centros/CentroDialog.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
+import VolverOrigen from 'components/layout/VolverOrigen.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
+import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { ambientePorId, bienPorId, db, ambientesDeCar, mantenimientoPorId, ubicacionDeBien } from 'src/services/datos'
 import { antecesoresDeNodo, arbolDeCentros, idsExpandibles, nodoAmbienteId, nodoCentroId, resolverNodo, rutaHasta } from 'src/services/bienes'
 import { anularBien, cerrarRevision, dependenciasDeBien, desasociarBien, reactivarBien } from 'src/services/acciones'
@@ -176,6 +181,11 @@ const situacion = ref(nodoPedido?.registro.situacion === 'anulado' ? 'anulado' :
 const inactivos = ref(anuladoPedido)
 const vista = ref('detalle')
 const nuevos = ref([])
+
+// Al volver con «Atrás» o con «Volver a…» se recuperan el nodo elegido y los filtros del árbol (SPEC 011, Ola 4).
+// Lo guardado en esta entrada del historial refleja lo que el usuario eligió después del enlace, así que prevalece.
+useEstadoNavegacion('centros', { seleccion, texto, situacion, inactivos })
+if (seleccion.value !== (pedido.id ?? null)) pedidoNoDisponible.value = null
 
 // ---------- Árbol ----------
 const arbol = computed(() => arbolDeCentros(

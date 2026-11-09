@@ -1,6 +1,8 @@
 <template>
   <q-page class="sg-page">
     <div class="sg-page__inner">
+      <!-- Al llegar a Inicio desde otra pantalla (campana o buscador) se ofrece volver a ella (SPEC 011, Ola 4). -->
+      <volver-origen class="self-start" />
       <h1 class="sg-hero">
         Sistema Integrado de Gestión de Recursos de Centros <span class="sg-hero__accent">SIGREC</span>
       </h1>
@@ -83,6 +85,7 @@ import NoteBanner from 'components/common/NoteBanner.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import CeldaTablero from 'components/common/CeldaTablero.vue'
 import AtencionRequerida from 'components/inicio/AtencionRequerida.vue'
+import VolverOrigen from 'components/layout/VolverOrigen.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { ANIO_SERVICIOS, useAtencion } from 'src/composables/useAtencion'
 import { db, vigente } from 'src/services/datos'

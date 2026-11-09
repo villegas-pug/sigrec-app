@@ -43,7 +43,7 @@
               <tr><th scope="col">Fecha</th><th scope="col">Hecho</th><th scope="col">Centro · ubicación</th><th scope="col">Recurso</th><th scope="col">Necesidad</th></tr>
             </thead>
             <tbody>
-              <tr v-for="ev in eventos" :key="ev.id" :class="{ 'sg-row--selected': ev.id === eventoId }">
+              <tr v-for="ev in eventos" :key="ev.id" :class="{ 'sg-row--selected': ev.id === eventoId }" :aria-current="ev.id === eventoId ? 'true' : undefined">
                 <td>{{ fecha(ev.fecha) }}</td>
                 <td>
                   <status-chip v-bind="TIPOS_EVENTO[ev.tipo]" />
@@ -170,9 +170,8 @@
 
 <script setup>
 import BotonDictado from 'components/common/BotonDictado.vue'
-import { computed, nextTick, reactive, ref, toRef, watch } from 'vue'
+import { computed, reactive, ref, toRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
@@ -197,7 +196,7 @@ import {
 import { CHIP_ANULADO, INCIDENTES, SITUACIONES, TIPOS_EVENTO, TODOS, condicion } from 'src/config/catalogos'
 import { ANIO_REVISION } from 'src/config/demo'
 import { fecha, plural, soles } from 'src/utils/formato'
-import { parametro } from 'src/utils/navegacion'
+import { mostrarDetalle, parametro } from 'src/utils/navegacion'
 
 const CLASES = { renovacion: 'Renovación', reposicion: 'Reposición' }
 const TIPOS_HISTORIAL = ['dano', 'robo', 'incendio', 'baja', 'reposicion']
@@ -218,7 +217,6 @@ const OPCIONES_NECESIDAD = [
   { label: ESTADOS.anulado.label, value: 'anulado' }
 ]
 
-const $q = useQuasar()
 const route = useRoute()
 const router = useRouter()
 const { enAmbitoCar, carIdsEnAmbito, puedeAcceder, puedeHacer } = usePerfil()
@@ -325,14 +323,11 @@ watch(eventos, (lista) => {
   if (!lista.some((e) => e.id === eventoId.value)) eventoId.value = lista[0]?.id ?? null
 }, { immediate: true })
 
-// En pantallas pequeñas el detalle queda debajo de la tabla: se baja hasta él al elegir un hecho.
-async function seleccionar (id) {
+// El detalle queda debajo de la tabla: al elegir un hecho se resalta su fila y, si el detalle no está a la vista, se baja hasta él.
+function seleccionar (id) {
   hechoNoDisponible.value = false
   eventoId.value = id
-  if ($q.screen.lt.md) {
-    await nextTick()
-    detalleRef.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
+  mostrarDetalle(detalleRef)
 }
 
 const evento = computed(() => db.eventos.find((e) => e.id === eventoId.value) ?? null)

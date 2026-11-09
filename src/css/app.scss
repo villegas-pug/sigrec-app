@@ -652,6 +652,53 @@ a {
   }
 }
 
+// ---------- Selección en la misma pantalla (SPEC 011, Ola 4) ----------
+// La fila del registro elegido lleva fondo suave y una barra a la izquierda, en cualquier tabla (también el calendario de
+// Servicios). En `.sg-table` el fondo lo fija la regla de arriba, que además gana al resaltado por paso del puntero.
+tr.sg-row--selected > td,
+tr.sg-row--selected > th {
+  background: var(--sg-blue-soft);
+}
+
+tr.sg-row--selected > :first-child {
+  box-shadow: inset 4px 0 0 var(--sg-blue);
+}
+
+// Nodo elegido del árbol de Gestión de centros: fondo y barra, no solo el color del texto.
+.sg-explorer__arbol .q-tree__node--selected {
+  border-radius: 4px;
+  background: var(--sg-blue-soft);
+  box-shadow: inset 4px 0 0 var(--sg-blue);
+}
+
+// Un destino al que se baja (detalle, fila o tarjeta) no queda tapado por la cabecera fija.
+.sg-card,
+.sg-box,
+.sg-detalle,
+tr {
+  scroll-margin-top: 88px;
+}
+
+// «Volver a ‹pantalla de origen›»: en la línea de las migas o junto al título.
+.sg-crumbs-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.sg-page-head__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
+.sg-volver {
+  margin-left: -6px;
+}
+
 // ---------- Listas de antecedentes ----------
 .sg-timeline {
   margin: 0;
@@ -690,10 +737,11 @@ a {
   border-color: var(--sg-border-control);
 }
 
-// Registro al que llegó un enlace profundo.
+// Registro elegido o al que llegó un enlace profundo: el mismo lenguaje que la fila seleccionada de una tabla.
 .sg-box--resaltada {
-  border-color: var(--sg-primary);
-  box-shadow: 0 0 0 1px var(--sg-primary);
+  border-color: var(--sg-blue);
+  background: var(--sg-blue-soft);
+  box-shadow: 0 0 0 1px var(--sg-blue), inset 4px 0 0 var(--sg-blue);
 }
 
 .sg-photo {

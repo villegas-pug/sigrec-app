@@ -52,7 +52,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="v in vehiculosVisibles" :key="v.id" :class="{ 'sg-row--selected': v.id === vehiculoDestacado }">
+              <tr v-for="v in vehiculosVisibles" :key="v.id" :class="{ 'sg-row--selected': v.id === vehiculoDestacado }" :aria-current="v.id === vehiculoDestacado ? 'true' : undefined">
                 <td>
                   <span class="text-weight-bold">{{ v.tipo }} · {{ v.id }}</span>
                   <div class="sg-muted">Placa {{ v.placa }}</div>
@@ -98,7 +98,7 @@
 
         <!-- Móvil y tableta: una tarjeta por vehículo, con sus accesos a la vista. -->
         <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
-          <div v-for="v in vehiculosVisibles" :key="v.id" class="sg-box" :class="{ 'sg-box--resaltada': v.id === vehiculoDestacado }">
+          <div v-for="v in vehiculosVisibles" :key="v.id" class="sg-box" :class="{ 'sg-box--resaltada': v.id === vehiculoDestacado }" :aria-current="v.id === vehiculoDestacado ? 'true' : undefined">
             <div class="row items-start no-wrap justify-between">
               <div class="column">
                 <span class="text-weight-bold">{{ v.tipo }} · {{ v.id }}</span>
@@ -164,6 +164,7 @@ import MantenimientoDialog from 'components/centros/MantenimientoDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useAnulacion } from 'src/composables/useAnulacion'
+import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { carPorId, itinerarioPorId, vigente } from 'src/services/datos'
 import { itinerariosDeVehiculo } from 'src/services/combustible'
 import { anular } from 'src/services/acciones'
@@ -218,6 +219,9 @@ if (vehiculoSolicitado.value && carId.value !== TODOS && carId.value !== vehicul
 if (vehiculoSolicitado.value?.anulacion) mostrarInactivos.value = true
 const vehiculoNoDisponible = !!vehiculoPedido && !vehiculoSolicitado.value
 const vehiculoDestacado = vehiculoSolicitado.value?.id ?? null
+
+// Al volver con «Atrás» o con «Volver a…» se recuperan los filtros (SPEC 011, Ola 4).
+useEstadoNavegacion('vehiculos', { carId, estadoFiltro, mostrarInactivos })
 const itinerarioOrigen = !vehiculoNoDisponible && vehiculoPedido && parametro(route.query.itinerario) ? itinerarioPorId(parametro(route.query.itinerario)) : null
 
 const dialogo = reactive({ abierto: false, vehiculo: null })

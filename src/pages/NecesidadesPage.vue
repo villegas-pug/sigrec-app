@@ -68,7 +68,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="fila in consolidado" :key="fila.car.id">
+              <tr
+                v-for="fila in consolidado"
+                :key="fila.car.id"
+                :class="{ 'sg-row--selected': fila.car.id === carId }"
+                :aria-current="fila.car.id === carId ? 'true' : undefined"
+              >
                 <td><button type="button" class="sg-row-btn" @click="carId = fila.car.id"><q-icon name="filter_alt" size="16px" aria-hidden="true" class="q-mr-xs" />{{ fila.car.nombre }}</button></td>
                 <td class="sg-num">{{ fila.renovacion }}</td>
                 <td class="sg-num">{{ fila.reposicion }}</td>

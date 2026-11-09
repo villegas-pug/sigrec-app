@@ -1,6 +1,6 @@
 # SPEC 011 — Auditoría funcional: Inicio como panel único, enlaces con contexto y una sola fuente por dato
 
-- **Estado:** Olas 1 (M1–M6), 2 (M7–M12) y 3 (M13–M16 y M18) implementadas en el prototipo. M17 (persistencia local) no se implementa por decisión del usuario: los datos siguen ficticios y en memoria. Verificación en navegador realizada el 09/11/2026 (ver §9 bis), con una excepción: la lectura real de la cámara.
+- **Estado:** Olas 1 (M1–M6), 2 (M7–M12) y 3 (M13–M16 y M18) implementadas en el prototipo. M17 (persistencia local) no se implementa por decisión del usuario: los datos siguen ficticios y en memoria. Verificación en navegador realizada el 09/11/2026 (ver §9 bis), con una excepción: la lectura real de la cámara. Ola 4 (M19–M21: escaneo en PC, «Volver» a la pantalla de origen y resaltado de la selección) implementada; su verificación en navegador está pendiente de autorización (§10).
 - **Fecha:** 2026-11-09
 - **Origen:** auditoría funcional posterior a la SPEC 010 (P0–P4). El usuario decidió fusionar el «Tablero de control» en Inicio y mover la «Consulta por equipo» a Inventario.
 - **Reemplaza:** SPEC 010 §5 (acceso al Tablero), §8 (pantalla Tablero) y §10 ítems 12, 14, 15 y 16, como se detalla abajo. En lo demás la SPEC 010 sigue vigente.
@@ -202,6 +202,12 @@ Otros riesgos:
 17. **Registro rápido:** la frase aplica tipo, condición, cantidad y adquisición tras confirmar, y el rótulo sugerido corresponde al tipo.
 18. **Simulador:** con S/ 5 000 aparecen las cifras de arriba y el CSV coincide con la tabla.
 19. **Mi jornada (Chofer):** en AMA-V01 se listan los recorridos pendientes. «Declarar consumo» abre el diálogo con el recorrido elegido y, al guardar, la tarea desaparece.
+20. **Escaneo en PC** (Chrome o Edge en Windows, por `localhost` o HTTPS): el escáner abre la webcam con la vista en espejo, sin el aviso de navegador no compatible. Un QR con `AMA-COM-EXT01`, mostrado en un móvil, abre la ficha desde el buscador. Con dos cámaras aparece «Cambiar de cámara».
+21. **Sin cámara o sin permiso:** aparece el motivo y el campo manual recibe el foco. Un lector USB escribe el rótulo y abre la ficha con Enter. Por `http://` con la dirección de red se avisa que la cámara requiere HTTPS.
+22. **Volver:** Inicio › aviso › Servicios › «Volver a Inicio» restaura la pestaña «Próximos 60 días» y la posición. En Gestión de centros › bien › «Ver necesidades», «Volver a Gestión de centros» abre el mismo bien en la misma pestaña.
+23. **Volver, casos límite:** al entrar por el menú no hay botón; tras recargar el botón sigue; desde Inicio › Servicios › Centros, «Volver» lleva a Servicios y, desde ahí, a Inicio.
+24. **Resaltado:** en Servicios, elegir «Agua» resalta su fila (o su tarjeta en móvil) y baja a la ficha si no está a la vista, también a 1280 px. En Necesidades › Consolidado, el centro elegido queda resaltado. En el árbol de Gestión de centros el nodo elegido tiene fondo.
+25. **Sin desbordes** a 390, 768 y 1280 px en las pantallas con el botón «Volver».
 
 ## 9 bis. Resultados de la verificación en navegador (09/11/2026)
 
@@ -236,3 +242,36 @@ Se recorrió la aplicación con `quasar dev` y un navegador automatizado (Chromi
 - **Navegadores:** solo Chromium de escritorio; faltan Android y Safari.
 - **Anchos:** 390 y 768 px sin desbordes en 10 pantallas, y el recorrido a 390 px sin desborde. No se hizo revisión visual ni 1280 px.
 - **Puerto:** en este equipo `localhost:9000` lo ocupa otro proceso y respondía basura; se usó la dirección de red.
+
+## 10. Ola 4: escaneo en PC, «Volver» a la pantalla de origen y resaltado de la selección
+
+**Origen:** propuestas del usuario tras la Ola 3. Decisiones:
+
+- **Lector:** jsQR (1.4.0, licencia Apache-2.0) cuando el navegador no trae lector nativo.
+- **«Volver»:** lleva a la pantalla anterior, paso a paso.
+
+| # | Mejora | Cómo funciona | Archivos |
+| --- | --- | --- | --- |
+| M19 | **Escaneo en PC y laptops** | La cámara ya no depende de `BarcodeDetector`, sino de que exista cámara en un contexto seguro (HTTPS o `localhost`). Con lector nativo se leen QR y códigos de barras, como antes. Sin él (Chrome y Edge en Windows, Firefox, Safari) se lee QR con jsQR, que se carga solo en ese caso: el cuadro se reduce a 640 px como máximo y se lee cada 350 ms. Se pide la cámara trasera si existe; con la webcam frontal de una laptop, la vista previa se muestra en espejo (la lectura usa la imagen original). Con varias cámaras aparece «Cambiar de cámara». Si falla, el aviso explica el motivo (permiso negado, sin cámara, cámara en uso o conexión sin HTTPS) y el campo manual recibe el foco. Ese campo sirve también para un lector de códigos USB, que escribe el rótulo y pulsa Enter. | `composables/useEscaneo.js`, `common/EscanerRotulo.vue` |
+| M20 | **«Volver a ‹pantalla de origen›»** | Al llegar a una pantalla por un enlace desde otra (aviso, tabla, ficha, buscador o campana), un botón junto a las migas ofrece volver. El origen se guarda en la propia entrada del historial (`history.state.sigrecOrigen`), así sobrevive a la recarga y a «Atrás» y «Adelante». Si solo cambia la consulta en la misma pantalla, se conserva el origen; el menú y el logo no ofrecen volver. «Volver» retrocede por el historial, así la pantalla de origen recupera sus filtros, su pestaña y su posición. Para eso, Servicios (centro, año y servicio), Itinerarios (vehículo y recorrido), Vehículos (filtros), Gestión de centros (nodo y filtros del árbol) y la pestaña de cada ficha del explorador ahora guardan su estado con `useEstadoNavegacion`. Lo guardado en la entrada prevalece sobre el enlace profundo, porque es lo que el usuario eligió después. El botón solo aparece si el perfil puede ver la pantalla de origen. | `router/retorno.js` (`origenDeNavegacion`, `instalarRetorno`, `volver`), `layout/VolverOrigen.vue`, `PageHeader`, `GestionCentrosPage`, `InicioPage`, `AppDrawer`, `AppHeader`, `DetallePanel` |
+| M21 | **Resaltado de la selección** | Cuando un enlace cambia el registro dentro de la misma pantalla, la fila o tarjeta elegida queda resaltada (fondo suave, barra a la izquierda y `aria-current`) y, si su detalle no está a la vista, se baja hasta él, en cualquier ancho y respetando la preferencia de movimiento reducido. Se aplica en Servicios (antes sin resaltado), Necesidades › Consolidado (centro filtrado), el árbol de Gestión de centros (fondo además del color) y, con el mismo estilo, en Incidencias, Itinerarios, Vehículos y Precios. | `css/app.scss`, `utils/navegacion.js › mostrarDetalle` y las páginas citadas |
+
+**Verificación en Node:** 10 escenarios de `retorno.js` con un historial simulado:
+
+- origen nulo al cargar y al entrar por el menú;
+- origen Inicio de Inicio a Servicios, y se conserva al cambiar la consulta;
+- de Servicios a Centros, el origen es Servicios;
+- «Volver» retrocede 1 y luego 2 entradas;
+- «Adelante» y recarga respetan el origen guardado;
+- una navegación fallida consume la marca del menú;
+- sin posición válida, abre la pantalla de origen.
+
+Los SFC compilan con `@vue/compiler-sfc`.
+
+**Pendiente en navegador** (requiere autorización para `quasar dev`): pruebas 20–25 de §9. Para la cámara se necesita `localhost` (por ejemplo `quasar dev --port 9100`, porque el 9000 está ocupado en este equipo) o HTTPS.
+
+⚠️ Riesgos:
+
+- **jsQR solo lee QR.** Los códigos de barras 1D en PC requieren el lector nativo o un lector USB.
+- **La cámara exige HTTPS** en cualquier despliegue que no sea `localhost`. No se cambió `quasar.config.js`.
+- **«Volver» depende del historial de la pestaña.** Un enlace abierto en una pestaña nueva no tiene origen.

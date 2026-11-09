@@ -1,5 +1,5 @@
 <template>
-  <detalle-panel :titulo="centro.nombre" :ruta="`${centro.id} · Centro`" icono="home_work" :tabs="tabs" :tab-inicial="tabInicial" :con-volver="conVolver" @volver="$emit('volver')">
+  <detalle-panel :nodo="`centro-${centro.id}`" :titulo="centro.nombre" :ruta="`${centro.id} · Centro`" icono="home_work" :tabs="tabs" :tab-inicial="tabInicial" :con-volver="conVolver" @volver="$emit('volver')">
     <template #chips>
       <status-chip v-bind="condicionInmueble(inmueble.condicion)" />
       <status-chip v-if="centro.anulacion" v-bind="CHIP_ANULADO" />

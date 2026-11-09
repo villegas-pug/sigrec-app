@@ -1,5 +1,6 @@
 <template>
   <detalle-panel
+    :nodo="`ambiente-${ambiente.id}`"
     :titulo="ambiente.nombre"
     :ruta="textoUbicacion(ubicacionDeAmbiente(ambiente.id))"
     icono="meeting_room"

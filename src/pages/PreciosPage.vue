@@ -39,7 +39,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="fila in filas" :id="`tipo-${fila.tipo.id}`" :key="fila.tipo.id" :class="{ 'sg-row--selected': fila.tipo.id === tipoResaltado }">
+              <tr v-for="fila in filas" :id="`tipo-${fila.tipo.id}`" :key="fila.tipo.id" :class="{ 'sg-row--selected': fila.tipo.id === tipoResaltado }" :aria-current="fila.tipo.id === tipoResaltado ? 'true' : undefined">
                 <td>
                   {{ fila.tipo.nombre }}
                   <div class="sg-muted">
@@ -75,7 +75,7 @@
 
         <!-- Móvil: una tarjeta por tipo, con sus acciones a la vista. -->
         <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
-          <div v-for="fila in filas" :id="`tipo-${fila.tipo.id}`" :key="fila.tipo.id" class="sg-box" :class="{ 'sg-box--resaltada': fila.tipo.id === tipoResaltado }">
+          <div v-for="fila in filas" :id="`tipo-${fila.tipo.id}`" :key="fila.tipo.id" class="sg-box" :class="{ 'sg-box--resaltada': fila.tipo.id === tipoResaltado }" :aria-current="fila.tipo.id === tipoResaltado ? 'true' : undefined">
             <div class="row items-start no-wrap justify-between">
               <div class="column">
                 <span class="text-weight-bold">{{ fila.tipo.nombre }}</span>

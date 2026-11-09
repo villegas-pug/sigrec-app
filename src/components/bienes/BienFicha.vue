@@ -1,5 +1,6 @@
 <template>
   <detalle-panel
+    :nodo="`bien-${bien.id}`"
     :titulo="`${bien.nombre} · ${bien.id}`"
     :ruta="textoUbicacion(ubicacion) + cadenaAsociacion"
     :icono="esComponente ? 'extension' : 'label'"

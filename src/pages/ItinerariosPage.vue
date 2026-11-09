@@ -40,7 +40,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="fila in filas" :key="fila.it.id" :class="{ 'sg-row--selected': fila.it.id === itinerarioId }">
+              <tr v-for="fila in filas" :key="fila.it.id" :class="{ 'sg-row--selected': fila.it.id === itinerarioId }" :aria-current="fila.it.id === itinerarioId ? 'true' : undefined">
                 <td>
                   <button type="button" class="sg-row-btn" @click="seleccionar(fila.it.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ fila.it.id }}</button>
                   <div class="sg-muted">{{ fecha(fila.it.fecha) }}</div>
@@ -73,7 +73,7 @@
 
         <!-- Móvil y tableta: una tarjeta por itinerario, con sus acciones a la vista. -->
         <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
-          <div v-for="fila in filas" :key="fila.it.id" class="sg-box" :class="{ 'sg-box--resaltada': fila.it.id === itinerarioId }">
+          <div v-for="fila in filas" :key="fila.it.id" class="sg-box" :class="{ 'sg-box--resaltada': fila.it.id === itinerarioId }" :aria-current="fila.it.id === itinerarioId ? 'true' : undefined">
             <div class="row items-start no-wrap justify-between">
               <div class="column">
                 <button type="button" class="sg-row-btn self-start" @click="seleccionar(fila.it.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ fila.it.id }} · {{ fecha(fila.it.fecha) }}</button>
@@ -151,7 +151,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import PageHeader from 'components/common/PageHeader.vue'
@@ -175,7 +175,8 @@ import { evaluarItinerario, itinerariosDeVehiculo } from 'src/services/combustib
 import { anular, dependenciasDeItinerario } from 'src/services/acciones'
 import { CHIP_ANULADO, EVALUACIONES_COMBUSTIBLE } from 'src/config/catalogos'
 import { fecha, litros } from 'src/utils/formato'
-import { parametro } from 'src/utils/navegacion'
+import { mostrarDetalle, parametro } from 'src/utils/navegacion'
+import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 
 const $q = useQuasar()
 const route = useRoute()
@@ -211,21 +212,27 @@ const filas = computed(() =>
 const itinerarioNoDisponible = ref(!!itinerarioPedido && !filas.value.some((f) => f.it.id === itinerarioPedido))
 const itinerarioId = ref(itinerarioNoDisponible.value ? null : itinerarioPedido)
 watch(vehiculoId, () => { itinerarioNoDisponible.value = false }, { flush: 'sync' })
+
+// Al volver con «Atrás» o con «Volver a…» se recuperan el vehículo y el recorrido elegidos (SPEC 011, Ola 4).
+// El vehículo se comparte con Vehículos y Combustible: solo se acepta si sigue en el ámbito del perfil.
+const itinerarioInicial = itinerarioId.value
+useEstadoNavegacion('itinerarios', { vehiculoId, mostrarInactivos, itinerarioId })
+if (!vehiculosEnAmbito.value.some((v) => v.id === vehiculoId.value)) vehiculoId.value = vehiculosEnAmbito.value[0]?.id ?? null
+if (itinerarioId.value !== itinerarioInicial) itinerarioNoDisponible.value = false
+
 watch(filas, (lista) => {
   if (itinerarioNoDisponible.value) return
   if (!lista.some((f) => f.it.id === itinerarioId.value)) itinerarioId.value = lista[0]?.it.id ?? null
 }, { immediate: true })
 const seleccion = computed(() => filas.value.find((f) => f.it.id === itinerarioId.value) ?? null)
 
-// En pantallas pequeñas la explicación queda debajo de la tabla: se baja hasta ella al elegir un itinerario.
-async function seleccionar (id) {
+// La explicación queda debajo de la tabla: al elegir un itinerario se resalta su fila y, si la explicación no está a la vista,
+// se baja hasta ella.
+function seleccionar (id) {
   if (!id) return
   itinerarioNoDisponible.value = false
   itinerarioId.value = id
-  if ($q.screen.lt.md) {
-    await nextTick()
-    detalleRef.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
+  mostrarDetalle(detalleRef)
 }
 
 const tramo = (t) => `${t.salida ?? '—'}–${t.llegada ?? '—'}${t.km != null ? ` · ${t.km} km` : ''}`
