@@ -1399,3 +1399,6 @@ tr {
     overflow: visible;
   }
 }
+
+// Resumen opcional, siempre visible junto a las acciones del formulario.
+.sg-dialog__summary { flex: 1 1 100%; min-width: 0; overflow-wrap: anywhere; font-weight: 600; color: var(--sg-blue); }

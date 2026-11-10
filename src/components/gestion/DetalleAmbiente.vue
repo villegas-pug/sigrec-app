@@ -5,9 +5,9 @@
     :ruta="textoUbicacion(ubicacionDeAmbiente(ambiente.id))"
     icono="meeting_room"
     :tabs="tabs"
-    :tab-inicial="tabInicial"
+    :tab-inicial="tabInicial === 'novedades' ? 'incidencias' : tabInicial"
     :con-volver="conVolver"
-    @volver="$emit('volver')"
+    @volver="$emit('volver')" @seleccionar="$emit('seleccionar', $event)"
   >
     <template #chips>
       <status-chip v-bind="condicion(ambiente.condicion)" />
@@ -16,9 +16,9 @@
     </template>
     <template #acciones>
       <q-btn v-if="puedeHacer('bien.registrar')" unelevated color="primary" icon="playlist_add" label="Registrar bien" :disable="!activo" @click="$emit('registrar-bien', ambiente.id)" />
-      <q-btn v-if="puedeHacer('bien.verificar')" :unelevated="!puedeHacer('bien.registrar')" :outline="puedeHacer('bien.registrar')" :color="puedeHacer('bien.registrar') ? 'secondary' : 'primary'" icon="fact_check" :label="`Verificar ambiente${porVerificar ? ` (${porVerificar} sin verificar)` : ''}`" :disable="!activo || !totalActivos" @click="dialogos.recorrido = true" />
-      <q-btn v-if="puedeHacer('ambiente.actualizar')" outline color="secondary" icon="edit" label="Actualizar ambiente" :disable="!activo" @click="dialogos.ambiente = true" />
-      <menu-acciones :items="accionesAmbiente" :etiqueta="`Acciones de ${ambiente.nombre}`" />
+      <q-btn v-if="puedeHacer('ambiente.incidente')" outline color="secondary" icon="report" label="Registrar incidente" :disable="!activo" @click="abrirIncidente()" />
+      <q-btn v-if="puedeHacer('bien.verificar') && !puedeHacer('bien.registrar')" :unelevated="!puedeHacer('bien.registrar')" :outline="puedeHacer('bien.registrar')" :color="puedeHacer('bien.registrar') ? 'secondary' : 'primary'" icon="fact_check" :label="`Verificar ambiente${porVerificar ? ` (${porVerificar} sin verificar)` : ''}`" :disable="!activo || !totalActivos" @click="dialogos.recorrido = true" />
+      <menu-acciones con-etiqueta :items="accionesAmbiente" :etiqueta="`Acciones de ${ambiente.nombre}`" />
     </template>
 
     <template #ficha>
@@ -48,7 +48,7 @@
         icono="fact_check"
         :subtitulo="evaluados ? `${evaluados} de ${ELEMENTOS_INFRAESTRUCTURA.length} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
       >
-        <estado-elementos :model-value="ambiente.estadoElementos" solo-lectura sugerir-novedad :accion-novedad="activo && puedeHacer('novedad.registrar')" @registrar-novedad="novedadDesdeElementos" />
+        <estado-elementos :model-value="ambiente.estadoElementos" solo-lectura sugerir-novedad etiqueta-accion="Registrar incidente" :accion-novedad="activo && puedeHacer('ambiente.incidente')" @registrar-novedad="novedadDesdeElementos" />
       </section-card>
       <section-card titulo="Mobiliario y equipos" icono="chair" subtitulo="Se calcula con los bienes activos del ambiente; no se captura aparte">
         <div v-if="totalActivos" class="sg-chips">
@@ -80,11 +80,9 @@
       </section-card>
     </template>
 
-    <template #novedades>
-      <section-card titulo="Novedades" subtitulo="Hechos que afectan al ambiente">
-        <template #acciones>
-          <q-btn v-if="puedeHacer('novedad.registrar')" unelevated color="primary" icon="add_alert" label="Registrar novedad" :disable="!activo" @click="abrirNovedad(null)" />
-        </template>
+    <template #incidencias>
+      <hechos-contexto :ambiente-id="ambiente.id" :hecho-inicial="hechoInicial" />
+      <section-card titulo="Infraestructura registrada" subtitulo="Consulta, corrección y atención de los hechos del ambiente">
         <div class="column q-gutter-y-sm">
           <div v-for="n in novedades" :id="`novedad-${n.id}`" :key="n.id" class="sg-box" :class="{ 'sg-box--resaltada': n.id === novedadResaltada }">
             <div class="row items-start no-wrap justify-between">
@@ -137,6 +135,7 @@
   </detalle-panel>
 
   <ambiente-dialog v-model="dialogos.ambiente" :centro="centro" :ambiente="ambiente" @hecho="(id) => $emit('seleccionar', nodoAmbienteId(id))" />
+  <incidente-dialog v-model="incidenteAbierto" :ambiente-inicial="ambiente.id" :sugerencia="sugerenciaIncidente" @hecho="$emit('hecho', $event)" />
   <recorrido-verificacion v-model="dialogos.recorrido" :ambiente="ambiente" @seleccionar="(id) => $emit('seleccionar', id)" />
   <novedad-dialog v-model="dialogoNovedad.abierto" :ambiente="ambiente" :novedad="dialogoNovedad.novedad" :sugerencia="dialogoNovedad.sugerencia" />
   <intervencion-dialog v-model="dialogoIntervencion.abierto" :ambiente="ambiente" :intervencion="dialogoIntervencion.intervencion" />
@@ -146,7 +145,9 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, reactive } from 'vue'
+import IncidenteDialog from 'components/bienes/IncidenteDialog.vue'
+import HechosContexto from './HechosContexto.vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import DetallePanel from 'components/gestion/DetallePanel.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
@@ -175,12 +176,13 @@ const props = defineProps({
   ambiente: { type: Object, required: true },
   // Con «Mostrar inactivos» se ven también los registros anulados del ambiente.
   inactivos: { type: Boolean, default: false },
+  hechoInicial: { type: String, default: null },
   tabInicial: { type: String, default: null },
   novedadResaltada: { type: String, default: null },
   conVolver: { type: Boolean, default: false }
 })
 
-defineEmits(['seleccionar', 'registrar-bien', 'volver'])
+defineEmits(['seleccionar', 'registrar-bien', 'volver', 'hecho'])
 
 const { puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
@@ -197,11 +199,14 @@ const evaluados = computed(() => cantidadEvaluados(props.ambiente.estadoElemento
 const conteoBienes = computed(() => conteoPorCondicion(bienesDeAmbiente(props.ambiente.id)))
 const totalActivos = computed(() => Object.values(conteoBienes.value).reduce((suma, n) => suma + n, 0))
 
+const incidenteAbierto = ref(false)
+const sugerenciaIncidente = ref(null)
+function abrirIncidente (sugerencia = null) { sugerenciaIncidente.value = sugerencia; incidenteAbierto.value = true }
 const tabs = computed(() => [
   { name: 'ficha', label: 'Ficha' },
+  { name: 'incidencias', label: 'Incidencias' },
   { name: 'fotos', label: 'Fotografías' },
   { name: 'bienes', label: `Bienes (${bienes.value.length})` },
-  { name: 'novedades', label: `Novedades (${novedades.value.length})` },
   { name: 'intervenciones', label: `Intervenciones (${intervenciones.value.length})` }
 ])
 
@@ -221,7 +226,7 @@ const dialogoNovedad = reactive({ abierto: false, novedad: null, sugerencia: nul
 const dialogoIntervencion = reactive({ abierto: false, intervencion: null })
 const dialogoAtencion = reactive({ abierto: false, novedad: null })
 
-const abrirNovedad = (novedad, sugerencia = null) => Object.assign(dialogoNovedad, { abierto: true, novedad, sugerencia })
+const abrirNovedad = (novedad, sugerencia = null) => { if (!novedad) abrirIncidente(sugerencia); else Object.assign(dialogoNovedad, { abierto: true, novedad, sugerencia: null }) }
 // Desde los elementos en mal estado: la novedad se precarga, pero la persona la revisa y la registra.
 const novedadDesdeElementos = (criticos) => abrirNovedad(null, {
   titulo: `${criticos.map((c) => c.label).join(', ')} en mal estado`,
@@ -261,6 +266,8 @@ const pedirAnulacionAmbiente = () => {
 }
 
 const accionesAmbiente = computed(() => [
+  { label: 'Actualizar ambiente', icono: 'edit', visible: puedeHacer('ambiente.actualizar'), disable: !activo.value, accion: () => { dialogos.ambiente = true } },
+  { label: 'Verificar ambiente', icono: 'fact_check', visible: puedeHacer('bien.verificar') && puedeHacer('bien.registrar'), disable: !activo.value || !totalActivos.value, accion: () => { dialogos.recorrido = true } },
   {
     label: 'Anular ambiente',
     icono: 'block',

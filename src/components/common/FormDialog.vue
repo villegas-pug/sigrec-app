@@ -16,6 +16,7 @@
           <slot />
         </q-card-section>
         <q-card-actions align="right" class="sg-dialog__footer q-px-md q-pb-md q-gutter-sm">
+          <div v-if="$slots.resumen" class="sg-dialog__summary" role="status"><slot name="resumen" /></div>
           <q-btn flat color="secondary" icon="close" :label="soloLectura ? 'Cerrar' : 'Cancelar'" @click="cerrar" />
           <q-btn v-if="!soloLectura" unelevated :color="colorEnviar" :icon="iconoEnviar" type="submit" :label="etiquetaEnviar" :disable="deshabilitarEnviar" />
         </q-card-actions>

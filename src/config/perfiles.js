@@ -7,6 +7,7 @@ import { MENU } from 'src/config/menu'
 
 // Mantenimiento de los datos de un centro: lo comparten Equipo central (todos los CAR) y Personal del CAR (su centro).
 const ACCIONES_MANTENIMIENTO = [
+  'centro.incidente', 'ambiente.incidente',
   'centro.actualizar', 'centro.foto', 'foto.actualizar', 'foto.anular',
   'ambiente.registrar', 'ambiente.actualizar', 'ambiente.anular',
   'novedad.registrar', 'novedad.actualizar', 'novedad.atender', 'novedad.anular',

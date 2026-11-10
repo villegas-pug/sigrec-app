@@ -1,8 +1,9 @@
 // Reglas de necesidades y presupuesto (RF-05, RF-06, RF-19, RF-20, RF-21).
 import { db, bienPorId, tipoPorId, ubicacionDeBien, ubicacionDeAmbiente, vigente } from './datos'
+import { esIncidencia, requiereReposicion, unidadesAfectadas, ubicacionHecho } from './incidencias'
 import { reposicionDe } from './bienes'
 import { plural } from 'src/utils/formato'
-import { INCIDENTES, TIPOS_EVENTO } from 'src/config/catalogos'
+import { TIPOS_EVENTO } from 'src/config/catalogos'
 import { PARAMETROS_PRIORIDAD } from 'src/config/demo'
 
 const enAmbito = (carIds, carId) => !carIds || carIds.includes(carId)
@@ -27,15 +28,15 @@ export function incidentesConNecesidad (bienId, anio = null) {
   return db.eventos.filter(
     (e) =>
       vigente(e) &&
-      INCIDENTES.includes(e.tipo) &&
-      e.reportaNecesidad &&
+      esIncidencia(e) &&
+      requiereReposicion(e, bienId) &&
       e.bienIds?.includes(bienId) &&
       (anio == null || anioDe(e.fecha) <= anio)
   )
 }
 
 // Unidades afectadas por un incidente: solo cuenta `unidades` cuando el hecho informa un único bien.
-const unidadesDelIncidente = (evento, cantidadBien) => (evento.bienIds.length === 1 && evento.unidades ? evento.unidades : cantidadBien)
+const unidadesDelIncidente = (evento, bien) => unidadesAfectadas(evento, bien)
 
 /**
  * Calcula las necesidades del año para los CAR indicados (null = todos).
@@ -66,13 +67,13 @@ export function calcularNecesidades ({ anio, carIds = null }) {
     }
     const incidentes = incidentesConNecesidad(bien.id, anio)
     for (const evento of incidentes) {
-      const unidades = unidadesDelIncidente(evento, cantidadBien)
+      const unidades = unidadesDelIncidente(evento, bien)
       const parcial = unidades < cantidadBien ? ` (${unidades} de ${plural(cantidadBien, 'unidad', 'unidades')})` : ''
       motivos.push({ clase: 'incidente', texto: `${TIPOS_EVENTO[evento.tipo].label}: ${evento.titulo}${parcial}`, fecha: evento.fecha, eventoId: evento.id })
     }
     if (!motivos.length) continue
 
-    const afectadas = incidentes.reduce((suma, e) => suma + unidadesDelIncidente(e, cantidadBien), 0)
+    const afectadas = incidentes.reduce((suma, e) => suma + unidadesDelIncidente(e, bien), 0)
     const cantidad = porVidaUtil ? cantidadBien : Math.min(cantidadBien, afectadas)
     const tipo = tipoPorId(bien.tipoId)
     const precioUnitario = tipo?.precio ?? null
@@ -99,6 +100,10 @@ export function calcularNecesidades ({ anio, carIds = null }) {
         .filter((n) => vigente(n) && n.requiereEvaluacion && !n.atendida)
         .map((novedad) => ({ id: novedad.id, novedad, ubicacion }))
     })
+
+  infraestructura.push(...db.eventos.filter((e) => vigente(e) && e.requiereEvaluacion && !e.atendida && e.origen && ['centro', 'ambiente'].includes(e.origen.tipo))
+    .map((e) => ({ id: e.id, novedad: e, ubicacion: ubicacionHecho(e), esIncidencia: true }))
+    .filter((i) => i.ubicacion.car && enAmbito(carIds, i.ubicacion.car.id)))
 
   const atendidas = db.eventos
     .filter((e) => vigente(e) && e.tipo === 'reposicion' && anioDe(e.fecha) <= anio)

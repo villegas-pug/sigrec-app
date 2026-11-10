@@ -47,9 +47,9 @@
     <note-banner v-if="criticos.length" tono="wa" icono="warning" class="q-mt-md">
       {{ criticos.map((c) => c.label).join(', ') }}: en condición mala o inservible.
       <template v-if="sugerirNovedad">
-        El estado por elemento no crea una novedad por sí solo.
-        <q-btn v-if="accionNovedad" flat dense no-caps color="primary" icon="add_alert" label="Registrar novedad" class="q-ml-xs" @click="$emit('registrar-novedad', criticos)" />
-        <template v-else>Considere registrar una novedad para que se atienda.</template>
+        El estado por elemento no registra un hecho por sí solo.
+        <q-btn v-if="accionNovedad" flat dense no-caps color="primary" icon="add_alert" :label="etiquetaAccion" class="q-ml-xs" @click="$emit('registrar-novedad', criticos)" />
+        <template v-else>Considere registrar el hecho para que se atienda.</template>
       </template>
     </note-banner>
   </div>
@@ -71,7 +71,8 @@ const props = defineProps({
   // Muestra la sugerencia de registrar una novedad (solo tiene sentido en el ambiente).
   sugerirNovedad: { type: Boolean, default: false },
   // Con la sugerencia, ofrece el botón «Registrar novedad» (emite `registrar-novedad` con los elementos críticos).
-  accionNovedad: { type: Boolean, default: false }
+  accionNovedad: { type: Boolean, default: false },
+  etiquetaAccion: { type: String, default: 'Registrar novedad' }
 })
 
 const emit = defineEmits(['update:modelValue', 'registrar-novedad'])

@@ -1,13 +1,8 @@
 <template>
   <q-page class="sg-page">
     <div class="sg-page__inner">
-      <page-header>
-        <template #acciones>
-          <q-btn v-if="puedeHacer('bien.incidente')" unelevated color="primary" icon="report" label="Registrar incidente" @click="Object.assign(dialogoIncidente, { abierto: true, evento: null })" />
-          <q-btn v-if="puedeHacer('bien.baja')" outline color="negative" icon="remove_circle" label="Dar de baja" @click="abrirAccion('baja')" />
-          <q-btn v-if="puedeHacer('bien.reposicion')" outline color="primary" icon="swap_horiz" label="Registrar reposición" @click="abrirAccion('reposicion')" />
-        </template>
-      </page-header>
+      <page-header />
+      <p class="sg-muted">Consulta general de incidentes, bajas y reposiciones. Las operaciones se realizan desde las fichas de Gestión de centros.</p>
 
       <registro-no-disponible v-if="hechoNoDisponible" entidad="El hecho" :id="hechoPedido" :volver="{ name: 'incidencias' }" etiqueta-volver="Ver todos los hechos" />
 
@@ -49,7 +44,7 @@
                   <status-chip v-bind="TIPOS_EVENTO[ev.tipo]" />
                   <status-chip v-if="ev.anulacion" v-bind="CHIP_ANULADO" class="q-ml-xs" />
                 </td>
-                <td>{{ ubicacion(ev).car.nombre }} · {{ ubicacion(ev).ambiente.nombre }}</td>
+                <td>{{ ubicacion(ev).car.nombre }} · {{ ubicacion(ev).ambiente?.nombre ?? 'Centro' }}</td>
                 <td><button type="button" class="sg-row-btn" @click="elegirDeLista(ev.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ ev.titulo }}</button><div class="sg-muted">{{ ev.bienIds.join(', ') }}</div></td>
                 <td><status-chip :tono="estadoNecesidad(ev).tono" :label="estadoNecesidad(ev).label" /></td>
               </tr>
@@ -59,159 +54,39 @@
         </div>
       </section-card>
 
-      <section-card v-if="evento" ref="detalleRef" :titulo="`${TIPOS_EVENTO[evento.tipo].label} · ${evento.titulo}`" :subtitulo="`${fecha(evento.fecha)} · ${ubicacion(evento).car.nombre} › ${ubicacion(evento).ambiente.nombre} · informado por ${evento.informadoPor}`">
-        <template #acciones>
-          <!-- Tras saltar desde el historial de un bien, se ofrece volver al hecho anterior con sus filtros (SPEC 011, Ola 5). -->
-          <q-btn v-if="anteriorInterno" flat dense no-caps color="secondary" icon="undo" :label="`Volver al hecho ${anteriorInterno.etiqueta}`" @click="regresarAnterior" />
-          <menu-acciones :items="accionesEvento" :etiqueta="`Acciones del hecho ${evento.titulo}`" />
-        </template>
-        <note-banner v-if="evento.anulacion" tono="ne" icono="block" class="q-mb-md">
-          Hecho anulado el {{ fecha(evento.anulacion.fecha) }} por {{ evento.anulacion.por }}. Motivo: {{ evento.anulacion.motivo }}
-          No genera necesidades.
-        </note-banner>
-        <p v-if="evento.detalle">{{ evento.detalle }}</p>
-        <p v-if="evento.registradoEl && evento.registradoEl !== evento.fecha" class="sg-muted">Registrado el {{ fecha(evento.registradoEl) }}.</p>
-
-        <div v-if="evento.tipo === 'reposicion'" class="sg-grid-2">
-          <div v-for="(b, idx) in [bienPorId(evento.bienAnteriorId), bienPorId(evento.bienNuevoId)]" :key="b.id" class="sg-box">
-            <div class="sg-chips">
-              <status-chip v-bind="SITUACIONES[b.situacion]" />
-              <status-chip :tono="idx === 0 ? 'ne' : 'in'" :label="idx === 0 ? 'Bien anterior' : 'Reposición'" />
-            </div>
-            <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: b.id } }" class="text-weight-bold">{{ b.nombre }} · {{ b.id }}</router-link>
-            <span v-else class="text-weight-bold">{{ b.nombre }} · {{ b.id }}</span>
-            <span class="sg-muted">{{ textoUbicacion(ubicacionDeBien(b)) }}</span>
-            <span class="sg-muted">Adquisición {{ fecha(b.adquisicion?.fecha) }} · vida útil {{ b.vidaUtilAnios != null ? plural(b.vidaUtilAnios, 'año', 'años') : '—' }}</span>
-            <q-expansion-item dense label="Historial del bien" header-class="q-px-none">
-              <historial-bien :bien="b" :tipos-seleccionables="TIPOS_HISTORIAL" @seleccionar="irAHecho" />
-            </q-expansion-item>
-          </div>
-        </div>
-
-        <template v-else>
-          <h3 class="sg-kv__label q-mt-none">Bienes reportados</h3>
-          <div class="sg-table-wrap">
-            <table class="sg-table">
-              <thead>
-                <tr><th scope="col">Bien</th><th scope="col">Condición actual</th><th scope="col">Situación</th><th scope="col">Necesidad</th><th v-if="esIncidente" scope="col">Siguiente paso</th></tr>
-              </thead>
-              <tbody>
-                <tr v-for="b in afectados" :key="b.id">
-                  <td>
-                    <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: b.id } }">{{ b.nombre }} · {{ b.id }}</router-link>
-                    <template v-else>{{ b.nombre }} · {{ b.id }}</template>
-                    <div class="sg-muted">{{ textoUbicacion(ubicacionDeBien(b)) }}</div>
-                    <div v-if="evento.unidades && afectados.length === 1" class="sg-muted">{{ evento.unidades }} de {{ b.cantidad }} unidades afectadas</div>
-                  </td>
-                  <td><status-chip v-bind="condicion(b.condicion)" /></td>
-                  <td><status-chip v-bind="SITUACIONES[b.situacion]" /></td>
-                  <td>
-                    <status-chip :tono="estadoDeBien(evento, b.id).tono" :label="estadoDeBien(evento, b.id).label" />
-                    <div v-if="necesidadDe(b.id)" class="sg-muted">
-                      {{ CLASES[necesidadDe(b.id).clase] }} ·
-                      <template v-if="necesidadDe(b.id).importe != null">{{ soles(necesidadDe(b.id).importe) }}</template>
-                      <status-chip v-else tono="wa" label="Sin valorar" />
-                    </div>
-                  </td>
-                  <td v-if="esIncidente">
-                    <q-btn
-                      v-if="pasoDe(evento, b.id)"
-                      outline
-                      dense
-                      no-caps
-                      :color="pasoDe(evento, b.id).color"
-                      :icon="pasoDe(evento, b.id).icono"
-                      :label="pasoDe(evento, b.id).label"
-                      @click="abrirPaso(b, pasoDe(evento, b.id).modo)"
-                    />
-                    <span v-else class="sg-muted">Ninguno</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <q-expansion-item v-for="b in afectados" :key="`h-${b.id}`" dense :default-opened="afectados.length === 1" :label="`Historial de ${b.nombre} · ${b.id}`" header-class="q-px-none">
-            <historial-bien :bien="b" :tipos-seleccionables="TIPOS_HISTORIAL" @seleccionar="irAHecho">
-              <template #extra="{ item }">
-                <status-chip v-if="INCIDENTES.includes(item.tipo)" class="q-ml-xs" :tono="estadoDeBien(item, b.id).tono" :label="estadoDeBien(item, b.id).label" />
-              </template>
-            </historial-bien>
-          </q-expansion-item>
-
-          <div v-if="esIncidente" class="sg-box sg-box--dashed q-mt-md">
-            <span class="text-weight-bold">{{ plural(noAfectados.length, 'bien no reportado como afectado', 'bienes no reportados como afectados') }}</span>
-            <span class="sg-muted">{{ noAfectados.map((b) => b.nombre).join(', ') || '—' }}. Su condición no cambia por este hecho.</span>
-          </div>
-
-          <template v-if="evento.tipo === 'baja' && asociados.length">
-            <note-banner tono="in" class="q-mt-md">
-              La baja no da de baja los bienes asociados. La relación se conserva como antecedente y cada uno requiere revisar su situación.
-            </note-banner>
-            <div class="sg-grid-2 q-mt-md">
-              <div v-for="a in asociados" :key="a.bien.id" class="sg-box" :class="{ 'sg-box--dashed': a.bien.revisionPendiente }">
-                <div class="sg-chips">
-                  <status-chip v-bind="condicion(a.bien.condicion)" />
-                  <status-chip v-bind="SITUACIONES[a.bien.situacion]" />
-                  <status-chip v-if="a.bien.revisionPendiente" tono="wa" label="Situación por revisar" />
-                </div>
-                <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: a.bien.id } }" class="text-weight-bold">{{ a.bien.nombre }} · {{ a.bien.id }}</router-link>
-                <span v-else class="text-weight-bold">{{ a.bien.nombre }} · {{ a.bien.id }}</span>
-                <span class="sg-muted">Antes en: {{ evento.bienIds[0] }} ({{ a.posicion ?? 'posición no informada' }})</span>
-              </div>
-            </div>
-          </template>
-        </template>
-      </section-card>
+      <detalle-hecho v-if="evento" ref="detalleRef" :evento="evento" @seleccionar="irAHecho">
+        <template #acciones><q-btn v-if="anteriorInterno" flat dense no-caps color="secondary" icon="undo" :label="`Volver al hecho ${anteriorInterno.etiqueta}`" @click="regresarAnterior" /></template>
+      </detalle-hecho>
     </div>
 
-    <incidente-dialog v-model="dialogoIncidente.abierto" :evento="dialogoIncidente.evento" :car-inicial="carContexto" @hecho="seleccionarUltimo" />
-    <bien-accion-dialog v-model="dialogoAccion.abierto" :modo="dialogoAccion.modo" :bien="dialogoAccion.bien" :car-inicial="carContexto" @hecho="alRegistrarAccion" />
-    <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
 </template>
 
 <script setup>
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, nextTick, reactive, ref, toRef, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
-import NoteBanner from 'components/common/NoteBanner.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
-import MenuAcciones from 'components/common/MenuAcciones.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
-import AnularDialog from 'components/common/AnularDialog.vue'
-import IncidenteDialog from 'components/bienes/IncidenteDialog.vue'
-import BienAccionDialog from 'components/bienes/BienAccionDialog.vue'
-import HistorialBien from 'components/bienes/HistorialBien.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { useAnulacion } from 'src/composables/useAnulacion'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { useRecorridoInterno } from 'src/composables/useRecorridoInterno'
-import { db, ambientesDeCar, bienPorId, bienesDeAmbiente, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien, vigente } from 'src/services/datos'
+import { db, ambientesDeCar, bienPorId, ubicacionDeAmbiente } from 'src/services/datos'
 import { calcularNecesidades } from 'src/services/necesidades'
-import { siguientePaso } from 'src/services/bienes'
-import {
-  anular, anularBaja, anularReposicion, dependenciasDeBaja, dependenciasDeReposicion, reposicionDe
-} from 'src/services/acciones'
-import { CHIP_ANULADO, INCIDENTES, SITUACIONES, TIPOS_EVENTO, TODOS, condicion } from 'src/config/catalogos'
+import DetalleHecho from 'components/bienes/DetalleHecho.vue'
+import { TIPOS_HECHO, ESTADOS, estadoNecesidad as estadoHecho, hechosRegistrados, ubicacionHecho } from 'src/services/incidencias'
+import { CHIP_ANULADO, TIPOS_EVENTO, TODOS } from 'src/config/catalogos'
 import { ANIO_REVISION } from 'src/config/demo'
-import { fecha, plural, soles } from 'src/utils/formato'
+import { fecha, plural } from 'src/utils/formato'
 import { mostrarDetalle, parametro } from 'src/utils/navegacion'
 
-const CLASES = { renovacion: 'Renovación', reposicion: 'Reposición' }
-const TIPOS_HISTORIAL = ['dano', 'robo', 'incendio', 'baja', 'reposicion']
+const TIPOS_HISTORIAL = TIPOS_HECHO
 
 // Estados de necesidad: el mismo significado en el listado y en el detalle.
-const ESTADOS = {
-  pendiente: { clave: 'pendiente', tono: 'da', label: 'Pendiente' },
-  atendida: { clave: 'atendida', tono: 'ok', label: 'Atendida' },
-  sin: { clave: 'sin', tono: 'ne', label: 'Sin necesidad reportada' },
-  sinAbierta: { clave: 'sin', tono: 'ne', label: 'Sin necesidad abierta' },
-  anulado: { clave: 'anulado', tono: 'ne', label: 'Anulado' }
-}
 const OPCIONES_NECESIDAD = [
   { label: 'Todas', value: TODOS },
   { label: ESTADOS.pendiente.label, value: 'pendiente' },
@@ -221,12 +96,10 @@ const OPCIONES_NECESIDAD = [
 ]
 
 const route = useRoute()
-const router = useRouter()
-const { enAmbitoCar, carIdsEnAmbito, puedeAcceder, puedeHacer } = usePerfil()
-const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
+const { enAmbitoCar, carIdsEnAmbito } = usePerfil()
 const { carId, opcionesCar } = useCentroSeleccionado(route.query.car, { todos: true })
 
-// Centro que heredan los formularios; con «Todos» no hay contexto y se pide elegirlo.
+// Centro utilizado por el filtro de ambientes del visor.
 const carContexto = computed(() => (carId.value === TODOS ? null : carId.value))
 
 const opcionesAmbiente = computed(() => [
@@ -241,32 +114,7 @@ const opcionesAnio = computed(() => [
 ])
 
 const pendientes = computed(() => calcularNecesidades({ anio: ANIO_REVISION, carIds: carIdsEnAmbito.value }).pendientes)
-const necesidadDe = (bienId) => pendientes.value.find((n) => n.id === bienId) ?? null
-
-// Estado de la necesidad de un bien frente a un hecho. Un incidente sobre un bien activo con necesidad pide darlo de baja;
-// si ya está dado de baja y sin reposición, pide la reposición.
-function estadoDeBien (ev, bienId) {
-  if (ev.anulacion) return ESTADOS.anulado
-  if (ev.tipo === 'reposicion' || reposicionDe(bienId)) return ESTADOS.atendida
-  if (!INCIDENTES.includes(ev.tipo) || !ev.reportaNecesidad) return ESTADOS.sin
-  if (bienPorId(bienId)?.situacion === 'baja') return ESTADOS.pendiente
-  return necesidadDe(bienId) ? ESTADOS.pendiente : ESTADOS.sinAbierta
-}
-
-// Siguiente paso de un incidente con necesidad pendiente (nulo si no hay o el perfil no puede hacerlo).
-function pasoDe (ev, bienId) {
-  if (estadoDeBien(ev, bienId) !== ESTADOS.pendiente) return null
-  const paso = siguientePaso(bienPorId(bienId))
-  return paso && puedeHacer(paso.permiso) ? paso : null
-}
-
-// Resumen del hecho: pendiente si algún bien lo está; si no, atendida si alguno lo está.
-function estadoNecesidad (ev) {
-  const estados = ev.bienIds.map((id) => estadoDeBien(ev, id))
-  const pend = estados.filter((e) => e === ESTADOS.pendiente).length
-  if (pend) return { ...ESTADOS.pendiente, label: ev.bienIds.length > 1 ? plural(pend, 'pendiente', 'pendientes') : ESTADOS.pendiente.label }
-  return estados.find((e) => e === ESTADOS.atendida) ?? estados[0] ?? ESTADOS.sin
-}
+const estadoNecesidad = (ev) => estadoHecho(ev, pendientes.value)
 
 const filtros = reactive({ ambienteId: TODOS, texto: '', tipo: TODOS, necesidad: TODOS, anio: TODOS })
 // Un hecho anulado pedido por enlace solo se ve con los inactivos.
@@ -280,12 +128,11 @@ function limpiarFiltros () {
   mostrarInactivos.value = false
 }
 
-const ubicacion = (ev) => ubicacionDeAmbiente(ev.ambienteId)
+const ubicacion = ubicacionHecho
 
 const eventos = computed(() => {
   const t = (filtros.texto ?? '').toLowerCase()
-  return db.eventos
-    .filter((ev) => TIPOS_HISTORIAL.includes(ev.tipo) && (mostrarInactivos.value || vigente(ev)))
+  return hechosRegistrados({ inactivos: mostrarInactivos.value })
     .filter((ev) => {
       const u = ubicacion(ev)
       if (!enAmbitoCar(u.car.id)) return false
@@ -296,7 +143,7 @@ const eventos = computed(() => {
       if (filtros.anio !== TODOS && !ev.fecha.startsWith(filtros.anio)) return false
       if (!t) return true
       const nombres = ev.bienIds.map((id) => bienPorId(id)?.nombre ?? '').join(' ')
-      return [ev.titulo, u.ambiente.nombre, nombres, ...ev.bienIds].some((v) => v.toLowerCase().includes(t))
+      return [ev.titulo, u.ambiente?.nombre ?? 'Centro', nombres, ...ev.bienIds].some((v) => v.toLowerCase().includes(t))
     })
     .sort((a, b) => b.fecha.localeCompare(a.fecha))
 })
@@ -337,44 +184,7 @@ function seleccionar (id) {
   mostrarDetalle(detalleRef)
 }
 
-const evento = computed(() => db.eventos.find((e) => e.id === eventoId.value) ?? null)
-const esIncidente = computed(() => INCIDENTES.includes(evento.value?.tipo))
-const afectados = computed(() => (evento.value ? evento.value.bienIds.map(bienPorId).filter(Boolean) : []))
-const noAfectados = computed(() =>
-  evento.value ? bienesDeAmbiente(evento.value.ambienteId).filter((b) => !evento.value.bienIds.includes(b.id) && b.situacion === 'activo') : []
-)
-
-// Componentes que tenía el bien al darse de baja (si el hecho los guardó) o, en su defecto, los que tiene hoy.
-const asociados = computed(() => {
-  const e = evento.value
-  if (!e) return []
-  if (e.componentes) return e.componentes.map((c) => ({ bien: bienPorId(c.bienId), posicion: c.posicion })).filter((a) => a.bien)
-  return db.bienes
-    .filter((b) => b.asociadoA?.bienId === e.bienIds[0])
-    .map((b) => ({ bien: b, posicion: b.asociadoA.posicion }))
-})
-
-const dialogoIncidente = reactive({ abierto: false, evento: null })
-
-// Baja y reposición se registran aquí eligiendo Centro › Ambiente › Bien, o desde «Siguiente paso» con el bien ya elegido.
-const dialogoAccion = reactive({ abierto: false, modo: 'baja', bien: null })
-
-function abrirAccion (modo, bien = null) {
-  Object.assign(dialogoAccion, { abierto: true, modo, bien })
-}
-
-const abrirPaso = (bien, modo) => abrirAccion(modo, bien)
-
-// El hecho recién registrado es el último del almacén: se muestra su detalle.
-function seleccionarUltimo () {
-  eventoId.value = db.eventos.at(-1)?.id ?? null
-}
-
-// Un paso iniciado desde un incidente no cambia el hecho que se está viendo; su estado se actualiza solo.
-function alRegistrarAccion () {
-  if (!dialogoAccion.bien) seleccionarUltimo()
-}
-
+const evento = computed(() => eventos.value.find((e) => e.id === eventoId.value) ?? null)
 // Salta a un hecho del historial; si un filtro lo oculta, los limpia primero.
 // Antes de saltar se recuerdan el hecho y los filtros actuales, para «Volver al hecho ‹anterior›» (SPEC 011, Ola 5).
 function irAHecho (id) {
@@ -405,84 +215,4 @@ async function regresarAnterior () {
   seleccionar(previo.eventoId)
 }
 
-const verFicha = (bienId) => ({
-  label: 'Ver ficha del bien',
-  icono: 'inventory_2',
-  visible: puedeAcceder('centros'),
-  accion: () => router.push({ name: 'centros', query: { bien: bienId } })
-})
-
-// Los incidentes se corrigen o anulan sin cambiar el estado del bien. Las bajas y reposiciones cambian el estado de un bien:
-// solo se anulan por error de registro (reversión en orden inverso: primero la reposición y después la baja).
-const accionesEvento = computed(() => {
-  const e = evento.value
-  if (!e) return []
-  if (e.tipo === 'baja') {
-    return [
-      verFicha(e.bienIds[0]),
-      {
-        label: 'Anular baja',
-        icono: 'block',
-        peligro: true,
-        visible: puedeHacer('baja.anular') && vigente(e),
-        accion: () => pedirAnulacion({
-          titulo: 'Anular baja',
-          subtitulo: e.titulo,
-          aviso: 'Use esta opción solo si la baja se registró por error. El bien vuelve a estar activo y a contar en los cálculos.',
-          dependencias: dependenciasDeBaja(e),
-          mensaje: 'Baja anulada. El bien está activo nuevamente.',
-          ejecutar: (datos) => anularBaja(e, datos)
-        })
-      }
-    ]
-  }
-  if (e.tipo === 'reposicion') {
-    return [
-      verFicha(e.bienNuevoId),
-      {
-        label: 'Anular reposición',
-        icono: 'block',
-        peligro: true,
-        visible: puedeHacer('reposicion.anular') && vigente(e),
-        accion: () => pedirAnulacion({
-          titulo: 'Anular reposición',
-          subtitulo: e.titulo,
-          aviso: 'Use esta opción solo si la reposición se registró por error. El bien nuevo se anula y el anterior sigue dado de baja.',
-          dependencias: dependenciasDeReposicion(e),
-          mensaje: 'Reposición anulada. El bien anterior sigue dado de baja.',
-          ejecutar: (datos) => anularReposicion(e, datos)
-        })
-      }
-    ]
-  }
-  if (!esIncidente.value) return []
-  return [
-    {
-      label: 'Actualizar incidente',
-      icono: 'edit',
-      visible: puedeHacer('incidente.actualizar') && vigente(e),
-      accion: () => Object.assign(dialogoIncidente, { abierto: true, evento: e })
-    },
-    {
-      label: 'Anular incidente',
-      icono: 'block',
-      peligro: true,
-      visible: puedeHacer('incidente.anular') && vigente(e),
-      accion: () => pedirAnulacion({
-        titulo: 'Anular incidente',
-        subtitulo: e.titulo,
-        aviso: 'Un incidente anulado deja de generar necesidades. La condición de los bienes no se revierte: corríjala desde la ficha del bien.',
-        mensaje: 'Incidente anulado.',
-        ejecutar: (datos) => anular(e, datos),
-      registro: e
-      })
-    },
-    {
-      label: 'Reactivar incidente',
-      icono: 'restore',
-      visible: puedeHacer('incidente.anular') && !vigente(e),
-      accion: () => pedirReactivacion({ entidad: 'incidente', registro: e, nombre: 'Incidente' })
-    }
-  ]
-})
 </script>

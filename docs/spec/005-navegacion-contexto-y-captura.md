@@ -1,5 +1,7 @@
 # SPEC 005 — Navegación contextual, captura rápida y acciones desde el pendiente
 
+> Actualización: la [SPEC 016](016-incidencias-origen-reposicion-individual.md) sustituye la selección de ubicación y la decisión global de reposición por un origen fijo y evaluación individual. Las reglas patrimoniales permanecen vigentes.
+
 - **Estado:** implementado en el prototipo. La verificación en navegador está pendiente de autorización.
 - **Fecha:** 2026-11-03
 - **Origen:** diagnóstico ejecutivo de SIGREC (hallazgos L01–L13) y plan priorizado P0–P6.

@@ -23,7 +23,7 @@
 
     <note-banner v-if="modo === 'reposicion'" tono="in">
       Solo se reponen bienes dados de baja que aún no tienen una reposición vigente. Para reponer un bien activo,
-      dé de baja primero (desde «Dar de baja» o desde el incidente).
+      dé de baja primero (desde la ficha del bien, con «Dar de baja»).
     </note-banner>
 
     <template v-if="modo === 'verificacion'">
@@ -144,7 +144,7 @@ const $q = useQuasar()
 const TITULOS = {
   verificacion: 'Informar verificación',
   baja: 'Dar de baja',
-  reposicion: 'Registrar reposición'
+  reposicion: 'Registrar reposición: alta del bien nuevo'
 }
 const OPCIONES_RESULTADO = [
   { label: 'Coincide con lo informado', value: 'coincide' },

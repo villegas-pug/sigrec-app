@@ -1,3 +1,4 @@
+import { esIncidencia, requiereReposicion } from './incidencias'
 // Atención requerida (SPEC 011): fuente única de los avisos de Inicio y del contador de la cabecera.
 // Reúne reglas que ya existen en cada módulo (servicios, controles preventivos, vehículos, necesidades y combustible);
 // no crea reglas nuevas. Cada aviso trae su destino (enlace profundo) y, si corresponde, la acción que lo resuelve.
@@ -7,7 +8,7 @@ import { avisosDeServicios, problemasRecurrentes } from './servicios'
 import { controlesPendientes, proximosControles } from './mantenimientos'
 import { requiereAtencion } from './vehiculos'
 import { evaluarItinerario, itinerariosDeVehiculo } from './combustible'
-import { INCIDENTES, TIPOS_EVENTO, TIPOS_MANTENIMIENTO, estadoVehiculo } from 'src/config/catalogos'
+import { TIPOS_EVENTO, TIPOS_MANTENIMIENTO, estadoVehiculo } from 'src/config/catalogos'
 import { PARAMETROS_ATENCION } from 'src/config/demo'
 import { diasEntre } from 'src/utils/fechas'
 import { fecha, plural, soles } from 'src/utils/formato'
@@ -152,8 +153,8 @@ function avisosVehiculos (vehiculos) {
 function avisosBienes (carIds, { anio }) {
   const necesidades = calcularNecesidades({ anio, carIds })
   const lista = []
-  for (const evento of db.eventos.filter((e) => vigente(e) && INCIDENTES.includes(e.tipo) && e.reportaNecesidad)) {
-    const abiertas = necesidades.pendientes.filter((n) => evento.bienIds.includes(n.id))
+  for (const evento of db.eventos.filter((e) => vigente(e) && esIncidencia(e) && (e.bienIds ?? []).some((id) => requiereReposicion(e, id)))) {
+    const abiertas = necesidades.pendientes.filter((n) => evento.bienIds.includes(n.id) && requiereReposicion(evento, n.id))
     if (!abiertas.length) continue
     const { car, ambiente } = ubicacionDeBien(abiertas[0].bien)
     lista.push({
@@ -177,9 +178,9 @@ function avisosBienes (carIds, { anio }) {
       horizonte: 'ahora',
       tono: 'in',
       etiqueta: 'Infraestructura en evaluación',
-      contexto: `${item.ubicacion.car.nombre} · ${item.ubicacion.ambiente.nombre}`,
+      contexto: `${item.ubicacion.car.nombre} · ${item.ubicacion.ambiente?.nombre ?? 'Centro'}`,
       texto: `${item.novedad.titulo}. Sin costo estimado hasta su evaluación.`,
-      destinos: [{ name: 'centros', query: { car: item.ubicacion.car.id, ambiente: item.ubicacion.ambiente.id, novedad: item.novedad.id } }],
+      destinos: [{ name: 'centros', query: item.esIncidencia ? { hecho: item.id } : { car: item.ubicacion.car.id, ambiente: item.ubicacion.ambiente.id, novedad: item.novedad.id } }],
       enlace: 'Ver ambiente'
     })
   }

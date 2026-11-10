@@ -5,8 +5,9 @@
     :ruta="textoUbicacion(ubicacion) + cadenaAsociacion"
     :icono="esComponente ? 'extension' : 'label'"
     :tabs="tabs"
+    :tab-inicial="tabInicial"
     :con-volver="conVolver"
-    @volver="$emit('volver')"
+    @volver="$emit('volver')" @seleccionar="$emit('seleccionar', $event)"
   >
     <template #chips>
       <status-chip tono="ne" :label="esComponente ? `Componente · ${CATEGORIAS[bien.categoria]}` : CATEGORIAS[bien.categoria]" />
@@ -18,15 +19,16 @@
     </template>
 
     <template #acciones>
-      <q-btn v-if="activo && puedeHacer('bien.actualizar')" outline color="secondary" icon="edit" label="Actualizar información" @click="$emit('accion', 'datos')" />
-      <q-btn v-if="!anulado && puedeHacer('bien.verificar')" outline color="secondary" icon="fact_check" label="Informar verificación" @click="$emit('accion', 'verificacion')" />
+      <q-btn v-if="activo && puedeHacer('bien.actualizar')" unelevated color="primary" icon="edit" label="Actualizar información" @click="$emit('accion', 'datos')" />
+      <q-btn v-if="!anulado && puedeHacer('bien.verificar') && !puedeHacer('bien.actualizar')" unelevated color="primary" icon="fact_check" label="Informar verificación" @click="$emit('accion', 'verificacion')" />
       <q-btn v-if="activo && puedeHacer('bien.incidente')" outline color="secondary" icon="report" label="Registrar incidente" @click="$emit('accion', 'incidente')" />
-      <q-btn v-if="activo && puedeHacer('bien.baja')" outline color="negative" icon="remove_circle" label="Dar de baja" @click="$emit('accion', 'baja')" />
-      <q-btn v-if="!activo && !anulado && !reposicion && puedeHacer('bien.reposicion')" unelevated color="primary" icon="swap_horiz" label="Registrar reposición" @click="$emit('accion', 'reposicion')" />
-      <menu-acciones :items="accionesMenu" :etiqueta="`Más acciones de ${bien.nombre}`" />
+      <q-btn v-if="!activo && !anulado && !reposicion && puedeHacer('bien.reposicion')" unelevated color="primary" icon="swap_horiz" label="Registrar reposición: alta del bien nuevo" @click="$emit('accion', 'reposicion')" />
+      <menu-acciones con-etiqueta :items="accionesMenu" :etiqueta="`Más acciones de ${bien.nombre}`" />
     </template>
 
     <template #ficha>
+      <p v-if="activo && puedeHacer('bien.reposicion')" class="sg-muted">Para registrar una reposición y dar de alta el bien nuevo, primero registre la baja de este bien.</p>
+      <router-link v-if="reposicion" :to="{ name: 'centros', query: { bien: reposicion.bienNuevoId } }">Ver el bien que ingresó por reposición: {{ reposicion.bienNuevoId }}</router-link>
       <note-banner v-if="anulado" tono="ne" icono="block">
         Registro anulado el {{ fecha(bien.anulacion.fecha) }} por {{ bien.anulacion.por }}. Motivo: {{ bien.anulacion.motivo }}
         No cuenta en las necesidades ni en los avisos.
@@ -151,7 +153,8 @@
 
     <template #antecedentes>
       <section-card titulo="Antecedentes">
-        <historial-bien :bien="bien" />
+        <hechos-contexto :bien-id="bien.id" :hecho-inicial="hechoInicial" />
+        <q-expansion-item label="Historial completo del bien"><historial-bien :bien="bien" /></q-expansion-item>
       </section-card>
     </template>
   </detalle-panel>
@@ -165,6 +168,7 @@
 </template>
 
 <script setup>
+import HechosContexto from 'components/gestion/HechosContexto.vue'
 import { computed, ref } from 'vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import DetallePanel from 'components/gestion/DetallePanel.vue'
@@ -187,6 +191,8 @@ import { fecha, plural, soles } from 'src/utils/formato'
 
 const props = defineProps({
   bien: { type: Object, required: true },
+  tabInicial: { type: String, default: null },
+  hechoInicial: { type: String, default: null },
   conVolver: { type: Boolean, default: false }
 })
 
@@ -236,6 +242,8 @@ const necesidad = computed(() =>
 
 // Acciones menos frecuentes en el menú «⋮».
 const accionesMenu = computed(() => [
+  { label: 'Informar verificación', icono: 'fact_check', visible: !anulado.value && puedeHacer('bien.verificar') && puedeHacer('bien.actualizar'), accion: () => emit('accion', 'verificacion') },
+  { label: 'Dar de baja', icono: 'remove_circle', peligro: true, visible: activo.value && puedeHacer('bien.baja'), accion: () => emit('accion', 'baja') },
   { label: 'Trasladar a otro ambiente', icono: 'moving', visible: activo.value && puedeHacer('bien.trasladar'), accion: () => emit('accion', 'trasladar') },
   { label: 'Anular registro', icono: 'block', peligro: true, visible: !anulado.value && puedeHacer('bien.anular'), accion: () => emit('accion', 'anular') },
   { label: 'Reactivar registro', icono: 'restore', visible: anulado.value && puedeHacer('bien.anular'), accion: () => emit('accion', 'reactivar') }

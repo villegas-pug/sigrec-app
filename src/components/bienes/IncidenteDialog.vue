@@ -1,164 +1,74 @@
 <template>
-  <form-dialog
-    :model-value="modelValue"
-    :icono-enviar="evento ? 'save' : 'report'"
-    :titulo="evento ? 'Actualizar incidente' : 'Registrar incidente'"
-    :subtitulo="subtitulo"
-    :ancho="620"
-    :etiqueta-enviar="evento ? 'Guardar cambios' : 'Registrar incidente'"
-    :modificado="modificado"
-    @update:model-value="$emit('update:modelValue', $event)"
-    @enviar="guardar"
-  >
-    <selector-ubicacion-bien
-      v-model="form.bienIds"
-      v-model:car-id="form.carId"
-      v-model:ambiente-id="form.ambienteId"
-      multiple
-      :ubicacion-fija="ubicacionFija"
-      :filtro="esElegible"
-    />
-    <div class="sg-muted" style="margin-top: -8px">Solo los bienes indicados quedan afectados; el resto del ambiente no cambia.</div>
-    <div class="row q-col-gutter-md">
-      <q-select v-model="form.tipo" class="col-12 col-sm-6" :options="OPCIONES_INCIDENTE" emit-value map-options outlined dense label="Hecho *" :rules="[requerido]">
-        <template #append><boton-dictado v-model="form.tipo" tipo="opcion" :opciones="OPCIONES_INCIDENTE" emit-value /></template>
-      </q-select>
-      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha del hecho *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
-        <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
-      </q-input>
+  <form-dialog :model-value="modelValue" :titulo="evento ? 'Actualizar incidente' : 'Registrar incidente'" :subtitulo="ubicacion" :ancho="1000" :modificado="modificado" :etiqueta-enviar="evento ? 'Guardar cambios' : 'Registrar incidente'" @update:model-value="$emit('update:modelValue', $event)" @enviar="guardar">
+    <div v-if="contexto" class="sg-box" aria-label="Contexto fijo de la incidencia">
+      <span v-if="contexto.padre">{{ contexto.padre.tipo === 'centro' ? 'Centro' : contexto.padre.tipo === 'ambiente' ? 'Ambiente' : 'Bien principal' }}: {{ contexto.padre.nombre }} · {{ contexto.padre.id }}</span>
+      <strong>{{ etiquetas[origen.tipo] }}: {{ contexto.nombre }} · {{ origen.id }}</strong>
+      <span class="sg-muted">Para registrar en otro recurso, cierre y seleccione su ficha.</span>
     </div>
-    <q-input v-model="form.titulo" outlined dense label="Motivo *" :rules="[requerido]">
-      <template #append><boton-dictado v-model="form.titulo" /></template>
-    </q-input>
-    <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Detalle">
-      <template #append><boton-dictado v-model="form.detalle" /></template>
-    </q-input>
-    <q-input
-      v-if="unidadesEditables"
-      v-model.number="form.unidades"
-      outlined
-      dense
-      type="number"
-      min="1"
-      :max="bienUnico.cantidad"
-      :label="`Unidades afectadas (de ${bienUnico.cantidad})`"
-      hint="Vacío = todas las unidades. Define cuántas unidades se reponen (regla por validar)."
-      :rules="[unidadesValidas]">
-      <template #append><boton-dictado v-model="form.unidades" tipo="numero" /></template>
-    </q-input>
-    <template v-if="!evento">
-      <q-toggle v-if="form.bienIds?.length > 1" v-model="porBien" label="Indicar condición por bien" />
-      <div v-if="porBien && form.bienIds?.length > 1" class="column q-gutter-y-sm">
-        <div v-for="id in form.bienIds" :key="id" class="sg-box">
-          <div class="sg-chips">
-            <span class="text-weight-bold">{{ bienPorId(id).nombre }} · {{ id }}</span>
-            <status-chip v-bind="condicion(bienPorId(id).condicion)" :label="`Actual: ${condicion(bienPorId(id).condicion).label}`" />
-          </div>
-          <condicion-selector v-model="form.condiciones[id]" clearable />
-        </div>
-      </div>
-      <condicion-selector v-else v-model="form.condicion" etiqueta="Nueva condición de los bienes afectados" clearable />
-    </template>
-    <q-checkbox v-model="form.reportaNecesidad" label="Reportar necesidad de reposición (sin esperar el fin de la vida útil)" />
+    <div class="row q-col-gutter-md">
+      <q-select v-model="form.tipo" class="col-12 col-sm-6" :options="opcionesTipo" emit-value map-options outlined dense label="Hecho *" :rules="[requerido]"><template #append><boton-dictado v-model="form.tipo" tipo="opcion" :opciones="opcionesTipo" emit-value /></template></q-select>
+      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha del hecho *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]"><template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template></q-input>
+    </div>
+    <q-input v-model="form.titulo" outlined dense label="Motivo *" :rules="[requerido]"><template #append><boton-dictado v-model="form.titulo" /></template></q-input>
+    <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Detalle"><template #append><boton-dictado v-model="form.detalle" /></template></q-input>
+    <q-checkbox v-if="['centro', 'ambiente'].includes(origen?.tipo)" v-model="form.requiereEvaluacion" label="Requiere evaluación de infraestructura" />
+    <p v-if="['centro', 'ambiente'].includes(origen?.tipo)" class="sg-muted">Genera seguimiento de infraestructura sin asignar un costo ni una reposición de bienes.</p>
+    <selector-afectados v-if="origen?.tipo !== 'centro'" ref="selector" v-model="form.bienIds" v-model:evaluaciones="form.evaluaciones" v-model:condiciones="form.condiciones" :candidatos="recursos" :multiple="origen?.tipo === 'ambiente'" :permitir-condicion="!evento" />
+    <p v-if="form.bienIds.length" class="sg-muted">Sí incorpora el recurso a Necesidades mientras esté activo; no registra una baja, reposición ni compra. Elegir «No» no elimina una necesidad por vida útil. Al dar de baja, el bien pasa al seguimiento informativo de reposición.</p>
+    <template #resumen>{{ form.bienIds.length }} afectados · {{ selector?.ocultos ?? 0 }} fuera del filtro · {{ cantidadReposicion }} requieren reposición · {{ decisionesPendientes }} decisiones pendientes</template>
   </form-dialog>
 </template>
-
 <script setup>
-import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
-import CondicionSelector from 'components/common/CondicionSelector.vue'
-import StatusChip from 'components/common/StatusChip.vue'
-import SelectorUbicacionBien from 'components/bienes/SelectorUbicacionBien.vue'
+import BotonDictado from 'components/common/BotonDictado.vue'
+import SelectorAfectados from './SelectorAfectados.vue'
 import { useBorrador } from 'src/composables/useBorrador'
-import { bienPorId, textoUbicacion, ubicacionDeAmbiente } from 'src/services/datos'
+import { usePerfil } from 'src/composables/usePerfil'
+import { bienPorId, bienesDeAmbiente } from 'src/services/datos'
+import { contextoIncidencia, origenIncidencia, requiereReposicion, unidadesAfectadas } from 'src/services/incidencias'
 import { actualizarIncidente, registrarIncidente } from 'src/services/acciones'
-import { OPCIONES_INCIDENTE, condicion } from 'src/config/catalogos'
+import { OPCIONES_INCIDENTE, OPCIONES_INCIDENCIA_INFRAESTRUCTURA } from 'src/config/catalogos'
 import { FECHA_CORTE } from 'src/config/demo'
 import { HINT_FECHA_CORTE, noFutura, requerido } from 'src/utils/validaciones'
-import { plural } from 'src/utils/formato'
-
-const props = defineProps({
-  modelValue: { type: Boolean, default: false },
-  // null = incidente nuevo; si no, el hecho que se corrige.
-  evento: { type: Object, default: null },
-  // Bien desde cuya ficha se registra: fija el centro y el ambiente.
-  bien: { type: Object, default: null },
-  // Centro de contexto (p. ej. el filtrado en Incidencias); null = el usuario lo elige.
-  carInicial: { type: String, default: null }
-})
-
+const props = defineProps({ modelValue: Boolean, evento: Object, bien: Object, ambienteInicial: String, centroInicial: String, sugerencia: Object })
 const emit = defineEmits(['update:modelValue', 'hecho'])
 const $q = useQuasar()
-
-const form = reactive({})
-const { modificado, fijar } = useBorrador(form, { excluir: ['carId'] })
-
-const ubicacionFija = computed(() => !!props.evento || !!props.bien)
-const porBien = ref(false)
-
-// Al corregir un hecho se conservan como opción los bienes ya reportados aunque hoy estén dados de baja.
-const esElegible = (b) => b.situacion === 'activo' || (form.bienIds ?? []).includes(b.id)
-
-const subtitulo = computed(() => (form.ambienteId ? textoUbicacion(ubicacionDeAmbiente(form.ambienteId)) : 'Los campos con * son obligatorios'))
-
-// Las unidades afectadas solo aplican a un único bien de un lote.
-const bienUnico = computed(() => (form.bienIds?.length === 1 ? bienPorId(form.bienIds[0]) : null))
-const unidadesEditables = computed(() => (bienUnico.value?.cantidad ?? 1) > 1)
-const unidadesValidas = (v) => v === '' || v == null || (Number.isInteger(v) && v >= 1 && v <= (bienUnico.value?.cantidad ?? 1)) || 'Indique un número entero dentro de la cantidad del bien'
-
-// Las condiciones por bien solo se conservan para los bienes aún seleccionados.
+const { puedeHacer, enAmbitoCar } = usePerfil()
+const etiquetas = { centro: 'Centro', ambiente: 'Ambiente', bien: 'Bien', componente: 'Componente' }
+const selector = ref(null)
+const opcionesTipo = computed(() => ['centro', 'ambiente'].includes(origen.value?.tipo) ? OPCIONES_INCIDENCIA_INFRAESTRUCTURA : OPCIONES_INCIDENTE)
+const origen = computed(() => props.evento ? origenIncidencia(props.evento) : props.bien ? { tipo: props.bien.asociadoA ? 'componente' : 'bien', id: props.bien.id } : props.ambienteInicial ? { tipo: 'ambiente', id: props.ambienteInicial } : props.centroInicial ? { tipo: 'centro', id: props.centroInicial } : null)
+const contexto = computed(() => origen.value ? props.evento?.contextoOrigen ?? contextoIncidencia(origen.value) : null)
+const ubicacion = computed(() => contexto.value ? `${etiquetas[origen.value.tipo]} · ${origen.value.id}` : '')
+const form = reactive({ bienIds: [], evaluaciones: {}, condiciones: {}, requiereEvaluacion: false })
+const { modificado, fijar } = useBorrador(form)
+const candidatos = computed(() => contexto.value?.ambienteId ? bienesDeAmbiente(contexto.value.ambienteId).filter((b) => b.situacion === 'activo' || props.evento?.bienIds?.includes(b.id)) : [])
+const recursos = computed(() => origen.value?.tipo === 'ambiente' ? [...new Map([...candidatos.value, ...(props.evento?.bienIds ?? []).map(bienPorId).filter(Boolean)].map((b) => [b.id, b])).values()] : props.bien ? [props.bien] : form.bienIds.map(bienPorId).filter(Boolean))
+const decisionesPendientes = computed(() => form.bienIds.filter((id) => typeof form.evaluaciones[id]?.requiereReposicion !== 'boolean').length)
+const cantidadReposicion = computed(() => form.bienIds.filter((id) => form.evaluaciones[id]?.requiereReposicion === true).length)
 watch(() => form.bienIds, (ids) => {
-  for (const id of Object.keys(form.condiciones ?? {})) if (!(ids ?? []).includes(id)) delete form.condiciones[id]
-}, { deep: true })
-
+  for (const id of ids) if (!form.evaluaciones[id]) form.evaluaciones[id] = { requiereReposicion: null, unidades: bienPorId(id).cantidad ?? 1 }
+}, { flush: 'sync' })
 watch(() => props.modelValue, (abierto) => {
-  if (!abierto) return
-  const { evento, bien } = props
-  // El hecho o el bien fijan la ubicación; si no, se hereda el contexto de la pantalla (centro filtrado) sin elegir ambiente.
-  const ambienteId = evento?.ambienteId ?? bien?.ambienteId ?? null
-  const carId = ambienteId ? ubicacionDeAmbiente(ambienteId).car.id : props.carInicial
-  porBien.value = false
-  Object.assign(form, {
-    carId: carId ?? null,
-    ambienteId,
-    tipo: evento?.tipo ?? 'dano',
-    fecha: evento?.fecha ?? FECHA_CORTE,
-    titulo: evento?.titulo ?? '',
-    detalle: evento?.detalle ?? '',
-    bienIds: evento ? [...evento.bienIds] : bien ? [bien.id] : [],
-    unidades: evento?.unidades ?? null,
-    condicion: null,
-    condiciones: {},
-    reportaNecesidad: evento?.reportaNecesidad ?? true
-  })
+  if (!abierto || !origen.value) return
+  const e = props.evento
+  const ids = e ? [...e.bienIds] : props.bien ? [props.bien.id] : []
+  Object.assign(form, { tipo: e?.tipo ?? props.sugerencia?.tipo ?? 'dano', fecha: e?.fecha ?? FECHA_CORTE, titulo: e?.titulo ?? props.sugerencia?.titulo ?? '', detalle: e?.detalle ?? props.sugerencia?.detalle ?? '', requiereEvaluacion: e?.requiereEvaluacion ?? props.sugerencia?.requiereEvaluacion ?? false, condiciones: {}, evaluaciones: {} })
+  form.bienIds = ids
+  for (const id of ids) form.evaluaciones[id] = { requiereReposicion: e ? requiereReposicion(e, id) : null, unidades: e ? unidadesAfectadas(e, bienPorId(id)) : bienPorId(id).cantidad ?? 1 }
   fijar()
 })
-
-function guardar () {
-  const datos = {
-    tipo: form.tipo,
-    fecha: form.fecha,
-    titulo: form.titulo,
-    detalle: form.detalle,
-    bienIds: form.bienIds,
-    unidades: unidadesEditables.value ? form.unidades : null,
-    reportaNecesidad: form.reportaNecesidad
-  }
-  if (props.evento) {
-    actualizarIncidente(props.evento, datos)
-    $q.notify({ type: 'positive', message: 'Incidente actualizado.' })
-  } else {
-    registrarIncidente({
-      ...datos,
-      ambienteId: form.ambienteId,
-      condicion: porBien.value ? null : form.condicion,
-      condiciones: porBien.value ? form.condiciones : {}
-    })
-    $q.notify({ type: 'positive', message: `Incidente registrado para ${plural(form.bienIds.length, 'bien', 'bienes')}.` })
-  }
-  emit('update:modelValue', false)
-  emit('hecho')
+async function guardar () {
+  if (selector.value && !(await selector.value.validar())) return
+  const permiso = ['centro', 'ambiente'].includes(origen.value?.tipo) ? `${origen.value.tipo}.incidente` : 'bien.incidente'
+  if (!contexto.value || !enAmbitoCar(contexto.value.carId) || !puedeHacer(permiso) || (props.evento && !puedeHacer('incidente.actualizar'))) return
+  try {
+    const datos = { ...form, origen: origen.value }
+    const e = props.evento ? (actualizarIncidente(props.evento, datos), props.evento) : registrarIncidente(datos)
+    $q.notify({ type: 'positive', message: `${props.evento ? 'Incidente actualizado' : 'Incidente registrado'}: ${e.titulo} · ${e.id}.` })
+    emit('update:modelValue', false); emit('hecho', e.id)
+  } catch (error) { $q.notify({ type: 'negative', message: error.message }) }
 }
 </script>

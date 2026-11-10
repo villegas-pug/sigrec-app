@@ -151,8 +151,9 @@
                 </td>
                 <td>
                   <div class="column q-gutter-y-xs items-start">
-                    <q-btn v-if="pasoDe(n)" dense outline no-caps :color="pasoDe(n).color" :icon="pasoDe(n).icono" :label="pasoDe(n).label" @click="abrirPaso(n.bien, pasoDe(n).modo)" />
-                    <span v-else-if="siguientePaso(n.bien)" class="sg-muted">Requiere: equipo central</span>
+                    <span v-if="pasoDe(n)">Paso pendiente: {{ pasoDe(n).label }}</span>
+                    <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: n.id } }">Ver ficha del bien</router-link>
+                    <span v-if="!pasoDe(n) && siguientePaso(n.bien)" class="sg-muted">Requiere: equipo central</span>
                     <router-link v-if="antecedenteDe(n)" :to="antecedenteDe(n).to">{{ antecedenteDe(n).label }}</router-link>
                   </div>
                 </td>
@@ -178,7 +179,8 @@
             <span class="sg-muted">{{ textoUbicacion(r.ubicacion) }}</span>
             <span v-for="e in r.incidentes" :key="e.id" class="sg-muted">{{ TIPOS_EVENTO[e.tipo].label }}: {{ e.titulo }} · {{ fecha(e.fecha) }}</span>
             <div class="row items-center q-gutter-x-md">
-              <q-btn v-if="puedeHacer('bien.reposicion')" dense outline no-caps color="primary" icon="swap_horiz" label="Registrar reposición" @click="abrirPaso(r.bien, 'reposicion')" />
+              <span>Paso pendiente: registrar reposición</span>
+              <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: r.bien.id } }">Ver ficha del bien</router-link>
               <router-link v-if="puedeAcceder('incidencias')" :to="{ name: 'incidencias', query: { car: r.ubicacion.car.id, hecho: r.incidentes[0].id } }">Ver incidente</router-link>
             </div>
           </div>
@@ -193,7 +195,7 @@
               <div class="sg-chips"><status-chip tono="in" label="Requiere evaluación" /><status-chip tono="si" label="Costo no estimado" /></div>
               <span class="text-weight-bold">{{ i.novedad.titulo }} · {{ i.id }}</span>
               <span class="sg-muted">{{ textoUbicacion(i.ubicacion) }} · informada el {{ fecha(i.novedad.fecha) }}</span>
-              <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { car: i.ubicacion.car.id, ambiente: i.ubicacion.ambiente.id, novedad: i.id } }" @click="registroConsultado = i.id">Ver novedad en el ambiente</router-link>
+              <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: i.esIncidencia ? { hecho: i.id } : { car: i.ubicacion.car.id, ambiente: i.ubicacion.ambiente.id, novedad: i.id } }" @click="registroConsultado = i.id">Ver incidencia de infraestructura</router-link>
             </div>
             <p v-if="!resultado.infraestructura.length" class="sg-muted q-mb-none">Sin necesidades de infraestructura.</p>
           </div>
@@ -219,7 +221,6 @@
       </div>
     </div>
 
-    <bien-accion-dialog v-model="dialogoAccion.abierto" :modo="dialogoAccion.modo" :bien="dialogoAccion.bien" />
     <precio-dialog v-if="dialogoPrecio.tipo" v-model="dialogoPrecio.abierto" :tipo="dialogoPrecio.tipo" />
   </q-page>
 </template>
@@ -234,7 +235,6 @@ import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import KpiCard from 'components/common/KpiCard.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
-import BienAccionDialog from 'components/bienes/BienAccionDialog.vue'
 import PrecioDialog from 'components/precios/PrecioDialog.vue'
 import SimuladorPresupuesto from 'components/necesidades/SimuladorPresupuesto.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
@@ -306,13 +306,11 @@ const puedeValorar = computed(() => puedeHacer('precio.informar'))
 const dialogoPrecio = reactive({ abierto: false, tipo: null })
 const valorar = (tipo) => Object.assign(dialogoPrecio, { tipo, abierto: true })
 
-// Siguiente paso de la atención (baja o reposición) si el perfil puede darlo; el paso abre el formulario con el bien ya elegido.
+// Paso pendiente informativo; su registro se realiza desde la ficha del bien en Gestión de centros.
 const pasoDe = (n) => {
   const paso = siguientePaso(n.bien)
   return paso && puedeHacer(paso.permiso) ? paso : null
 }
-const dialogoAccion = reactive({ abierto: false, modo: 'baja', bien: null })
-const abrirPaso = (bien, modo) => Object.assign(dialogoAccion, { abierto: true, modo, bien })
 
 // Antecedente de la necesidad: el incidente que la motivó o, si solo es por vida útil, la ficha del bien.
 function antecedenteDe (n) {

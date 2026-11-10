@@ -64,7 +64,7 @@ export const ubicacionDeBien = (bien) => ubicacionDeAmbiente(bien.ambienteId)
 
 // Jerarquía Centro › Ambiente.
 export function textoUbicacion ({ car, ambiente }) {
-  return `${car.nombre} › ${ambiente.nombre}`
+  return ambiente ? `${car.nombre} › ${ambiente.nombre}` : car.nombre
 }
 
 let contador = 0

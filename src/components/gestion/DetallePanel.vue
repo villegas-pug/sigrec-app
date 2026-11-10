@@ -3,11 +3,12 @@
     <header class="sg-detalle__head">
       <div class="sg-detalle__titulo">
         <!-- En móvil: vuelve al árbol de la misma pantalla. Lleva texto e icono propios para no confundirse con «Volver a ‹pantalla›». -->
-        <q-btn v-if="conVolver" flat dense no-caps color="secondary" icon="account_tree" label="Árbol" aria-label="Volver al árbol de centros" @click="$emit('volver')" />
+        <q-btn v-if="conVolver" flat dense no-caps color="secondary" icon="account_tree" label="Explorar recursos" aria-label="Volver al explorador de centros y recursos" @click="$emit('volver')" />
         <q-icon :name="icono" size="26px" color="secondary" aria-hidden="true" />
         <div class="sg-detalle__texto">
           <h2 class="sg-section-title">{{ titulo }}</h2>
-          <p v-if="ruta" class="sg-card__sub">{{ ruta }}</p>
+          <ruta-ficha v-if="nodo" :nodo="nodo" @seleccionar="$emit('seleccionar', $event)" />
+          <p v-else-if="ruta" class="sg-card__sub">{{ ruta }}</p>
         </div>
         <div v-if="$slots.chips" class="sg-chips"><slot name="chips" /></div>
       </div>
@@ -32,6 +33,7 @@
 <script setup>
 // Contenedor común del detalle de un nodo del explorador: cabecera con título, estado y acciones; pestañas con scroll propio.
 // Cada pestaña se rellena con un slot que lleva su mismo `name`.
+import RutaFicha from './RutaFicha.vue'
 import { ref, watch } from 'vue'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 
@@ -49,7 +51,7 @@ const props = defineProps({
   conVolver: { type: Boolean, default: false }
 })
 
-defineEmits(['volver'])
+defineEmits(['volver', 'seleccionar'])
 
 const tab = ref(props.tabs.some((t) => t.name === props.tabInicial) ? props.tabInicial : props.tabs[0]?.name)
 

@@ -1,3 +1,4 @@
+import { contextoIncidencia, origenIncidencia, esIncidencia } from './incidencias'
 // Acciones de la interfaz sobre el almacén en memoria. Registrar una necesidad o un hecho no aprueba compras ni pagos.
 // El autor de cada registro es el perfil activo (services/autor.js). La baja es lógica: `anular` / `reactivar`.
 import {
@@ -247,36 +248,38 @@ export function cambiarCondicion (bien, nueva, { fecha, detalle = '' } = {}) {
 }
 
 // Solo los bienes indicados quedan afectados; el resto del ambiente no cambia por inferencia (CA-11).
-// `unidades` solo aplica a un único bien de un lote: las unidades afectadas (regla por validar).
-// `condiciones` (mapa bienId → condición) tiene prioridad sobre la `condicion` común a todos los bienes.
-export function registrarIncidente ({ tipo, titulo, detalle, fecha, ambienteId, bienIds, reportaNecesidad, condicion: nueva, condiciones = {}, unidades }) {
-  for (const id of bienIds) {
-    const cond = condiciones[id] ?? nueva
-    if (cond) cambiarCondicion(bienPorId(id), cond, { fecha, detalle: titulo })
+// Cada recurso conserva su evaluación y cantidad; los datos anteriores se interpretan mediante los helpers de incidencias.
+// Validar antes de cambiar condiciones o registrar el hecho.
+function validarIncidencia (datos, anterior = null) {
+  const origen = anterior ? origenIncidencia(anterior) : datos.origen
+  if (!origen || !['centro', 'ambiente', 'bien', 'componente'].includes(origen.tipo)) throw new Error('Indique un origen válido')
+  if (!esIncidencia({ tipo: datos.tipo, origen })) throw new Error('Tipo de incidencia no válido para este origen')
+  const contexto = anterior?.contextoOrigen ?? contextoIncidencia(origen)
+  const ids = [...new Set(datos.bienIds ?? [])]
+  if (origen.tipo === 'centro' && ids.length) throw new Error('Una incidencia del centro no selecciona descendientes')
+  if (['bien', 'componente'].includes(origen.tipo) && (ids.length !== 1 || ids[0] !== origen.id)) throw new Error('El recurso de origen no puede cambiar')
+  for (const id of ids) {
+    const b = bienPorId(id)
+    if (!b || (b.situacion !== 'activo' && !anterior?.bienIds?.includes(id)) || (origen.tipo === 'ambiente' && b.ambienteId !== contexto.ambienteId && !anterior?.bienIds?.includes(id))) throw new Error('Recurso no elegible')
+    const ev = datos.evaluaciones?.[id]
+    if (typeof ev?.requiereReposicion !== 'boolean') throw new Error('Decida la reposición de cada recurso')
+    if (!Number.isInteger(ev.unidades) || ev.unidades < 1 || ev.unidades > (b.cantidad ?? 1)) throw new Error('Cantidad afectada fuera del rango disponible')
   }
-  return registrarEvento({
-    tipo,
-    titulo,
-    detalle,
-    fecha,
-    ambienteId,
-    bienIds,
-    reportaNecesidad,
-    unidades: bienIds.length === 1 ? numeroONulo(unidades) : null
-  })
+  return { origen: { ...origen }, contextoOrigen: contexto, carId: contexto.carId, ambienteId: contexto.ambienteId,
+    bienIds: ids, evaluaciones: Object.fromEntries(ids.map((id) => [id, { ...datos.evaluaciones[id] }])),
+    requiereEvaluacion: ['centro', 'ambiente'].includes(origen.tipo) && !!datos.requiereEvaluacion }
 }
-
-export function actualizarIncidente (evento, { tipo, titulo, detalle, fecha, bienIds, reportaNecesidad, unidades }) {
-  Object.assign(evento, {
-    tipo,
-    titulo,
-    detalle,
-    fecha: fecha || evento.fecha,
-    bienIds,
-    reportaNecesidad,
-    unidades: bienIds.length === 1 ? numeroONulo(unidades) : null,
-    modificado: sello()
-  })
+export function registrarIncidente (datos) {
+  const contexto = validarIncidencia(datos)
+  for (const id of contexto.bienIds) {
+    const cond = datos.condiciones?.[id] ?? datos.condicion
+    if (cond) cambiarCondicion(bienPorId(id), cond, { fecha: datos.fecha, detalle: datos.titulo })
+  }
+  return registrarEvento({ tipo: datos.tipo, titulo: datos.titulo, detalle: datos.detalle, fecha: datos.fecha, ...contexto })
+}
+export function actualizarIncidente (evento, datos) {
+  const contexto = validarIncidencia(datos, evento)
+  Object.assign(evento, { tipo: datos.tipo, titulo: datos.titulo, detalle: datos.detalle, fecha: datos.fecha || evento.fecha, ...contexto, modificado: sello() })
 }
 
 const componentesDe = (bienId) => db.bienes.filter((b) => b.asociadoA?.bienId === bienId && b.situacion !== 'anulado')

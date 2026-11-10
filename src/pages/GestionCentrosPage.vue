@@ -15,6 +15,7 @@
 
       <div class="sg-explorer">
         <arbol-centros
+          ref="arbolRef"
           v-if="!movil || vista === 'arbol'"
           v-model:texto="texto"
           v-model:situacion="situacion"
@@ -31,6 +32,10 @@
           <div v-if="nodo && anteriorInterno" class="sg-recorrido-anterior">
             <q-btn flat dense no-caps color="secondary" icon="undo" :label="`Volver a ${anteriorInterno.etiqueta}`" @click="regresarAnterior" />
           </div>
+          <div v-if="fueraDelFiltro" class="sg-box q-ma-sm" role="status">
+            <span>La ficha abierta no coincide con los filtros del explorador.</span>
+            <q-btn flat dense no-caps color="secondary" label="Mostrar en el árbol" @click="mostrarEnArbol" />
+          </div>
           <template v-if="nodo">
             <detalle-centro
               v-if="nodo.tipo === 'centro'"
@@ -39,6 +44,8 @@
               :inactivos="inactivos"
               :tab-inicial="tabInicialCentro"
               :mantenimiento-resaltado="mantenimientoResaltado"
+              :hecho-inicial="seleccion === pedido.id ? hechoPedido : null"
+              @hecho="abrirHecho"
               @registrar-bien="(ambienteId, tipoId) => iniciarRegistro(ambienteId, null, tipoId)"
               :con-volver="movil"
               @seleccionar="irA"
@@ -51,8 +58,10 @@
               :inactivos="inactivos"
               :tab-inicial="tabInicial"
               :novedad-resaltada="novedadResaltada"
+              :hecho-inicial="seleccion === pedido.id ? hechoPedido : null"
               :con-volver="movil"
               @seleccionar="irA"
+              @hecho="abrirHecho"
               @registrar-bien="iniciarRegistro"
               @volver="vista = 'arbol'"
             />
@@ -60,6 +69,8 @@
               v-else
               :key="seleccion"
               :bien="nodo.registro"
+              :tab-inicial="hechoPedido && seleccion === pedido.id ? 'antecedentes' : tabPedida"
+              :hecho-inicial="seleccion === pedido.id ? hechoPedido : null"
               :con-volver="movil"
               @accion="abrirAccion"
               @seleccionar="irA"
@@ -88,7 +99,7 @@
     <centro-dialog v-model="dialogoCentro" @hecho="(id) => irA(nodoCentroId(id))" />
     <bien-accion-dialog v-if="bien" v-model="accion.abierta" :modo="accion.modo" :bien="bien" @hecho="irA" />
     <bien-edicion-dialog v-if="bien" v-model="edicion.abierta" :modo="edicion.modo" :bien="bien" @hecho="irA" />
-    <incidente-dialog v-model="incidente.abierto" :bien="bien" />
+    <incidente-dialog v-model="incidente.abierto" :bien="bien" @hecho="abrirHecho" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
 </template>
@@ -97,8 +108,8 @@
 import ConsultaInfraestructura from 'components/gestion/ConsultaInfraestructura.vue'
 // «Gestión de centros»: explorador Centro › Ambiente › Bien › Componente. Elegir un nodo muestra su detalle y sus acciones;
 // el registro de bienes se abre en un modal sobre el detalle seleccionado.
-import { computed, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import ArbolCentros from 'components/gestion/ArbolCentros.vue'
 import DetalleCentro from 'components/gestion/DetalleCentro.vue'
@@ -120,11 +131,13 @@ import { primeraVisita } from 'src/router/retorno'
 import { ambientePorId, bienPorId, db, ambientesDeCar, mantenimientoPorId, ubicacionDeBien } from 'src/services/datos'
 import { antecesoresDeNodo, arbolDeCentros, idsExpandibles, nodoAmbienteId, nodoCentroId, resolverNodo, rutaHasta } from 'src/services/bienes'
 import { anularBien, cerrarRevision, dependenciasDeBien, desasociarBien, reactivarBien } from 'src/services/acciones'
+import { TIPOS_HECHO, origenIncidencia, ubicacionHecho } from 'src/services/incidencias'
 import { TODOS } from 'src/config/catalogos'
 import { parametro } from 'src/utils/navegacion'
 
 const $q = useQuasar()
 const route = useRoute()
+const router = useRouter()
 const { carsDelAmbito, enAmbitoCar, puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
@@ -150,9 +163,28 @@ const registrarPedido = parametro(route.query.registrar) === '1' && puedeHacer('
 // intervenciones); una pestaña desconocida se ignora. ?seguridad=1 se conserva como alias de ?tab=seguridad (SPEC 011).
 const mantenimientoPedido = parametro(route.query.mantenimiento)
 const tabPedida = parametro(route.query.tab) ?? (parametro(route.query.seguridad) === '1' ? 'seguridad' : null)
+const hechoPedido = parametro(route.query.hecho)
+const hechoSolicitado = hechoPedido ? db.eventos.find((e) => e.id === hechoPedido && TIPOS_HECHO.includes(e.tipo)) : null
+const contextoHechoValido = () => {
+  if (!hechoSolicitado) return false
+  const u = ubicacionHecho(hechoSolicitado)
+  const o = origenIncidencia(hechoSolicitado)
+  const b = bienPedido ? bienPorId(bienPedido) : ['bien', 'componente'].includes(o.tipo) ? bienPorId(o.id) : null
+  return !!u.car && enAmbitoCar(u.car.id) && (!carPedido || carPedido === u.car.id) &&
+    (!ambientePedido || (o.tipo === 'ambiente' && ambientePedido === o.id)) &&
+    (!bienPedido || (!!b && hechoSolicitado.bienIds.includes(b.id))) &&
+    (!b || enAmbitoCar(ubicacionDeBien(b).car.id)) &&
+    (!['bien', 'componente'].includes(o.tipo) || !!b) && !mantenimientoPedido && !novedadPedida
+}
 const mantenimientoSolicitado = mantenimientoPedido ? mantenimientoPorId(mantenimientoPedido) : null
 
 function inicial () {
+  if (hechoPedido) {
+    if (!contextoHechoValido()) return { noDisponible: { entidad: 'El hecho', id: hechoPedido } }
+    if (bienPedido) return { id: bienPedido }
+    const o = origenIncidencia(hechoSolicitado)
+    return { id: o.tipo === 'centro' ? nodoCentroId(o.id) : o.tipo === 'ambiente' ? nodoAmbienteId(o.id) : o.id }
+  }
   if (mantenimientoPedido) {
     return mantenimientoSolicitado && enAmbitoCar(mantenimientoSolicitado.carId)
       ? { id: nodoCentroId(mantenimientoSolicitado.carId) }
@@ -177,9 +209,9 @@ function inicial () {
 const pedido = inicial()
 const pedidoNoDisponible = ref(pedido.noDisponible ?? null)
 const seleccion = ref(pedido.id ?? null)
-const tabInicial = pedidoNoDisponible.value ? null : novedadPedida ? 'novedades' : tabPedida
+const tabInicial = pedidoNoDisponible.value ? null : hechoPedido ? 'incidencias' : novedadPedida ? 'novedades' : tabPedida
 const novedadResaltada = pedidoNoDisponible.value ? null : novedadPedida
-const tabInicialCentro = pedidoNoDisponible.value ? null : mantenimientoPedido ? 'seguridad' : tabPedida
+const tabInicialCentro = pedidoNoDisponible.value ? null : hechoPedido ? 'incidencias' : mantenimientoPedido ? 'seguridad' : tabPedida
 const mantenimientoResaltado = pedidoNoDisponible.value ? null : mantenimientoPedido
 
 // Registros anulados pedidos por enlace: se muestran activando «Mostrar inactivos» y el filtro de situación correspondiente.
@@ -236,6 +268,20 @@ const nodo = computed(() => {
   return enAmbitoCar(carId) ? n : null
 })
 
+const arbolRef = ref(null)
+const fueraDelFiltro = computed(() => !!nodo.value && rutaHasta(arbol.value, seleccion.value) === null)
+async function mostrarEnArbol () {
+  texto.value = ''
+  const n = nodo.value
+  if (!n) return
+  situacion.value = n.registro.situacion === 'anulado' ? 'anulado' : TODOS
+  if ([...antecesoresDeNodo(seleccion.value), seleccion.value].some((id) => resolverNodo(id)?.registro.anulacion)) inactivos.value = true
+  expandirHasta(seleccion.value)
+  if (movil.value) vista.value = 'arbol'
+  await nextTick()
+  arbolRef.value?.mostrar(seleccion.value)
+}
+function abrirHecho (id) { if (id) router.push({ name: 'centros', query: { hecho: id } }) }
 const bien = computed(() => (nodo.value && (nodo.value.tipo === 'bien' || nodo.value.tipo === 'componente') ? nodo.value.registro : null))
 
 const modo = ref('detalle')

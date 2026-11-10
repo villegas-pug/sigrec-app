@@ -1,5 +1,7 @@
 # SPEC 004 — Incidencias: contexto Centro › Ambiente › Bien y recorrido necesidad → baja → reposición
 
+> Actualización: la [SPEC 016](016-incidencias-origen-reposicion-individual.md) sustituye la selección de ubicación y la decisión global de reposición por un origen fijo y evaluación individual. Las reglas patrimoniales permanecen vigentes.
+
 - **Estado:** implementado en el prototipo (verificación en navegador pendiente de autorización)
 - **Fecha:** 2026-11-03
 - **Origen:** revisión de UX de Incidencias, bajas y reposiciones con el perfil Equipo central.

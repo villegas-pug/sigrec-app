@@ -1,5 +1,5 @@
 <template>
-  <detalle-panel :nodo="`centro-${centro.id}`" :titulo="centro.nombre" :ruta="`${centro.id} · Centro`" icono="home_work" :tabs="tabs" :tab-inicial="tabInicial" :con-volver="conVolver" @volver="$emit('volver')">
+  <detalle-panel :nodo="`centro-${centro.id}`" :titulo="centro.nombre" :ruta="`${centro.id} · Centro`" icono="home_work" :tabs="tabs" :tab-inicial="tabInicial" :con-volver="conVolver" @volver="$emit('volver')" @seleccionar="$emit('seleccionar', $event)">
     <template #chips>
       <status-chip v-bind="condicionInmueble(inmueble.condicion)" />
       <status-chip v-if="centro.anulacion" v-bind="CHIP_ANULADO" />
@@ -7,9 +7,9 @@
       <status-chip v-if="resumenControles.extintoresFaltantes" tono="wa" :label="plural(resumenControles.extintoresFaltantes, 'extintor faltante', 'extintores faltantes')" />
     </template>
     <template #acciones>
-      <q-btn v-if="puedeHacer('ambiente.registrar')" outline color="secondary" icon="add_home" label="Registrar ambiente" :disable="!activo" @click="dialogos.ambiente = true" />
-      <q-btn v-if="puedeHacer('centro.actualizar')" outline color="secondary" icon="edit" label="Actualizar ficha" :disable="!activo" @click="dialogos.ficha = true" />
-      <menu-acciones :items="accionesCentro" :etiqueta="`Acciones de ${centro.nombre}`" />
+      <q-btn v-if="puedeHacer('ambiente.registrar')" unelevated color="primary" icon="add_home" label="Registrar ambiente" :disable="!activo" @click="dialogos.ambiente = true" />
+      <q-btn v-if="puedeHacer('centro.incidente')" outline color="secondary" icon="report" label="Registrar incidente" :disable="!activo" @click="incidenteAbierto = true" />
+      <menu-acciones con-etiqueta :items="accionesCentro" :etiqueta="`Acciones de ${centro.nombre}`" />
     </template>
 
     <template #ficha>
@@ -63,6 +63,7 @@
       </section-card>
     </template>
 
+    <template #incidencias><hechos-contexto :centro-id="centro.id" :hecho-inicial="hechoInicial" /></template>
     <template #fotos>
       <galeria-fotos :centro="centro" titulo="Fotografías del centro" />
     </template>
@@ -91,13 +92,16 @@
     </template>
   </detalle-panel>
 
+  <incidente-dialog v-model="incidenteAbierto" :centro-inicial="centro.id" @hecho="$emit('hecho', $event)" />
   <centro-ficha-dialog v-model="dialogos.ficha" :centro="centro" />
   <ambiente-dialog v-model="dialogos.ambiente" :centro="centro" @hecho="(id) => $emit('seleccionar', nodoAmbienteId(id))" />
   <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import IncidenteDialog from 'components/bienes/IncidenteDialog.vue'
+import HechosContexto from './HechosContexto.vue'
+import { computed, reactive, ref } from 'vue'
 import DetallePanel from 'components/gestion/DetallePanel.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
@@ -126,16 +130,18 @@ const props = defineProps({
   centro: { type: Object, required: true },
   // Con «Mostrar inactivos» el historial de mantenimientos incluye los anulados.
   inactivos: { type: Boolean, default: false },
+  hechoInicial: { type: String, default: null },
   tabInicial: { type: String, default: null },
   mantenimientoResaltado: { type: String, default: null },
   conVolver: { type: Boolean, default: false }
 })
 
-defineEmits(['seleccionar', 'volver', 'registrar-bien'])
+defineEmits(['seleccionar', 'volver', 'registrar-bien', 'hecho'])
 
 const { puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
+const incidenteAbierto = ref(false)
 const dialogos = reactive({ ficha: false, ambiente: false })
 
 const inmueble = computed(() => props.centro.inmueble)
@@ -146,6 +152,7 @@ const resumenControles = computed(() => resumirControles(controlesPendientes([pr
 
 const tabs = computed(() => [
   { name: 'ficha', label: 'Ficha' },
+  { name: 'incidencias', label: 'Incidencias' },
   { name: 'fotos', label: 'Fotografías' },
   { name: 'seguridad', label: 'Seguridad y mantenimiento' },
   { name: 'ambientes', label: `Ambientes (${ambientes.value.length})` }
@@ -166,6 +173,7 @@ const camposConstruccion = computed(() => {
 const accionesCentro = computed(() => {
   const c = props.centro
   return [
+    { label: 'Actualizar ficha', icono: 'edit', visible: puedeHacer('centro.actualizar'), disable: !activo.value, accion: () => { dialogos.ficha = true } },
     {
       label: 'Anular centro',
       icono: 'block',

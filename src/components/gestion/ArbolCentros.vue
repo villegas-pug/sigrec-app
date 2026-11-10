@@ -1,7 +1,7 @@
 <template>
-  <div class="sg-explorer__col">
+  <div ref="contenedor" class="sg-explorer__col">
     <div class="sg-explorer__filtros">
-      <q-input v-model="texto" outlined dense clearable label="Buscar bien por nombre, rótulo o código">
+      <q-input v-model="texto" outlined dense clearable label="Buscar centro, ambiente o recurso">
         <template #append><boton-dictado v-model="texto" /><q-icon name="search" /></template>
       </q-input>
       <div class="column q-gutter-y-xs">
@@ -28,7 +28,7 @@
         @update:selected="(id) => id && $emit('seleccionar', id)"
       >
         <template #default-header="{ node }">
-          <div class="row items-center q-gutter-x-sm q-gutter-y-xs">
+          <div :data-nodo-id="node.id" class="row items-center q-gutter-x-sm q-gutter-y-xs">
             <q-icon :name="node.icono" size="18px" aria-hidden="true" />
             <span :class="{ 'text-weight-bold': node.id === seleccionado || node.tipo === 'centro' }">{{ node.label }}</span>
             <span v-if="node.codigo" class="sg-muted">{{ node.codigo }}</span>
@@ -47,6 +47,7 @@
 </template>
 
 <script setup>
+import { nextTick, ref } from 'vue'
 // Árbol Centro › Ambiente › Bien › Componente con sus filtros. Todos los niveles se pueden seleccionar.
 import BotonDictado from 'components/common/BotonDictado.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
@@ -62,6 +63,13 @@ defineProps({
 
 defineEmits(['seleccionar'])
 
+const contenedor = ref(null)
+async function mostrar (id) {
+  await nextTick()
+  const el = [...(contenedor.value?.querySelectorAll('[data-nodo-id]') ?? [])].find((el) => el.getAttribute('data-nodo-id') === id)
+  el?.scrollIntoView({ block: 'nearest' })
+}
+defineExpose({ mostrar })
 const texto = defineModel('texto', { type: String, default: '' })
 const situacion = defineModel('situacion', { type: String, default: TODOS })
 const inactivos = defineModel('inactivos', { type: Boolean, default: false })

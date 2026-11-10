@@ -45,7 +45,20 @@ export const CATEGORIAS = {
 
 export const OPCIONES_CATEGORIA = Object.entries(CATEGORIAS).map(([value, label]) => ({ value, label }))
 
+// Tipos de novedad de un ambiente (infraestructura).
+export const TIPOS_NOVEDAD = {
+  dano: 'Daño',
+  incendio: 'Incendio',
+  humedad: 'Humedad o filtración',
+  instalaciones: 'Instalaciones eléctricas o sanitarias',
+  estructura: 'Estructura',
+  otro: 'Otro'
+}
+
+export const OPCIONES_NOVEDAD = Object.entries(TIPOS_NOVEDAD).map(([value, label]) => ({ value, label }))
+
 export const TIPOS_EVENTO = {
+  ...Object.fromEntries(Object.entries(TIPOS_NOVEDAD).filter(([key]) => !['dano', 'incendio'].includes(key)).map(([key, label]) => [key, { label, tono: 'wa', icono: 'construction' }])),
   dano: { label: 'Daño', tono: 'da', icono: 'build' },
   robo: { label: 'Robo', tono: 'da', icono: 'report' },
   incendio: { label: 'Incendio', tono: 'da', icono: 'local_fire_department' },
@@ -64,17 +77,7 @@ export const INCIDENTES = ['dano', 'robo', 'incendio']
 
 export const OPCIONES_INCIDENTE = INCIDENTES.map((value) => ({ value, label: TIPOS_EVENTO[value].label }))
 
-// Tipos de novedad de un ambiente (infraestructura).
-export const TIPOS_NOVEDAD = {
-  dano: 'Daño',
-  incendio: 'Incendio',
-  humedad: 'Humedad o filtración',
-  instalaciones: 'Instalaciones eléctricas o sanitarias',
-  estructura: 'Estructura',
-  otro: 'Otro'
-}
-
-export const OPCIONES_NOVEDAD = Object.entries(TIPOS_NOVEDAD).map(([value, label]) => ({ value, label }))
+export const OPCIONES_INCIDENCIA_INFRAESTRUCTURA = [...new Set([...INCIDENTES, ...Object.keys(TIPOS_NOVEDAD)])].map((value) => ({ value, label: TIPOS_EVENTO[value].label }))
 
 export const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre']
 export const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic']

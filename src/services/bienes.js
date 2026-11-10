@@ -5,8 +5,9 @@ import { fecha, plural } from 'src/utils/formato'
 
 const coincide = (bien, texto) => {
   if (!texto) return true
-  const t = texto.toLowerCase()
-  return [bien.nombre, bien.id, bien.codigoPatrimonial, bien.descripcion].some((v) => v?.toLowerCase().includes(t))
+  const normalizar = (v) => String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  const t = normalizar(texto)
+  return [bien.nombre, bien.id, bien.codigoPatrimonial, bien.descripcion].some((v) => normalizar(v).includes(t))
 }
 
 // «todos» muestra activos y dados de baja; los bienes anulados (registro erróneo) solo se ven al pedirlos.
@@ -30,12 +31,13 @@ export const nodoAmbienteId = (ambienteId) => `amb:${ambienteId}`
 
 function nodoAmbiente (ambiente, filtros) {
   const delAmbiente = bienesDeAmbiente(ambiente.id)
-  const construir = (padreId) =>
+  const construir = (padreId, heredado = false) =>
     delAmbiente
       .filter((b) => (b.asociadoA?.bienId ?? null) === padreId)
       .map((bien) => {
-        const componentes = construir(bien.id)
-        const visible = cumpleSituacion(bien, filtros.situacion) && coincide(bien, filtros.texto)
+        const coincideTexto = heredado || coincide(bien, filtros.texto)
+        const componentes = construir(bien.id, coincideTexto)
+        const visible = cumpleSituacion(bien, filtros.situacion) && coincideTexto
         return visible || componentes.length ? nodoBien(bien, componentes) : null
       })
       .filter(Boolean)
@@ -46,14 +48,14 @@ function nodoAmbiente (ambiente, filtros) {
     codigo: plural(delAmbiente.filter((b) => b.situacion === 'activo').length, 'bien activo', 'bienes activos'),
     icono: 'meeting_room',
     ambiente,
-    children: construir(null)
+    children: construir(null, coincide(ambiente, filtros.texto))
   }
 }
 
 /**
  * Árbol centro › ambiente › bien › componente (RF-01, RF-08). Todos los niveles son seleccionables.
  * El inmueble no es un nivel: sus datos son parte de la ficha del centro.
- * Con filtro, conserva los bienes que coinciden y sus antecesores para no perder la ubicación.
+ * Con búsqueda, conserva coincidencias de cualquier nivel y sus antecesores; los descendientes respetan situación y ámbito.
  */
 export function arbolDeCentros (carIds, { texto = '', situacion = 'activo', inactivos = false } = {}) {
   const filtros = { texto, situacion }
@@ -61,8 +63,8 @@ export function arbolDeCentros (carIds, { texto = '', situacion = 'activo', inac
     .map((carId) => {
       const car = carPorId(carId)
       const children = ambientesDeCar(carId, { inactivos })
-        .map((ambiente) => nodoAmbiente(ambiente, filtros))
-        .filter((nodo) => nodo.children.length || !texto)
+        .map((ambiente) => nodoAmbiente(ambiente, coincide(car, texto) ? { ...filtros, texto: '' } : filtros))
+        .filter((nodo) => nodo.children.length || !texto || coincide(nodo.ambiente ?? nodo.car, texto) || coincide(car, texto))
       return {
         id: nodoCentroId(carId),
         tipo: 'centro',
@@ -73,7 +75,7 @@ export function arbolDeCentros (carIds, { texto = '', situacion = 'activo', inac
         children
       }
     })
-    .filter((nodo) => nodo.children.length || !texto)
+    .filter((nodo) => nodo.children.length || !texto || coincide(nodo.car, texto))
 }
 
 // Nodo del árbol a partir de su id: { tipo: 'centro' | 'ambiente' | 'bien' | 'componente', registro } o null si no existe.

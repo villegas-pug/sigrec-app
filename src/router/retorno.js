@@ -27,6 +27,7 @@ export function origenDeNavegacion ({ to, from, principal: esPrincipal = false, 
   if (esPrincipal) return null
   // Una consulta agregada y su ficha comparten ruta, pero son pasos distintos del recorrido (SPEC 013).
   const consulta = from?.name === to?.name && (
+    (from.name === 'centros' && to.query?.hecho && from.query?.hecho !== to.query.hecho) ||
     (from.name === 'itinerarios' && from.query?.vista === 'ambito' && to.query?.itinerario) ||
     (from.name === 'servicios' && from.query?.alerta && to.query?.servicio) ||
     (from.name === 'centros' && from.query?.consulta && !to.query?.consulta) ||
