@@ -33,8 +33,8 @@ export const TODAS_LAS_ACCIONES = [
   'combustible.actualizarPropio'
 ]
 
-// Todas las pantallas navegables, tomadas del menú: una pantalla nueva queda disponible para el perfil de acceso total.
-export const TODAS_LAS_RUTAS = MENU.flatMap((entrada) => entrada.items ?? [entrada]).map((entrada) => entrada.key)
+// Accesos del menú más el catálogo contextual, cuyo permiso se conserva aunque no tenga submenú.
+export const TODAS_LAS_RUTAS = [...MENU.flatMap((entrada) => entrada.items ?? [entrada]).map((entrada) => entrada.key), 'precios']
 
 export const PERFILES = [
   {

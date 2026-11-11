@@ -51,7 +51,7 @@
             </template>
             <template v-else>
               <div class="sg-chips"><status-chip tono="wa" label="Sin valorar" /></div>
-              <router-link v-if="puedeValorar" :to="{ name: 'precios', query: { tipo: tipoElegido.id } }" class="text-weight-bold">Informar el precio de {{ tipoElegido.nombre }}</router-link>
+              <q-btn v-if="puedeValorar" flat dense no-caps color="secondary" :label="`Informar el precio de ${tipoElegido.nombre}`" @click="abrirCatalogo" />
               <span v-else class="sg-muted">Pendiente de valoración por equipo central.</span>
             </template>
           </div>
@@ -167,10 +167,13 @@
         <q-btn unelevated color="primary" icon="playlist_add" :label="`Guardar y registrar otro en ${ambiente.nombre}`" @click="formulario?.submit()" />
       </q-card-actions>
     </q-card>
+    <catalogo-precios-dialog v-if="puedeValorar" v-model="catalogoAbierto" :anio="ANIO_REVISION" :car-ids="[ambiente.carId]" :contexto="textoUbicacion(ubicacionDeAmbiente(ambiente.id))" :tipo-pedido="tipoCatalogo" @hide="restaurarFocoCatalogo" />
   </q-dialog>
 </template>
 
 <script setup>
+import CatalogoPreciosDialog from 'components/precios/CatalogoPreciosDialog.vue'
+import { ANIO_REVISION } from 'src/config/demo'
 // Modo registro del explorador de «Gestión de centros»: alta breve de un bien (o de un componente) en el ambiente seleccionado.
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'
@@ -262,6 +265,17 @@ defineExpose({ confirmarDescarte })
 
 const tipoElegido = computed(() => (form.tipoId ? tipoPorId(form.tipoId) : null))
 const puedeValorar = computed(() => puedeHacer('precio.informar'))
+const catalogoAbierto = ref(false)
+const tipoCatalogo = ref('')
+let botonCatalogo = null
+function abrirCatalogo (evento) {
+  botonCatalogo = evento.currentTarget
+  tipoCatalogo.value = tipoElegido.value.id
+  catalogoAbierto.value = true
+}
+function restaurarFocoCatalogo () {
+  if (botonCatalogo?.isConnected) botonCatalogo.focus({ preventScroll: true })
+}
 
 // «Datos adicionales» se abre solo cuando ya trae valores (componente de otro bien o inventario previo).
 const adicionalesAbierto = ref(!!form.asociadoA)

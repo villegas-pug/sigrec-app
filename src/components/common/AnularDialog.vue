@@ -8,6 +8,7 @@
     etiqueta-enviar="Anular"
     color-enviar="negative"
     :deshabilitar-enviar="dependencias.length > 0"
+    :modificado="confirmarDescarte && !!motivo"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="$emit('confirmar', motivo)"
   >
@@ -41,6 +42,8 @@ const props = defineProps({
   titulo: { type: String, default: 'Anular registro' },
   subtitulo: { type: String, default: '' },
   aviso: { type: String, default: '' },
+  // En un catálogo modal, descartar el motivo conserva abierto el catálogo.
+  confirmarDescarte: { type: Boolean, default: false },
   // Elementos vigentes que impiden anular (lista vacía = se puede anular).
   dependencias: { type: Array, default: () => [] }
 })

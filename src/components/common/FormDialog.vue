@@ -1,10 +1,9 @@
 <template>
   <q-dialog
     :model-value="modelValue"
-    :persistent="modificado"
+    :no-route-dismiss="modificado"
     :maximized="$q.screen.lt.sm"
-    @update:model-value="$emit('update:modelValue', $event)"
-    @escape-key="cerrar"
+    @update:model-value="actualizarApertura"
   >
     <q-card class="sg-dialog" :style="{ width: `${ancho}px` }">
       <q-card-section class="sg-dialog__header">
@@ -27,7 +26,7 @@
 
 <script setup>
 // Diálogo de formulario común: título, campos (slot), Cancelar y Enviar. En pantallas pequeñas se maximiza.
-// Con `modificado` pide confirmación antes de descartar lo escrito (Cancelar o Esc).
+// Con `modificado` pide confirmación antes de descartar lo escrito (Cancelar, Esc o clic exterior).
 import { useQuasar } from 'quasar'
 
 const props = defineProps({
@@ -47,18 +46,28 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'enviar'])
 const $q = useQuasar()
+let confirmacionAbierta = false
+
+function actualizarApertura (abierto) {
+  if (abierto) emit('update:modelValue', true)
+  else cerrar()
+}
 
 function cerrar () {
+  if (confirmacionAbierta) return
   if (!props.modificado) {
     emit('update:modelValue', false)
     return
   }
+  confirmacionAbierta = true
   $q.dialog({
     title: 'Cambios sin guardar',
     message: 'Hay datos escritos que no se han guardado. Si cierra ahora se descartarán.',
     persistent: true,
     cancel: { flat: true, icon: 'edit', label: 'Seguir editando', color: 'secondary' },
     ok: { unelevated: true, icon: 'delete_outline', label: 'Descartar', color: 'negative' }
-  }).onOk(() => emit('update:modelValue', false))
+  })
+    .onOk(() => emit('update:modelValue', false))
+    .onDismiss(() => { confirmacionAbierta = false })
 }
 </script>

@@ -11,7 +11,7 @@
         </template>
         <template #acciones>
           <q-btn outline color="secondary" icon="download" label="Exportar CSV" :disable="vista === 'infraestructura' ? !resultado.infraestructura.length : vista === 'atendidas' ? !resultado.atendidas.length : !pendientes.length" @click="exportar" />
-          <q-btn v-if="puedeAcceder('precios')" unelevated color="primary" icon="sell" label="Tipos de bien y precios" :to="{ name: 'precios' }" />
+          <q-btn v-if="puedeAcceder('precios')" unelevated color="primary" icon="sell" label="Tipos de bien y precios" @click="abrirCatalogo" />
         </template>
       </page-header>
 
@@ -221,6 +221,7 @@
       </div>
     </div>
 
+    <catalogo-precios-dialog v-if="puedeAcceder('precios')" v-model="catalogoAbierto" :anio="anio" :car-ids="carIdsVisibles" :contexto="tituloAmbito" :tipo-pedido="parametro(route.query.tipoCatalogo) || ''" :filtro-inicial="parametro(route.query.filtroCatalogo) || 'todos'" @hide="restaurarFocoCatalogo" />
     <precio-dialog v-if="dialogoPrecio.tipo" v-model="dialogoPrecio.abierto" :tipo="dialogoPrecio.tipo" />
   </q-page>
 </template>
@@ -236,8 +237,10 @@ import StatusChip from 'components/common/StatusChip.vue'
 import KpiCard from 'components/common/KpiCard.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import PrecioDialog from 'components/precios/PrecioDialog.vue'
+import CatalogoPreciosDialog from 'components/precios/CatalogoPreciosDialog.vue'
 import SimuladorPresupuesto from 'components/necesidades/SimuladorPresupuesto.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
+import { primeraVisita } from 'src/router/retorno'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
@@ -301,6 +304,21 @@ useEstadoNavegacion('necesidades', { anio, carId, clase, tipoId, centroDesdeCons
 onMounted(() => { if (registroConsultado.value) mostrarDetalle(document.getElementById(`necesidad-${registroConsultado.value}`)) })
 
 const puedeValorar = computed(() => puedeHacer('precio.informar'))
+
+const catalogoAbierto = ref(false)
+onMounted(() => {
+  if (parametro(route.query.catalogo) === 'precios' && puedeAcceder('precios') && primeraVisita()) catalogoAbierto.value = true
+})
+let botonCatalogo = null
+
+function abrirCatalogo (evento) {
+  botonCatalogo = evento.currentTarget
+  catalogoAbierto.value = true
+}
+
+function restaurarFocoCatalogo () {
+  if (botonCatalogo?.isConnected) botonCatalogo.focus({ preventScroll: true })
+}
 
 // Valoración en línea (SPEC 011, Ola 2): el precio se informa sin salir de Necesidades y los importes se recalculan al guardar.
 const dialogoPrecio = reactive({ abierto: false, tipo: null })

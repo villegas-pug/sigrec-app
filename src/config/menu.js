@@ -10,8 +10,7 @@ export const MENU = [
     icon: 'request_quote',
     items: [
       { key: 'necesidades', label: 'Necesidades', icon: 'assignment' },
-      { key: 'inventario', label: 'Inventario para planificación', icon: 'inventory_2' },
-      { key: 'precios', label: 'Tipos de bien y precios', icon: 'sell' }
+      { key: 'inventario', label: 'Inventario para planificación', icon: 'inventory_2' }
     ]
   },
   { key: 'servicios', label: 'Servicios básicos y pagos', icon: 'receipt_long' },

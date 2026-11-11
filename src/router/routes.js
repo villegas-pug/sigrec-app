@@ -14,7 +14,10 @@ const routes = [
       { path: 'incidencias', name: 'incidencias', component: () => import('pages/IncidenciasPage.vue'), meta: { titulo: 'Incidencias, bajas y reposiciones' } },
       { path: 'necesidades', name: 'necesidades', component: () => import('pages/NecesidadesPage.vue'), meta: { grupo: 'Necesidades y presupuesto', titulo: 'Necesidades' } },
       { path: 'necesidades/inventario', name: 'inventario', component: () => import('pages/InventarioPage.vue'), meta: { grupo: 'Necesidades y presupuesto', titulo: 'Inventario para planificación' } },
-      { path: 'necesidades/precios', name: 'precios', component: () => import('pages/PreciosPage.vue'), meta: { grupo: 'Necesidades y presupuesto', titulo: 'Tipos de bien y precios' } },
+      { path: 'necesidades/precios', name: 'precios', redirect: (to) => {
+        const { tipo, filtro, ...contexto } = to.query
+        return { name: 'necesidades', query: { ...contexto, catalogo: 'precios', ...(tipo ? { tipoCatalogo: tipo } : {}), ...(filtro ? { filtroCatalogo: filtro } : {}) } }
+      } },
       { path: 'servicios', name: 'servicios', component: () => import('pages/ServiciosPage.vue'), meta: { titulo: 'Servicios básicos y pagos' } },
       { path: 'movilidad/vehiculos', name: 'vehiculos', component: () => import('pages/VehiculosPage.vue'), meta: { grupo: 'Movilidad', titulo: 'Vehículos' } },
       { path: 'movilidad/itinerarios', name: 'itinerarios', component: () => import('pages/ItinerariosPage.vue'), meta: { grupo: 'Movilidad', titulo: 'Itinerarios' } },
