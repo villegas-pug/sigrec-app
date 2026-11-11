@@ -55,7 +55,9 @@ export function instalarRetorno (router) {
       // Entrada ya visitada (Atrás, Adelante, recarga o reemplazo): se respeta su origen.
       origen.value = estado[CLAVE]
     } else {
-      const nuevo = origenDeNavegacion({ to, from, principal: esPrincipal, origenPrevio: origen.value, posicionPrevia: posicionActual })
+      const calculado = origenDeNavegacion({ to, from, principal: esPrincipal, origenPrevio: origen.value, posicionPrevia: posicionActual })
+      // Un origen reutilizado puede ser reactivo: el historial necesita una copia de datos sin proxies.
+      const nuevo = JSON.parse(JSON.stringify(calculado))
       window.history.replaceState({ ...estado, [CLAVE]: nuevo }, '')
       origen.value = nuevo
     }

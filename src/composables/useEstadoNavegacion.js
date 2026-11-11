@@ -5,7 +5,7 @@ import { watch } from 'vue'
 
 const CLAVE = 'sigrec'
 
-// `campos` es un objeto { nombre: ref }. Los valores deben poder clonarse (texto, número, booleano).
+// `campos` es un objeto { nombre: ref }. Los valores deben ser datos JSON (también arrays y objetos).
 export function useEstadoNavegacion (clave, campos) {
   const nombres = Object.keys(campos)
 
@@ -20,7 +20,9 @@ export function useEstadoNavegacion (clave, campos) {
     () => Object.fromEntries(nombres.map((n) => [n, campos[n].value])),
     (valores) => {
       const estado = window.history.state ?? {}
-      window.history.replaceState({ ...estado, [CLAVE]: { ...estado[CLAVE], [clave]: valores } }, '')
+      // El historial no admite proxies de Vue: guardar una copia de sus datos, incluidas las expansiones del árbol.
+      const serializables = JSON.parse(JSON.stringify(valores))
+      window.history.replaceState({ ...estado, [CLAVE]: { ...estado[CLAVE], [clave]: serializables } }, '')
     },
     { deep: true }
   )
