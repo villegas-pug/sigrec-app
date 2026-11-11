@@ -1,0 +1,22 @@
+await chapter('04 · Incidentes, baja y reposición','Hechos, afectados y trazabilidad del bien nuevo');
+await go('centros?bien=AMA-TUTORIAL-01');
+await click(btn('Registrar incidente'));await select('Hecho *','Daño');await fill('Motivo *','Daño de demostración');await fill('Detalle','Incidente ficticio para explicar el procedimiento.');
+await click(page.getByRole('radio',{name:'Sí',exact:true}).last());
+await say('El incidente conserva el bien de origen. Describa el hecho, su fecha y los efectos; revise los afectados.');
+await click(btn('Registrar incidente'));
+await say('El hecho registrado tiene gestión contextual. Una necesidad no ejecuta automáticamente la baja ni una compra.');
+await go('centros?bien=AMA-TUTORIAL-01');
+await menu('Más acciones de Silla Tutorial','Dar de baja');await fill('Motivo de la baja *','Daño irreparable de demostración');
+await say('Dar de baja exige fecha y motivo. Si existen componentes, su situación debe revisarse por separado.');
+await click(btn('Dar de baja'));
+await click(btn('Registrar reposición: alta del bien nuevo'));await fill('Rótulo SIGREC del bien nuevo *','AMA-TUTORIAL-02');await fill('Nombre *','Silla Tutorial Repuesta');
+
+await say('La reposición requiere baja previa. Registre un rótulo nuevo y los datos propios del bien que ingresa.');
+await click(btn('Registrar reposición: alta del bien nuevo'));
+await say('La reposición enlaza el bien anterior con el nuevo y atiende su necesidad. Cada uno conserva su historial.');
+await go('incidencias');
+await say('Incidencias reúne hechos de centros, ambientes y bienes, incluidas bajas y reposiciones.');
+await fill('Recurso (bien, rótulo o ambiente)','Tutorial');await say('Combine centro, ambiente, recurso, hecho, necesidad y período. Limpiar filtros restablece la consulta.');
+await click(btn('Limpiar filtros'));
+await click(page.locator('main .sg-row-btn').first());
+await say('Seleccione un hecho para consultar origen, afectados y acciones disponibles. Los enlaces llevan a las fichas relacionadas.');

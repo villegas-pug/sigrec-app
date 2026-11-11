@@ -1,0 +1,70 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.452
+03 · Bienes y componentes
+Datos, componentes, traslado y verificación
+
+00:00:05.452 --> 00:00:17.756
+03 · Bienes y componentes
+El registro se abre sobre el ambiente elegido. Complete tipo, nombre, rótulo, cantidad y condición.
+
+00:00:17.756 --> 00:00:26.713
+03 · Bienes y componentes
+Datos adicionales incluye categoría, patrimonio, marca, serie, deterioro, costo original y asociación como componente.
+
+00:00:26.713 --> 00:00:34.383
+03 · Bienes y componentes
+La ficha diferencia costo original y precio referencial. El rótulo identifica el bien dentro de SIGREC.
+
+00:00:34.383 --> 00:00:46.036
+03 · Bienes y componentes
+Actualice datos y adquisición con lo que realmente conoce. Los campos sin información no se interpretan como cero.
+
+00:00:46.036 --> 00:00:57.747
+03 · Bienes y componentes
+La verificación registra fecha, coincidencia o diferencias y observación, sin inventar datos del bien.
+
+00:00:57.747 --> 00:01:07.463
+03 · Bienes y componentes
+El traslado elige un ambiente de destino y su fecha. Revise qué ocurre con los componentes asociados.
+
+00:01:07.463 --> 00:01:17.461
+03 · Bienes y componentes
+Asocie el bien a otro del mismo ambiente y señale su posición. Un componente pertenece a un solo bien.
+
+00:01:17.461 --> 00:01:25.879
+03 · Bienes y componentes
+Registrar componente reutiliza el formulario de alta con el bien principal preseleccionado.
+
+00:01:25.879 --> 00:01:33.578
+03 · Bienes y componentes
+Un componente permite consultar su bien principal y sus hermanos, o quitar la asociación.
+
+00:01:33.578 --> 00:01:40.960
+03 · Bienes y componentes
+Antecedentes muestra hechos relacionados y el historial completo: altas, verificaciones, traslados y acciones patrimoniales.
+
+00:01:48.577 --> 00:01:58.786
+03 · Bienes y componentes
+Al registrar un componente, el bien principal ya está elegido. El nuevo componente conserva rótulo e historial propios.
+
+00:01:58.786 --> 00:02:05.705
+03 · Bienes y componentes
+La nueva ficha muestra el principal y los otros componentes asociados al mismo bien.
+
+00:02:05.705 --> 00:02:18.311
+03 · Bienes y componentes
+Si el principal está de baja, sus componentes pueden quedar pendientes de revisión. Mantener activo conserva el componente tras revisarlo.
+
+00:02:18.311 --> 00:02:29.444
+03 · Bienes y componentes
+Antes de anular un ambiente con bienes, el asistente permite reubicar o dar de baja cada pendiente, sin hacerlo automáticamente.
+
+00:02:29.444 --> 00:02:44.291
+03 · Bienes y componentes
+Aprovechar datos copia una propuesta del inventario previo. Constate y corrija los datos; no equivale a una verificación automática.
+
+00:02:44.291 --> 00:02:53.040
+03 · Bienes y componentes
+Guardar y registrar otro mantiene abierto el registro para continuar en el mismo ambiente. Cancelar termina la captura.
+

@@ -1,0 +1,58 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.311
+10 · Itinerarios
+Programación, ejecución, mapa y estimación explicada
+
+00:00:04.311 --> 00:00:13.975
+10 · Itinerarios
+Seleccione vehículo. Los pendientes indican qué recorridos necesitan ejecución o declaración de consumo.
+
+00:00:13.975 --> 00:00:21.307
+10 · Itinerarios
+Programe fecha, propósito y destinos. Ingrese horas y distancia previstas o defina la ruta en el mapa.
+
+00:00:21.307 --> 00:00:31.414
+10 · Itinerarios
+El itinerario separa lo previsto y lo realizado. Un recorrido sin ejecución todavía no es un consumo comparable.
+
+00:00:31.414 --> 00:00:40.008
+10 · Itinerarios
+Informe los datos realmente realizados. Si se sugiere distancia, confírmela o corríjala antes de guardar.
+
+00:00:40.008 --> 00:00:49.921
+10 · Itinerarios
+Estimación explicada muestra distancia dividida entre rendimiento, consumo declarado y diferencia. Si faltan datos, lo indica.
+
+00:00:49.921 --> 00:00:59.557
+10 · Itinerarios
+El mapa permite elegir puntos y calcular una ruta. La búsqueda y el trazado dependen de servicios externos.
+
+00:00:59.557 --> 00:01:08.887
+10 · Itinerarios
+Haga clic y añada cada punto. Puede cambiar su nombre, centrarlo, reordenarlo o eliminarlo.
+
+00:01:08.887 --> 00:01:19.150
+10 · Itinerarios
+Ver todos ajusta el mapa. Ir al origen centra el primer punto; Volver al origen añade el retorno al recorrido.
+
+00:01:19.150 --> 00:01:32.088
+10 · Itinerarios
+Si el cálculo externo falla, el mapa ofrece Reintentar. Revise la distancia calculada antes de guardar.
+
+00:01:32.088 --> 00:01:37.520
+10 · Itinerarios
+También puede registrar un recorrido previsto sin informar todavía su ejecución ni consumo.
+
+00:01:38.387 --> 00:01:49.399
+10 · Itinerarios
+La consulta de recorridos del ámbito permite revisar todos los vehículos y filtrar por centro. Cada resultado abre su detalle.
+
+00:01:49.399 --> 00:02:00.590
+10 · Itinerarios
+Si falta el rendimiento, Completar rendimiento lleva a Vehículos para registrar el dato de referencia.
+
+00:02:00.590 --> 00:02:06.360
+10 · Itinerarios
+Al volver, la estimación incorpora el rendimiento informado y conserva la selección del recorrido.
+

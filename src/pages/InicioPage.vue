@@ -3,6 +3,7 @@
     <div class="sg-page__inner">
       <!-- Al llegar a Inicio desde otra pantalla (campana o buscador) se ofrece volver a ella (SPEC 011, Ola 4). -->
       <volver-origen class="self-start" />
+      <manual-help class="self-end" />
       <h1 class="sg-hero">
         Sistema Integrado de Gestión de Recursos de Centros <span class="sg-hero__accent">SIGREC</span>
       </h1>
@@ -75,6 +76,7 @@
 </template>
 
 <script setup>
+import ManualHelp from 'components/common/ManualHelp.vue'
 // Inicio (SPEC 011): panel único. Reúne los indicadores, la atención requerida y la situación por centro que antes se
 // repartían entre Inicio y el «Tablero de control». Ninguna cifra ni aviso se calcula aquí: vienen de services/situacion.js
 // y services/atencion.js.

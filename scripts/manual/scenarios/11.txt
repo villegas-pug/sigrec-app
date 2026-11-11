@@ -1,0 +1,9 @@
+await chapter('11 · Combustible','Cargas, consumo declarado y comparación por recorrido');
+await go('movilidad/combustible?vehiculo=AMA-V01');
+await say('Combustible distingue una carga al vehículo del consumo declarado en un recorrido. No son el mismo dato.');
+await click(btn('Informar combustible'));await click(page.getByRole('radio',{name:'Carga al vehículo',exact:true}));await fill('Cantidad *','15');await fill('Sustento (vale, declaración…)','Vale ficticio TUT-001');
+await say('Para informar una carga, registre fecha, litros y sustento. No atribuya toda la carga a un recorrido.');await click(btn('Registrar'));
+await click(btn('Informar combustible'));await click(page.getByRole('radio',{name:'Consumo declarado en un recorrido',exact:true}));await select('Recorrido *','Recorrido Tutorial');await fill('Cantidad *','2.2');await fill('Sustento (vale, declaración…)','Declaración ficticia del recorrido');
+await say('El consumo declarado se vincula a un recorrido realizado. Informe los litros correspondientes a ese recorrido.');await click(btn('Registrar'));
+await page.getByRole('heading',{name:'Comparación por recorrido',exact:true}).scrollIntoViewIfNeeded();await say('La comparación usa distancia realizada y rendimiento de referencia. Los datos insuficientes se señalan, sin asumir consumo cero.');
+await click(page.getByRole('button',{name:/Acciones del registro/}).first());await say('Las acciones del registro permiten corregirlo o anularlo según el perfil. El autor y la fecha mantienen trazabilidad.');await page.keyboard.press('Escape');

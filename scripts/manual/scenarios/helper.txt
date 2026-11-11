@@ -1,0 +1,21 @@
+  page.setDefaultTimeout(5000);
+  const cues = [];
+  const started = Date.now();
+  const pause = ms => page.waitForTimeout(ms);
+  async function say(text, locator, seconds) {
+    if(locator){await locator.scrollIntoViewIfNeeded();await locator.evaluate(el=>{el.dataset.manualOutline=el.style.outline;el.style.outline='3px solid #f59e0b';el.style.outlineOffset='-3px'});}
+    cues.push({t:(Date.now()-started)/1000,text});
+    await pause(seconds?seconds*1000:Math.max(2800,text.length*60));
+    if(locator)await locator.evaluate(el=>{el.style.outline=el.dataset.manualOutline||'';el.style.outlineOffset='';delete el.dataset.manualOutline}).catch(()=>{});
+  }
+  async function click(locator){await locator.scrollIntoViewIfNeeded();await locator.evaluate(el=>{el.dataset.manualOutline=el.style.outline;el.style.outline='3px solid #f59e0b';el.style.outlineOffset='-3px'});await pause(500);await locator.evaluate(el=>{el.style.outline=el.dataset.manualOutline||'';el.style.outlineOffset='';delete el.dataset.manualOutline});await locator.click();await pause(450);}
+  const btn = name => page.getByRole('button',{name,exact:true}).last();
+  const tab = name => page.getByRole('tab',{name,exact:true});
+  const field = name => page.getByRole('textbox',{name,exact:true}).last();
+  async function fill(name,value) { const loc=page.getByLabel(name,{exact:true}).last();await loc.scrollIntoViewIfNeeded();await loc.fill(String(value));await pause(220); }
+  async function select(name,option) { const loc=page.getByRole('combobox',{name,exact:true}).last();await click(loc);await click(page.getByRole('option').filter({hasText:option}).first()); }
+  async function close() { await click(btn('Cancelar'));const discard=btn('Descartar');if(await discard.isVisible()){await pause(1200);await click(discard);} }
+  async function menu(name,option) { await click(typeof name==='string'?page.getByRole('button',{name,exact:true}).first():name);await click(page.locator('.q-menu:visible .q-item').filter({hasText:option}).first()); }
+  async function go(hash) { let target='http://localhost:9000/#/'+hash;if(page.url()===target)target+=(hash.includes('?')?'&':'?')+'_manual='+Date.now();await page.goto(target);await pause(700); }
+  async function chapter(title,description){cues.push({t:(Date.now()-started)/1000,text:title+'. '+description,chapter:title});await pause(3500);}
+  async function lookForm(text){await say(text,page.getByRole('dialog').last());const body=page.locator('.q-dialog:visible .sg-dialog__body').last();if(await body.count()){await body.evaluate(el=>el.scrollTop=el.scrollHeight);await pause(1500);}}

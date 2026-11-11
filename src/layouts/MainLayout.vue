@@ -13,7 +13,7 @@
 
     <q-page-container>
       <!-- La clave por URL completa vuelve a montar la página cuando solo cambia la consulta (?bien=, ?vehiculo=…). -->
-      <router-view v-if="permitido" :key="route.fullPath" />
+      <router-view v-if="permitido" :key="route.name === 'manual' ? 'manual' : route.fullPath" />
       <sin-acceso v-else />
     </q-page-container>
   </q-layout>

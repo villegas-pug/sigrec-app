@@ -1,0 +1,8 @@
+await go('servicios?car=AMA&servicio=SRV-AMA-LUZ');
+let factName=page.locator('.sg-timeline__item').filter({hasText:'Interrupción ficticia de demostración'}).getByRole('button',{name:/Acciones del hecho del/});
+await menu(factName,'Actualizar hecho');await fill('Detalle','Detalle corregido de la continuidad del servicio.');await say('Los hechos de interrupción y restablecimiento pueden corregirse. El historial conserva las correcciones de pagos.');await click(btn('Guardar cambios'));
+factName=page.locator('.sg-timeline__item').filter({hasText:'Detalle corregido de la continuidad del servicio.'}).getByRole('button',{name:/Acciones del hecho del/});
+await menu(factName,'Anular hecho');await fill('Motivo *','Corrección ficticia del tutorial');await click(btn('Anular'));
+for(const sw of await page.getByRole('switch',{name:'Mostrar inactivos',exact:true}).all())await sw.setChecked(true);
+await menu(factName,'Reactivar hecho');await click(btn('Reactivar'));
+await say('Anular o reactivar un hecho recalcula el estado del servicio; no ejecuta pagos ni modifica automáticamente los demás hechos.');

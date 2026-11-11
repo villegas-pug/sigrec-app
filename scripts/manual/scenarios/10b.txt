@@ -1,0 +1,5 @@
+await go('movilidad/itinerarios?vista=ambito');await say('La consulta de recorridos del ámbito permite revisar todos los vehículos y filtrar por centro. Cada resultado abre su detalle.');await select('Centro','CAR Demo Horizonte');await click(page.getByRole('link',{name:'Ver detalle',exact:true}).first());
+await say('Si falta el rendimiento, Completar rendimiento lleva a Vehículos para registrar el dato de referencia.');
+await click(page.getByRole('link',{name:'Completar rendimiento',exact:true}).first());
+if(!(await page.getByLabel('Rendimiento de referencia (km/L)',{exact:true}).isVisible()))await menu('Acciones del vehículo HOR-V01','Actualizar vehículo');await fill('Rendimiento de referencia (km/L)','8');await click(btn('Guardar cambios'));
+if(await btn('Volver a Itinerarios').isVisible())await click(btn('Volver a Itinerarios'));await say('Al volver, la estimación incorpora el rendimiento informado y conserva la selección del recorrido.');

@@ -1,0 +1,19 @@
+await chapter('05 · Fotografías e infraestructura','Imágenes, intervenciones y mantenimiento preventivo');
+await go('centros?car=AMA');await click(tab('Fotografías'));
+await click(btn('Incorporar fotografía'));await page.locator('input[type=file]').setInputFiles('artifacts/manual-usuario/clean/example.png');await fill('Título *','Imagen de demostración');await fill('Nota','Archivo de ejemplo para mostrar la incorporación.');
+await say('Incorpore una imagen y un título. Puede asociarla a un ambiente. El prototipo admite hasta cinco megabytes.');
+await click(btn('Incorporar'));
+await click(btn('Ampliar fotografía Imagen de demostración'));await say('El visor amplía la fotografía y permite recorrer o descargar las imágenes disponibles.');await page.keyboard.press('Escape');
+await menu('Acciones de la fotografía Imagen de demostración','Actualizar fotografía');await fill('Nota','Nota corregida en el tutorial.');await click(btn('Guardar cambios'));
+await say('El menú de la fotografía permite corregir sus datos, anularla y reactivarla al mostrar inactivas.');
+await click(tab('Seguridad y mantenimiento'));
+await say('Seguridad muestra dotación de extintores, recargas, fumigación y el historial de mantenimiento. Sin programar no significa al día.');
+await click(btn('Registrar recarga de todos'));await lookForm('La recarga en lote permite seleccionar varios extintores y registrar fecha, próxima atención, detalle e importe.');await close();
+await click(btn('Registrar fumigación'));await fill('Detalle','Fumigación ficticia para el manual.');await say('Registre la fecha realizada y, si corresponde, la próxima fecha. El importe es opcional.');await click(btn('Registrar'));
+await say('El mantenimiento registrado actualiza el control preventivo y aparece en su historial.');
+await go('centros?ambiente=AMA-D1');await click(page.getByRole('tab',{name:/Intervenciones/}));
+await click(btn('Registrar intervención'));await fill('Intervención *','Pintado de demostración');await fill('Mes','2026-10');
+await click(page.getByRole('checkbox',{name:/Es un pintado/}));await say('Las intervenciones registran trabajos realizados. Marcar un pintado puede actualizar el último pintado del ambiente.');await click(btn('Registrar'));
+await click(tab('Incidencias'));await say('La pestaña Incidencias reúne hechos del ambiente y novedades de infraestructura, con corrección, anulación y atención.');
+const nov=page.getByRole('button',{name:/Acciones de la novedad/}).first();
+if(await nov.count()){await click(nov);await say('Más acciones permite actualizar la novedad o marcarla como atendida cuando corresponda.');await page.keyboard.press('Escape');}

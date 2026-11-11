@@ -20,3 +20,6 @@ yarn-error.log*
 
 # Audios de reuniones (no versionar)
 *.m4a
+
+# Producción local del manual; los medios finales viven en public/manual.
+/artifacts/manual-usuario/

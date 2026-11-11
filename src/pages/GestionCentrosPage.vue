@@ -5,6 +5,7 @@
         <div class="sg-page-head__titulo">
           <volver-origen />
           <h1 class="sg-page-title">Gestión de centros</h1>
+          <manual-help />
         </div>
         <q-btn v-if="puedeHacer('centro.registrar')" outline color="secondary" icon="add_business" label="Registrar centro" @click="dialogoCentro = true" />
       </div>
@@ -119,6 +120,7 @@
 </template>
 
 <script setup>
+import ManualHelp from 'components/common/ManualHelp.vue'
 import ConsultaInfraestructura from 'components/gestion/ConsultaInfraestructura.vue'
 // «Gestión de centros»: explorador Centro › Módulo › Ambiente › Bien › Componente (SPEC 020). Elegir un nodo muestra su detalle y sus acciones;
 // el registro de bienes se abre en un modal sobre el detalle seleccionado.

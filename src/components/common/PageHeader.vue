@@ -1,5 +1,6 @@
 <template>
   <header>
+    <manual-help class="float-right" />
     <div class="sg-crumbs-row">
       <!-- Si se llegó por un enlace desde otra pantalla, se ofrece volver a ella (SPEC 011, Ola 4). -->
       <volver-origen />
@@ -27,6 +28,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import ManualHelp from './ManualHelp.vue'
 import { useRoute } from 'vue-router'
 import { usePerfil } from 'src/composables/usePerfil'
 import AyudaContextual from 'components/common/AyudaContextual.vue'

@@ -50,21 +50,21 @@ export const PERFILES = [
     id: 'car',
     nombre: 'Personal del CAR',
     ambito: { descripcion: 'CAR Demo Amanecer', carIds: ['AMA'], vehiculoIds: null },
-    accesos: ['inicio', 'centros', 'incidencias', 'necesidades', 'inventario', 'servicios', 'vehiculos', 'itinerarios', 'combustible'],
+    accesos: ['inicio', 'centros', 'incidencias', 'necesidades', 'inventario', 'servicios', 'vehiculos', 'itinerarios', 'combustible', 'manual'],
     acciones: ACCIONES_MANTENIMIENTO
   },
   {
     id: 'verifica',
     nombre: 'Verificación física',
     ambito: { descripcion: 'CAR Demo Amanecer', carIds: ['AMA'], vehiculoIds: null },
-    accesos: ['centros', 'incidencias'],
+    accesos: ['centros', 'incidencias', 'manual'],
     acciones: ['bien.verificar', 'bien.incidente']
   },
   {
     id: 'chofer',
     nombre: 'Chofer',
     ambito: { descripcion: 'Movilidad AMA-V01 · CAR Demo Amanecer', carIds: ['AMA'], vehiculoIds: ['AMA-V01'] },
-    accesos: ['itinerarios', 'vehiculos', 'combustible'],
+    accesos: ['itinerarios', 'vehiculos', 'combustible', 'manual'],
     acciones: ['itinerario.registrar', 'itinerario.ejecucion', 'combustible.informar', 'combustible.actualizarPropio']
   }
 ]

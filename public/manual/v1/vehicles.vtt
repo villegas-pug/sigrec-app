@@ -1,0 +1,34 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.316
+09 · Vehículos
+Registro, estado operativo y rendimiento de referencia
+
+00:00:04.316 --> 00:00:17.932
+09 · Vehículos
+Vehículos reúne el parque del ámbito y sus estados. Puede filtrar por centro, estado operativo e inactivos.
+
+00:00:17.932 --> 00:00:25.791
+09 · Vehículos
+Registre tipo, placa, combustible y centro. El rendimiento permite estimar consumo; no es una norma obligatoria.
+
+00:00:25.791 --> 00:00:35.408
+09 · Vehículos
+La ficha conserva chofer relacionado, estado, rendimiento y mantenimientos. Los enlaces abren itinerarios y combustible.
+
+00:00:35.408 --> 00:00:45.200
+09 · Vehículos
+Cuando un vehículo requiere mantenimiento o está detenido, puede registrar motivo y presupuesto estimado.
+
+00:00:48.928 --> 00:01:02.795
+09 · Vehículos
+El mantenimiento de un vehículo puede informar que queda operativo. Revise la casilla; registrar una atención no debe asumirlo.
+
+00:01:02.795 --> 00:01:14.329
+09 · Vehículos
+Actualizar vehículo distingue operativo, requiere mantenimiento, detenido y no informado. El presupuesto desconocido queda sin estimar.
+
+00:01:14.329 --> 00:01:22.880
+09 · Vehículos
+Los equipos también registran mantenimientos desde su ficha, con última atención, próxima fecha e historial.
+

@@ -1,0 +1,26 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.223
+11 · Combustible
+Cargas, consumo declarado y comparación por recorrido
+
+00:00:04.223 --> 00:00:13.565
+11 · Combustible
+Combustible distingue una carga al vehículo del consumo declarado en un recorrido. No son el mismo dato.
+
+00:00:13.565 --> 00:00:26.064
+11 · Combustible
+Para informar una carga, registre fecha, litros y sustento. No atribuya toda la carga a un recorrido.
+
+00:00:26.064 --> 00:00:33.901
+11 · Combustible
+El consumo declarado se vincula a un recorrido realizado. Informe los litros correspondientes a ese recorrido.
+
+00:00:33.901 --> 00:00:42.722
+11 · Combustible
+La comparación usa distancia realizada y rendimiento de referencia. Los datos insuficientes se señalan, sin asumir consumo cero.
+
+00:00:42.722 --> 00:00:49.680
+11 · Combustible
+Las acciones del registro permiten corregirlo o anularlo según el perfil. El autor y la fecha mantienen trazabilidad.
+

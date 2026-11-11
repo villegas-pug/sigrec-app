@@ -1,0 +1,25 @@
+await chapter('06 · Necesidades y presupuesto','Consolidado, valoración, simulación y exportación');
+await go('necesidades');
+await say('Necesidades calcula renovaciones y reposiciones para el año elegido. Una necesidad conserva sus motivos y cuenta una sola vez.');
+await select('Centro','CAR Demo Amanecer');await say('Combine año, centro, tipo y clasificación. El consolidado y el detalle cambian con los filtros.');
+await select('Consulta','Necesidades sin valorar');await say('Sin valorar significa costo desconocido. El importe conocido no representa un presupuesto completo.');
+await select('Consulta','Infraestructura en evaluación');await say('La infraestructura en evaluación se informa separadamente y mantiene el enlace a su origen.');
+await select('Consulta','Atendidas por reposición');await say('Las necesidades atendidas se conservan como antecedentes y dejan de sumar entre las pendientes.');
+await select('Consulta','Todas las secciones');
+await click(page.getByRole('button',{name:'Exportar CSV',exact:true}).first());await say('Exportar CSV descarga los resultados de la consulta activa para revisarlos en una hoja de cálculo.');
+await page.getByRole('heading',{name:'Simulador de presupuesto',exact:true}).scrollIntoViewIfNeeded();
+await fill('Monto disponible (S/)','1500');await say('Ingrese un monto disponible. El simulador separa cubiertas, sin saldo y sin valorar, según su priorización provisional.');
+await click(page.getByRole('button',{name:'Exportar CSV',exact:true}).last());
+await click(btn('Tipos de bien y precios'));
+await say('El catálogo se abre sin abandonar Necesidades. Permite buscar tipos, filtrar su uso y consultar detalles.');
+if(await btn('Página siguiente').isEnabled()){await click(btn('Página siguiente'));await click(btn('Primera página'));}
+await fill('Buscar tipo de bien','Silla');await click(page.getByRole('button',{name:'Ver detalle',exact:true}).first());await say('Ver detalle muestra la categoría, vida útil, precio, procedencia e impacto del tipo en las necesidades.');
+await page.keyboard.press('Escape');await fill('Buscar tipo de bien','');
+await click(btn('Registrar tipo de bien'));await fill('Nombre *','Tipo Tutorial');await select('Categoría *','Mobiliario');await fill('Vida útil sugerida (años)','5');
+await say('Registre tipos de bien con nombre único, categoría y vida útil sugerida. El precio se informa por separado.');
+await click(btn('Registrar tipo'));
+await fill('Buscar tipo de bien','Tipo Tutorial');await click(btn('Informar precio de Tipo Tutorial'));await fill('Precio (S/) *','250');await fill('Fecha del precio','2026-10');await fill('Procedencia (cotización, catálogo, factura…)','Cotización ficticia de demostración');
+await say('Informe un precio mayor que cero y su procedencia. El catálogo actualiza las valoraciones que dependen de ese tipo.');
+await click(btn('Guardar precio'));
+await menu('Acciones de Tipo Tutorial','Actualizar tipo de bien');await lookForm('Actualizar tipo permite corregir su nombre, categoría y vida útil sugerida.');await close();
+await click(btn('Cerrar'));

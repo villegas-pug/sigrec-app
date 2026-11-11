@@ -1,0 +1,17 @@
+await chapter('14 · Vista móvil y dictado','Entrada por voz en dispositivos compatibles');
+await go('inicio');await click(btn('Buscar (Ctrl + K)'));
+await say('Esta sección usa una vista móvil emulada para mostrar los controles disponibles en dispositivos compatibles.');
+const mic=page.getByRole('button',{name:'Dictar por voz',exact:true}).last();
+if(await mic.isVisible()) {
+  await say('El micrófono inicia el dictado del campo. El sistema informa cómo se procesará el audio.',mic);
+  await click(mic);await pause(1200);
+  await say('La disponibilidad del micrófono depende del dispositivo y sus permisos. Aquí no se demuestra una transcripción exitosa.');
+  const stop=page.getByRole('button',{name:'Detener dictado',exact:true});if(await stop.isVisible())await click(stop);
+  const cancel=btn('Cancelar');if(await cancel.isVisible())await click(cancel);
+  const help=btn('Cómo habilitarlo');if(await help.isVisible()){await click(help);await say('La ayuda indica cómo permitir el micrófono y reintentar. También puede completar el campo con el teclado.');await click(btn('Entendido'));}
+  await click(mic);await pause(700);
+  const download=btn('Descargar y dictar');if(await download.isVisible()){await say('El procesamiento local solicita descargar un modelo de voz. Puede cancelar; no se descargará en esta demostración.');await click(btn('Cancelar'));}
+} else {await say('En este entorno el dictado no está disponible. Los campos siguen admitiendo escritura manual.');}
+await page.keyboard.press('Escape');
+await say('Cámara, geolocalización y transcripción requieren equipo y permisos reales. No se han simulado resultados de esos dispositivos.');
+await say('Fin del manual. Use los capítulos para volver a la función que necesita y revise siempre el ámbito de su perfil.');

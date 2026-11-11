@@ -1,0 +1,9 @@
+await chapter('09 · Vehículos','Registro, estado operativo y rendimiento de referencia');
+await go('movilidad/vehiculos');
+await say('Vehículos reúne el parque del ámbito y sus estados. Puede filtrar por centro, estado operativo e inactivos.');
+await click(btn('Registrar vehículo'));await select('Centro *','CAR Demo Amanecer');await fill('Tipo *','Camioneta Tutorial');await fill('Placa *','TUT-001');await fill('Combustible *','Gasohol');await fill('Rendimiento de referencia (km/L)','10');await select('Estado operativo','Operativo');
+await say('Registre tipo, placa, combustible y centro. El rendimiento permite estimar consumo; no es una norma obligatoria.');
+await click(btn('Registrar vehículo'));
+await say('La ficha conserva chofer relacionado, estado, rendimiento y mantenimientos. Los enlaces abren itinerarios y combustible.');
+await click(page.getByRole('button',{name:/Acciones del vehículo/}).first());await click(page.locator('.q-menu:visible .q-item').filter({hasText:'Actualizar vehículo'}));
+await lookForm('Cuando un vehículo requiere mantenimiento o está detenido, puede registrar motivo y presupuesto estimado.');await close();

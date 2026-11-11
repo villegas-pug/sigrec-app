@@ -10,6 +10,7 @@ const routes = [
       // La raíz lleva a la primera pantalla a la que el perfil activo tiene acceso.
       { path: '', name: 'raiz', redirect: () => ({ name: usePerfil().rutaInicial.value }) },
       { path: 'inicio', name: 'inicio', component: () => import('pages/InicioPage.vue'), meta: { titulo: 'Inicio' } },
+      { path: 'manual', name: 'manual', component: () => import('pages/ManualPage.vue'), meta: { titulo: 'Manual de usuario' } },
       { path: 'centros', name: 'centros', component: () => import('pages/GestionCentrosPage.vue'), meta: { titulo: 'Gestión de centros' } },
       { path: 'incidencias', name: 'incidencias', component: () => import('pages/IncidenciasPage.vue'), meta: { titulo: 'Incidencias, bajas y reposiciones' } },
       { path: 'necesidades', name: 'necesidades', component: () => import('pages/NecesidadesPage.vue'), meta: { grupo: 'Necesidades y presupuesto', titulo: 'Necesidades' } },

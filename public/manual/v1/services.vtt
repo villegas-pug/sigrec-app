@@ -1,0 +1,54 @@
+WEBVTT
+
+00:00:00.002 --> 00:00:04.349
+08 · Servicios básicos y pagos
+Ficha, períodos, pagos y continuidad del servicio
+
+00:00:04.349 --> 00:00:14.996
+08 · Servicios básicos y pagos
+Seleccione centro y año. La matriz muestra solo servicios registrados y sus períodos según la periodicidad.
+
+00:00:14.996 --> 00:00:21.187
+08 · Servicios básicos y pagos
+El servicio registra proveedor, periodicidad, contacto, suministro, contratación, inicio y renovación.
+
+00:00:21.187 --> 00:00:31.262
+08 · Servicios básicos y pagos
+Los servicios y periodicidades se eligen del catálogo. Los datos opcionales pueden quedar pendientes.
+
+00:00:31.262 --> 00:00:38.340
+08 · Servicios básicos y pagos
+Seleccione un servicio para ver su ficha, antigüedad, renovación, estado e historial de hechos.
+
+00:00:38.340 --> 00:00:47.439
+08 · Servicios básicos y pagos
+Actualizar ficha permite corregir proveedor, contacto y condiciones del servicio.
+
+00:00:47.439 --> 00:00:56.907
+08 · Servicios básicos y pagos
+Registre una interrupción con fecha y detalle. Informar un pago no restablece el servicio.
+
+00:00:56.907 --> 00:01:02.939
+08 · Servicios básicos y pagos
+El restablecimiento se registra como otro hecho y cierra la interrupción abierta.
+
+00:01:02.939 --> 00:01:12.199
+08 · Servicios básicos y pagos
+Cada celda abre el detalle del período. Permite consultar el estado, actualizar el pago o corregir la situación.
+
+00:01:12.199 --> 00:01:20.656
+08 · Servicios básicos y pagos
+Pendiente conocido permite informar vencimiento, motivo y detalle. Sin información no confirma una deuda.
+
+00:01:20.656 --> 00:01:29.240
+08 · Servicios básicos y pagos
+Para informar un pago, indique fecha, importe y sustento. SIGREC registra la información; no ejecuta el pago.
+
+00:01:32.874 --> 00:01:48.578
+08 · Servicios básicos y pagos
+Los hechos de interrupción y restablecimiento pueden corregirse. El historial conserva las correcciones de pagos.
+
+00:01:48.578 --> 00:01:56.080
+08 · Servicios básicos y pagos
+Anular o reactivar un hecho recalcula el estado del servicio; no ejecuta pagos ni modifica automáticamente los demás hechos.
+

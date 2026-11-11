@@ -1,0 +1,15 @@
+await go('centros?car=TUT');await click(btn('Registrar incidente'));await select('Hecho *','Daño');await fill('Motivo *','Filtración Tutorial');await fill('Detalle','Ejemplo ficticio de infraestructura del centro.');await page.getByRole('checkbox',{name:'Requiere evaluación de infraestructura',exact:true}).check();
+await say('Un incidente puede originarse en el centro o en un ambiente y requerir evaluación de infraestructura, incluso sin bienes afectados.');await click(btn('Registrar incidente'));
+await menu('Acciones del hecho Filtración Tutorial','Actualizar incidente');await fill('Detalle','Detalle corregido del ejemplo de infraestructura.');await click(btn('Guardar cambios'));
+await menu('Acciones del hecho Filtración Tutorial','Marcar infraestructura como atendida');await fill('Cómo se atendió','Reparación ficticia de demostración.');
+await say('Atender infraestructura registra fecha y solución. Su necesidad deja de figurar en evaluación.');await click(btn('Marcar como atendida'));
+await go('centros?ambiente=AMA-D1');await click(btn('Registrar incidente'));await select('Hecho *','Daño');await fill('Motivo *','Incidente de ambiente Tutorial');
+await fill('Buscar por nombre, rótulo o código','AMA-D1-FZ');await click(page.getByRole('checkbox',{name:/Seleccionar resultados/}));await fill('Unidades afectadas de Frazadas · AMA-D1-FZ','1');await click(page.getByRole('radio',{name:'No',exact:true}).last());
+await say('Busque y marque los afectados. Informe las unidades y si requieren reposición. Cada componente se selecciona por separado.');
+await click(page.getByRole('switch',{name:'Solo seleccionados',exact:true}));await click(btn('Quitar selección'));await click(page.getByRole('switch',{name:'Solo seleccionados',exact:true}));await click(page.getByRole('checkbox',{name:/Seleccionar resultados/}));await click(page.getByRole('radio',{name:'No',exact:true}).last());
+await click(btn('Registrar incidente'));
+await go('centros?ambiente=AMA-D1&tab=incidencias');
+await menu('Acciones de la novedad Ventana lateral dañada','Actualizar novedad');await lookForm('Las novedades existentes pueden corregir tipo, fecha, detalle y ubicación, o indicar evaluación de infraestructura.');await close();
+await go('centros?car=AMA&tab=seguridad');await click(btn('Registrar recarga de todos'));await fill('Detalle','Recarga en lote ficticia de demostración.');await say('La recarga en lote registra una misma atención para todos los extintores seleccionados.');await click(btn('Registrar'));
+await click(page.getByRole('button',{name:/Acciones del mantenimiento/}).first());await click(page.locator('.q-menu:visible .q-item').filter({hasText:'Actualizar mantenimiento'}));await lookForm('Los mantenimientos existentes permiten corregir fecha, próxima atención, detalle e importe. Su anulación conserva el antecedente.');await close();
+await go('centros?consulta=elementos_criticos');await say('Las consultas de infraestructura reúnen elementos críticos, lugares en mal estado y novedades abiertas con enlaces a su ficha.');await select('Consulta','Módulos y ambientes en mal estado');await select('Consulta','Novedades abiertas');

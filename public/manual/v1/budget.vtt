@@ -1,0 +1,54 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.313
+06 · Necesidades y presupuesto
+Consolidado, valoración, simulación y exportación
+
+00:00:04.313 --> 00:00:14.148
+06 · Necesidades y presupuesto
+Necesidades calcula renovaciones y reposiciones para el año elegido. Una necesidad conserva sus motivos y cuenta una sola vez.
+
+00:00:14.148 --> 00:00:22.113
+06 · Necesidades y presupuesto
+Combine año, centro, tipo y clasificación. El consolidado y el detalle cambian con los filtros.
+
+00:00:22.113 --> 00:00:30.295
+06 · Necesidades y presupuesto
+Sin valorar significa costo desconocido. El importe conocido no representa un presupuesto completo.
+
+00:00:30.295 --> 00:00:38.016
+06 · Necesidades y presupuesto
+La infraestructura en evaluación se informa separadamente y mantiene el enlace a su origen.
+
+00:00:38.016 --> 00:00:47.201
+06 · Necesidades y presupuesto
+Las necesidades atendidas se conservan como antecedentes y dejan de sumar entre las pendientes.
+
+00:00:47.201 --> 00:00:53.469
+06 · Necesidades y presupuesto
+Exportar CSV descarga los resultados de la consulta activa para revisarlos en una hoja de cálculo.
+
+00:00:53.469 --> 00:01:02.909
+06 · Necesidades y presupuesto
+Ingrese un monto disponible. El simulador separa cubiertas, sin saldo y sin valorar, según su priorización provisional.
+
+00:01:02.909 --> 00:01:12.955
+06 · Necesidades y presupuesto
+El catálogo se abre sin abandonar Necesidades. Permite buscar tipos, filtrar su uso y consultar detalles.
+
+00:01:12.955 --> 00:01:23.764
+06 · Necesidades y presupuesto
+Ver detalle muestra la categoría, vida útil, precio, procedencia e impacto del tipo en las necesidades.
+
+00:01:23.764 --> 00:01:33.907
+06 · Necesidades y presupuesto
+Registre tipos de bien con nombre único, categoría y vida útil sugerida. El precio se informa por separado.
+
+00:01:33.907 --> 00:01:44.258
+06 · Necesidades y presupuesto
+Informe un precio mayor que cero y su procedencia. El catálogo actualiza las valoraciones que dependen de ese tipo.
+
+00:01:44.258 --> 00:01:53.320
+06 · Necesidades y presupuesto
+Actualizar tipo permite corregir su nombre, categoría y vida útil sugerida.
+

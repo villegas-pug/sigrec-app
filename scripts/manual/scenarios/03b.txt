@@ -1,0 +1,10 @@
+await go('centros?bien=AMA-D1-C01');await click(page.getByRole('tab',{name:/Componentes/}));await click(btn('Registrar componente'));await select('Tipo de bien *','Colchón');await fill('Nombre *','Componente Tutorial');await fill('Rótulo SIGREC *','AMA-TUTORIAL-COMP');await click(page.getByRole('radio',{name:'Bueno',exact:true}).first());
+await say('Al registrar un componente, el bien principal ya está elegido. El nuevo componente conserva rótulo e historial propios.');await click(btn('Guardar'));
+await go('centros?bien=AMA-TUTORIAL-COMP');await click(tab('Forma parte de'));await say('La nueva ficha muestra el principal y los otros componentes asociados al mismo bien.');
+await go('centros?bien=AMA-D2-C04-S');await click(tab('Forma parte de'));await say('Si el principal está de baja, sus componentes pueden quedar pendientes de revisión. Mantener activo conserva el componente tras revisarlo.');await click(btn('Mantener activo'));
+await go('centros?ambiente=AMA-D1');await menu('Acciones de Dormitorio 1','Anular ambiente');await say('Antes de anular un ambiente con bienes, el asistente permite reubicar o dar de baja cada pendiente, sin hacerlo automáticamente.');await click(btn('Cerrar'));
+await click(btn('Registrar bien'));
+const reuse=page.getByRole('button',{name:'Aprovechar datos',exact:true}).first();
+if(await reuse.isVisible()){await click(reuse);await say('Aprovechar datos copia una propuesta del inventario previo. Constate y corrija los datos; no equivale a una verificación automática.');await click(btn('Quitar inventario previo'));}
+await select('Tipo de bien *','Silla');await fill('Nombre *','Registro múltiple Tutorial');await fill('Rótulo SIGREC *','AMA-TUTORIAL-MULTI');await fill('Adquisición','');await click(page.getByRole('radio',{name:'Bueno',exact:true}).first());
+await click(page.getByRole('button',{name:/Guardar y registrar otro en Dormitorio 1/}));await say('Guardar y registrar otro mantiene abierto el registro para continuar en el mismo ambiente. Cancelar termina la captura.');await close();

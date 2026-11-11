@@ -1,0 +1,7 @@
+await go('movilidad/vehiculos');await menu('Acciones del vehículo HOR-V01','Registrar mantenimiento');await fill('Detalle','Revisión ficticia de frenos y llantas.');
+const operational=page.getByRole('checkbox',{name:/El vehículo HOR-V01 queda operativo/});if(await operational.isVisible())await operational.check();
+await say('El mantenimiento de un vehículo puede informar que queda operativo. Revise la casilla; registrar una atención no debe asumirlo.');
+await click(btn('Registrar'));
+await menu('Acciones del vehículo HOR-V01','Actualizar vehículo');await select('Estado operativo','Requiere mantenimiento');await fill('Motivo del mantenimiento o de la detención','Observación ficticia pendiente');await fill('Presupuesto estimado (S/)','1800');
+await say('Actualizar vehículo distingue operativo, requiere mantenimiento, detenido y no informado. El presupuesto desconocido queda sin estimar.');await click(btn('Guardar cambios'));
+await go('centros?bien=AMA-COC-CI01');await click(btn('Registrar mantenimiento'));await fill('Detalle','Revisión ficticia del equipo.');await say('Los equipos también registran mantenimientos desde su ficha, con última atención, próxima fecha e historial.');await click(btn('Registrar'));

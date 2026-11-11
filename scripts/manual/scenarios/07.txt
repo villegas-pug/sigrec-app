@@ -1,0 +1,15 @@
+await chapter('07 · Inventario para planificación','Cuatro vistas y exportaciones según los filtros');
+await go('necesidades/inventario?vista=resumen');
+await say('Resumen del inventario agrega unidades activas, condición, valor aproximado y necesidades del año.');
+await select('Agrupar por','Categoría');await say('Agrupe por categoría o tipo de bien y filtre centro, categoría y año a revisar.');
+await select('Agrupar por','Tipo de bien');
+await click(page.getByRole('button',{name:'Ver por centro',exact:true}).first());
+await say('Ver por centro abre la consulta por equipo con el tipo seleccionado y muestra dónde existe o falta.');
+await click(tab('Consulta por equipo'));await select('Tipo de bien','Extintor');
+await say('La consulta por equipo distingue cantidad, condición y controles. Sin equipo y sin programar son situaciones diferentes.');
+await click(btn('Exportar CSV'));
+await click(tab('Detalle de bienes'));await select('Verificación','Sin verificación registrada');await say('Detalle de bienes permite filtrar por centro, tipo, verificación y control vencido. Abra la ficha para actuar.');
+await select('Verificación','Todas');
+await click(tab('Bienes en mal estado'));await select('Tipo de bien','Todos los tipos');await say('Esta vista reúne bienes activos en condición mala o inservible, su deterioro y ubicación, incluidos componentes.');
+await click(btn('Exportar CSV'));
+await click(tab('Resumen del inventario'));await click(page.getByRole('link',{name:'Ver necesidades',exact:true}).first());await say('Ver necesidades conserva el centro elegido y enlaza la planificación con su presupuesto.');

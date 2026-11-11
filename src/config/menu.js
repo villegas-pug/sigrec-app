@@ -23,5 +23,6 @@ export const MENU = [
       { key: 'itinerarios', label: 'Itinerarios', icon: 'route' },
       { key: 'combustible', label: 'Combustible', icon: 'local_gas_station' }
     ]
-  }
+  },
+  { key: 'manual', label: 'Manual de usuario', icon: 'video_library' }
 ]
