@@ -1,5 +1,5 @@
 // Consultas de bienes: árbol de ubicación, componentes y antecedentes (RF-01, RF-04, RF-08, RF-20).
-import { db, ambientePorId, bienPorId, carPorId, ambientesDeCar, bienesDeAmbiente, vigente } from './datos'
+import { db, ambientePorId, bienPorId, carPorId, moduloPorId, modulosDeCar, ambientesDeModulo, bienesDeAmbiente, vigente } from './datos'
 import { TIPOS_MANTENIMIENTO, condicionInmueble } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
 
@@ -25,9 +25,13 @@ function nodoBien (bien, hijos) {
   }
 }
 
-// Prefijos de nodo para que centros y ambientes no compartan clave con los bienes en el árbol.
+// Prefijos de nodo para que centros, módulos y ambientes no compartan clave con los bienes en el árbol.
 export const nodoCentroId = (carId) => `car:${carId}`
+export const nodoModuloId = (moduloId) => `mod:${moduloId}`
 export const nodoAmbienteId = (ambienteId) => `amb:${ambienteId}`
+
+// Icono del módulo: las casas y los módulos de uso común se distinguen en todo el sistema.
+export const iconoModulo = (modulo) => (modulo.tipo === 'comun' ? 'groups' : 'cottage')
 
 function nodoAmbiente (ambiente, filtros) {
   const delAmbiente = bienesDeAmbiente(ambiente.id)
@@ -52,8 +56,25 @@ function nodoAmbiente (ambiente, filtros) {
   }
 }
 
+// Un nivel con coincidencia de texto muestra completos sus descendientes (respetando situación y ámbito).
+function nodoModulo (modulo, filtros, inactivos) {
+  const propios = coincide(modulo, filtros.texto) ? { ...filtros, texto: '' } : filtros
+  const children = ambientesDeModulo(modulo.id, { inactivos })
+    .map((ambiente) => nodoAmbiente(ambiente, propios))
+    .filter((nodo) => nodo.children.length || !propios.texto || coincide(nodo.ambiente, propios.texto))
+  return {
+    id: nodoModuloId(modulo.id),
+    tipo: 'modulo',
+    label: modulo.nombre,
+    codigo: `${modulo.tipo === 'comun' ? 'Uso común · ' : ''}${plural(children.length, 'ambiente', 'ambientes')}`,
+    icono: iconoModulo(modulo),
+    modulo,
+    children
+  }
+}
+
 /**
- * Árbol centro › ambiente › bien › componente (RF-01, RF-08). Todos los niveles son seleccionables.
+ * Árbol centro › módulo › ambiente › bien › componente (RF-01, RF-08, SPEC 020). Todos los niveles son seleccionables.
  * El inmueble no es un nivel: sus datos son parte de la ficha del centro.
  * Con búsqueda, conserva coincidencias de cualquier nivel y sus antecesores; los descendientes respetan situación y ámbito.
  */
@@ -62,9 +83,10 @@ export function arbolDeCentros (carIds, { texto = '', situacion = 'activo', inac
   return carIds
     .map((carId) => {
       const car = carPorId(carId)
-      const children = ambientesDeCar(carId, { inactivos })
-        .map((ambiente) => nodoAmbiente(ambiente, coincide(car, texto) ? { ...filtros, texto: '' } : filtros))
-        .filter((nodo) => nodo.children.length || !texto || coincide(nodo.ambiente ?? nodo.car, texto) || coincide(car, texto))
+      const propios = coincide(car, texto) ? { ...filtros, texto: '' } : filtros
+      const children = modulosDeCar(carId, { inactivos })
+        .map((modulo) => nodoModulo(modulo, propios, inactivos))
+        .filter((nodo) => nodo.children.length || !propios.texto || coincide(nodo.modulo, propios.texto))
       return {
         id: nodoCentroId(carId),
         tipo: 'centro',
@@ -78,12 +100,16 @@ export function arbolDeCentros (carIds, { texto = '', situacion = 'activo', inac
     .filter((nodo) => nodo.children.length || !texto || coincide(nodo.car, texto))
 }
 
-// Nodo del árbol a partir de su id: { tipo: 'centro' | 'ambiente' | 'bien' | 'componente', registro } o null si no existe.
+// Nodo del árbol a partir de su id: { tipo: 'centro' | 'modulo' | 'ambiente' | 'bien' | 'componente', registro } o null si no existe.
 export function resolverNodo (id) {
   if (!id) return null
   if (id.startsWith('car:')) {
     const registro = carPorId(id.slice(4))
     return registro ? { tipo: 'centro', registro } : null
+  }
+  if (id.startsWith('mod:')) {
+    const registro = moduloPorId(id.slice(4))
+    return registro ? { tipo: 'modulo', registro } : null
   }
   if (id.startsWith('amb:')) {
     const registro = ambientePorId(id.slice(4))
@@ -106,13 +132,15 @@ export function rutaHasta (nodos, objetivo, camino = []) {
   return null
 }
 
-// Antecesores de un nodo según los datos (sin depender de los filtros del árbol): centro › ambiente › bien padre.
+// Antecesores de un nodo según los datos (sin depender de los filtros del árbol): centro › módulo › ambiente › bien padre.
 export function antecesoresDeNodo (id) {
   const nodo = resolverNodo(id)
   if (!nodo || nodo.tipo === 'centro') return []
-  if (nodo.tipo === 'ambiente') return [nodoCentroId(nodo.registro.carId)]
-  const ambiente = ambientePorId(nodo.registro.ambienteId)
-  return [nodoCentroId(ambiente.carId), nodoAmbienteId(ambiente.id), ...(nodo.registro.asociadoA ? [nodo.registro.asociadoA.bienId] : [])]
+  if (nodo.tipo === 'modulo') return [nodoCentroId(nodo.registro.carId)]
+  const ambiente = nodo.tipo === 'ambiente' ? nodo.registro : ambientePorId(nodo.registro.ambienteId)
+  const hastaAmbiente = [nodoCentroId(ambiente.carId), ...(ambiente.moduloId ? [nodoModuloId(ambiente.moduloId)] : [])]
+  if (nodo.tipo === 'ambiente') return hastaAmbiente
+  return [...hastaAmbiente, nodoAmbienteId(ambiente.id), ...(nodo.registro.asociadoA ? [nodo.registro.asociadoA.bienId] : [])]
 }
 
 // Los componentes anulados (registro erróneo) no figuran entre las asociaciones.

@@ -7,7 +7,7 @@
       <status-chip v-if="resumenControles.extintoresFaltantes" tono="wa" :label="plural(resumenControles.extintoresFaltantes, 'extintor faltante', 'extintores faltantes')" />
     </template>
     <template #acciones>
-      <q-btn v-if="puedeHacer('ambiente.registrar')" unelevated color="primary" icon="add_home" label="Registrar ambiente" :disable="!activo" @click="dialogos.ambiente = true" />
+      <q-btn v-if="puedeHacer('modulo.registrar')" unelevated color="primary" icon="add_home_work" label="Registrar módulo" :disable="!activo" @click="dialogos.modulo = true" />
       <q-btn v-if="puedeHacer('centro.incidente')" outline color="secondary" icon="report" label="Registrar incidente" :disable="!activo" @click="incidenteAbierto = true" />
       <menu-acciones con-etiqueta :items="accionesCentro" :etiqueta="`Acciones de ${centro.nombre}`" />
     </template>
@@ -72,29 +72,48 @@
       <control-preventivo :centro="centro" :inactivos="inactivos" :resaltado="mantenimientoResaltado" @seleccionar="(id) => $emit('seleccionar', id)" @registrar-extintor="(ambienteId) => $emit('registrar-bien', ambienteId, TIPO_EXTINTOR)" />
     </template>
 
+    <!-- Módulos del centro (casas y de uso común) con sus ambientes (SPEC 020). La pestaña conserva el nombre «ambientes» para los enlaces. -->
     <template #ambientes>
-      <section-card :titulo="`Ambientes del centro (${ambientes.length})`" subtitulo="Condición, novedades abiertas y elementos críticos de cada ambiente; selecciónelo para ver el detalle" sin-relleno>
-        <div v-for="amb in ambientes" :key="amb.id" class="sg-borde-superior row items-center justify-between q-px-md q-py-sm">
-          <div class="column">
-            <button type="button" class="sg-row-btn text-weight-bold self-start" @click="$emit('seleccionar', nodoAmbienteId(amb.id))"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ amb.nombre }}</button>
-            <span class="sg-muted">{{ [amb.piso != null ? `Piso ${amb.piso}` : null, amb.bloque, amb.ubicacion].filter(Boolean).join(' · ') || 'Ubicación no informada' }}</span>
+      <section-card
+        v-for="grupo in gruposModulos"
+        :key="grupo.tipo"
+        :titulo="`${grupo.titulo} (${grupo.modulos.length})`"
+        :subtitulo="grupo.subtitulo"
+        :icono="grupo.icono"
+        sin-relleno
+      >
+        <div v-for="m in grupo.modulos" :key="m.id">
+          <div class="sg-modulo__cabecera sg-borde-superior row items-center justify-between q-px-md q-py-sm">
+            <div class="column">
+              <button type="button" class="sg-row-btn text-weight-bold self-start" @click="$emit('seleccionar', nodoModuloId(m.id))">
+                <q-icon :name="iconoModulo(m)" size="18px" aria-hidden="true" class="q-mr-xs" />{{ m.nombre }}
+              </button>
+              <span class="sg-muted">{{ resumenModulo(m) }}</span>
+            </div>
+            <div class="sg-chips items-center">
+              <status-chip v-bind="condicion(m.condicion)" />
+              <status-chip v-if="m.anulacion" v-bind="CHIP_ANULADO" />
+              <q-btn v-if="puedeHacer('ambiente.registrar') && activo && vigente(m)" flat dense no-caps color="secondary" icon="add" label="Ambiente" :aria-label="`Registrar ambiente en ${m.nombre}`" @click="abrirAmbiente(m)" />
+            </div>
           </div>
-          <div class="sg-chips">
-            <status-chip v-bind="condicion(amb.condicion)" />
-            <status-chip v-if="amb.anulacion" v-bind="CHIP_ANULADO" />
-            <status-chip v-if="novedadesAbiertas(amb).length" tono="da" :label="plural(novedadesAbiertas(amb).length, 'novedad abierta', 'novedades abiertas')" />
-            <status-chip v-if="elementosCriticos(amb.estadoElementos).length" tono="wa" :label="plural(elementosCriticos(amb.estadoElementos).length, 'elemento crítico', 'elementos críticos')" />
-            <status-chip tono="ne" :label="plural(bienesDeAmbiente(amb.id).filter((b) => b.situacion === 'activo').length, 'bien activo', 'bienes activos')" />
+          <div class="sg-modulo__ambientes">
+            <fila-ambiente v-for="amb in ambientesDeModulo(m.id, { inactivos: true })" :key="amb.id" :ambiente="amb" @seleccionar="$emit('seleccionar', $event)" />
+            <p v-if="!ambientesDeModulo(m.id, { inactivos: true }).length" class="sg-borde-superior q-px-md q-py-sm sg-muted q-mb-none">Sin ambientes registrados.</p>
           </div>
         </div>
-        <p v-if="!ambientes.length" class="q-pa-md sg-muted q-mb-none">El centro aún no tiene ambientes registrados.</p>
       </section-card>
+      <div v-if="!modulos.length" class="sg-box sg-box--dashed">
+        <span class="text-weight-bold">El centro aún no tiene módulos registrados.</span>
+        <span class="sg-muted">Registre primero las casas y los módulos de uso común; luego, sus ambientes.</span>
+        <q-btn v-if="puedeHacer('modulo.registrar') && activo" outline color="secondary" icon="add_home_work" label="Registrar módulo" class="self-start" @click="dialogos.modulo = true" />
+      </div>
     </template>
   </detalle-panel>
 
   <incidente-dialog v-model="incidenteAbierto" :centro-inicial="centro.id" @hecho="$emit('hecho', $event)" />
   <centro-ficha-dialog v-model="dialogos.ficha" :centro="centro" />
-  <ambiente-dialog v-model="dialogos.ambiente" :centro="centro" @hecho="(id) => $emit('seleccionar', nodoAmbienteId(id))" />
+  <modulo-dialog v-model="dialogos.modulo" :centro="centro" @hecho="(id) => $emit('seleccionar', nodoModuloId(id))" />
+  <ambiente-dialog v-model="dialogos.ambiente" :centro="centro" :modulo="moduloParaAmbiente" @hecho="(id) => $emit('seleccionar', nodoAmbienteId(id))" />
   <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
 </template>
 
@@ -111,16 +130,17 @@ import MenuAcciones from 'components/common/MenuAcciones.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import CentroFichaDialog from 'components/centros/CentroFichaDialog.vue'
 import AmbienteDialog from 'components/centros/AmbienteDialog.vue'
+import ModuloDialog from 'components/centros/ModuloDialog.vue'
+import FilaAmbiente from 'components/gestion/FilaAmbiente.vue'
 import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
 import ControlPreventivo from 'components/centros/ControlPreventivo.vue'
 import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { ambientesDeCar, bienesDeAmbiente, vigente } from 'src/services/datos'
-import { nodoAmbienteId } from 'src/services/bienes'
+import { ambientesDeCar, ambientesDeModulo, modulosDeCar, vigente } from 'src/services/datos'
+import { iconoModulo, nodoAmbienteId, nodoModuloId } from 'src/services/bienes'
 import { anular, dependenciasDeCentro } from 'src/services/acciones'
-import { cantidadEvaluados, elementosCriticos } from 'src/services/infraestructura'
-import { novedadesAbiertas } from 'src/services/situacion'
+import { cantidadEvaluados } from 'src/services/infraestructura'
 import { controlesPendientes, resumirControles } from 'src/services/mantenimientos'
 import { FECHA_CORTE } from 'src/config/demo'
 import { CHIP_ANULADO, ELEMENTOS_INFRAESTRUCTURA, TIPO_EXTINTOR, condicion, condicionInmueble } from 'src/config/catalogos'
@@ -142,11 +162,30 @@ const { puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
 const incidenteAbierto = ref(false)
-const dialogos = reactive({ ficha: false, ambiente: false })
+const dialogos = reactive({ ficha: false, modulo: false, ambiente: false })
+// Módulo preseleccionado al registrar un ambiente desde su fila.
+const moduloParaAmbiente = ref(null)
+function abrirAmbiente (modulo) {
+  moduloParaAmbiente.value = modulo
+  dialogos.ambiente = true
+}
 
 const inmueble = computed(() => props.centro.inmueble)
 const activo = computed(() => vigente(props.centro))
 const ambientes = computed(() => ambientesDeCar(props.centro.id, { inactivos: true }))
+const modulos = computed(() => modulosDeCar(props.centro.id, { inactivos: true }))
+// Casas primero y luego los módulos de uso común; un grupo sin módulos no se muestra.
+const gruposModulos = computed(() => [
+  { tipo: 'casa', titulo: 'Casas', icono: 'cottage', subtitulo: 'Donde viven los grupos de residentes; seleccione un módulo o un ambiente para ver su detalle' },
+  { tipo: 'comun', titulo: 'Módulos de uso común', icono: 'groups', subtitulo: 'Los comparten todas las casas del centro: comedor, cocina, lavandería, administración' }
+].map((g) => ({ ...g, modulos: modulos.value.filter((m) => (m.tipo === 'comun' ? 'comun' : 'casa') === g.tipo) })).filter((g) => g.modulos.length))
+
+const resumenModulo = (m) => [
+  plural(ambientesDeModulo(m.id).length, 'ambiente', 'ambientes'),
+  m.tipo === 'casa' && m.capacidad != null ? plural(m.capacidad, 'residente', 'residentes') : null,
+  m.pisos != null ? plural(m.pisos, 'piso', 'pisos') : null,
+  m.ubicacion
+].filter(Boolean).join(' · ')
 const evaluados = computed(() => cantidadEvaluados(inmueble.value.construccion.estadoElementos))
 const resumenControles = computed(() => resumirControles(controlesPendientes([props.centro.id], FECHA_CORTE)))
 
@@ -155,7 +194,7 @@ const tabs = computed(() => [
   { name: 'incidencias', label: 'Incidencias' },
   { name: 'fotos', label: 'Fotografías' },
   { name: 'seguridad', label: 'Seguridad y mantenimiento' },
-  { name: 'ambientes', label: `Ambientes (${ambientes.value.length})` }
+  { name: 'ambientes', label: `Módulos y ambientes (${ambientes.value.length})` }
 ])
 
 const camposConstruccion = computed(() => {
@@ -197,3 +236,8 @@ const accionesCentro = computed(() => {
   ]
 })
 </script>
+
+<style scoped>
+.sg-modulo__cabecera { background: var(--sg-blue-soft); }
+.sg-modulo__ambientes { padding-left: 16px; }
+</style>

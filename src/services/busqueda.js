@@ -1,6 +1,6 @@
-// Buscador global (SPEC 011, Ola 3): un índice de centros, ambientes, bienes, vehículos, servicios y tipos de bien del ámbito,
+// Buscador global (SPEC 011, Ola 3): un índice de centros, módulos (SPEC 020), ambientes, bienes, vehículos, servicios y tipos de bien del ámbito,
 // con su destino (enlace profundo). Funciones puras: el ámbito y los accesos los decide quien llama.
-import { db, vigente } from './datos'
+import { db, moduloPorId, vigente } from './datos'
 import { celdasDelServicio } from './servicios'
 import { normalizar } from 'src/utils/interpretacionVoz'
 import { CONDICIONES, SITUACIONES, TIPOS_SERVICIO } from 'src/config/catalogos'
@@ -22,10 +22,15 @@ export function indiceDeBusqueda ({ cars, vehiculos, fechaCorte = null, anioServ
       acciones: [{ label: `Registrar mantenimiento en ${car.nombre}`, icono: 'build', permiso: 'mantenimiento.registrar', destino: { name: 'centros', query: { car: car.id, tab: 'seguridad' } } }]
     })
   }
-  const ambientes = db.ambientes.filter((a) => vigente(a) && carIds.has(a.carId))
   const nombreCar = (id) => cars.find((c) => c.id === id)?.nombre ?? id
+  for (const m of db.modulos.filter((m) => vigente(m) && carIds.has(m.carId))) {
+    agregar({ clave: `mod-${m.id}`, tipo: 'modulo', id: m.id, titulo: m.nombre, detalle: `${nombreCar(m.carId)}${m.tipo === 'comun' ? ' · Uso común' : ''}`, icono: m.tipo === 'comun' ? 'groups' : 'cottage', destino: { name: 'centros', query: { modulo: m.id } } })
+  }
+  const ambientes = db.ambientes.filter((a) => vigente(a) && carIds.has(a.carId))
+  // «Centro › Módulo»: ruta del ambiente para el detalle de ambientes y bienes.
+  const rutaAmbiente = (a) => [nombreCar(a.carId), moduloPorId(a.moduloId)?.nombre].filter(Boolean).join(' › ')
   for (const a of ambientes) {
-    agregar({ clave: `amb-${a.id}`, tipo: 'ambiente', id: a.id, titulo: a.nombre, detalle: nombreCar(a.carId), icono: 'meeting_room', destino: { name: 'centros', query: { ambiente: a.id } },
+    agregar({ clave: `amb-${a.id}`, tipo: 'ambiente', id: a.id, titulo: a.nombre, detalle: rutaAmbiente(a), icono: 'meeting_room', destino: { name: 'centros', query: { ambiente: a.id } },
       acciones: [{ label: `Registrar bien en ${a.nombre} (${nombreCar(a.carId)})`, icono: 'playlist_add', permiso: 'bien.registrar', destino: { name: 'centros', query: { ambiente: a.id, registrar: '1' } } }] })
   }
   const ambientePorId = new Map(ambientes.map((a) => [a.id, a]))
@@ -33,7 +38,7 @@ export function indiceDeBusqueda ({ cars, vehiculos, fechaCorte = null, anioServ
     const a = ambientePorId.get(b.ambienteId)
     if (!a || b.situacion === 'anulado') continue
     const estado = b.situacion === 'activo' ? CONDICIONES[b.condicion]?.label ?? 'Sin condición' : SITUACIONES[b.situacion]?.label ?? b.situacion
-    agregar({ clave: `bien-${b.id}`, tipo: 'bien', id: b.id, titulo: b.nombre, detalle: `${nombreCar(a.carId)} › ${a.nombre} · ${estado}${b.codigoPatrimonial ? ` · ${b.codigoPatrimonial}` : ''}`, icono: b.asociadoA ? 'extension' : 'label', destino: { name: 'centros', query: { bien: b.id } } })
+    agregar({ clave: `bien-${b.id}`, tipo: 'bien', id: b.id, titulo: b.nombre, detalle: `${rutaAmbiente(a)} › ${a.nombre} · ${estado}${b.codigoPatrimonial ? ` · ${b.codigoPatrimonial}` : ''}`, icono: b.asociadoA ? 'extension' : 'label', destino: { name: 'centros', query: { bien: b.id } } })
   }
   for (const v of vehiculos) {
     agregar({ clave: `veh-${v.id}`, tipo: 'vehiculo', id: v.id, titulo: `${v.tipo} · placa ${v.placa}`, detalle: nombreCar(v.carId), icono: 'directions_car', destino: { name: 'vehiculos', query: { car: v.carId, vehiculo: v.id } },

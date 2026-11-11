@@ -79,6 +79,13 @@ export const OPCIONES_INCIDENTE = INCIDENTES.map((value) => ({ value, label: TIP
 
 export const OPCIONES_INCIDENCIA_INFRAESTRUCTURA = [...new Set([...INCIDENTES, ...Object.keys(TIPOS_NOVEDAD)])].map((value) => ({ value, label: TIPOS_EVENTO[value].label }))
 
+// Tipos de módulo del centro (SPEC 020): una casa alberga a un grupo; uno de uso común lo comparten todas las casas.
+export const TIPOS_MODULO = {
+  casa: { label: 'Casa', descripcion: 'Vive un grupo de residentes' },
+  comun: { label: 'Uso común', descripcion: 'Lo comparten las casas: comedor, cocina, lavandería, administración' }
+}
+export const OPCIONES_TIPO_MODULO = Object.entries(TIPOS_MODULO).map(([value, t]) => ({ value, label: t.label }))
+
 export const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre']
 export const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic']
 export const ORDINALES_TRIMESTRE = ['1.er', '2.º', '3.er', '4.º']
@@ -88,13 +95,21 @@ export const TIPOS_SERVICIO = {
   agua: 'Agua',
   internet: 'Internet',
   cable: 'Cable',
-  gas: 'Gas',
+  gas_natural: 'Gas natural',
+  gas_balon: 'Gas balón',
+  extintores: 'Extintores',
+  fumigacion: 'Fumigación',
   arbitrios: 'Arbitrios'
 }
 
+// Toda periodicidad divide el año en meses enteros (ver PERIODOS_POR_ANIO en services/servicios.js).
 export const PERIODICIDADES = {
   mensual: 'Mensual',
-  trimestral: 'Trimestral'
+  bimestral: 'Bimestral',
+  trimestral: 'Trimestral',
+  cuatrimestral: 'Cuatrimestral',
+  semestral: 'Semestral',
+  anual: 'Anual'
 }
 
 export const OPCIONES_PERIODICIDAD = Object.entries(PERIODICIDADES).map(([value, label]) => ({ value, label }))

@@ -75,7 +75,7 @@ import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { useRecorridoInterno } from 'src/composables/useRecorridoInterno'
-import { db, ambientesDeCar, bienPorId, ubicacionDeAmbiente } from 'src/services/datos'
+import { db, ambientesDeCar, bienPorId, opcionesAmbientes, ubicacionDeAmbiente } from 'src/services/datos'
 import { calcularNecesidades } from 'src/services/necesidades'
 import DetalleHecho from 'components/bienes/DetalleHecho.vue'
 import { TIPOS_HECHO, ESTADOS, estadoNecesidad as estadoHecho, hechosRegistrados, ubicacionHecho } from 'src/services/incidencias'
@@ -104,7 +104,7 @@ const carContexto = computed(() => (carId.value === TODOS ? null : carId.value))
 
 const opcionesAmbiente = computed(() => [
   { label: 'Todos los ambientes', value: TODOS },
-  ...(carContexto.value ? ambientesDeCar(carContexto.value).map((a) => ({ label: a.nombre, value: a.id })) : [])
+  ...(carContexto.value ? opcionesAmbientes(ambientesDeCar(carContexto.value)) : [])
 ])
 const opcionesTipo = [{ label: 'Todos', value: TODOS }, ...TIPOS_HISTORIAL.map((t) => ({ label: TIPOS_EVENTO[t].label, value: t }))]
 // Los años del filtro salen de los hechos registrados, del más reciente al más antiguo.

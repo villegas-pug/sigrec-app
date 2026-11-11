@@ -11,7 +11,7 @@ import { useRoute } from 'vue-router'
 import ListaTrazable from 'components/common/ListaTrazable.vue'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
-import { ambientesDeCar, carPorId } from 'src/services/datos'
+import { ambientesDeCar, carPorId, moduloPorId, textoUbicacion } from 'src/services/datos'
 import { elementosCriticos } from 'src/services/infraestructura'
 import { novedadesAbiertas } from 'src/services/situacion'
 import { CONDICIONES_CRITICAS, condicion } from 'src/config/catalogos'
@@ -25,10 +25,12 @@ const contexto = computed(() => opcionesCar.value.find((o) => o.value === carId.
 const filas = computed(() => carIdsVisibles.value.flatMap((id) => {
   const car = carPorId(id)
   const ambientes = ambientesDeCar(id)
+  // Ruta «Centro › Módulo [› Ambiente]» de cada fila (SPEC 020).
+  const ruta = (a, conAmbiente = true) => textoUbicacion({ car, modulo: moduloPorId(a.moduloId), ambiente: conAmbiente ? a : null })
   const to = (ambiente, novedad) => ({ name: 'centros', query: { car: id, ...(ambiente ? { ambiente: ambiente.id } : {}), ...(novedad ? { novedad: novedad.id } : { tab: 'ficha' }) } })
-  if (consulta.value === 'ambientes_criticos') return ambientes.filter((a) => CONDICIONES_CRITICAS.includes(a.condicion)).map((a) => ({ id: a.id, titulo: a.nombre, contexto: car.nombre, detalle: condicion(a.condicion).label, to: to(a) }))
-  if (consulta.value === 'novedades') return ambientes.flatMap((a) => novedadesAbiertas(a).map((n) => ({ id: n.id, titulo: n.titulo, contexto: `${car.nombre} › ${a.nombre}`, detalle: 'Novedad abierta', to: to(a, n) })))
+  if (consulta.value === 'ambientes_criticos') return ambientes.filter((a) => CONDICIONES_CRITICAS.includes(a.condicion)).map((a) => ({ id: a.id, titulo: a.nombre, contexto: ruta(a, false), detalle: condicion(a.condicion).label, to: to(a) }))
+  if (consulta.value === 'novedades') return ambientes.flatMap((a) => novedadesAbiertas(a).map((n) => ({ id: n.id, titulo: n.titulo, contexto: ruta(a), detalle: 'Novedad abierta', to: to(a, n) })))
   return [{ id: car.id, nombre: 'Inmueble', estados: car.inmueble.construccion.estadoElementos, ambiente: null }, ...ambientes.map((a) => ({ id: a.id, nombre: a.nombre, estados: a.estadoElementos, ambiente: a }))]
-    .flatMap((lugar) => elementosCriticos(lugar.estados).map((e) => ({ id: `${lugar.id}-${e.key}`, titulo: e.label, contexto: `${car.nombre} › ${lugar.nombre}`, detalle: condicion(lugar.estados[e.key]).label, to: to(lugar.ambiente) })))
+    .flatMap((lugar) => elementosCriticos(lugar.estados).map((e) => ({ id: `${lugar.id}-${e.key}`, titulo: e.label, contexto: lugar.ambiente ? ruta(lugar.ambiente) : `${car.nombre} › ${lugar.nombre}`, detalle: condicion(lugar.estados[e.key]).label, to: to(lugar.ambiente) })))
 }))
 </script>

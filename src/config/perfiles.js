@@ -9,6 +9,7 @@ import { MENU } from 'src/config/menu'
 const ACCIONES_MANTENIMIENTO = [
   'centro.incidente', 'ambiente.incidente',
   'centro.actualizar', 'centro.foto', 'foto.actualizar', 'foto.anular',
+  'modulo.registrar', 'modulo.actualizar', 'modulo.anular',
   'ambiente.registrar', 'ambiente.actualizar', 'ambiente.anular',
   'novedad.registrar', 'novedad.actualizar', 'novedad.atender', 'novedad.anular',
   'intervencion.registrar', 'intervencion.actualizar', 'intervencion.anular',

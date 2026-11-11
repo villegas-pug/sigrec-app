@@ -73,7 +73,7 @@ const $q = useQuasar()
 const router = useRouter()
 const { carsEnAmbito, vehiculosEnAmbito, puedeAcceder, puedeHacer } = usePerfil()
 
-const ETIQUETAS = { centro: 'Centro', ambiente: 'Ambiente', bien: 'Bien', vehiculo: 'Vehículo', servicio: 'Servicio', tipo: 'Tipo de bien', pantalla: 'Pantalla', accion: 'Acción' }
+const ETIQUETAS = { centro: 'Centro', modulo: 'Módulo', ambiente: 'Ambiente', bien: 'Bien', vehiculo: 'Vehículo', servicio: 'Servicio', tipo: 'Tipo de bien', pantalla: 'Pantalla', accion: 'Acción' }
 
 const consulta = ref('')
 const activo = ref(0)

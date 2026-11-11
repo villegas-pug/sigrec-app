@@ -99,7 +99,7 @@ import CondicionSelector from 'components/common/CondicionSelector.vue'
 import CampoAdquisicion from 'components/common/CampoAdquisicion.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { useBorrador } from 'src/composables/useBorrador'
-import { ambientesDeCar, bienesDeAmbiente, ubicacionDeBien } from 'src/services/datos'
+import { ambientesDeCar, bienesDeAmbiente, opcionesAmbientes, ubicacionDeBien } from 'src/services/datos'
 import { actualizarBien, asociarBien, numeroONulo, puedeAsociar, trasladarBien } from 'src/services/acciones'
 import { asociacionesDeBien } from 'src/services/bienes'
 import { FECHA_CORTE } from 'src/config/demo'
@@ -131,9 +131,7 @@ const opcionesPadre = computed(() =>
 )
 
 const opcionesAmbiente = computed(() =>
-  ambientesDeCar(ubicacionDeBien(props.bien).car.id)
-    .filter((a) => a.id !== props.bien.ambienteId)
-    .map((a) => ({ label: a.nombre, value: a.id }))
+  opcionesAmbientes(ambientesDeCar(ubicacionDeBien(props.bien).car.id).filter((a) => a.id !== props.bien.ambienteId))
 )
 
 const componentes = computed(() => asociacionesDeBien(props.bien).hijos)

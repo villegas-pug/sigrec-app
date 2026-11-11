@@ -1,0 +1,26 @@
+[
+  {
+    "id": "AMA-M01", "carId": "AMA", "nombre": "Casa 1", "tipo": "casa", "capacidad": 12, "pisos": 2, "areaM2": 160,
+    "condicion": "regular", "ubicacion": "Frente al ingreso principal"
+  },
+  {
+    "id": "AMA-M02", "carId": "AMA", "nombre": "Comedor y cocina", "tipo": "comun", "capacidad": null, "pisos": 1, "areaM2": 90,
+    "condicion": "bueno", "ubicacion": "Junto al patio techado"
+  },
+  {
+    "id": "HOR-M01", "carId": "HOR", "nombre": "Casa 1", "tipo": "casa", "capacidad": 8, "pisos": 1, "areaM2": null,
+    "condicion": "bueno", "ubicacion": null
+  },
+  {
+    "id": "HOR-M02", "carId": "HOR", "nombre": "Comedor y cocina", "tipo": "comun", "capacidad": null, "pisos": 1, "areaM2": null,
+    "condicion": "regular", "ubicacion": null
+  },
+  {
+    "id": "ESP-M01", "carId": "ESP", "nombre": "Casa 1", "tipo": "casa", "capacidad": 10, "pisos": 2, "areaM2": null,
+    "condicion": "bueno", "ubicacion": null
+  },
+  {
+    "id": "ESP-M02", "carId": "ESP", "nombre": "Servicios comunes", "tipo": "comun", "capacidad": null, "pisos": 1, "areaM2": null,
+    "condicion": "regular", "ubicacion": "Al fondo del terreno"
+  }
+]

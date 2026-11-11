@@ -56,7 +56,7 @@ import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { useBorrador } from 'src/composables/useBorrador'
-import { ambientesDeCar } from 'src/services/datos'
+import { ambientesDeCar, opcionesAmbientes } from 'src/services/datos'
 import { actualizarFoto, registrarFoto } from 'src/services/acciones'
 import { requerido } from 'src/utils/validaciones'
 import { FECHA_CORTE } from 'src/config/demo'
@@ -79,7 +79,7 @@ const $q = useQuasar()
 const form = reactive({ archivo: null, titulo: '', nota: '', ambienteId: null })
 const { modificado, fijar } = useBorrador(form)
 
-const opcionesAmbiente = computed(() => (props.centro ? ambientesDeCar(props.centro.id) : []).map((a) => ({ label: a.nombre, value: a.id })))
+const opcionesAmbiente = computed(() => opcionesAmbientes(props.centro ? ambientesDeCar(props.centro.id) : []))
 const ambienteFijo = computed(() => !props.foto && !!props.ambienteInicial)
 
 watch(() => props.modelValue, (abierto) => {

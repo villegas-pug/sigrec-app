@@ -71,7 +71,7 @@
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, watch } from 'vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { ambientesDeCar, bienesDeAmbiente } from 'src/services/datos'
+import { ambientesDeCar, bienesDeAmbiente, etiquetaAmbiente, ordenarPorModulo } from 'src/services/datos'
 import { SITUACIONES, condicion } from 'src/config/catalogos'
 import { requerido } from 'src/utils/validaciones'
 import { plural } from 'src/utils/formato'
@@ -98,9 +98,9 @@ const opcionesCar = computed(() => carsEnAmbito.value.map((c) => ({ label: c.nom
 
 // Un ambiente sin bienes elegibles se muestra deshabilitado, con su conteo.
 const opcionesAmbiente = computed(() =>
-  (props.carId ? ambientesDeCar(props.carId) : []).map((a) => {
+  ordenarPorModulo(props.carId ? ambientesDeCar(props.carId) : []).map((a) => {
     const n = bienesDeAmbiente(a.id).filter(props.filtro).length
-    return { label: `${a.nombre} (${plural(n, 'bien elegible', 'bienes elegibles')})`, value: a.id, disable: n === 0 && !props.ubicacionFija }
+    return { label: `${etiquetaAmbiente(a)} (${plural(n, 'bien elegible', 'bienes elegibles')})`, value: a.id, disable: n === 0 && !props.ubicacionFija }
   })
 )
 

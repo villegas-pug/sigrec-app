@@ -32,7 +32,7 @@
             <q-icon :name="node.icono" size="18px" aria-hidden="true" />
             <span :class="{ 'text-weight-bold': node.id === seleccionado || node.tipo === 'centro' }">{{ node.label }}</span>
             <span v-if="node.codigo" class="sg-muted">{{ node.codigo }}</span>
-            <status-chip v-if="node.car?.anulacion || node.ambiente?.anulacion" v-bind="CHIP_ANULADO" />
+            <status-chip v-if="node.car?.anulacion || node.modulo?.anulacion || node.ambiente?.anulacion" v-bind="CHIP_ANULADO" />
             <status-chip v-if="nuevos.includes(node.id)" tono="ok" label="Nuevo" />
             <status-chip v-if="node.bien && node.bien.situacion === 'baja'" tono="ne" label="Baja" />
             <status-chip v-else-if="node.bien && node.bien.situacion === 'anulado'" v-bind="CHIP_ANULADO" />
@@ -48,7 +48,7 @@
 
 <script setup>
 import { nextTick, ref } from 'vue'
-// Árbol Centro › Ambiente › Bien › Componente con sus filtros. Todos los niveles se pueden seleccionar.
+// Árbol Centro › Módulo › Ambiente › Bien › Componente con sus filtros (SPEC 020). Todos los niveles se pueden seleccionar.
 import BotonDictado from 'components/common/BotonDictado.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import StatusChip from 'components/common/StatusChip.vue'

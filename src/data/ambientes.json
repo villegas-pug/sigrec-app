@@ -1,6 +1,6 @@
 [
   {
-    "id": "AMA-D1", "carId": "AMA", "nombre": "Dormitorio 1", "piso": 1, "areaM2": 18, "puertas": 1, "ventanas": 2,
+    "id": "AMA-D1", "carId": "AMA", "moduloId": "AMA-M01", "nombre": "Dormitorio 1", "piso": 1, "areaM2": 18, "puertas": 1, "ventanas": 2,
     "condicion": "regular", "ultimoPintado": "2023-03",
     "estadoElementos": { "puertas": "bueno", "ventanas": "malo", "pintura": "regular", "pisos": "bueno", "estructura": "bueno" },
     "intervenciones": [
@@ -16,16 +16,16 @@
     ]
   },
   {
-    "id": "AMA-D2", "carId": "AMA", "nombre": "Dormitorio 2", "piso": 2, "areaM2": 20, "puertas": 1, "ventanas": 2,
+    "id": "AMA-D2", "carId": "AMA", "moduloId": "AMA-M01", "nombre": "Dormitorio 2", "piso": 2, "areaM2": 20, "puertas": 1, "ventanas": 2,
     "condicion": "bueno", "ultimoPintado": null, "intervenciones": [], "novedades": []
   },
   {
-    "id": "AMA-COM", "carId": "AMA", "nombre": "Comedor", "piso": 1, "areaM2": 35, "puertas": 2, "ventanas": 3,
+    "id": "AMA-COM", "carId": "AMA", "moduloId": "AMA-M02", "nombre": "Comedor", "piso": 1, "areaM2": 35, "puertas": 2, "ventanas": 3,
     "condicion": "bueno", "ultimoPintado": "2024-08",
     "intervenciones": [{ "descripcion": "Pintado de muros", "fecha": "2024-08" }], "novedades": []
   },
   {
-    "id": "AMA-COC", "carId": "AMA", "nombre": "Cocina", "piso": 1, "areaM2": 16, "puertas": 1, "ventanas": 1,
+    "id": "AMA-COC", "carId": "AMA", "moduloId": "AMA-M02", "nombre": "Cocina", "piso": 1, "areaM2": 16, "puertas": 1, "ventanas": 1,
     "condicion": "regular", "ultimoPintado": null, "intervenciones": [],
     "estadoElementos": { "puertas": "regular", "pintura": "regular", "pisos": "bueno", "electricas": "bueno", "sanitarias": "bueno" },
     "novedades": [
@@ -37,21 +37,21 @@
     ]
   },
   {
-    "id": "AMA-SES", "carId": "AMA", "nombre": "Sala de estudio", "piso": 2, "areaM2": 24, "puertas": 1, "ventanas": 2,
+    "id": "AMA-SES", "carId": "AMA", "moduloId": "AMA-M01", "nombre": "Sala de estudio", "piso": 2, "areaM2": 24, "puertas": 1, "ventanas": 2,
     "condicion": "bueno", "ultimoPintado": "2025-01",
     "intervenciones": [{ "descripcion": "Pintado de muros", "fecha": "2025-01" }], "novedades": []
   },
   {
-    "id": "AMA-SEA", "carId": "AMA", "nombre": "Sala de estar", "piso": 1, "areaM2": 28, "puertas": 1, "ventanas": 2,
+    "id": "AMA-SEA", "carId": "AMA", "moduloId": "AMA-M01", "nombre": "Sala de estar", "piso": 1, "areaM2": 28, "puertas": 1, "ventanas": 2,
     "condicion": "bueno", "ultimoPintado": "2024-08",
     "intervenciones": [{ "descripcion": "Pintado de muros", "fecha": "2024-08" }], "novedades": []
   },
   {
-    "id": "HOR-D1", "carId": "HOR", "nombre": "Dormitorio 1", "piso": 1, "areaM2": 22, "puertas": 1, "ventanas": 2,
+    "id": "HOR-D1", "carId": "HOR", "moduloId": "HOR-M01", "nombre": "Dormitorio 1", "piso": 1, "areaM2": 22, "puertas": 1, "ventanas": 2,
     "condicion": "bueno", "ultimoPintado": "2025-06", "intervenciones": [{ "descripcion": "Pintado de muros", "fecha": "2025-06" }], "novedades": []
   },
   {
-    "id": "HOR-COC", "carId": "HOR", "nombre": "Cocina", "piso": 1, "areaM2": 20, "puertas": 1, "ventanas": 1,
+    "id": "HOR-COC", "carId": "HOR", "moduloId": "HOR-M02", "nombre": "Cocina", "piso": 1, "areaM2": 20, "puertas": 1, "ventanas": 1,
     "condicion": "malo", "ultimoPintado": null, "intervenciones": [],
     "estadoElementos": { "pintura": "malo", "pisos": "regular", "electricas": "malo", "sanitarias": "regular" },
     "novedades": [
@@ -63,19 +63,19 @@
     ]
   },
   {
-    "id": "HOR-COM", "carId": "HOR", "nombre": "Comedor", "piso": 1, "areaM2": 30, "puertas": 2, "ventanas": 2,
+    "id": "HOR-COM", "carId": "HOR", "moduloId": "HOR-M02", "nombre": "Comedor", "piso": 1, "areaM2": 30, "puertas": 2, "ventanas": 2,
     "condicion": "bueno", "ultimoPintado": "2025-06", "intervenciones": [], "novedades": []
   },
   {
-    "id": "ESP-D1", "carId": "ESP", "nombre": "Dormitorio 1", "piso": 2, "areaM2": 24, "puertas": 1, "ventanas": 2,
+    "id": "ESP-D1", "carId": "ESP", "moduloId": "ESP-M01", "nombre": "Dormitorio 1", "piso": 2, "areaM2": 24, "puertas": 1, "ventanas": 2,
     "condicion": "bueno", "ultimoPintado": "2024-02", "intervenciones": [{ "descripcion": "Pintado de muros", "fecha": "2024-02" }], "novedades": []
   },
   {
-    "id": "ESP-COM", "carId": "ESP", "nombre": "Comedor", "piso": 1, "areaM2": 32, "puertas": 2, "ventanas": 3,
+    "id": "ESP-COM", "carId": "ESP", "moduloId": "ESP-M02", "nombre": "Comedor", "piso": 1, "areaM2": 32, "puertas": 2, "ventanas": 3,
     "condicion": "bueno", "ultimoPintado": null, "intervenciones": [], "novedades": []
   },
   {
-    "id": "ESP-LAV", "carId": "ESP", "nombre": "Lavandería", "piso": 1, "areaM2": 12, "puertas": 1, "ventanas": 1,
+    "id": "ESP-LAV", "carId": "ESP", "moduloId": "ESP-M02", "nombre": "Lavandería", "piso": 1, "areaM2": 12, "puertas": 1, "ventanas": 1,
     "condicion": "regular", "ultimoPintado": null, "intervenciones": [], "novedades": []
   }
 ]

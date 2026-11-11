@@ -9,11 +9,11 @@
 </template>
 <script setup>
 import { computed } from 'vue'
-import { antecesoresDeNodo, resolverNodo, nodoCentroId, nodoAmbienteId } from 'src/services/bienes'
+import { antecesoresDeNodo, resolverNodo, nodoCentroId, nodoModuloId, nodoAmbienteId } from 'src/services/bienes'
 const props = defineProps({ nodo: { type: String, required: true } })
 defineEmits(['seleccionar'])
 const partes = computed(() => {
-  const id = props.nodo.startsWith('centro-') ? nodoCentroId(props.nodo.slice(7)) : props.nodo.startsWith('ambiente-') ? nodoAmbienteId(props.nodo.slice(9)) : props.nodo.startsWith('bien-') ? props.nodo.slice(5) : props.nodo
+  const id = props.nodo.startsWith('centro-') ? nodoCentroId(props.nodo.slice(7)) : props.nodo.startsWith('modulo-') ? nodoModuloId(props.nodo.slice(7)) : props.nodo.startsWith('ambiente-') ? nodoAmbienteId(props.nodo.slice(9)) : props.nodo.startsWith('bien-') ? props.nodo.slice(5) : props.nodo
   return [...antecesoresDeNodo(id), id].map((id) => { const n = resolverNodo(id); return n ? { id, label: `${n.registro.nombre} · ${n.registro.id}` } : null }).filter(Boolean)
 })
 </script>

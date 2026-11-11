@@ -5,13 +5,19 @@ import { PARAMETROS_SERVICIOS } from 'src/config/demo'
 import { diasEntre, mesesEntre, restarMeses } from 'src/utils/fechas'
 import { plural } from 'src/utils/formato'
 
-const PERIODOS_POR_ANIO = { mensual: 12, trimestral: 4 }
+const PERIODOS_POR_ANIO = { mensual: 12, bimestral: 6, trimestral: 4, cuatrimestral: 3, semestral: 2, anual: 1 }
+const NOMBRE_ORDINAL = { trimestral: 'trimestre', cuatrimestral: 'cuatrimestre', semestral: 'semestre' }
 
 export const serviciosDeCar = (carId, { inactivos = false } = {}) =>
   db.servicios.filter((s) => s.carId === carId && (inactivos || vigente(s)))
 
+// «Ene», «Ene–Feb», «1.er trimestre», «1.er cuatrimestre», «1.er semestre» o «Anual».
 export function nombrePeriodo (servicio, numero) {
-  return servicio.periodicidad === 'mensual' ? MESES_CORTOS[numero - 1] : `${ORDINALES_TRIMESTRE[numero - 1]} trimestre`
+  const { periodicidad } = servicio
+  if (periodicidad === 'mensual') return MESES_CORTOS[numero - 1]
+  if (periodicidad === 'bimestral') return `${MESES_CORTOS[numero * 2 - 2]}–${MESES_CORTOS[numero * 2 - 1]}`
+  if (periodicidad === 'anual') return 'Anual'
+  return `${ORDINALES_TRIMESTRE[numero - 1]} ${NOMBRE_ORDINAL[periodicidad] ?? 'trimestre'}`
 }
 
 // Una periodicidad solo puede cambiarse mientras el servicio no tenga períodos informados.

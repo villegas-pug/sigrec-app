@@ -1,5 +1,5 @@
 // Consultas y estados compartidos por el visor y Gestión de centros (SPEC 015).
-import { db, bienPorId, ambientePorId, carPorId, ubicacionDeAmbiente, ubicacionDeBien, vigente } from './datos'
+import { db, bienPorId, ambientePorId, carPorId, moduloPorId, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien, vigente } from './datos'
 import { reposicionDe } from './bienes'
 import { INCIDENTES, TIPOS_NOVEDAD } from 'src/config/catalogos'
 import { plural } from 'src/utils/formato'
@@ -12,7 +12,8 @@ export function origenIncidencia (e) {
 export function ubicacionHecho (e) {
   const ambiente = e.ambienteId ? ambientePorId(e.ambienteId) : null
   const car = carPorId(e.carId ?? ambiente?.carId)
-  return { car, ambiente, nombre: ambiente ? `${car?.nombre ?? 'Centro no disponible'} › ${ambiente.nombre}` : car?.nombre ?? 'Centro no disponible' }
+  const modulo = ambiente ? moduloPorId(ambiente.moduloId) : null
+  return { car, ambiente, nombre: textoUbicacion({ car: car ?? { nombre: 'Centro no disponible' }, modulo, ambiente }) }
 }
 export function requiereReposicion (e, id) {
   const evaluacion = e.evaluaciones?.[id]

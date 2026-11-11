@@ -2,7 +2,7 @@ import { contextoIncidencia, origenIncidencia, esIncidencia } from './incidencia
 // Acciones de la interfaz sobre el almacén en memoria. Registrar una necesidad o un hecho no aprueba compras ni pagos.
 // El autor de cada registro es el perfil activo (services/autor.js). La baja es lógica: `anular` / `reactivar`.
 import {
-  db, nuevoId, ambientePorId, ambientesDeCar, bienPorId, bienesDeAmbiente, carPorId, itinerarioPorId, servicioPorId, vehiculoPorId, vigentes
+  db, nuevoId, ambientePorId, ambientesDeModulo, bienPorId, bienesDeAmbiente, carPorId, itinerarioPorId, moduloPorId, modulosDeCar, servicioPorId, vehiculoPorId, vigentes
 } from './datos'
 import { nombrePeriodo } from './servicios'
 import { bajaDe, reposicionDe } from './bienes'
@@ -65,10 +65,19 @@ const rotuloBien = (b) => `${b.nombre} ${b.id}`
 
 // Dependencias que impiden anular un registro (lista vacía = se puede anular).
 export const dependenciasDeCentro = (car) => [
-  ...ambientesDeCar(car.id).map((a) => `Ambiente ${a.nombre}`),
+  ...modulosDeCar(car.id).map((m) => `Módulo ${m.nombre}`),
   ...vigentes(db.vehiculos).filter((v) => v.carId === car.id).map((v) => `Vehículo ${v.id}`),
   ...vigentes(db.servicios).filter((s) => s.carId === car.id).map((s) => `Servicio de ${TIPOS_SERVICIO[s.tipo]}`)
 ]
+
+// Ambientes activos que impiden anular un módulo: se anulan o se mueven antes a otro módulo.
+export const dependenciasDeModulo = (modulo) => ambientesDeModulo(modulo.id).map((a) => `Ambiente ${a.nombre}`)
+
+export function anularModulo (modulo, datos) {
+  const dependencias = dependenciasDeModulo(modulo)
+  if (dependencias.length) throw new Error(`El módulo tiene ambientes activos: ${dependencias.join(', ')}`)
+  anular(modulo, datos)
+}
 
 // Bienes que impiden anular un ambiente: los activos (componentes asociados incluidos) y los que aún esperan revisión.
 // Se resuelven reubicándolos o dando de baja cada uno; nunca se dan de baja solos.
@@ -97,6 +106,9 @@ export function bloqueoDeReactivacion (entidad, registro) {
   const AVISO_CENTRO = 'El centro está anulado: reactívelo primero.'
   switch (entidad) {
     case 'ambiente':
+      if (centroAnulado(registro.carId)) return AVISO_CENTRO
+      return moduloPorId(registro.moduloId)?.anulacion ? 'El módulo está anulado: reactívelo primero.' : null
+    case 'modulo':
     case 'vehiculo':
       return centroAnulado(registro.carId) ? AVISO_CENTRO : null
     case 'servicio':
@@ -162,9 +174,30 @@ export function actualizarFoto (foto, { titulo, nota, url, nombreArchivo, ambien
   Object.assign(foto, { titulo, nota: nota || null, ambienteId })
 }
 
+// ---------- Módulos (SPEC 020) ----------
+
+// El código del módulo es su identificador (`AMA-M01`) y no cambia; tampoco su centro.
+export function registrarModulo (car, datos) {
+  const modulo = { id: siguienteCodigo(`${car.id}-M`, moduloPorId), carId: car.id, ...datos }
+  db.modulos.push(modulo)
+  return modulo
+}
+
+export function actualizarModulo (modulo, { carId, id, ...cambios }) {
+  Object.assign(modulo, cambios)
+}
+
+// Un ambiente solo pertenece a un módulo activo de su mismo centro.
+function validarModulo (moduloId, carId) {
+  const modulo = moduloPorId(moduloId)
+  if (!modulo || modulo.carId !== carId || modulo.anulacion) throw new Error('Elija un módulo activo del centro')
+}
+
 // ---------- Ambientes, novedades e intervenciones ----------
 
+// `datos.moduloId` es obligatorio; `carId` se toma del centro y coincide con el del módulo.
 export function registrarAmbiente (car, datos) {
+  validarModulo(datos.moduloId, car.id)
   const ambiente = {
     id: siguienteCodigo(`${car.id}-A`, ambientePorId),
     carId: car.id,
@@ -176,7 +209,9 @@ export function registrarAmbiente (car, datos) {
   return ambiente
 }
 
+// Cambiar `moduloId` mueve el ambiente a otro módulo del mismo centro; el centro no cambia.
 export function actualizarAmbiente (ambiente, cambios) {
+  if (cambios.moduloId && cambios.moduloId !== ambiente.moduloId) validarModulo(cambios.moduloId, ambiente.carId)
   Object.assign(ambiente, cambios)
 }
 

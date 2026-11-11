@@ -51,6 +51,16 @@
               @seleccionar="irA"
               @volver="vista = 'arbol'"
             />
+            <detalle-modulo
+              v-else-if="nodo.tipo === 'modulo'"
+              :key="seleccion"
+              :modulo="nodo.registro"
+              :inactivos="inactivos"
+              :tab-inicial="tabPedida"
+              :con-volver="movil"
+              @seleccionar="irA"
+              @volver="vista = 'arbol'"
+            />
             <detalle-ambiente
               v-else-if="nodo.tipo === 'ambiente'"
               :key="seleccion"
@@ -78,7 +88,7 @@
               @volver="vista = 'arbol'"
             />
           </template>
-          <div v-else class="q-pa-lg sg-muted">Seleccione un centro, ambiente, bien o componente del árbol para ver su detalle y sus acciones.</div>
+          <div v-else class="q-pa-lg sg-muted">Seleccione un centro, módulo, ambiente, bien o componente del árbol para ver su detalle y sus acciones.</div>
         </div>
       </div>
       </template>
@@ -106,13 +116,14 @@
 
 <script setup>
 import ConsultaInfraestructura from 'components/gestion/ConsultaInfraestructura.vue'
-// «Gestión de centros»: explorador Centro › Ambiente › Bien › Componente. Elegir un nodo muestra su detalle y sus acciones;
+// «Gestión de centros»: explorador Centro › Módulo › Ambiente › Bien › Componente (SPEC 020). Elegir un nodo muestra su detalle y sus acciones;
 // el registro de bienes se abre en un modal sobre el detalle seleccionado.
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import ArbolCentros from 'components/gestion/ArbolCentros.vue'
 import DetalleCentro from 'components/gestion/DetalleCentro.vue'
+import DetalleModulo from 'components/gestion/DetalleModulo.vue'
 import DetalleAmbiente from 'components/gestion/DetalleAmbiente.vue'
 import RegistroBienPanel from 'components/gestion/RegistroBienPanel.vue'
 import BienFicha from 'components/bienes/BienFicha.vue'
@@ -128,8 +139,8 @@ import { useAnulacion } from 'src/composables/useAnulacion'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { useRecorridoInterno } from 'src/composables/useRecorridoInterno'
 import { primeraVisita } from 'src/router/retorno'
-import { ambientePorId, bienPorId, db, ambientesDeCar, mantenimientoPorId, ubicacionDeBien } from 'src/services/datos'
-import { antecesoresDeNodo, arbolDeCentros, idsExpandibles, nodoAmbienteId, nodoCentroId, resolverNodo, rutaHasta } from 'src/services/bienes'
+import { ambientePorId, bienPorId, db, ambientesDeCar, mantenimientoPorId, moduloPorId, ubicacionDeBien } from 'src/services/datos'
+import { antecesoresDeNodo, arbolDeCentros, idsExpandibles, nodoAmbienteId, nodoCentroId, nodoModuloId, resolverNodo, rutaHasta } from 'src/services/bienes'
 import { anularBien, cerrarRevision, dependenciasDeBien, desasociarBien, reactivarBien } from 'src/services/acciones'
 import { TIPOS_HECHO, origenIncidencia, ubicacionHecho } from 'src/services/incidencias'
 import { TODOS } from 'src/config/catalogos'
@@ -148,13 +159,14 @@ const esConsulta = ['ambientes_criticos', 'elementos_criticos', 'novedades'].inc
 const altoPagina = (offset) => (movil.value || esConsulta ? {} : { height: `calc(100vh - ${offset}px)`, overflow: 'hidden' })
 
 // ---------- Enlaces profundos ----------
-// ?bien= | ?ambiente= | ?novedad= | ?car= | ?mantenimiento= seleccionan el nodo (con ?tab= para la pestaña); ?registrar=1 (con ?ambiente=,
+// ?bien= | ?ambiente= | ?novedad= | ?modulo= | ?car= | ?mantenimiento= seleccionan el nodo (con ?tab= para la pestaña); ?registrar=1 (con ?ambiente=,
 // ?asociar= y ?tipo=) abre el modo registro.
 // Lo pedido solo se acepta dentro del ámbito del perfil; si no existe se avisa y no se elige otro registro.
 const bienPedido = parametro(route.query.bien)
 const novedadPedida = parametro(route.query.novedad)
 const ambienteDeNovedad = novedadPedida ? db.ambientes.find((a) => a.novedades?.some((n) => n.id === novedadPedida)) : null
 const ambientePedido = ambienteDeNovedad?.id ?? parametro(route.query.ambiente)
+const moduloPedido = parametro(route.query.modulo)
 const carPedido = parametro(route.query.car)
 const asociarPedido = parametro(route.query.asociar)
 const registrarPedido = parametro(route.query.registrar) === '1' && puedeHacer('bien.registrar')
@@ -199,6 +211,10 @@ function inicial () {
     if (a && enAmbitoCar(a.carId)) return { id: nodoAmbienteId(a.id) }
     return { noDisponible: novedadPedida ? { entidad: 'La novedad', id: novedadPedida } : { entidad: 'El ambiente', id: ambientePedido } }
   }
+  if (moduloPedido) {
+    const m = moduloPorId(moduloPedido)
+    return m && enAmbitoCar(m.carId) ? { id: nodoModuloId(m.id) } : { noDisponible: { entidad: 'El módulo', id: moduloPedido } }
+  }
   if (carPedido) {
     return enAmbitoCar(carPedido) ? { id: nodoCentroId(carPedido) } : { noDisponible: { entidad: 'El centro', id: carPedido } }
   }
@@ -216,9 +232,10 @@ const mantenimientoResaltado = pedidoNoDisponible.value ? null : mantenimientoPe
 
 // Registros anulados pedidos por enlace: se muestran activando «Mostrar inactivos» y el filtro de situación correspondiente.
 const nodoPedido = resolverNodo(seleccion.value)
-const ambienteDelNodo = !nodoPedido || nodoPedido.tipo === 'centro' ? null : nodoPedido.tipo === 'ambiente' ? nodoPedido.registro : ambientePorId(nodoPedido.registro.ambienteId)
+const ambienteDelNodo = !nodoPedido || nodoPedido.tipo === 'centro' || nodoPedido.tipo === 'modulo' ? null : nodoPedido.tipo === 'ambiente' ? nodoPedido.registro : ambientePorId(nodoPedido.registro.ambienteId)
+const moduloDelNodo = nodoPedido?.tipo === 'modulo' ? nodoPedido.registro : ambienteDelNodo ? moduloPorId(ambienteDelNodo.moduloId) : null
 const novedadAnulada = !!ambienteDeNovedad?.novedades.find((n) => n.id === novedadPedida)?.anulacion
-const anuladoPedido = !!(ambienteDelNodo?.anulacion || novedadAnulada || mantenimientoSolicitado?.anulacion || (nodoPedido?.tipo === 'centro' && nodoPedido.registro.anulacion))
+const anuladoPedido = !!(ambienteDelNodo?.anulacion || moduloDelNodo?.anulacion || novedadAnulada || mantenimientoSolicitado?.anulacion || (nodoPedido?.tipo === 'centro' && nodoPedido.registro.anulacion))
 
 const texto = ref('')
 const situacion = ref(nodoPedido?.registro.situacion === 'anulado' ? 'anulado' : TODOS)
@@ -242,7 +259,8 @@ const arbol = computed(() => arbolDeCentros(
   { texto: texto.value ?? '', situacion: situacion.value, inactivos: inactivos.value }
 ))
 
-// Con búsqueda se expande todo; si no, se conserva lo abierto y se suman los centros y la ruta del nodo seleccionado.
+// Con búsqueda se expande todo; si no, se conserva lo abierto y se suman los centros, sus módulos (para ver los ambientes como
+// antes de SPEC 020) y la ruta del nodo seleccionado.
 const expandidos = ref([])
 watch(arbol, (nodos) => {
   if (texto.value) {
@@ -250,7 +268,7 @@ watch(arbol, (nodos) => {
     return
   }
   const ruta = seleccion.value ? rutaHasta(nodos, seleccion.value) ?? antecesoresDeNodo(seleccion.value) : []
-  expandidos.value = [...new Set([...expandidos.value, ...nodos.map((n) => n.id), ...ruta])]
+  expandidos.value = [...new Set([...expandidos.value, ...nodos.flatMap((n) => [n.id, ...(n.children ?? []).map((m) => m.id)]), ...ruta])]
 }, { immediate: true })
 
 // Abre los antecesores del nodo; con `incluirNodo`, también el propio nodo (al elegir un centro o ambiente se ven sus hijos).
@@ -264,7 +282,7 @@ function expandirHasta (id, { incluirNodo = false } = {}) {
 const nodo = computed(() => {
   const n = resolverNodo(seleccion.value)
   if (!n) return null
-  const carId = n.tipo === 'centro' ? n.registro.id : n.tipo === 'ambiente' ? n.registro.carId : ubicacionDeBien(n.registro).car.id
+  const carId = n.tipo === 'centro' ? n.registro.id : n.tipo === 'modulo' || n.tipo === 'ambiente' ? n.registro.carId : ubicacionDeBien(n.registro).car.id
   return enAmbitoCar(carId) ? n : null
 })
 
@@ -288,7 +306,7 @@ const modo = ref('detalle')
 const registroRef = ref(null)
 
 // Nombre de la ficha para «Volver a ‹ficha›».
-const etiquetaNodo = (n) => (n.tipo === 'centro' || n.tipo === 'ambiente' ? n.registro.nombre : `${n.registro.nombre} · ${n.registro.id}`)
+const etiquetaNodo = (n) => (['centro', 'modulo', 'ambiente'].includes(n.tipo) ? n.registro.nombre : `${n.registro.nombre} · ${n.registro.id}`)
 
 // Cambiar de nodo con un registro a medias pide confirmación antes de descartarlo. Devuelve si se cambió.
 // `apilar`: salto desde el contenido de una ficha (se recuerda la anterior). `vaciar`: navegación principal (árbol).
