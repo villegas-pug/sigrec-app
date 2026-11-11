@@ -22,7 +22,7 @@
               <div>{{ f.bien.id }}</div><div class="sg-muted">{{ f.bien.codigoPatrimonial || 'Sin código patrimonial' }}</div>
               <div v-if="f.bien.asociadoA" class="sg-muted">Componente de {{ f.principal?.nombre || 'Bien principal' }} · {{ f.bien.asociadoA.bienId }}</div>
             </td>
-            <td>{{ f.car.nombre }}<div class="sg-muted">{{ f.ambiente.nombre }}</div></td>
+            <td>{{ f.car.nombre }}<div class="sg-muted">{{ etiquetaAmbiente(f.ambiente) }}</div></td>
             <td class="sg-num">{{ numero(f.bien.cantidad ?? 1) }}</td>
             <td><status-chip v-bind="condicion(f.bien.condicion)" /><div v-if="f.control" class="sg-muted">{{ ESTADOS_CONTROL[f.control.estado].label }} · {{ f.control.proxima || 'Sin próxima fecha' }}</div></td>
             <td>{{ f.bien.deterioro || 'Sin deterioro informado' }} · {{ f.bien.verificacion ? `Verificación: ${f.bien.verificacion.fecha} · ${f.bien.verificacion.resultado}` : 'Sin verificación registrada' }}</td>
@@ -37,7 +37,7 @@
            :class="{ 'sg-box--resaltada': seleccionado === f.bien.id }" :aria-current="seleccionado === f.bien.id ? 'true' : undefined">
         <strong>{{ f.bien.nombre }}</strong><span>{{ f.bien.id }}</span>
         <span class="sg-muted">{{ f.bien.codigoPatrimonial || 'Sin código patrimonial' }}</span>
-        <span>{{ f.car.nombre }} › {{ f.ambiente.nombre }}</span>
+        <span>{{ textoUbicacion(f) }}</span>
         <span v-if="f.bien.asociadoA" class="sg-muted">Componente de {{ f.principal?.nombre || 'Bien principal' }} · {{ f.bien.asociadoA.bienId }}</span>
         <span>Cantidad: <strong>{{ numero(f.bien.cantidad ?? 1) }}</strong></span>
         <div><status-chip v-bind="condicion(f.bien.condicion)" /><span v-if="f.control"> · {{ ESTADOS_CONTROL[f.control.estado].label }} · {{ f.control.proxima || 'Sin próxima fecha' }}</span></div>
@@ -55,6 +55,7 @@ import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { condicion, ESTADOS_CONTROL } from 'src/config/catalogos'
+import { etiquetaAmbiente, textoUbicacion } from 'src/services/datos'
 import { numero, plural } from 'src/utils/formato'
 
 defineProps({

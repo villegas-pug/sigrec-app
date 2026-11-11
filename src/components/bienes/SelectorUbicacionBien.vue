@@ -66,7 +66,8 @@
 </template>
 
 <script setup>
-// Selección jerárquica Centro › Ambiente › Bien. Cambiar un nivel limpia los inferiores,
+// Selección jerárquica Centro › Ambiente › Bien; cada ambiente muestra su módulo («Módulo › Ambiente», SPEC 020).
+// Cambiar un nivel limpia los inferiores,
 // de modo que no se puede quedar con un bien que no pertenece a la ubicación mostrada.
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, watch } from 'vue'

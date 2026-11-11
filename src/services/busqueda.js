@@ -31,7 +31,7 @@ export function indiceDeBusqueda ({ cars, vehiculos, fechaCorte = null, anioServ
   const rutaAmbiente = (a) => [nombreCar(a.carId), moduloPorId(a.moduloId)?.nombre].filter(Boolean).join(' › ')
   for (const a of ambientes) {
     agregar({ clave: `amb-${a.id}`, tipo: 'ambiente', id: a.id, titulo: a.nombre, detalle: rutaAmbiente(a), icono: 'meeting_room', destino: { name: 'centros', query: { ambiente: a.id } },
-      acciones: [{ label: `Registrar bien en ${a.nombre} (${nombreCar(a.carId)})`, icono: 'playlist_add', permiso: 'bien.registrar', destino: { name: 'centros', query: { ambiente: a.id, registrar: '1' } } }] })
+      acciones: [{ label: `Registrar bien en ${a.nombre} (${rutaAmbiente(a)})`, icono: 'playlist_add', permiso: 'bien.registrar', destino: { name: 'centros', query: { ambiente: a.id, registrar: '1' } } }] })
   }
   const ambientePorId = new Map(ambientes.map((a) => [a.id, a]))
   for (const b of db.bienes) {

@@ -72,7 +72,7 @@
         outlined
         dense
         label="Ambiente de destino *"
-        hint="Del mismo centro"
+        hint="Del mismo centro (cualquier módulo)"
         :rules="[requerido]">
         <template #append><boton-dictado v-model="form.ambienteId" tipo="opcion" :opciones="opcionesAmbiente" emit-value /></template>
       </q-select>

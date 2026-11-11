@@ -84,7 +84,7 @@ function guardar () {
       contratoHasta: alquilado ? form.contratoHasta || null : null
     }
   )
-  $q.notify({ type: 'positive', message: `${car.nombre} registrado. Continúe con sus ambientes.` })
+  $q.notify({ type: 'positive', message: `${car.nombre} registrado. Continúe con sus módulos y ambientes.` })
   emit('update:modelValue', false)
   emit('hecho', car.id)
 }

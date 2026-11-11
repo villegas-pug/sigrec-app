@@ -1,7 +1,7 @@
 <template>
   <form-dialog :model-value="modelValue" :titulo="evento ? 'Actualizar incidente' : 'Registrar incidente'" :subtitulo="ubicacion" :ancho="1000" :modificado="modificado" :etiqueta-enviar="evento ? 'Guardar cambios' : 'Registrar incidente'" @update:model-value="$emit('update:modelValue', $event)" @enviar="guardar">
     <div v-if="contexto" class="sg-box" aria-label="Contexto fijo de la incidencia">
-      <span v-if="contexto.padre">{{ contexto.padre.tipo === 'centro' ? 'Centro' : contexto.padre.tipo === 'ambiente' ? 'Ambiente' : 'Bien principal' }}: {{ contexto.padre.nombre }} · {{ contexto.padre.id }}</span>
+      <span v-if="contexto.padre">{{ ETIQUETAS_PADRE[contexto.padre.tipo] ?? 'Bien principal' }}: {{ contexto.padre.nombre }} · {{ contexto.padre.id }}</span>
       <strong>{{ etiquetas[origen.tipo] }}: {{ contexto.nombre }} · {{ origen.id }}</strong>
       <span class="sg-muted">Para registrar en otro recurso, cierre y seleccione su ficha.</span>
     </div>
@@ -37,6 +37,8 @@ const emit = defineEmits(['update:modelValue', 'hecho'])
 const $q = useQuasar()
 const { puedeHacer, enAmbitoCar } = usePerfil()
 const etiquetas = { centro: 'Centro', ambiente: 'Ambiente', bien: 'Bien', componente: 'Componente' }
+// Nivel superior del origen: el ambiente cuelga de su módulo (SPEC 020); los contextos guardados antes conservan el centro.
+const ETIQUETAS_PADRE = { centro: 'Centro', modulo: 'Módulo', ambiente: 'Ambiente' }
 const selector = ref(null)
 const opcionesTipo = computed(() => ['centro', 'ambiente'].includes(origen.value?.tipo) ? OPCIONES_INCIDENCIA_INFRAESTRUCTURA : OPCIONES_INCIDENTE)
 const origen = computed(() => props.evento ? origenIncidencia(props.evento) : props.bien ? { tipo: props.bien.asociadoA ? 'componente' : 'bien', id: props.bien.id } : props.ambienteInicial ? { tipo: 'ambiente', id: props.ambienteInicial } : props.centroInicial ? { tipo: 'centro', id: props.centroInicial } : null)

@@ -165,7 +165,7 @@ import EstadoElementos from 'components/common/EstadoElementos.vue'
 import RecorridoVerificacion from 'components/bienes/RecorridoVerificacion.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { bienesDeAmbiente, carPorId, textoUbicacion, ubicacionDeAmbiente, vigente } from 'src/services/datos'
+import { bienesDeAmbiente, carPorId, etiquetaAmbiente, textoUbicacion, ubicacionDeAmbiente, vigente } from 'src/services/datos'
 import { nodoAmbienteId } from 'src/services/bienes'
 import { anular, anularAmbiente, dependenciasDeAmbiente, pendientesDeAmbiente } from 'src/services/acciones'
 import { cantidadEvaluados, conteoPorCondicion } from 'src/services/infraestructura'
@@ -256,7 +256,7 @@ const pedirAnulacionAmbiente = () => {
   const amb = props.ambiente
   pedirAnulacion({
     titulo: 'Anular ambiente',
-    subtitulo: `${amb.nombre} · ${amb.id}`,
+    subtitulo: `${etiquetaAmbiente(amb)} · ${amb.id}`,
     dependencias: dependenciasDeAmbiente(amb),
     aviso: 'El ambiente y su historial se conservan; deja de ofrecerse para registrar bienes y puede reactivarse con «Mostrar inactivos».',
     mensaje: 'Ambiente anulado.',

@@ -88,7 +88,7 @@ import AtencionRequerida from 'components/inicio/AtencionRequerida.vue'
 import VolverOrigen from 'components/layout/VolverOrigen.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { ANIO_SERVICIOS, useAtencion } from 'src/composables/useAtencion'
-import { db, vigente } from 'src/services/datos'
+import { ambientesDeCar, modulosDeCar } from 'src/services/datos'
 import { resumenPorCentro, totalizarSituacion } from 'src/services/situacion'
 import { evaluarItinerario, itinerariosDeVehiculo } from 'src/services/combustible'
 import { condicion, condicionInmueble } from 'src/config/catalogos'
@@ -127,9 +127,11 @@ const textoInmueble = (car) => (car.inmueble ? `Inmueble ${condicionInmueble(car
 const ATENCION = { name: 'inicio', query: { aviso: 'control_vencido' }, hash: '#atencion' }
 const kpis = computed(() => {
   const t = total.value
-  const ambientes = db.ambientes.filter((a) => vigente(a) && carsEnAmbito.value.some((c) => c.id === a.carId)).length
+  // Jerarquía registrada en el ámbito: módulos y ambientes vigentes (SPEC 020).
+  const modulos = carsEnAmbito.value.reduce((suma, c) => suma + modulosDeCar(c.id).length, 0)
+  const ambientes = carsEnAmbito.value.reduce((suma, c) => suma + ambientesDeCar(c.id).length, 0)
   const lista = [
-    { ruta: 'centros', icono: 'home_work', tono: 'azul', valor: t.centros, etiqueta: t.centros === 1 ? 'Centro de Acogida Residencial' : 'Centros de Acogida Residencial', nota: plural(ambientes, 'ambiente registrado', 'ambientes registrados') },
+    { ruta: 'centros', icono: 'home_work', tono: 'azul', valor: t.centros, etiqueta: t.centros === 1 ? 'Centro de Acogida Residencial' : 'Centros de Acogida Residencial', nota: `${plural(modulos, 'módulo', 'módulos')} · ${plural(ambientes, 'ambiente registrado', 'ambientes registrados')}` },
     { ruta: 'necesidades', icono: 'assignment_late', tono: 'rojo', valor: t.necesidades, etiqueta: `Necesidades pendientes ${ANIO_REVISION}`, nota: `${plural(t.infraestructura, 'de infraestructura', 'de infraestructura')} en evaluación · ${plural(t.atendidas, 'atendida', 'atendidas')}` },
     { ruta: 'necesidades', icono: 'payments', tono: 'verde', valor: soles(t.importeConocido), etiqueta: 'Importe estimado conocido', nota: t.sinValorar ? `Incompleto: ${plural(t.sinValorar, 'necesidad sin valorar', 'necesidades sin valorar')}` : 'Todas las necesidades tienen precio' },
     { destino: ATENCION, icono: 'error', tono: 'rojo', valor: t.controlesVencidos, etiqueta: 'Controles vencidos', nota: `${t.controlesPorVencer} por vencer · ${plural(t.extintoresFaltantes, 'extintor faltante', 'extintores faltantes')}` },
@@ -159,10 +161,12 @@ function celdas (f) {
       ].filter(Boolean)
     },
     infraestructura: {
-      // Los ambientes y sus elementos críticos se ven en la pestaña Ambientes del centro; el estado general, en la ficha.
-      to: enlace('centros', { car, tab: f.ambientesCriticos || f.elementosCriticos ? 'ambientes' : 'ficha' }),
+      // Módulos, ambientes y sus elementos críticos se ven en la pestaña «Módulos y ambientes» del centro (`tab=ambientes`);
+      // el estado general y los elementos del inmueble, en la ficha.
+      to: enlace('centros', { car, tab: f.ambientesCriticos || f.modulosCriticos || f.elementosCriticos > f.elementosCriticosInmueble ? 'ambientes' : 'ficha' }),
       items: [
         { ...condicion(f.estadoGeneral), label: `Estado general: ${condicion(f.estadoGeneral).label}`, to: enlace('centros', { car, tab: 'ficha' }) },
+        f.modulosCriticos ? { tono: 'da', label: plural(f.modulosCriticos, 'módulo en mal estado', 'módulos en mal estado'), to: enlace('centros', { car, consulta: 'ambientes_criticos' }) } : null,
         f.ambientesCriticos ? { tono: 'da', label: plural(f.ambientesCriticos, 'ambiente en mal estado', 'ambientes en mal estado'), to: enlace('centros', { car, consulta: 'ambientes_criticos' }) } : null,
         f.elementosCriticos ? { tono: 'wa', label: plural(f.elementosCriticos, 'elemento crítico', 'elementos críticos'), to: enlace('centros', { car, consulta: 'elementos_criticos' }) } : null
       ].filter(Boolean)

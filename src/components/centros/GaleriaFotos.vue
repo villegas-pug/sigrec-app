@@ -17,7 +17,7 @@
           <figcaption class="sg-photo__caption">
             <strong>{{ foto.titulo }}</strong>
             <span>{{ fecha(foto.fecha) }}</span><span v-if="foto.nota">{{ foto.nota }}</span>
-            <status-chip v-if="!ambienteId && !bien" tono="ne" :label="foto.ambienteId ? (ambientePorId(foto.ambienteId)?.nombre ?? 'Ambiente') : 'Del centro'" class="q-ml-xs" />
+            <status-chip v-if="!ambienteId && !bien" tono="ne" :label="nombreAmbiente(foto)" class="q-ml-xs" />
             <status-chip v-if="foto.anulacion" v-bind="CHIP_ANULADO" class="q-ml-xs" />
           </figcaption>
           <div class="sg-photo__actions">
@@ -49,7 +49,7 @@ import FotoDialog from 'components/centros/FotoDialog.vue'
 import VisorFotos from 'components/centros/VisorFotos.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { ambientePorId, vigente } from 'src/services/datos'
+import { ambientePorId, etiquetaAmbiente, vigente } from 'src/services/datos'
 import { anular } from 'src/services/acciones'
 import { CHIP_ANULADO } from 'src/config/catalogos'
 import { fecha } from 'src/utils/formato'
@@ -86,7 +86,13 @@ const items = computed(() =>
 const disponible = (foto) => !!foto.url && !errores.value.includes(foto.url)
 const fotosDisponibles = computed(() => items.value.map(({ foto }) => foto).filter(disponible))
 const marcarError = (url) => { if (url && !errores.value.includes(url)) errores.value = [...errores.value, url] }
-const contexto = (foto) => props.bien ? `${props.bien.nombre} · ${props.bien.id}` : (foto.ambienteId ? (ambientePorId(foto.ambienteId)?.nombre ?? 'Ambiente') : 'Del centro')
+// «Módulo › Ambiente» de la foto (SPEC 020); sin ambiente es del centro.
+const nombreAmbiente = (foto) => {
+  if (!foto.ambienteId) return 'Del centro'
+  const a = ambientePorId(foto.ambienteId)
+  return a ? etiquetaAmbiente(a) : 'Ambiente'
+}
+const contexto = (foto) => props.bien ? `${props.bien.nombre} · ${props.bien.id}` : nombreAmbiente(foto)
 function abrirVisor (foto, evento) {
   focoAnterior = evento.currentTarget
   indiceInicial.value = fotosDisponibles.value.indexOf(foto)

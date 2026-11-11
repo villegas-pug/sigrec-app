@@ -9,7 +9,7 @@
           dense
           autofocus
           clearable
-          placeholder="Rótulo, bien, ambiente, centro, placa, servicio o pantalla"
+          placeholder="Rótulo, bien, ambiente, módulo, centro, placa, servicio o pantalla"
           aria-label="Buscar en SIGREC"
           @keydown.down.prevent="mover(1)"
           @keydown.up.prevent="mover(-1)"

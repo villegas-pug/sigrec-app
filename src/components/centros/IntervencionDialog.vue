@@ -3,7 +3,7 @@
     :model-value="modelValue"
     :icono-enviar="intervencion ? 'save' : 'add'"
     :titulo="intervencion ? 'Actualizar intervención' : 'Registrar intervención'"
-    :subtitulo="ambiente.nombre"
+    :subtitulo="etiquetaAmbiente(ambiente)"
     :ancho="480"
     :etiqueta-enviar="intervencion ? 'Guardar cambios' : 'Registrar'"
     :modificado="modificado"
@@ -28,6 +28,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarIntervencion, registrarIntervencion } from 'src/services/acciones'
 import { noFutura, requerido } from 'src/utils/validaciones'
+import { etiquetaAmbiente } from 'src/services/datos'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },

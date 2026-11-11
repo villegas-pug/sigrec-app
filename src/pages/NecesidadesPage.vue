@@ -244,7 +244,7 @@ import { primeraVisita } from 'src/router/retorno'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
-import { carPorId, db, textoUbicacion, vigentes } from 'src/services/datos'
+import { carPorId, db, etiquetaAmbiente, textoUbicacion, vigentes } from 'src/services/datos'
 import { calcularNecesidades, consolidarPorCar, totalizar } from 'src/services/necesidades'
 import { siguientePaso } from 'src/services/bienes'
 import { SITUACIONES, TIPOS_EVENTO, TODOS, condicion } from 'src/config/catalogos'
@@ -352,7 +352,7 @@ const COLUMNAS_CSV = [
   { titulo: 'Rótulo', valor: (n) => n.id },
   { titulo: 'Bien', valor: (n) => n.bien.nombre },
   { titulo: 'CAR', valor: (n) => n.ubicacion.car.nombre },
-  { titulo: 'Ambiente', valor: (n) => n.ubicacion.ambiente.nombre },
+  { titulo: 'Ambiente', valor: (n) => etiquetaAmbiente(n.ubicacion.ambiente) },
   { titulo: 'Clasificación principal', valor: (n) => CLASES[n.clase] },
   { titulo: 'Motivos', valor: (n) => n.motivos.map((m) => m.texto).join(' | ') },
   { titulo: 'Cantidad', valor: (n) => n.cantidad },

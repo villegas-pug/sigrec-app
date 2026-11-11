@@ -9,7 +9,7 @@
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
-    <q-input v-model="form.nombre" outlined dense label="Nombre *" hint="Ej.: Casa Los Girasoles, Comedor y cocina" :rules="[requerido]">
+    <q-input v-model="form.nombre" outlined dense label="Nombre *" hint="Ej.: Módulo 3. Se sugiere el siguiente número del centro; puede cambiarlo" :rules="[requerido]">
       <template #append><boton-dictado v-model="form.nombre" /></template>
     </q-input>
 
@@ -49,6 +49,9 @@
     <q-input v-model="form.ubicacion" outlined dense label="Referencia de ubicación en el centro" hint="Opcional. Ej.: Al fondo, junto al patio">
       <template #append><boton-dictado v-model="form.ubicacion" /></template>
     </q-input>
+
+    <div class="sg-kv__label">Estado de la infraestructura por elemento</div>
+    <estado-elementos v-model="form.estadoElementos" v-model:adicionales="form.elementosAdicionales" permitir-agregar />
   </form-dialog>
 </template>
 
@@ -59,9 +62,11 @@ import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import CondicionSelector from 'components/common/CondicionSelector.vue'
+import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarModulo, numeroONulo, registrarModulo, siguienteCodigo } from 'src/services/acciones'
 import { moduloPorId } from 'src/services/datos'
+import { completarElementos, normalizarElementos } from 'src/services/infraestructura'
 import { OPCIONES_TIPO_MODULO, TIPOS_MODULO } from 'src/config/catalogos'
 import { opcionalMayorQueCero, requerido } from 'src/utils/validaciones'
 
@@ -79,6 +84,8 @@ const form = reactive({})
 const { modificado, fijar } = useBorrador(form)
 
 const codigoSugerido = computed(() => siguienteCodigo(`${props.centro.id}-M`, moduloPorId))
+// «Módulo N» con el número del código que se asignará (`AMA-M03` → «Módulo 3»); la numeración se reinicia en cada centro.
+const nombreSugerido = () => `Módulo ${Number(codigoSugerido.value.match(/(\d+)$/)[1])}`
 
 const enteroOpcional = (v) => v === null || v === undefined || v === '' || (Number.isInteger(v) && v >= 0) || 'Indique un número entero, cero o mayor'
 const pisosValidos = (v) => (Number.isInteger(v) && v >= 1) || 'Indique al menos 1 piso'
@@ -87,13 +94,15 @@ watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
   const m = props.modulo
   Object.assign(form, {
-    nombre: m?.nombre ?? '',
+    nombre: m?.nombre ?? nombreSugerido(),
     tipo: m?.tipo ?? 'casa',
     capacidad: m?.capacidad ?? null,
     pisos: m?.pisos ?? 1,
     areaM2: m?.areaM2 ?? null,
     condicion: m?.condicion ?? 'bueno',
-    ubicacion: m?.ubicacion ?? ''
+    ubicacion: m?.ubicacion ?? '',
+    elementosAdicionales: [...(m?.elementosAdicionales ?? [])],
+    estadoElementos: completarElementos(m?.estadoElementos, m?.elementosAdicionales)
   })
   fijar()
 })
@@ -107,7 +116,9 @@ function guardar () {
     pisos: numeroONulo(form.pisos),
     areaM2: numeroONulo(form.areaM2),
     condicion: form.condicion,
-    ubicacion: form.ubicacion?.trim() || null
+    ubicacion: form.ubicacion?.trim() || null,
+    elementosAdicionales: form.elementosAdicionales.length ? form.elementosAdicionales.map(({ key, label }) => ({ key, label })) : null,
+    estadoElementos: normalizarElementos(form.estadoElementos, form.elementosAdicionales)
   }
   let id
   if (props.modulo) {

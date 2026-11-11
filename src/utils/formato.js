@@ -1,6 +1,10 @@
 // Formatos de presentación: miles separados por espacio y coma decimal (S/ 1 300; 1,5 L).
 import { MESES } from 'src/config/catalogos'
 
+// Identificador legible a partir de un texto: sin tildes, en minúsculas y con guiones («Tanque elevado» → «tanque-elevado»).
+export const identificador = (texto) =>
+  texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
 const agrupar = (entero) => entero.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 
 export function numero (valor, decimales = 0) {

@@ -41,7 +41,7 @@ const props = defineProps({
   // Identificador del nodo: con él se recuerda la pestaña al volver a esta pantalla (SPEC 011, Ola 4).
   nodo: { type: String, default: null },
   titulo: { type: String, required: true },
-  // Ruta jerárquica del nodo (Centro › Ambiente › …).
+  // Ruta jerárquica del nodo (Centro › Módulo › Ambiente › …).
   ruta: { type: String, default: '' },
   icono: { type: String, default: 'info' },
   // [{ name, label }]

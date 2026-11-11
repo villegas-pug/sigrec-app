@@ -132,7 +132,7 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   // verificacion | baja | reposicion (los incidentes se registran con IncidenteDialog).
   modo: { type: String, required: true },
-  // Bien desde cuya ficha se actúa. Sin él, el diálogo pide elegirlo: Centro › Ambiente › Bien.
+  // Bien desde cuya ficha se actúa. Sin él, el diálogo pide elegirlo: Centro › Ambiente (con su módulo) › Bien.
   bien: { type: Object, default: null },
   // Centro de contexto (p. ej. el filtrado en Incidencias); null = el usuario lo elige.
   carInicial: { type: String, default: null }

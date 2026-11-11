@@ -45,7 +45,7 @@
               <td>
                 <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: n.id } }" @click="seleccionado = n.id" class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</router-link>
                 <span v-else class="text-weight-bold">{{ n.bien.nombre }} · {{ n.id }}</span>
-                <div class="sg-muted">{{ n.ubicacion.car.nombre }} › {{ n.ubicacion.ambiente.nombre }}</div>
+                <div class="sg-muted">{{ textoUbicacion(n.ubicacion) }}</div>
               </td>
               <td>{{ n.clase === 'reposicion' ? 'Reposición por incidente' : 'Renovación por vida útil' }}</td>
               <td><status-chip v-bind="condicion(n.bien.condicion)" /></td>
@@ -76,6 +76,7 @@ import { condicion } from 'src/config/catalogos'
 import { exportarCsv } from 'src/utils/csv'
 import { mostrarDetalle } from 'src/utils/navegacion'
 import { plural, soles } from 'src/utils/formato'
+import { etiquetaAmbiente, textoUbicacion } from 'src/services/datos'
 
 const props = defineProps({
   // Necesidades pendientes ya filtradas (las mismas del detalle).
@@ -111,7 +112,7 @@ function exportar () {
     { titulo: 'Rótulo', valor: (n) => n.id },
     { titulo: 'Bien', valor: (n) => n.bien.nombre },
     { titulo: 'CAR', valor: (n) => n.ubicacion.car.nombre },
-    { titulo: 'Ambiente', valor: (n) => n.ubicacion.ambiente.nombre },
+    { titulo: 'Ambiente', valor: (n) => etiquetaAmbiente(n.ubicacion.ambiente) },
     { titulo: 'Clasificación', valor: (n) => n.clase },
     { titulo: 'Condición', valor: (n) => condicion(n.bien.condicion).label },
     { titulo: 'Importe (S/)', valor: (n) => n.importe ?? 'Sin valorar' },

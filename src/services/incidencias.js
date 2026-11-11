@@ -1,5 +1,5 @@
 // Consultas y estados compartidos por el visor y Gestión de centros (SPEC 015).
-import { db, bienPorId, ambientePorId, carPorId, moduloPorId, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien, vigente } from './datos'
+import { db, bienPorId, ambientePorId, carPorId, etiquetaAmbiente, moduloPorId, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien, vigente } from './datos'
 import { reposicionDe } from './bienes'
 import { INCIDENTES, TIPOS_NOVEDAD } from 'src/config/catalogos'
 import { plural } from 'src/utils/formato'
@@ -13,7 +13,7 @@ export function ubicacionHecho (e) {
   const ambiente = e.ambienteId ? ambientePorId(e.ambienteId) : null
   const car = carPorId(e.carId ?? ambiente?.carId)
   const modulo = ambiente ? moduloPorId(ambiente.moduloId) : null
-  return { car, ambiente, nombre: textoUbicacion({ car: car ?? { nombre: 'Centro no disponible' }, modulo, ambiente }) }
+  return { car, modulo, ambiente, nombre: textoUbicacion({ car: car ?? { nombre: 'Centro no disponible' }, modulo, ambiente }) }
 }
 export function requiereReposicion (e, id) {
   const evaluacion = e.evaluaciones?.[id]
@@ -31,14 +31,16 @@ export function contextoIncidencia (origen) {
   if (origen.tipo === 'ambiente') {
     const a = ambientePorId(origen.id)
     if (!a) throw new Error('Ambiente no disponible')
-    const { car } = ubicacionDeAmbiente(a.id)
-    return { carId: car.id, ambienteId: a.id, padre: { tipo: 'centro', id: car.id, nombre: car.nombre }, nombre: a.nombre }
+    const { car, modulo } = ubicacionDeAmbiente(a.id)
+    // El padre del ambiente es su módulo (SPEC 020); los contextos ya guardados conservan el centro.
+    const padre = modulo ? { tipo: 'modulo', id: modulo.id, nombre: textoUbicacion({ car, modulo }) } : { tipo: 'centro', id: car.id, nombre: car.nombre }
+    return { carId: car.id, ambienteId: a.id, padre, nombre: a.nombre }
   }
   const bien = bienPorId(origen.id)
   if (!bien) throw new Error('Bien no disponible')
   const { car, ambiente } = ubicacionDeBien(bien)
   const principal = bien.asociadoA ? bienPorId(bien.asociadoA.bienId) : null
-  return { carId: car.id, ambienteId: ambiente.id, padre: principal ? { tipo: 'bien', id: principal.id, nombre: principal.nombre } : { tipo: 'ambiente', id: ambiente.id, nombre: ambiente.nombre }, nombre: bien.nombre }
+  return { carId: car.id, ambienteId: ambiente.id, padre: principal ? { tipo: 'bien', id: principal.id, nombre: principal.nombre } : { tipo: 'ambiente', id: ambiente.id, nombre: etiquetaAmbiente(ambiente) }, nombre: bien.nombre }
 }
 export const permisoIncidencia = (e) => ['centro', 'ambiente'].includes(origenIncidencia(e).tipo) ? `${origenIncidencia(e).tipo}.incidente` : 'bien.incidente'
 export function hechosRegistrados ({ bienId = null, ambienteId = null, centroId = null, inactivos = false } = {}) {

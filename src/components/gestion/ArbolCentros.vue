@@ -1,7 +1,7 @@
 <template>
   <div ref="contenedor" class="sg-explorer__col">
     <div class="sg-explorer__filtros">
-      <q-input v-model="texto" outlined dense clearable label="Buscar centro, ambiente o recurso">
+      <q-input v-model="texto" outlined dense clearable label="Buscar centro, módulo, ambiente o recurso">
         <template #append><boton-dictado v-model="texto" /><q-icon name="search" /></template>
       </q-input>
       <div class="column q-gutter-y-xs">

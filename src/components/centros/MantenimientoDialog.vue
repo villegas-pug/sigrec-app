@@ -84,7 +84,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { usePerfil } from 'src/composables/usePerfil'
-import { db, vehiculoPorId, vigentes } from 'src/services/datos'
+import { ambientePorId, db, etiquetaAmbiente, vehiculoPorId, vigentes } from 'src/services/datos'
 import { actualizarMantenimiento, actualizarVehiculo, registrarMantenimiento } from 'src/services/acciones'
 import { requiereAtencion } from 'src/services/vehiculos'
 import { extintoresDeCentro } from 'src/services/mantenimientos'
@@ -125,7 +125,7 @@ const bienesDelCentro = computed(() =>
 
 const opcionesObjetivo = computed(() => {
   const objetivo = tipoActual.value?.objetivo
-  const ambienteDe = (b) => db.ambientes.find((a) => a.id === b.ambienteId)?.nombre ?? ''
+  const ambienteDe = (b) => { const a = ambientePorId(b.ambienteId); return a ? etiquetaAmbiente(a) : '' }
   const opcionBien = (b) => ({ value: b.id, label: `${rotuloBien(b)} · ${ambienteDe(b)}` })
   if (objetivo === 'extintor') return extintoresDeCentro(props.centro.id, FECHA_CORTE).lista.map((e) => opcionBien(e.bien))
   if (objetivo === 'equipo') return bienesDelCentro.value.filter((b) => b.categoria === 'equipo' && b.tipoId !== TIPO_EXTINTOR).map(opcionBien)

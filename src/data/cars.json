@@ -17,7 +17,8 @@
         "pisos": 2,
         "areaM2": null,
         "areaTerrenoM2": null,
-        "estadoElementos": { "techo": "regular", "estructura": "bueno", "electricas": "regular", "sanitarias": "bueno" },
+        "estadoElementos": { "techo": "regular", "estructura": "bueno", "electricas": "regular", "sanitarias": "bueno", "extra-cisterna": "regular" },
+        "elementosAdicionales": [{ "key": "extra-cisterna", "label": "Cisterna" }],
         "estado": "regular",
         "caracteristicas": "Techo aligerado, escalera interior, cisterna de 5 m³, patio techado"
       },

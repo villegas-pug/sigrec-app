@@ -1,7 +1,7 @@
 // Situación por centro (SPEC 011, antes «Tablero de control» de la SPEC 010 §8): una fila por centro que reúne necesidades,
 // infraestructura, bienes, controles preventivos, vehículos y servicios. No crea reglas nuevas: reutiliza las de cada módulo,
 // de modo que sus cifras coinciden con las pantallas de detalle. Inicio es la única pantalla que la muestra.
-import { db, ambientesDeCar, bienesActivosDeCentros, vigente } from './datos'
+import { db, ambientesDeCar, bienesActivosDeCentros, modulosDeCar, vigente } from './datos'
 import { conteoPorCondicion, elementosCriticos } from './infraestructura'
 import { calcularNecesidades, consolidarPorCar } from './necesidades'
 import { controlesPendientes, fumigacionDeCentro, resumirControles } from './mantenimientos'
@@ -28,6 +28,8 @@ export function resumenPorCentro (cars, { fechaCorte, anioServicios, anio }) {
     const servicios = serviciosDeCar(car.id)
     const avisos = avisosDeServicios(servicios, anioServicios, fechaCorte)
     const construccion = car.inmueble.construccion ?? {}
+    const modulos = modulosDeCar(car.id)
+    const criticosInmueble = elementosCriticos(construccion.estadoElementos, construccion.elementosAdicionales).length
     const n = necesidades[i]
 
     return {
@@ -35,7 +37,12 @@ export function resumenPorCentro (cars, { fechaCorte, anioServicios, anio }) {
       necesidades: { cantidad: n.cantidad, importeConocido: n.importeConocido, sinValorar: n.sinValorar, infraestructura: n.infraestructura, atendidas: n.atendidas },
       estadoGeneral: construccion.estado ?? null,
       ambientesCriticos: ambientes.filter((a) => CONDICIONES_CRITICAS.includes(a.condicion)).length,
-      elementosCriticos: elementosCriticos(construccion.estadoElementos).length + sumar(ambientes.map((a) => elementosCriticos(a.estadoElementos).length)),
+      modulosCriticos: modulos.filter((m) => CONDICIONES_CRITICAS.includes(m.condicion)).length,
+      // Inmueble, módulos activos (con sus elementos agregados, SPEC 022) y ambientes. Los del inmueble se ven en la ficha del centro.
+      elementosCriticosInmueble: criticosInmueble,
+      elementosCriticos: criticosInmueble +
+        sumar(modulos.map((m) => elementosCriticos(m.estadoElementos, m.elementosAdicionales).length)) +
+        sumar(ambientes.map((a) => elementosCriticos(a.estadoElementos).length)),
       novedadesAbiertas: sumar(ambientes.map((a) => novedadesAbiertas(a).length)),
       bienesActivos: sumar(Object.values(condiciones)),
       bienesMalos: condiciones.malo + condiciones.inservible,

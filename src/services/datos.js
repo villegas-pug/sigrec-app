@@ -82,10 +82,16 @@ export function textoUbicacion ({ car, modulo, ambiente }) {
 // Etiqueta de un ambiente en los selectores de un centro: «Módulo › Ambiente».
 export const etiquetaAmbiente = (ambiente) => [moduloPorId(ambiente.moduloId)?.nombre, ambiente.nombre].filter(Boolean).join(' › ')
 
-// Ambientes en el orden del árbol: por módulo (casas primero) y, dentro de cada uno, en el orden de registro.
+// Posición de un módulo en el orden del árbol: casas primero y, dentro de cada grupo, orden de registro.
+export function posicionModulo (moduloId) {
+  const i = db.modulos.findIndex((m) => m.id === moduloId)
+  if (i < 0) return Infinity
+  return (db.modulos[i].tipo === 'comun' ? db.modulos.length : 0) + i
+}
+
+// Ambientes en el orden del árbol: por módulo y, dentro de cada uno, en el orden de registro.
 export function ordenarPorModulo (ambientes) {
-  const orden = new Map(db.modulos.map((m, i) => [m.id, (m.tipo === 'comun' ? db.modulos.length : 0) + i]))
-  return [...ambientes].sort((a, b) => (orden.get(a.moduloId) ?? Infinity) - (orden.get(b.moduloId) ?? Infinity))
+  return [...ambientes].sort((a, b) => posicionModulo(a.moduloId) - posicionModulo(b.moduloId))
 }
 
 // Opciones { value, label } de ambientes para un selector, con el módulo en la etiqueta.

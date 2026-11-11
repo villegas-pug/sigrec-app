@@ -57,9 +57,9 @@
       <section-card
         titulo="Estado de la infraestructura"
         icono="fact_check"
-        :subtitulo="evaluados ? `${evaluados} de ${ELEMENTOS_INFRAESTRUCTURA.length} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
+        :subtitulo="evaluados ? `${evaluados} de ${totalElementos} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
       >
-        <estado-elementos :model-value="inmueble.construccion.estadoElementos" solo-lectura />
+        <estado-elementos :model-value="inmueble.construccion.estadoElementos" :adicionales="inmueble.construccion.elementosAdicionales ?? []" solo-lectura />
       </section-card>
     </template>
 
@@ -93,6 +93,7 @@
             <div class="sg-chips items-center">
               <status-chip v-bind="condicion(m.condicion)" />
               <status-chip v-if="m.anulacion" v-bind="CHIP_ANULADO" />
+              <status-chip v-if="criticosModulo(m)" tono="wa" :label="plural(criticosModulo(m), 'elemento crítico', 'elementos críticos')" />
               <q-btn v-if="puedeHacer('ambiente.registrar') && activo && vigente(m)" flat dense no-caps color="secondary" icon="add" label="Ambiente" :aria-label="`Registrar ambiente en ${m.nombre}`" @click="abrirAmbiente(m)" />
             </div>
           </div>
@@ -140,10 +141,10 @@ import { useAnulacion } from 'src/composables/useAnulacion'
 import { ambientesDeCar, ambientesDeModulo, modulosDeCar, vigente } from 'src/services/datos'
 import { iconoModulo, nodoAmbienteId, nodoModuloId } from 'src/services/bienes'
 import { anular, dependenciasDeCentro } from 'src/services/acciones'
-import { cantidadEvaluados } from 'src/services/infraestructura'
+import { cantidadEvaluados, elementosCriticos, elementosDe } from 'src/services/infraestructura'
 import { controlesPendientes, resumirControles } from 'src/services/mantenimientos'
 import { FECHA_CORTE } from 'src/config/demo'
-import { CHIP_ANULADO, ELEMENTOS_INFRAESTRUCTURA, TIPO_EXTINTOR, condicion, condicionInmueble } from 'src/config/catalogos'
+import { CHIP_ANULADO, TIPO_EXTINTOR, condicion, condicionInmueble } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
 
 const props = defineProps({
@@ -180,13 +181,16 @@ const gruposModulos = computed(() => [
   { tipo: 'comun', titulo: 'Módulos de uso común', icono: 'groups', subtitulo: 'Los comparten todas las casas del centro: comedor, cocina, lavandería, administración' }
 ].map((g) => ({ ...g, modulos: modulos.value.filter((m) => (m.tipo === 'comun' ? 'comun' : 'casa') === g.tipo) })).filter((g) => g.modulos.length))
 
+const criticosModulo = (m) => elementosCriticos(m.estadoElementos, m.elementosAdicionales).length
+
 const resumenModulo = (m) => [
   plural(ambientesDeModulo(m.id).length, 'ambiente', 'ambientes'),
   m.tipo === 'casa' && m.capacidad != null ? plural(m.capacidad, 'residente', 'residentes') : null,
   m.pisos != null ? plural(m.pisos, 'piso', 'pisos') : null,
   m.ubicacion
 ].filter(Boolean).join(' · ')
-const evaluados = computed(() => cantidadEvaluados(inmueble.value.construccion.estadoElementos))
+const evaluados = computed(() => cantidadEvaluados(inmueble.value.construccion.estadoElementos, inmueble.value.construccion.elementosAdicionales))
+const totalElementos = computed(() => elementosDe(inmueble.value.construccion.elementosAdicionales).length)
 const resumenControles = computed(() => resumirControles(controlesPendientes([props.centro.id], FECHA_CORTE)))
 
 const tabs = computed(() => [

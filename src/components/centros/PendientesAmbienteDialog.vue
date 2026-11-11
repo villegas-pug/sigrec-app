@@ -4,7 +4,7 @@
       <q-card class="sg-dialog" :style="{ width: '720px' }">
         <q-card-section class="sg-dialog__header">
           <h2 class="text-h6 text-weight-bold q-my-none">Resolver los bienes antes de anular el ambiente</h2>
-          <p class="sg-muted q-mb-none">{{ ambiente.nombre }} · {{ ambiente.id }}</p>
+          <p class="sg-muted q-mb-none">{{ textoUbicacion(ubicacionDeAmbiente(ambiente.id)) }} · {{ ambiente.id }}</p>
         </q-card-section>
 
         <q-card-section class="sg-dialog__body column q-gutter-y-md">
@@ -59,7 +59,7 @@ import StatusChip from 'components/common/StatusChip.vue'
 import BienEdicionDialog from 'components/bienes/BienEdicionDialog.vue'
 import BienAccionDialog from 'components/bienes/BienAccionDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { ambientesDeCar, db } from 'src/services/datos'
+import { ambientesDeCar, db, textoUbicacion, ubicacionDeAmbiente } from 'src/services/datos'
 import { cerrarRevision, pendientesDeAmbiente } from 'src/services/acciones'
 import { SITUACIONES, condicion } from 'src/config/catalogos'
 import { plural } from 'src/utils/formato'

@@ -3,7 +3,7 @@
     :model-value="modelValue"
     :icono-enviar="novedad ? 'save' : 'add'"
     :titulo="novedad ? 'Actualizar novedad' : 'Registrar novedad'"
-    :subtitulo="ambiente.nombre"
+    :subtitulo="etiquetaAmbiente(ambiente)"
     :etiqueta-enviar="novedad ? 'Guardar cambios' : 'Registrar'"
     :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
@@ -40,6 +40,7 @@ import { actualizarNovedad, registrarNovedad } from 'src/services/acciones'
 import { OPCIONES_NOVEDAD } from 'src/config/catalogos'
 import { FECHA_CORTE } from 'src/config/demo'
 import { noFutura, requerido } from 'src/utils/validaciones'
+import { etiquetaAmbiente } from 'src/services/datos'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },

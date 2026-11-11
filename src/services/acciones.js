@@ -2,14 +2,14 @@ import { contextoIncidencia, origenIncidencia, esIncidencia } from './incidencia
 // Acciones de la interfaz sobre el almacén en memoria. Registrar una necesidad o un hecho no aprueba compras ni pagos.
 // El autor de cada registro es el perfil activo (services/autor.js). La baja es lógica: `anular` / `reactivar`.
 import {
-  db, nuevoId, ambientePorId, ambientesDeModulo, bienPorId, bienesDeAmbiente, carPorId, itinerarioPorId, moduloPorId, modulosDeCar, servicioPorId, vehiculoPorId, vigentes
+  db, nuevoId, ambientePorId, ambientesDeModulo, bienPorId, bienesDeAmbiente, carPorId, etiquetaAmbiente, itinerarioPorId, moduloPorId, modulosDeCar, servicioPorId, vehiculoPorId, vigentes
 } from './datos'
 import { nombrePeriodo } from './servicios'
 import { bajaDe, reposicionDe } from './bienes'
 import { autorActual } from './autor'
 import { FECHA_CORTE } from 'src/config/demo'
 import { ESTADOS_PERIODO, TIPOS_EVENTO, TIPOS_SERVICIO, condicion } from 'src/config/catalogos'
-import { soles } from 'src/utils/formato'
+import { identificador, soles } from 'src/utils/formato'
 
 // ---------- Utilidades ----------
 
@@ -46,9 +46,6 @@ function idUnico (base, existe) {
   return `${base}-${n}`
 }
 
-const identificador = (texto) =>
-  texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-
 // ---------- Baja lógica ----------
 
 // Cualquier registro puede anularse con un motivo; deja de contar en los cálculos y se conserva como antecedente.
@@ -65,7 +62,7 @@ const rotuloBien = (b) => `${b.nombre} ${b.id}`
 
 // Dependencias que impiden anular un registro (lista vacía = se puede anular).
 export const dependenciasDeCentro = (car) => [
-  ...modulosDeCar(car.id).map((m) => `Módulo ${m.nombre}`),
+  ...modulosDeCar(car.id).map((m) => `${m.nombre} (${m.id})`),
   ...vigentes(db.vehiculos).filter((v) => v.carId === car.id).map((v) => `Vehículo ${v.id}`),
   ...vigentes(db.servicios).filter((s) => s.carId === car.id).map((s) => `Servicio de ${TIPOS_SERVICIO[s.tipo]}`)
 ]
@@ -399,7 +396,7 @@ export function trasladarBien (bien, ambienteDestinoId, { fecha } = {}) {
     : movidos.length > 1 ? `Se ${movidos.length - 1 === 1 ? 'traslada también 1 componente' : `trasladan también ${movidos.length - 1} componentes`}.` : ''
   return registrarEvento({
     tipo: 'traslado',
-    titulo: `Traslado: ${origen.nombre} → ${destino.nombre}`,
+    titulo: `Traslado: ${etiquetaAmbiente(origen)} → ${etiquetaAmbiente(destino)}`,
     detalle,
     fecha,
     ambienteId: destino.id,

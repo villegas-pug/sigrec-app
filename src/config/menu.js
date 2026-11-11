@@ -1,5 +1,5 @@
 // Menú lateral. Cada `key` de una entrada navegable coincide con el nombre de su ruta y con los accesos de perfiles.js.
-// «Gestión de centros» es una sola pantalla: un explorador Centro › Ambiente › Bien › Componente con detalle y acciones por nivel.
+// «Gestión de centros» es una sola pantalla: un explorador Centro › Módulo › Ambiente › Bien › Componente con detalle y acciones por nivel.
 export const MENU = [
   { key: 'inicio', label: 'Inicio', icon: 'home' },
   { key: 'centros', label: 'Gestión de centros', icon: 'home_work' },

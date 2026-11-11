@@ -129,7 +129,7 @@ export const HECHOS_SERVICIO = {
   correccion: { tono: 'si', label: 'Corrección de período' }
 }
 
-// Elementos cuya condición se evalúa en un ambiente y en la construcción de un centro (SPEC 010 §3; lista por validar).
+// Elementos cuya condición se evalúa en un ambiente, un módulo y la construcción de un centro (SPEC 010 §3, SPEC 022; lista por validar).
 // El mobiliario y los equipos no se evalúan aquí: su estado se obtiene de los bienes registrados en el ambiente.
 export const ELEMENTOS_INFRAESTRUCTURA = [
   { key: 'puertas', label: 'Puertas', icono: 'door_front' },
@@ -140,6 +140,12 @@ export const ELEMENTOS_INFRAESTRUCTURA = [
   { key: 'estructura', label: 'Estructura', icono: 'foundation' },
   { key: 'electricas', label: 'Instalaciones eléctricas', icono: 'electrical_services' },
   { key: 'sanitarias', label: 'Instalaciones sanitarias', icono: 'plumbing' }
+]
+
+// Sugerencias al agregar un elemento propio de un centro o módulo (SPEC 022); también se acepta texto libre.
+export const SUGERENCIAS_ELEMENTOS = [
+  'Cerco perimétrico', 'Portón de ingreso', 'Patios y veredas', 'Áreas verdes', 'Cisterna', 'Tanque elevado',
+  'Escaleras', 'Barandas', 'Desagüe', 'Iluminación exterior', 'Fachada'
 ]
 
 // Condiciones que justifican sugerir el registro de una novedad.

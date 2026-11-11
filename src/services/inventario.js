@@ -1,6 +1,6 @@
 // Reporte de inventario para planificación (SPEC 010 §4): cantidades por tipo de bien o categoría, condición, valor aproximado
 // y necesidades del año. Solo cuenta bienes activos; no cambia las reglas de necesidades, las reutiliza.
-import { ambientesDeCar, bienPorId, bienesActivosDeCentros, tipoPorId, ubicacionDeBien, db } from './datos'
+import { ambientesDeCar, bienPorId, bienesActivosDeCentros, posicionModulo, tipoPorId, ubicacionDeBien, db } from './datos'
 import { calcularNecesidades } from './necesidades'
 import { controlDeBien } from './mantenimientos'
 import { CATEGORIAS, CONDICIONES, CONDICIONES_CRITICAS } from 'src/config/catalogos'
@@ -18,6 +18,7 @@ export function detalleInventario ({ carIds, tipoId = null, verificacion = null,
       (control !== 'vencido' || controlDeBien(bien, fechaCorte).estado === 'vencido'))
     .map((bien) => ({ bien, ...ubicacionDeBien(bien), principal: bien.asociadoA ? bienPorId(bien.asociadoA.bienId) : null, control: fechaCorte ? controlDeBien(bien, fechaCorte) : null }))
     .sort((a, b) => a.car.nombre.localeCompare(b.car.nombre, 'es') ||
+      posicionModulo(a.ambiente.moduloId) - posicionModulo(b.ambiente.moduloId) ||
       a.ambiente.nombre.localeCompare(b.ambiente.nombre, 'es') ||
       a.bien.nombre.localeCompare(b.bien.nombre, 'es') || a.bien.id.localeCompare(b.bien.id, 'es'))
 }

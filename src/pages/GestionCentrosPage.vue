@@ -139,7 +139,7 @@ import { useAnulacion } from 'src/composables/useAnulacion'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { useRecorridoInterno } from 'src/composables/useRecorridoInterno'
 import { primeraVisita } from 'src/router/retorno'
-import { ambientePorId, bienPorId, db, ambientesDeCar, mantenimientoPorId, moduloPorId, ubicacionDeBien } from 'src/services/datos'
+import { ambientePorId, bienPorId, db, ambientesDeCar, mantenimientoPorId, moduloPorId, ordenarPorModulo, ubicacionDeBien } from 'src/services/datos'
 import { antecesoresDeNodo, arbolDeCentros, idsExpandibles, nodoAmbienteId, nodoCentroId, nodoModuloId, resolverNodo, rutaHasta } from 'src/services/bienes'
 import { anularBien, cerrarRevision, dependenciasDeBien, desasociarBien, reactivarBien } from 'src/services/acciones'
 import { TIPOS_HECHO, origenIncidencia, ubicacionHecho } from 'src/services/incidencias'
@@ -171,8 +171,8 @@ const carPedido = parametro(route.query.car)
 const asociarPedido = parametro(route.query.asociar)
 const registrarPedido = parametro(route.query.registrar) === '1' && puedeHacer('bien.registrar')
 // ?mantenimiento= abre la pestaña «Seguridad y mantenimiento» del centro y resalta el registro.
-// ?tab= elige la pestaña del centro (ficha | fotos | seguridad | ambientes) o del ambiente (ficha | fotos | bienes | novedades |
-// intervenciones); una pestaña desconocida se ignora. ?seguridad=1 se conserva como alias de ?tab=seguridad (SPEC 011).
+// ?tab= elige la pestaña del centro (ficha | incidencias | fotos | seguridad | ambientes = «Módulos y ambientes»), del módulo
+// (ficha | ambientes) o del ambiente (ficha | fotos | bienes | novedades | intervenciones); una pestaña desconocida se ignora. ?seguridad=1 se conserva como alias de ?tab=seguridad (SPEC 011).
 const mantenimientoPedido = parametro(route.query.mantenimiento)
 const tabPedida = parametro(route.query.tab) ?? (parametro(route.query.seguridad) === '1' ? 'seguridad' : null)
 const hechoPedido = parametro(route.query.hecho)
@@ -271,7 +271,7 @@ watch(arbol, (nodos) => {
   expandidos.value = [...new Set([...expandidos.value, ...nodos.flatMap((n) => [n.id, ...(n.children ?? []).map((m) => m.id)]), ...ruta])]
 }, { immediate: true })
 
-// Abre los antecesores del nodo; con `incluirNodo`, también el propio nodo (al elegir un centro o ambiente se ven sus hijos).
+// Abre los antecesores del nodo; con `incluirNodo`, también el propio nodo (al elegir un centro, módulo o ambiente se ven sus hijos).
 function expandirHasta (id, { incluirNodo = false } = {}) {
   const ruta = rutaHasta(arbol.value, id) ?? antecesoresDeNodo(id)
   expandidos.value = [...new Set([...expandidos.value, ...ruta, ...(incluirNodo ? [id] : [])])]
@@ -359,7 +359,7 @@ function alTerminarRegistro (nuevo) {
 if (registrarPedido && !pedidoNoDisponible.value) {
   const padre = asociarPedido ? bienPorId(asociarPedido) : null
   const padreValido = padre && padre.situacion === 'activo' && !padre.asociadoA && enAmbitoCar(ubicacionDeBien(padre).car.id)
-  const ambienteId = padreValido ? padre.ambienteId : ambientePedido ?? ambientesDeCar(carPedido ?? carsDelAmbito()[0]?.id)[0]?.id
+  const ambienteId = padreValido ? padre.ambienteId : ambientePedido ?? ordenarPorModulo(ambientesDeCar(carPedido ?? carsDelAmbito()[0]?.id))[0]?.id
   if (ambienteId && ambientePorId(ambienteId) && enAmbitoCar(ambientePorId(ambienteId).carId)) {
     if (!seleccionRestaurada) seleccion.value = padreValido ? padre.id : nodoAmbienteId(ambienteId)
     if (primeraVisita()) {

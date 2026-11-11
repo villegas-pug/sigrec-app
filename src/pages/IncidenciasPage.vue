@@ -44,7 +44,7 @@
                   <status-chip v-bind="TIPOS_EVENTO[ev.tipo]" />
                   <status-chip v-if="ev.anulacion" v-bind="CHIP_ANULADO" class="q-ml-xs" />
                 </td>
-                <td>{{ ubicacion(ev).car.nombre }} · {{ ubicacion(ev).ambiente?.nombre ?? 'Centro' }}</td>
+                <td>{{ ubicacion(ev).nombre }}</td>
                 <td><button type="button" class="sg-row-btn" @click="elegirDeLista(ev.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ ev.titulo }}</button><div class="sg-muted">{{ ev.bienIds.join(', ') }}</div></td>
                 <td><status-chip :tono="estadoNecesidad(ev).tono" :label="estadoNecesidad(ev).label" /></td>
               </tr>
@@ -75,7 +75,7 @@ import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { useRecorridoInterno } from 'src/composables/useRecorridoInterno'
-import { db, ambientesDeCar, bienPorId, opcionesAmbientes, ubicacionDeAmbiente } from 'src/services/datos'
+import { db, ambientesDeCar, bienPorId, opcionesAmbientes } from 'src/services/datos'
 import { calcularNecesidades } from 'src/services/necesidades'
 import DetalleHecho from 'components/bienes/DetalleHecho.vue'
 import { TIPOS_HECHO, ESTADOS, estadoNecesidad as estadoHecho, hechosRegistrados, ubicacionHecho } from 'src/services/incidencias'
@@ -143,7 +143,7 @@ const eventos = computed(() => {
       if (filtros.anio !== TODOS && !ev.fecha.startsWith(filtros.anio)) return false
       if (!t) return true
       const nombres = ev.bienIds.map((id) => bienPorId(id)?.nombre ?? '').join(' ')
-      return [ev.titulo, u.ambiente?.nombre ?? 'Centro', nombres, ...ev.bienIds].some((v) => v.toLowerCase().includes(t))
+      return [ev.titulo, u.nombre, nombres, ...ev.bienIds].some((v) => v.toLowerCase().includes(t))
     })
     .sort((a, b) => b.fecha.localeCompare(a.fecha))
 })

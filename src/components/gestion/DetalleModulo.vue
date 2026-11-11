@@ -12,6 +12,7 @@
       <status-chip :tono="modulo.tipo === 'comun' ? 'in' : 'ne'" :icono="iconoModulo(modulo)" :label="TIPOS_MODULO[modulo.tipo]?.label ?? 'Tipo no informado'" />
       <status-chip v-bind="condicion(modulo.condicion)" />
       <status-chip v-if="modulo.anulacion" v-bind="CHIP_ANULADO" />
+      <status-chip v-if="criticos" tono="wa" :label="plural(criticos, 'elemento crítico', 'elementos críticos')" />
     </template>
     <template #acciones>
       <q-btn v-if="puedeHacer('ambiente.registrar')" unelevated color="primary" icon="add_home" label="Registrar ambiente" :disable="!activo" @click="abrirAmbiente" />
@@ -48,6 +49,13 @@
           </key-value>
         </div>
       </section-card>
+      <section-card
+        titulo="Estado de la infraestructura"
+        icono="fact_check"
+        :subtitulo="evaluados ? `${evaluados} de ${totalElementos} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
+      >
+        <estado-elementos :model-value="modulo.estadoElementos" :adicionales="modulo.elementosAdicionales ?? []" solo-lectura />
+      </section-card>
     </template>
 
     <template #ambientes>
@@ -77,6 +85,7 @@ import KeyValue from 'components/common/KeyValue.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import MenuAcciones from 'components/common/MenuAcciones.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
+import EstadoElementos from 'components/common/EstadoElementos.vue'
 import ModuloDialog from 'components/centros/ModuloDialog.vue'
 import AmbienteDialog from 'components/centros/AmbienteDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
@@ -84,6 +93,7 @@ import { useAnulacion } from 'src/composables/useAnulacion'
 import { ambientesDeModulo, carPorId, vigente } from 'src/services/datos'
 import { iconoModulo, nodoAmbienteId, nodoModuloId } from 'src/services/bienes'
 import { anularModulo, dependenciasDeModulo } from 'src/services/acciones'
+import { cantidadEvaluados, elementosCriticos, elementosDe } from 'src/services/infraestructura'
 import { CHIP_ANULADO, TIPOS_MODULO, condicion } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
 
@@ -104,6 +114,9 @@ const centro = computed(() => carPorId(props.modulo.carId))
 const activo = computed(() => vigente(props.modulo))
 const ambientes = computed(() => ambientesDeModulo(props.modulo.id, { inactivos: props.inactivos }))
 const ambientesActivos = computed(() => ambientesDeModulo(props.modulo.id).length)
+const evaluados = computed(() => cantidadEvaluados(props.modulo.estadoElementos, props.modulo.elementosAdicionales))
+const totalElementos = computed(() => elementosDe(props.modulo.elementosAdicionales).length)
+const criticos = computed(() => elementosCriticos(props.modulo.estadoElementos, props.modulo.elementosAdicionales).length)
 
 const tabs = computed(() => [
   { name: 'ficha', label: 'Ficha' },

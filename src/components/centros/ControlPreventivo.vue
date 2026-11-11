@@ -11,7 +11,7 @@
         <q-list dense>
           <q-item-label header>¿En qué ambiente?</q-item-label>
           <q-item v-for="a in ambientes" :key="a.id" v-close-popup clickable @click="$emit('registrar-extintor', a.id)">
-            <q-item-section>{{ a.nombre }}</q-item-section>
+            <q-item-section>{{ etiquetaAmbiente(a) }}</q-item-section>
           </q-item>
         </q-list>
       </q-btn-dropdown>
@@ -41,7 +41,7 @@
         <div class="row items-start no-wrap justify-between">
           <div class="column">
             <button type="button" class="sg-row-btn text-weight-bold self-start" @click="$emit('seleccionar', e.bien.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ e.bien.nombre }} · {{ e.bien.id }}</button>
-            <span class="sg-muted">{{ e.ambiente.nombre }}</span>
+            <span class="sg-muted">{{ etiquetaAmbiente(e.ambiente) }}</span>
           </div>
           <status-chip v-bind="ESTADOS_CONTROL[e.estado]" />
         </div>
@@ -121,7 +121,7 @@ import AnularDialog from 'components/common/AnularDialog.vue'
 import MantenimientoDialog from 'components/centros/MantenimientoDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { ambientesDeCar, vigente } from 'src/services/datos'
+import { ambientesDeCar, etiquetaAmbiente, ordenarPorModulo, vigente } from 'src/services/datos'
 import { anular } from 'src/services/acciones'
 import { extintoresDeCentro, fumigacionDeCentro, mantenimientosDe, objetivoDe } from 'src/services/mantenimientos'
 import { CHIP_ANULADO, ESTADOS_CONTROL, TIPOS_MANTENIMIENTO } from 'src/config/catalogos'
@@ -148,7 +148,8 @@ const historial = computed(() => mantenimientosDe({ carId: props.centro.id }, { 
 
 const plazo = (dias) => (dias >= 0 ? `en ${plural(dias, 'día', 'días')}` : `hace ${plural(-dias, 'día', 'días')}`)
 
-const ambientes = computed(() => ambientesDeCar(props.centro.id))
+// Por módulo, como en el árbol; cada opción muestra «Módulo › Ambiente» (SPEC 020).
+const ambientes = computed(() => ordenarPorModulo(ambientesDeCar(props.centro.id)))
 const dialogoFicha = ref(false)
 
 const dialogo = reactive({ abierto: false, mantenimiento: null, tipo: null, bienId: null, bienIds: null })
