@@ -1,5 +1,6 @@
 // Consultas de bienes: árbol de ubicación, componentes y antecedentes (RF-01, RF-04, RF-08, RF-20).
 import { db, ambientePorId, bienPorId, carPorId, moduloPorId, modulosDeCar, ambientesDeModulo, bienesDeAmbiente, vigente } from './datos'
+import { contarRecursos, textoConteoRecursos } from './jerarquiaRecursos'
 import { TIPOS_MANTENIMIENTO, condicionInmueble } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
 
@@ -49,7 +50,7 @@ function nodoAmbiente (ambiente, filtros) {
     id: nodoAmbienteId(ambiente.id),
     tipo: 'ambiente',
     label: ambiente.nombre,
-    codigo: plural(delAmbiente.filter((b) => b.situacion === 'activo').length, 'bien activo', 'bienes activos'),
+    codigo: `${textoConteoRecursos(contarRecursos(delAmbiente.filter((b) => cumpleSituacion(b, filtros.situacion))))} (registros)`,
     icono: 'meeting_room',
     ambiente,
     children: construir(null, coincide(ambiente, filtros.texto))

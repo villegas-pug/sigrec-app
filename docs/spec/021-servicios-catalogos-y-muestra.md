@@ -22,3 +22,7 @@
 
 - Revisión estática: catálogos y `PERIODOS_POR_ANIO` con las seis periodicidades; `nombrePeriodo` conserva los textos mensual y trimestral; `servicios.json` con un único registro válido. Las celdas ya envuelven texto (columna flexible), por lo que no se cambió CSS.
 - No se ejecutaron pruebas, builds, servidores ni validación visual o funcional; quedan pendientes de autorización.
+
+## Compatibility
+
+La SPEC 024 sustituye las filas de tipos faltantes por un único estado vacío cuando no hay servicios visibles. Se conserva Luz como muestra y el catálogo completo de tipos en el formulario de alta.

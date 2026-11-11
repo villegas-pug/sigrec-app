@@ -65,18 +65,9 @@
     </template>
 
     <template #bienes>
-      <section-card :titulo="`Bienes del ambiente (${bienes.length})`" subtitulo="Inventario directo del ambiente; un componente indica el bien del que forma parte" sin-relleno>
-        <div v-for="b in bienes" :key="b.id" class="sg-borde-superior row items-center justify-between q-px-md q-py-sm">
-          <div class="column">
-            <button type="button" class="sg-row-btn text-weight-bold self-start" @click="$emit('seleccionar', b.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ b.nombre }} · {{ b.id }}</button>
-            <span v-if="b.asociadoA" class="sg-muted">Componente de {{ b.asociadoA.bienId }}<template v-if="b.asociadoA.posicion"> ({{ b.asociadoA.posicion }})</template></span>
-          </div>
-          <div class="sg-chips">
-            <status-chip v-bind="condicion(b.condicion)" />
-            <status-chip v-bind="SITUACIONES[b.situacion]" />
-          </div>
-        </div>
-        <p v-if="!bienes.length" class="q-pa-md sg-muted q-mb-none">El ambiente aún no tiene bienes registrados.</p>
+      <section-card :titulo="`Recursos del ambiente · ${resumenRecursos}`" subtitulo="Despliegue cada bien para consultar sus componentes" sin-relleno>
+        <descendientes-recursos :nodos="grupos" @seleccionar="$emit('seleccionar', $event)" />
+        <p v-if="!bienes.length" class="q-pa-md sg-muted q-mb-none">No hay recursos para los filtros seleccionados.</p>
       </section-card>
     </template>
 
@@ -145,6 +136,8 @@
 </template>
 
 <script setup>
+import DescendientesRecursos from './DescendientesRecursos.vue'
+import { gruposBienes, contarRecursos, textoConteoRecursos, coincideSituacion } from 'src/services/jerarquiaRecursos'
 import IncidenteDialog from 'components/bienes/IncidenteDialog.vue'
 import HechosContexto from './HechosContexto.vue'
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
@@ -176,6 +169,7 @@ const props = defineProps({
   ambiente: { type: Object, required: true },
   // Con «Mostrar inactivos» se ven también los registros anulados del ambiente.
   inactivos: { type: Boolean, default: false },
+  situacion: { type: String, default: 'todos' },
   hechoInicial: { type: String, default: null },
   tabInicial: { type: String, default: null },
   novedadResaltada: { type: String, default: null },
@@ -190,7 +184,9 @@ const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = use
 const centro = computed(() => carPorId(props.ambiente.carId))
 const activo = computed(() => vigente(props.ambiente))
 
-const bienes = computed(() => bienesDeAmbiente(props.ambiente.id).filter((b) => props.inactivos || b.situacion !== 'anulado'))
+const bienes = computed(() => bienesDeAmbiente(props.ambiente.id).filter((b) => coincideSituacion(b, props.situacion)))
+const grupos = computed(() => gruposBienes(props.ambiente.id, { situacion: props.situacion }))
+const resumenRecursos = computed(() => textoConteoRecursos(contarRecursos(bienes.value)))
 const novedades = computed(() => (props.ambiente.novedades ?? []).filter((n) => props.inactivos || vigente(n)))
 const intervenciones = computed(() => (props.ambiente.intervenciones ?? []).filter((i) => props.inactivos || vigente(i)))
 const abiertas = computed(() => (props.ambiente.novedades ?? []).filter((n) => vigente(n) && !n.atendida))
@@ -206,7 +202,7 @@ const tabs = computed(() => [
   { name: 'ficha', label: 'Ficha' },
   { name: 'incidencias', label: 'Incidencias' },
   { name: 'fotos', label: 'Fotografías' },
-  { name: 'bienes', label: `Bienes (${bienes.value.length})` },
+  { name: 'bienes', label: `Recursos · ${resumenRecursos.value}` },
   { name: 'intervenciones', label: `Intervenciones (${intervenciones.value.length})` }
 ])
 

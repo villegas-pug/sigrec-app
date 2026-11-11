@@ -60,7 +60,7 @@
 
     <template #ambientes>
       <section-card :titulo="`Ambientes del módulo (${ambientes.length})`" subtitulo="Condición, novedades abiertas y elementos críticos de cada ambiente; selecciónelo para ver el detalle" sin-relleno>
-        <fila-ambiente v-for="amb in ambientes" :key="amb.id" :ambiente="amb" @seleccionar="$emit('seleccionar', $event)" />
+        <descendientes-recursos :nodos="descendientes" @seleccionar="$emit('seleccionar', $event)" />
         <div v-if="!ambientes.length" class="q-pa-md column q-gutter-y-sm">
           <p class="sg-muted q-mb-none">El módulo aún no tiene ambientes registrados.</p>
           <q-btn v-if="puedeHacer('ambiente.registrar') && activo" outline color="secondary" icon="add_home" label="Registrar el primer ambiente" class="self-start" @click="abrirAmbiente" />
@@ -78,7 +78,8 @@
 // Ficha de un módulo del centro (SPEC 020): sus datos, sus ambientes y sus acciones.
 import { computed, reactive } from 'vue'
 import DetallePanel from 'components/gestion/DetallePanel.vue'
-import FilaAmbiente from 'components/gestion/FilaAmbiente.vue'
+import DescendientesRecursos from './DescendientesRecursos.vue'
+import { nodoAmbienteRecursos } from 'src/services/jerarquiaRecursos'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import KeyValue from 'components/common/KeyValue.vue'
@@ -101,6 +102,7 @@ const props = defineProps({
   modulo: { type: Object, required: true },
   // Con «Mostrar inactivos» se ven también los ambientes anulados del módulo.
   inactivos: { type: Boolean, default: false },
+  situacion: { type: String, default: 'todos' },
   tabInicial: { type: String, default: null },
   conVolver: { type: Boolean, default: false }
 })
@@ -113,6 +115,7 @@ const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = use
 const centro = computed(() => carPorId(props.modulo.carId))
 const activo = computed(() => vigente(props.modulo))
 const ambientes = computed(() => ambientesDeModulo(props.modulo.id, { inactivos: props.inactivos }))
+const descendientes = computed(() => ambientes.value.map((a) => nodoAmbienteRecursos(a, { situacion: props.situacion })))
 const ambientesActivos = computed(() => ambientesDeModulo(props.modulo.id).length)
 const evaluados = computed(() => cantidadEvaluados(props.modulo.estadoElementos, props.modulo.elementosAdicionales))
 const totalElementos = computed(() => elementosDe(props.modulo.elementosAdicionales).length)

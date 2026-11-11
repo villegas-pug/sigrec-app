@@ -108,14 +108,14 @@
           <q-btn v-if="puedeHacer('bien.componente') && !asociaciones.hijos.length" outline color="secondary" icon="link" label="Asociar a otro bien" @click="$emit('accion', 'componente')" />
         </template>
         <div class="sg-kv-grid">
-          <div v-for="h in asociaciones.hijos" :key="h.id" class="sg-box" :class="{ 'sg-box--dashed': h.revisionPendiente }">
+          <div v-for="h in componentesVisibles" :key="h.id" class="sg-box" :class="{ 'sg-box--dashed': h.revisionPendiente }">
             <span class="sg-kv__label">Componente</span>
             <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ h.nombre }} {{ h.id }}</button>
             <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
             <status-chip v-if="h.revisionPendiente" tono="wa" label="Situación por revisar" />
           </div>
         </div>
-        <p v-if="!asociaciones.hijos.length" class="sg-muted q-mb-none">Sin componentes registrados.</p>
+        <p v-if="!componentesVisibles.length" class="sg-muted q-mb-none">Sin componentes para los filtros seleccionados.</p>
       </section-card>
     </template>
 
@@ -131,7 +131,7 @@
             <button type="button" class="sg-row-btn" @click="$emit('seleccionar', asociaciones.padre.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ asociaciones.padre.nombre }} {{ asociaciones.padre.id }}</button>
             <span class="sg-muted">Posición: {{ bien.asociadoA.posicion }} · {{ SITUACIONES[asociaciones.padre.situacion].label }}</span>
           </div>
-          <div v-for="h in asociaciones.hermanos" :key="h.id" class="sg-box">
+          <div v-for="h in hermanosVisibles" :key="h.id" class="sg-box">
             <span class="sg-kv__label">Componente del mismo bien</span>
             <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ h.nombre }} {{ h.id }}</button>
             <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
@@ -181,6 +181,7 @@ import HistorialBien from 'components/bienes/HistorialBien.vue'
 import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
 import MantenimientoDialog from 'components/centros/MantenimientoDialog.vue'
 import { db, bienPorId, tipoPorId, textoUbicacion, ubicacionDeBien } from 'src/services/datos'
+import { coincideSituacion } from 'src/services/jerarquiaRecursos'
 import { asociacionesDeBien } from 'src/services/bienes'
 import { antecedentesFaltantes, calcularNecesidades, finVidaUtil } from 'src/services/necesidades'
 import { reposicionDe } from 'src/services/acciones'
@@ -191,6 +192,7 @@ import { fecha, plural, soles } from 'src/utils/formato'
 
 const props = defineProps({
   bien: { type: Object, required: true },
+  situacion: { type: String, default: 'todos' },
   tabInicial: { type: String, default: null },
   hechoInicial: { type: String, default: null },
   conVolver: { type: Boolean, default: false }
@@ -208,7 +210,9 @@ const esComponente = computed(() => !!props.bien.asociadoA)
 const condicionBien = computed(() => condicion(props.bien.condicion))
 const fin = computed(() => finVidaUtil(props.bien))
 const faltantes = computed(() => antecedentesFaltantes(props.bien))
+const componentesVisibles = computed(() => db.bienes.filter((b) => b.asociadoA?.bienId === props.bien.id && b.ambienteId === props.bien.ambienteId && coincideSituacion(b, props.situacion)))
 const asociaciones = computed(() => asociacionesDeBien(props.bien))
+const hermanosVisibles = computed(() => db.bienes.filter((b) => props.bien.asociadoA && b.id !== props.bien.id && b.asociadoA?.bienId === props.bien.asociadoA.bienId && b.ambienteId === props.bien.ambienteId && coincideSituacion(b, props.situacion)))
 const reposicion = computed(() => reposicionDe(props.bien.id))
 
 // Mantenimiento: lo muestran los equipos y los extintores (y cualquier bien que ya tenga registros).
@@ -224,7 +228,7 @@ const tabs = computed(() => [
   { name: 'ficha', label: 'Ficha' },
   esComponente.value
     ? { name: 'padre', label: 'Forma parte de' }
-    : { name: 'componentes', label: `Componentes (${asociaciones.value.hijos.length})` },
+    : { name: 'componentes', label: `Componentes (${componentesVisibles.value.length})` },
   { name: 'fotos', label: 'Fotografías' },
   { name: 'antecedentes', label: 'Antecedentes' }
 ])

@@ -67,15 +67,6 @@
                   />
                 </td>
               </tr>
-              <tr v-for="tipo in noRegistrados" :key="tipo">
-                <th scope="row" class="sg-periodos__servicio">{{ TIPOS_SERVICIO[tipo] }}</th>
-                <td colspan="12">
-                  <button v-if="puedeHacer('servicio.registrar')" type="button" class="sg-celda sg-celda--sin_info" @click="abrirServicio(null, tipo)">
-                    <q-icon name="add" size="16px" aria-hidden="true" class="q-mr-xs" />Sin servicio registrado para este centro · Registrar
-                  </button>
-                  <span v-else class="sg-celda sg-celda--sin_info sg-celda--inerte">Sin servicio registrado para este centro</span>
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -108,11 +99,12 @@
               />
             </div>
           </div>
-          <div v-for="tipo in noRegistrados" :key="tipo" class="sg-box sg-box--dashed">
-            <span class="text-weight-bold">{{ TIPOS_SERVICIO[tipo] }}</span>
-            <span class="sg-muted">Sin servicio registrado para este centro</span>
-            <q-btn v-if="puedeHacer('servicio.registrar')" flat dense color="secondary" icon="add" label="Registrar" class="self-start" @click="abrirServicio(null, tipo)" />
-          </div>
+
+        </div>
+
+        <div v-if="!filas.length" class="q-pa-md column q-gutter-y-sm" role="status">
+          <p class="sg-muted q-mb-none">No hay servicios registrados para este centro con los filtros seleccionados.</p>
+          <q-btn v-if="puedeHacer('servicio.registrar') && car && noRegistrados.length" outline color="secondary" icon="add" label="Registrar servicio" class="self-start" @click="abrirServicio(null)" />
         </div>
 
         <div v-for="aviso in avisosContinuidad" :key="aviso.servicio.id" class="q-px-md q-pb-md">

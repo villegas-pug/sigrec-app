@@ -82,26 +82,7 @@
         :icono="grupo.icono"
         sin-relleno
       >
-        <div v-for="m in grupo.modulos" :key="m.id">
-          <div class="sg-modulo__cabecera sg-borde-superior row items-center justify-between q-px-md q-py-sm">
-            <div class="column">
-              <button type="button" class="sg-row-btn text-weight-bold self-start" @click="$emit('seleccionar', nodoModuloId(m.id))">
-                <q-icon :name="iconoModulo(m)" size="18px" aria-hidden="true" class="q-mr-xs" />{{ m.nombre }}
-              </button>
-              <span class="sg-muted">{{ resumenModulo(m) }}</span>
-            </div>
-            <div class="sg-chips items-center">
-              <status-chip v-bind="condicion(m.condicion)" />
-              <status-chip v-if="m.anulacion" v-bind="CHIP_ANULADO" />
-              <status-chip v-if="criticosModulo(m)" tono="wa" :label="plural(criticosModulo(m), 'elemento crítico', 'elementos críticos')" />
-              <q-btn v-if="puedeHacer('ambiente.registrar') && activo && vigente(m)" flat dense no-caps color="secondary" icon="add" label="Ambiente" :aria-label="`Registrar ambiente en ${m.nombre}`" @click="abrirAmbiente(m)" />
-            </div>
-          </div>
-          <div class="sg-modulo__ambientes">
-            <fila-ambiente v-for="amb in ambientesDeModulo(m.id, { inactivos: true })" :key="amb.id" :ambiente="amb" @seleccionar="$emit('seleccionar', $event)" />
-            <p v-if="!ambientesDeModulo(m.id, { inactivos: true }).length" class="sg-borde-superior q-px-md q-py-sm sg-muted q-mb-none">Sin ambientes registrados.</p>
-          </div>
-        </div>
+        <descendientes-recursos :nodos="jerarquia.filter((n) => grupo.modulos.some((m) => m.id === n.registro.id))" :puede-registrar-ambiente="activo && puedeHacer('ambiente.registrar')" @seleccionar="$emit('seleccionar', $event)" @registrar-ambiente="abrirAmbiente" />
       </section-card>
       <div v-if="!modulos.length" class="sg-box sg-box--dashed">
         <span class="text-weight-bold">El centro aún no tiene módulos registrados.</span>
@@ -132,16 +113,17 @@ import AnularDialog from 'components/common/AnularDialog.vue'
 import CentroFichaDialog from 'components/centros/CentroFichaDialog.vue'
 import AmbienteDialog from 'components/centros/AmbienteDialog.vue'
 import ModuloDialog from 'components/centros/ModuloDialog.vue'
-import FilaAmbiente from 'components/gestion/FilaAmbiente.vue'
+import DescendientesRecursos from './DescendientesRecursos.vue'
+import { nodosModulos } from 'src/services/jerarquiaRecursos'
 import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
 import ControlPreventivo from 'components/centros/ControlPreventivo.vue'
 import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { ambientesDeCar, ambientesDeModulo, modulosDeCar, vigente } from 'src/services/datos'
-import { iconoModulo, nodoAmbienteId, nodoModuloId } from 'src/services/bienes'
+import { ambientesDeCar, modulosDeCar, vigente } from 'src/services/datos'
+import { nodoAmbienteId, nodoModuloId } from 'src/services/bienes'
 import { anular, dependenciasDeCentro } from 'src/services/acciones'
-import { cantidadEvaluados, elementosCriticos, elementosDe } from 'src/services/infraestructura'
+import { cantidadEvaluados, elementosDe } from 'src/services/infraestructura'
 import { controlesPendientes, resumirControles } from 'src/services/mantenimientos'
 import { FECHA_CORTE } from 'src/config/demo'
 import { CHIP_ANULADO, TIPO_EXTINTOR, condicion, condicionInmueble } from 'src/config/catalogos'
@@ -151,6 +133,7 @@ const props = defineProps({
   centro: { type: Object, required: true },
   // Con «Mostrar inactivos» el historial de mantenimientos incluye los anulados.
   inactivos: { type: Boolean, default: false },
+  situacion: { type: String, default: 'todos' },
   hechoInicial: { type: String, default: null },
   tabInicial: { type: String, default: null },
   mantenimientoResaltado: { type: String, default: null },
@@ -171,24 +154,17 @@ function abrirAmbiente (modulo) {
   dialogos.ambiente = true
 }
 
+const jerarquia = computed(() => nodosModulos(props.centro.id, { inactivos: props.inactivos, situacion: props.situacion }))
 const inmueble = computed(() => props.centro.inmueble)
 const activo = computed(() => vigente(props.centro))
-const ambientes = computed(() => ambientesDeCar(props.centro.id, { inactivos: true }))
-const modulos = computed(() => modulosDeCar(props.centro.id, { inactivos: true }))
+const ambientes = computed(() => ambientesDeCar(props.centro.id, { inactivos: props.inactivos }))
+const modulos = computed(() => modulosDeCar(props.centro.id, { inactivos: props.inactivos }))
 // Casas primero y luego los módulos de uso común; un grupo sin módulos no se muestra.
 const gruposModulos = computed(() => [
   { tipo: 'casa', titulo: 'Casas', icono: 'cottage', subtitulo: 'Donde viven los grupos de residentes; seleccione un módulo o un ambiente para ver su detalle' },
   { tipo: 'comun', titulo: 'Módulos de uso común', icono: 'groups', subtitulo: 'Los comparten todas las casas del centro: comedor, cocina, lavandería, administración' }
 ].map((g) => ({ ...g, modulos: modulos.value.filter((m) => (m.tipo === 'comun' ? 'comun' : 'casa') === g.tipo) })).filter((g) => g.modulos.length))
 
-const criticosModulo = (m) => elementosCriticos(m.estadoElementos, m.elementosAdicionales).length
-
-const resumenModulo = (m) => [
-  plural(ambientesDeModulo(m.id).length, 'ambiente', 'ambientes'),
-  m.tipo === 'casa' && m.capacidad != null ? plural(m.capacidad, 'residente', 'residentes') : null,
-  m.pisos != null ? plural(m.pisos, 'piso', 'pisos') : null,
-  m.ubicacion
-].filter(Boolean).join(' · ')
 const evaluados = computed(() => cantidadEvaluados(inmueble.value.construccion.estadoElementos, inmueble.value.construccion.elementosAdicionales))
 const totalElementos = computed(() => elementosDe(inmueble.value.construccion.elementosAdicionales).length)
 const resumenControles = computed(() => resumirControles(controlesPendientes([props.centro.id], FECHA_CORTE)))
@@ -198,7 +174,7 @@ const tabs = computed(() => [
   { name: 'incidencias', label: 'Incidencias' },
   { name: 'fotos', label: 'Fotografías' },
   { name: 'seguridad', label: 'Seguridad y mantenimiento' },
-  { name: 'ambientes', label: `Módulos y ambientes (${ambientes.value.length})` }
+  { name: 'ambientes', label: `Módulos (${modulos.value.length}) · Ambientes (${ambientes.value.length})` }
 ])
 
 const camposConstruccion = computed(() => {

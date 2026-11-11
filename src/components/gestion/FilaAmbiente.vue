@@ -9,13 +9,14 @@
       <status-chip v-if="ambiente.anulacion" v-bind="CHIP_ANULADO" />
       <status-chip v-if="novedadesAbiertas(ambiente).length" tono="da" :label="plural(novedadesAbiertas(ambiente).length, 'novedad abierta', 'novedades abiertas')" />
       <status-chip v-if="elementosCriticos(ambiente.estadoElementos).length" tono="wa" :label="plural(elementosCriticos(ambiente.estadoElementos).length, 'elemento crítico', 'elementos críticos')" />
-      <status-chip tono="ne" :label="plural(bienesDeAmbiente(ambiente.id).filter((b) => b.situacion === 'activo').length, 'bien activo', 'bienes activos')" />
+      <status-chip tono="ne" :label="`${textoConteoRecursos(contarRecursos(bienesDeAmbiente(ambiente.id).filter((b) => b.situacion === 'activo')))} activos`" />
     </div>
   </div>
 </template>
 
 <script setup>
 // Fila de un ambiente con su condición, novedades, elementos críticos y bienes; la usan las fichas del centro y del módulo.
+import { contarRecursos, textoConteoRecursos } from 'src/services/jerarquiaRecursos'
 import StatusChip from 'components/common/StatusChip.vue'
 import { bienesDeAmbiente } from 'src/services/datos'
 import { nodoAmbienteId } from 'src/services/bienes'

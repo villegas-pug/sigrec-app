@@ -51,3 +51,7 @@
 - Revisión estática: 14 SFC compilados con `@vue/compiler-sfc` sin errores; sintaxis de servicios y configuración revisada con `node --check`; `modulos.json`, `ambientes.json` y `servicios.json` válidos (12 ambientes con `moduloId`).
 - La pestaña del centro conserva el nombre `ambientes` (enlaces de Inicio con `tab=ambientes`) y muestra «Módulos y ambientes»; el árbol abre por defecto centros y módulos para mantener visibles los ambientes.
 - No se ejecutaron pruebas, builds, servidores ni validación visual o funcional; quedan pendientes de autorización.
+
+## Compatibility
+
+La SPEC 023 complementa las secciones de descendientes con grupos desplegables y conteos separados de bienes principales y componentes.
