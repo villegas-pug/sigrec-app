@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Diagrama y diccionario del modelo relacional Oracle de SIGREC.">
+  <title>SIGREC · Modelo de datos</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace" data-expand-background>Ir al diagrama</a>
+  <a class="skip-link" href="#inspector" data-expand-background>Ir al diccionario</a>
+
+  <div id="app">
+    <header class="site-header" data-expand-background>
+      <div class="header-inner">
+        <a class="brand" href="./" aria-label="SIGREC, inicio del visor">
+          <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <rect x="18" y="7" width="12" height="9" rx="2" stroke="currentColor" stroke-width="2"/>
+            <rect x="5" y="31" width="12" height="9" rx="2" stroke="currentColor" stroke-width="2"/>
+            <rect x="31" y="31" width="12" height="9" rx="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M24 16v7m-13 8v-8h26v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>SIGREC <small>USPNNA · INABIF</small></span>
+        </a>
+        <nav class="header-actions" aria-label="Documentación">
+          <button type="button" class="header-button" id="open-coverage" disabled>Reglas y cobertura</button>
+          <a class="header-link" href="./data/modelo.json" target="_blank" rel="noopener">Ver JSON<span aria-hidden="true"> ↗</span></a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="intro" aria-labelledby="page-title" data-expand-background>
+        <div>
+          <div class="intro-meta"><span id="platform">Oracle Database</span><span id="model-version" hidden></span></div>
+          <h1 id="page-title">Modelo de datos SIGREC</h1>
+          <p id="model-description">Explora las entidades, relaciones y reglas de los recursos de los centros.</p>
+        </div>
+        <dl class="statistics" aria-label="Resumen del modelo">
+          <div><dt>Módulos</dt><dd id="module-count">—</dd></div>
+          <div><dt>Tablas</dt><dd id="table-count">—</dd></div>
+          <div><dt>Relaciones de negocio</dt><dd id="relationship-count">—</dd></div>
+        </dl>
+      </section>
+
+      <section class="workspace" id="workspace" aria-label="Explorador del modelo">
+        <div class="toolbar">
+          <div class="view-selector" aria-label="Vista del diagrama">
+            <button class="view-button" type="button" data-mode="executive" aria-pressed="true" disabled>Vista ejecutiva</button>
+            <button class="view-button" type="button" data-mode="technical" aria-pressed="false" disabled>Vista técnica</button>
+            <button class="view-button" type="button" data-mode="complete" aria-pressed="false" disabled>Vista completa</button>
+          </div>
+          <div class="search-area">
+            <label class="visually-hidden" for="search">Buscar tablas y columnas</label>
+            <div class="search-field">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <input id="search" type="search" placeholder="Buscar tabla o columna…" autocomplete="off" aria-controls="search-results" disabled>
+              <kbd aria-hidden="true">/</kbd>
+            </div>
+            <div id="search-results" class="search-results" hidden>
+              <p id="search-count" role="status"></p>
+              <div id="result-list"></div>
+            </div>
+          </div>
+          <div class="export-actions" aria-label="Exportar diagrama">
+            <button type="button" class="plain-button" id="export-svg" disabled>Descargar SVG</button>
+            <button type="button" class="plain-button" id="export-pdf" disabled>Imprimir / PDF</button>
+          </div>
+        </div>
+
+        <div class="module-filter" id="module-filter" aria-label="Filtrar diagrama por módulo"></div>
+        <div class="work-grid">
+          <section class="canvas-panel" aria-labelledby="diagram-title">
+            <div class="panel-heading">
+              <div>
+                <h2 id="diagram-title">Diagrama de relaciones</h2>
+                <p id="view-hint">Cargando el modelo…</p>
+              </div>
+              <div class="panel-actions">
+                <label id="audit-toggle-wrap" class="audit-toggle" hidden><input id="audit-toggle" type="checkbox"> FK de auditoría</label>
+                <button id="inspector-toggle" class="plain-button" type="button" aria-controls="inspector" aria-expanded="false" hidden>Diccionario</button>
+                <button id="fullscreen-toggle" class="plain-button" type="button" aria-pressed="false" disabled>Pantalla completa</button>
+              </div>
+            </div>
+            <div id="viewport" class="viewport" aria-label="Lienzo desplazable del diagrama" aria-describedby="pan-help" tabindex="0">
+              <div id="surface" class="surface">
+                <div id="diagram" class="diagram"></div>
+              </div>
+              <p id="canvas-message" class="canvas-message" role="status">Cargando el diccionario Oracle…</p>
+            </div>
+            <p id="diagram-help" class="visually-hidden">Pulsa Intro para abrir el detalle o usa Mayús con las flechas para mover la tabla.</p>
+            <p id="group-help" class="visually-hidden">Arrastra el encabezado o usa Mayús con las flechas para mover el módulo y sus tablas.</p>
+            <p id="pan-help" class="visually-hidden">Usa las flechas izquierda y derecha para desplazar el lienzo. Con ratón, arrastra el fondo o usa Mayús con la rueda.</p>
+            <div class="diagram-footer">
+              <div class="legend" aria-label="Leyenda">
+                <span><i></i> Relación</span>
+                <span><i class="legend-highlight"></i> Seleccionada</span>
+                <span id="audit-legend" hidden><i class="legend-audit"></i> Auditoría</span>
+                <span id="field-cardinality-legend" hidden>Cardinalidad FK · hijos por padre / padres por hijo · † filas vigentes</span>
+              </div>
+              <div class="zoom-controls" aria-label="Zoom y distribución">
+                <div class="pan-controls" role="group" aria-label="Desplazamiento horizontal">
+                  <button type="button" id="pan-left" aria-label="Desplazar a la izquierda" title="Desplazar a la izquierda" disabled>←</button>
+                  <button type="button" id="pan-right" aria-label="Desplazar a la derecha" title="Desplazar a la derecha" disabled>→</button>
+                </div>
+                <button type="button" id="zoom-out" aria-label="Alejar" title="Alejar" disabled>−</button>
+                <output id="zoom-value" aria-label="Zoom actual">100 %</output>
+                <button type="button" id="zoom-in" aria-label="Acercar" title="Acercar" disabled>+</button>
+                <button type="button" id="zoom-fit" class="zoom-fit" disabled>Ajustar</button>
+                <button type="button" id="zoom-read" class="zoom-fit" hidden>Lectura 100 %</button>
+                <button type="button" id="distribute-groups" class="zoom-fit" disabled>Distribuir grupos</button>
+                <button type="button" id="reset-layout" class="zoom-fit" disabled>Restablecer distribución</button>
+              </div>
+              <div id="relation-readout" class="relation-readout" hidden></div>
+            </div>
+          </section>
+
+          <aside class="inspector" id="inspector" aria-labelledby="inspector-title" tabindex="-1">
+            <div class="panel-heading inspector-heading">
+              <div>
+                <h2 id="inspector-title">Diccionario</h2>
+                <p id="inspector-context">Entidades visibles</p>
+              </div>
+              <div class="panel-actions">
+                <button id="back-to-list" class="plain-button" type="button" hidden>Ver lista</button>
+                <button id="inspector-close" class="plain-button" type="button" aria-label="Cerrar diccionario" hidden>Cerrar</button>
+              </div>
+            </div>
+            <div id="inspector-content" class="inspector-content">
+              <p class="empty-text">El diccionario se prepara a partir del modelo JSON.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+      <footer class="page-footer" data-expand-background>
+        <span>SIGREC · Sistema Integrado de Gestión de Recursos de Centros</span>
+        <span id="footer-model">Modelo relacional Oracle</span>
+      </footer>
+      <noscript><p class="noscript">Activa JavaScript para consultar el diagrama y el diccionario.</p></noscript>
+    </main>
+  </div>
+
+  <dialog id="coverage-dialog" aria-labelledby="coverage-title">
+    <div class="coverage-header">
+      <div>
+        <h2 id="coverage-title">Reglas y cobertura funcional</h2>
+        <p>Procedencia, alcance y supuestos del modelo Oracle.</p>
+      </div>
+      <form method="dialog"><button class="plain-button" type="submit">Cerrar</button></form>
+    </div>
+    <div class="coverage-controls">
+      <label>Módulo <select id="coverage-module"></select></label>
+      <label>Tipo <select id="coverage-type">
+        <option value="rules">Reglas de negocio</option>
+        <option value="processes">Cobertura por pantalla</option>
+        <option value="profiles">Perfiles de demostración</option>
+      </select></label>
+      <label id="coverage-evidence-wrap">Evidencia <select id="coverage-evidence">
+        <option value="">Todas</option>
+        <option value="OBSERVADO">Observada</option>
+        <option value="CRITERIO_PROVISIONAL">Provisional</option>
+        <option value="SUPUESTO_DISENO">Supuesto de diseño</option>
+      </select></label>
+    </div>
+    <div id="coverage-content" class="coverage-content"></div>
+  </dialog>
+
+  <div id="print-area" class="print-area" aria-hidden="true"></div>
+  <div id="announcement" class="visually-hidden" role="status"></div>
+</body>
+</html>
