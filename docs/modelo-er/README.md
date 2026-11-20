@@ -50,6 +50,19 @@ La ficha del inmueble vive en el centro. Las cifras de Inicio, necesidades, avis
 
 Desde la versión `2.0.0`, los nombres Oracle usan `SGR_ENTIDAD` o `SGR_PADRE_HIJO` para asociaciones. Ejemplos: `SGR_CENTRO`, `SGR_VEHICULO` y `SGR_PERFIL_PERMISO`. Las restricciones e índices conservan su alias técnico.
 
+## Consolidación del modelo en 4.0.0
+
+El modelo pasa de **44 a 42 tablas**. Tres consolidaciones reducen registros y relaciones redundantes. Se recupera una tabla para conservar el historial de reposiciones. [SPEC 028](../spec/028-modelo-er-consolidation.md)
+
+| Cambio | Justificación e integridad |
+| --- | --- |
+| Novedades e incidencias en `SGR_INCIDENTE` | Comparten título, fecha, tipo y contexto. `CLASE` conserva la diferencia entre ambos flujos y el `CHECK` exige origen de ambiente para novedades. `SGR_ATENCION` tiene una FK obligatoria y admite una sola atención vigente por hecho. |
+| Cargas y consumos en `SGR_COMBUSTIBLE` | Una fila conserva código, autor, fecha, litros y sustento. El tipo exige exactamente una referencia válida. La carga indica vehículo y el consumo indica ejecución. Un índice único funcional impide dos consumos vigentes de una ejecución. |
+| Periodicidad en meses | Servicio y período guardan respectivamente la configuración actual y la duración con que se informó el período. Los `CHECK` validan las seis duraciones y limitan el ordinal. Los hechos siguen vinculados al período original aunque cambie la configuración. |
+| Historial en `SGR_REPOSICION` | La reversión conserva la fecha, el detalle, el reemplazo y los componentes reasignados que consulta el visor de incidencias. Se reutiliza `SGR_BIEN_IMPLICADO` para registrar esos componentes. |
+
+Los catálogos de condición y tipo de servicio conservan sus códigos y FK. También se conservan los registros con historial o ciclo de vida propio, como las atenciones, los períodos y sus hechos, la ejecución del itinerario y los precios referenciales. Las reglas del JSON distinguen las restricciones de fila y unicidad de las validaciones que requieren una transacción futura, como confirmar el ámbito de combustible, validar afectados y revertir una reposición junto con las reasignaciones.
+
 ## Validación y aceptación
 
 La verificación estática del visor valida nombres, tipos, auditoría, claves, destinos, índices, cardinalidades, catálogos y referencias. El módulo [model.js](js/model.js) expone `expandModel` y `validateModel` para revisar el JSON con un consumidor local. Cada columna que admite `NULL` declara su motivo. Las reglas de más de una fila indican la frontera transaccional para una futura implementación.
@@ -68,5 +81,9 @@ Los siguientes escenarios quedan definidos para una validación funcional autori
 | Abrir Vista completa y buscar un campo | Se muestran sus tipos, claves y nulabilidad dentro de cada tabla. La búsqueda enfoca la fila y la selección de una FK resalta las dos columnas relacionadas. |
 | Imprimir Vista completa general o de un módulo | Una sola página A3 horizontal con título, leyenda y todas las tarjetas y relaciones visibles. |
 | Alternar las FK de auditoría y abrir un índice funcional | Distinción de relaciones de auditoría y expresión de unicidad condicional legible. |
+| Consultar un ambiente con una novedad y una incidencia | La novedad conserva su ubicación y atención. Solo la incidencia admite afectados. El indicador de novedades abiertas y la evaluación de infraestructura mantienen sus filtros. |
+| Corregir una carga como consumo y luego anularlo | Conserva código y autor, usa el vehículo de la ejecución y se rechaza si ya existe un consumo vigente. Tras anularlo, la ejecución admite otra declaración. |
+| Cambiar un servicio de bimestral a mensual cuando esté habilitado | Los hechos anteriores conservan sus períodos bimestrales. El ordinal 7 es inválido en un período bimestral y válido en uno mensual. |
+| Revertir una reposición y registrar otra para la misma baja | La primera queda consultable como anulada con su reemplazo y sus componentes. Solo la segunda es vigente. La baja puede revertirse cuando ya no tenga reposición vigente. |
 | Usar el visor a 360 px y a ancho de escritorio | Panel, controles y diálogo legibles. La lista permite navegar sin manipular el diagrama. |
 | Exportar después de acercar y desplazar el lienzo | SVG con toda la selección y vista de impresión completa, con páginas por módulo en la vista técnica general. |
