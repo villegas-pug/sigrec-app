@@ -48,7 +48,7 @@ Para un índice `uniqueFunctional`, aplica `transforms` de izquierda a derecha s
 
 La ficha del inmueble vive en el centro. Las cifras de Inicio, necesidades, avisos, inventario consolidado y simulación se derivan de sus registros de origen. Los datos históricos con fecha parcial conservan su granularidad. La identidad se propone mediante un proveedor externo y un actor de auditoría local. Las fotografías admiten metadatos históricos sin imagen y el modelo propone un BLOB para contenido nuevo. Las reglas de pólizas, expedientes de NNA, ejecución de pagos y aprobación de compras quedan fuera del dominio documentado por el prototipo. [Alcance del prototipo](../spec/001-prototipo-sigrec.md) · [Ficha y estado operativo](../spec/010-fichas-planificacion-y-estado-operativo.md)
 
-Desde la versión `2.0.0`, los nombres Oracle usan `SGR_ENTIDAD` o `SGR_PADRE_HIJO` para asociaciones. Ejemplos: `SGR_CENTRO`, `SGR_VEHICULO` y `SGR_INCIDENTE_BIEN`. Las restricciones e índices conservan su alias técnico.
+Desde la versión `2.0.0`, los nombres Oracle usan `SGR_ENTIDAD` o `SGR_PADRE_HIJO` para asociaciones. Ejemplos: `SGR_CENTRO`, `SGR_VEHICULO` y `SGR_PERFIL_PERMISO`. Las restricciones e índices conservan su alias técnico.
 
 ## Validación y aceptación
 

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "2.0.0",
+  "schemaVersion": "3.0.0",
   "title": "Modelo de datos SIGREC",
   "description": "Modelo relacional de los recursos y la operación de los Centros de Acogida Residencial de la USPNNA.",
   "platform": {
@@ -2085,6 +2085,82 @@
           "kind": "btree"
         }
       ]
+    },
+    {
+      "name": "SGR_TIPO_INCIDENCIA",
+      "alias": "CAT_TIN",
+      "module": "centros",
+      "label": "Tipos de incidencia",
+      "description": "Tipos usados para incidencias y novedades de infraestructura.",
+      "executive": false,
+      "catalogValues": [
+        {
+          "CODIGO": "DANO",
+          "NOMBRE": "Daño"
+        },
+        {
+          "CODIGO": "ROBO",
+          "NOMBRE": "Robo"
+        },
+        {
+          "CODIGO": "INCENDIO",
+          "NOMBRE": "Incendio"
+        },
+        {
+          "CODIGO": "HUMEDAD",
+          "NOMBRE": "Humedad o filtración"
+        },
+        {
+          "CODIGO": "INSTALACIONES",
+          "NOMBRE": "Instalaciones eléctricas o sanitarias"
+        },
+        {
+          "CODIGO": "ESTRUCTURA",
+          "NOMBRE": "Estructura"
+        },
+        {
+          "CODIGO": "OTRO",
+          "NOMBRE": "Otro"
+        }
+      ],
+      "sources": [
+        "catalogos",
+        "spec016",
+        "spec017"
+      ],
+      "columns": [
+        {
+          "name": "CODIGO",
+          "type": "VARCHAR2(40 CHAR)",
+          "description": "Código estable de tipos de incidencia.",
+          "nullable": false
+        },
+        {
+          "name": "NOMBRE",
+          "type": "VARCHAR2(120 CHAR)",
+          "description": "Denominación visible.",
+          "nullable": false
+        },
+        {
+          "name": "DESCRIPCION",
+          "type": "VARCHAR2(500 CHAR)",
+          "description": "Definición funcional complementaria.",
+          "nullable": true,
+          "nullableReason": "Sin detalle adicional."
+        }
+      ],
+      "foreignKeys": [],
+      "uniqueKeys": [
+        {
+          "name": "UK_CAT_TIN_CODIGO",
+          "columns": [
+            "CODIGO"
+          ],
+          "description": "Código estable, reservado aun cuando el catálogo se inactive."
+        }
+      ],
+      "checks": [],
+      "indexes": []
     },
     {
       "name": "SGR_NOVEDAD",
@@ -4421,82 +4497,6 @@
       ]
     },
     {
-      "name": "SGR_TIPO_INCIDENCIA",
-      "alias": "CAT_TIN",
-      "module": "incidencias",
-      "label": "Tipos de incidencia",
-      "description": "Tipos usados para incidencias y novedades de infraestructura.",
-      "executive": false,
-      "catalogValues": [
-        {
-          "CODIGO": "DANO",
-          "NOMBRE": "Daño"
-        },
-        {
-          "CODIGO": "ROBO",
-          "NOMBRE": "Robo"
-        },
-        {
-          "CODIGO": "INCENDIO",
-          "NOMBRE": "Incendio"
-        },
-        {
-          "CODIGO": "HUMEDAD",
-          "NOMBRE": "Humedad o filtración"
-        },
-        {
-          "CODIGO": "INSTALACIONES",
-          "NOMBRE": "Instalaciones eléctricas o sanitarias"
-        },
-        {
-          "CODIGO": "ESTRUCTURA",
-          "NOMBRE": "Estructura"
-        },
-        {
-          "CODIGO": "OTRO",
-          "NOMBRE": "Otro"
-        }
-      ],
-      "sources": [
-        "catalogos",
-        "spec016",
-        "spec017"
-      ],
-      "columns": [
-        {
-          "name": "CODIGO",
-          "type": "VARCHAR2(40 CHAR)",
-          "description": "Código estable de tipos de incidencia.",
-          "nullable": false
-        },
-        {
-          "name": "NOMBRE",
-          "type": "VARCHAR2(120 CHAR)",
-          "description": "Denominación visible.",
-          "nullable": false
-        },
-        {
-          "name": "DESCRIPCION",
-          "type": "VARCHAR2(500 CHAR)",
-          "description": "Definición funcional complementaria.",
-          "nullable": true,
-          "nullableReason": "Sin detalle adicional."
-        }
-      ],
-      "foreignKeys": [],
-      "uniqueKeys": [
-        {
-          "name": "UK_CAT_TIN_CODIGO",
-          "columns": [
-            "CODIGO"
-          ],
-          "description": "Código estable, reservado aun cuando el catálogo se inactive."
-        }
-      ],
-      "checks": [],
-      "indexes": []
-    },
-    {
       "name": "SGR_INCIDENTE",
       "alias": "INC_INC",
       "module": "incidencias",
@@ -4845,206 +4845,11 @@
       ]
     },
     {
-      "name": "SGR_INCIDENTE_BIEN",
-      "alias": "INC_IBI",
-      "module": "incidencias",
-      "label": "Bien afectado",
-      "description": "Evaluación individual de unidades afectadas, decisión de reposición y condición constatada cuando se informa.",
-      "executive": true,
-      "junction": [
-        "ID_INCIDENTE",
-        "ID_BIEN"
-      ],
-      "sources": [
-        "eventos",
-        "afectados",
-        "incidenteForm",
-        "incidenciaServicio",
-        "spec016",
-        "spec017"
-      ],
-      "columns": [
-        {
-          "name": "CANT_AFECTADA",
-          "type": "NUMBER(10,0)",
-          "description": "Unidades afectadas según la evaluación individual.",
-          "nullable": false
-        },
-        {
-          "name": "REQUIERE_REPOSICION",
-          "type": "NUMBER(1,0)",
-          "description": "Decisión expresa de reposición para este bien.",
-          "nullable": false
-        },
-        {
-          "name": "FUENTE_EVALUACION",
-          "type": "VARCHAR2(12 CHAR)",
-          "description": "Distingue evaluación capturada de interpretación del antecedente histórico.",
-          "nullable": false
-        },
-        {
-          "name": "ID_INCIDENTE",
-          "type": "NUMBER(38,0)",
-          "description": "Incidencia evaluada.",
-          "nullable": false
-        },
-        {
-          "name": "ID_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Bien o componente afectado.",
-          "nullable": false
-        },
-        {
-          "name": "ID_CONDICION",
-          "type": "NUMBER(38,0)",
-          "description": "Condición observada en la incidencia.",
-          "nullable": true,
-          "nullableReason": "El evaluador puede omitir la condición."
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_INC_IBI_INC_INC",
-          "columns": [
-            "ID_INCIDENTE"
-          ],
-          "references": {
-            "table": "SGR_INCIDENTE",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Incidencia evaluada",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          },
-          "executive": true
-        },
-        {
-          "name": "FK_INC_IBI_BIE_BIE",
-          "columns": [
-            "ID_BIEN"
-          ],
-          "references": {
-            "table": "SGR_BIEN",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Bien o componente afectado",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          },
-          "executive": true
-        },
-        {
-          "name": "FK_INC_IBI_CAT_COND",
-          "columns": [
-            "ID_CONDICION"
-          ],
-          "references": {
-            "table": "SGR_CONDICION",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Condición observada en la incidencia",
-          "cardinality": {
-            "from": {
-              "min": 0,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        }
-      ],
-      "uniqueKeys": [],
-      "checks": [
-        {
-          "name": "CK_INC_IBI_REQUIERE_REPOSICION",
-          "columns": [
-            "REQUIERE_REPOSICION"
-          ],
-          "expression": "REQUIERE_REPOSICION IN (0, 1)",
-          "description": "Indicador binario."
-        },
-        {
-          "name": "CK_INC_IBI_CANT_AFECTADA",
-          "columns": [
-            "CANT_AFECTADA"
-          ],
-          "expression": "CANT_AFECTADA > 0",
-          "description": "El valor informado debe ser positivo."
-        },
-        {
-          "name": "CK_INC_IBI_FUENTE_EVALUACION",
-          "columns": [
-            "FUENTE_EVALUACION"
-          ],
-          "expression": "FUENTE_EVALUACION IN ('INDIVIDUAL', 'HISTORICA')",
-          "description": "Valores admitidos para fuente_evaluacion."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "IX_INC_IBI_PAR",
-          "columns": [
-            "ID_INCIDENTE",
-            "ID_BIEN"
-          ],
-          "description": "Un afectado vigente por bien e incidencia. Permite corregir la selección con trazabilidad.",
-          "kind": "uniqueFunctional",
-          "predicate": "ESTADO = 1 AND ELIMINADO = 0"
-        },
-        {
-          "name": "IX_INC_IBI_INC_INC",
-          "columns": [
-            "ID_INCIDENTE"
-          ],
-          "description": "Cobertura de FK_INC_IBI_INC_INC.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_INC_IBI_BIE_BIE",
-          "columns": [
-            "ID_BIEN"
-          ],
-          "description": "Cobertura de FK_INC_IBI_BIE_BIE.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_INC_IBI_CAT_COND",
-          "columns": [
-            "ID_CONDICION"
-          ],
-          "description": "Cobertura de FK_INC_IBI_CAT_COND.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
       "name": "SGR_BAJA",
       "alias": "INC_BAJ",
       "module": "incidencias",
       "label": "Baja patrimonial",
-      "description": "Hecho patrimonial que retira de operación las unidades representadas por un bien.",
+      "description": "Hecho patrimonial que retira de operación las unidades representadas por un bien y, cuando corresponde, su reposición mediante el alta de un reemplazo.",
       "executive": true,
       "sources": [
         "eventos",
@@ -5085,6 +4890,28 @@
           "description": "Ambiente del bien al darlo de baja.",
           "nullable": true,
           "nullableReason": "Antecedente sin ubicación histórica identificable."
+        },
+        {
+          "name": "FEC_REPOSICION",
+          "type": "DATE",
+          "description": "Fecha de reposición.",
+          "nullable": true,
+          "granularity": "DIA",
+          "nullableReason": "Sin reposición vigente."
+        },
+        {
+          "name": "DETALLE_REPOSICION",
+          "type": "VARCHAR2(1000 CHAR)",
+          "description": "Detalle conservado del alta por reposición.",
+          "nullable": true,
+          "nullableReason": "Sin reposición vigente o dato complementario sin informar."
+        },
+        {
+          "name": "ID_NUEVO_BIEN",
+          "type": "NUMBER(38,0)",
+          "description": "Bien de reemplazo creado en el acto de reposición.",
+          "nullable": true,
+          "nullableReason": "Sin reposición vigente."
         }
       ],
       "foreignKeys": [
@@ -5135,10 +4962,62 @@
               "max": "N"
             }
           }
+        },
+        {
+          "name": "FK_INC_BAJ_BIEN_NUE",
+          "columns": [
+            "ID_NUEVO_BIEN"
+          ],
+          "references": {
+            "table": "SGR_BIEN",
+            "columns": [
+              "ID"
+            ]
+          },
+          "role": "Bien de reemplazo creado en el mismo acto",
+          "cardinality": {
+            "from": {
+              "min": 0,
+              "max": 1
+            },
+            "to": {
+              "min": 0,
+              "max": 1
+            }
+          },
+          "executive": true
         }
       ],
-      "uniqueKeys": [],
-      "checks": [],
+      "uniqueKeys": [
+        {
+          "name": "UK_INC_BAJ_BIEN_NUE",
+          "columns": [
+            "ID_NUEVO_BIEN"
+          ],
+          "description": "Un bien de reemplazo nace de una sola reposición."
+        }
+      ],
+      "checks": [
+        {
+          "name": "CK_INC_BAJ_REPOSICION",
+          "columns": [
+            "FEC_REPOSICION",
+            "ID_NUEVO_BIEN",
+            "DETALLE_REPOSICION"
+          ],
+          "expression": "(FEC_REPOSICION IS NULL AND ID_NUEVO_BIEN IS NULL AND DETALLE_REPOSICION IS NULL) OR (FEC_REPOSICION IS NOT NULL AND ID_NUEVO_BIEN IS NOT NULL)",
+          "description": "Fecha y bien de reemplazo se informan juntos; el detalle solo existe con reposición."
+        },
+        {
+          "name": "CK_INC_BAJ_NUEVO",
+          "columns": [
+            "ID_NUEVO_BIEN",
+            "ID_BIEN"
+          ],
+          "expression": "ID_NUEVO_BIEN <> ID_BIEN",
+          "description": "El reemplazo es un bien distinto del dado de baja."
+        }
+      ],
       "indexes": [
         {
           "name": "IX_INC_BAJ_BIEN",
@@ -5168,61 +5047,128 @@
       ]
     },
     {
-      "name": "SGR_BAJA_BIEN",
-      "alias": "INC_BBI",
+      "name": "SGR_BIEN_IMPLICADO",
+      "alias": "INC_BIM",
       "module": "incidencias",
-      "label": "Componente por revisar",
-      "description": "Instantánea del componente al dar de baja el bien principal y resolución individual posterior.",
-      "executive": false,
-      "junction": [
-        "ID_BAJA",
-        "ID_BIEN"
-      ],
+      "label": "Bien implicado",
+      "description": "Bien afectado por una incidencia, con su evaluación individual, o componente activo de un bien dado de baja, con su revisión individual y su eventual reasignación al reemplazo.",
+      "executive": true,
       "sources": [
         "eventos",
+        "afectados",
+        "incidenteForm",
+        "incidenciaServicio",
+        "spec016",
+        "spec017",
         "acciones",
         "bienes",
-        "spec016"
+        "bienAccion"
       ],
       "columns": [
+        {
+          "name": "ROL",
+          "type": "VARCHAR2(12 CHAR)",
+          "description": "Papel del bien: afectado por una incidencia o componente de una baja.",
+          "nullable": false
+        },
+        {
+          "name": "CANT_AFECTADA",
+          "type": "NUMBER(10,0)",
+          "description": "Unidades afectadas según la evaluación individual.",
+          "nullable": true,
+          "nullableReason": "Fila de componente de una baja."
+        },
+        {
+          "name": "REQUIERE_REPOSICION",
+          "type": "NUMBER(1,0)",
+          "description": "Decisión expresa de reposición para este bien.",
+          "nullable": true,
+          "nullableReason": "Fila de componente de una baja."
+        },
+        {
+          "name": "FUENTE_EVALUACION",
+          "type": "VARCHAR2(12 CHAR)",
+          "description": "Distingue evaluación capturada de interpretación del antecedente histórico.",
+          "nullable": true,
+          "nullableReason": "Fila de componente de una baja."
+        },
         {
           "name": "POSICION",
           "type": "VARCHAR2(180 CHAR)",
           "description": "Posición del componente al momento de la baja.",
           "nullable": true,
-          "nullableReason": "Posición sin informar."
+          "nullableReason": "Fila de bien afectado por una incidencia o posición sin informar."
         },
         {
           "name": "FEC_RESOLUCION",
           "type": "DATE",
           "description": "Fecha de resolución individual.",
           "nullable": true,
-          "nullableReason": "Aún por revisar o antecedente sin fecha de resolución.",
+          "nullableReason": "Fila de bien afectado por una incidencia, revisión pendiente o antecedente sin fecha de resolución.",
           "granularity": "DIA"
         },
         {
           "name": "RESOLUCION",
           "type": "VARCHAR2(25 CHAR)",
-          "description": "Acción que resolvió la revisión del componente.",
+          "description": "Acción que resolvió la revisión del componente; REPOSICION indica su reasignación al bien de reemplazo.",
           "nullable": true,
-          "nullableReason": "La revisión aún no se ha resuelto."
+          "nullableReason": "Fila de bien afectado por una incidencia o revisión aún no resuelta."
+        },
+        {
+          "name": "ID_INCIDENTE",
+          "type": "NUMBER(38,0)",
+          "description": "Incidencia evaluada.",
+          "nullable": true,
+          "nullableReason": "Fila de componente de una baja."
         },
         {
           "name": "ID_BAJA",
           "type": "NUMBER(38,0)",
           "description": "Baja patrimonial del principal.",
-          "nullable": false
+          "nullable": true,
+          "nullableReason": "Fila de bien afectado por una incidencia."
         },
         {
           "name": "ID_BIEN",
           "type": "NUMBER(38,0)",
-          "description": "Componente que requiere revisión.",
+          "description": "Bien afectado o componente por revisar.",
           "nullable": false
+        },
+        {
+          "name": "ID_CONDICION",
+          "type": "NUMBER(38,0)",
+          "description": "Condición observada en la incidencia.",
+          "nullable": true,
+          "nullableReason": "Fila de componente de una baja o condición omitida por el evaluador."
         }
       ],
       "foreignKeys": [
         {
-          "name": "FK_INC_BBI_INC_BAJ",
+          "name": "FK_INC_BIM_INC_INC",
+          "columns": [
+            "ID_INCIDENTE"
+          ],
+          "references": {
+            "table": "SGR_INCIDENTE",
+            "columns": [
+              "ID"
+            ]
+          },
+          "role": "Incidencia evaluada",
+          "cardinality": {
+            "from": {
+              "min": 0,
+              "max": 1
+            },
+            "to": {
+              "min": 0,
+              "max": "N"
+            }
+          },
+          "executive": true
+        },
+        {
+          "name": "FK_INC_BIM_INC_BAJ",
           "columns": [
             "ID_BAJA"
           ],
@@ -5232,20 +5178,21 @@
               "ID"
             ]
           },
-          "role": "Baja patrimonial del principal",
+          "role": "Baja patrimonial del principal revisado",
           "cardinality": {
             "from": {
-              "min": 1,
+              "min": 0,
               "max": 1
             },
             "to": {
               "min": 0,
               "max": "N"
             }
-          }
+          },
+          "executive": true
         },
         {
-          "name": "FK_INC_BBI_BIE_BIE",
+          "name": "FK_INC_BIM_BIE_BIE",
           "columns": [
             "ID_BIEN"
           ],
@@ -5255,7 +5202,7 @@
               "ID"
             ]
           },
-          "role": "Componente que requiere revisión",
+          "role": "Bien afectado o componente por revisar",
           "cardinality": {
             "from": {
               "min": 1,
@@ -5265,22 +5212,105 @@
               "min": 0,
               "max": "N"
             }
+          },
+          "executive": true
+        },
+        {
+          "name": "FK_INC_BIM_CAT_COND",
+          "columns": [
+            "ID_CONDICION"
+          ],
+          "references": {
+            "table": "SGR_CONDICION",
+            "columns": [
+              "ID"
+            ]
+          },
+          "role": "Condición observada en la incidencia",
+          "cardinality": {
+            "from": {
+              "min": 0,
+              "max": 1
+            },
+            "to": {
+              "min": 0,
+              "max": "N"
+            }
           }
         }
       ],
-      "uniqueKeys": [
-        {
-          "name": "UK_INC_BBI_PAR",
-          "columns": [
-            "ID_BAJA",
-            "ID_BIEN"
-          ],
-          "description": "Un componente por instantánea de baja."
-        }
-      ],
+      "uniqueKeys": [],
       "checks": [
         {
-          "name": "CK_INC_BBI_RESOLUCION",
+          "name": "CK_INC_BIM_ROL",
+          "columns": [
+            "ROL"
+          ],
+          "expression": "ROL IN ('AFECTADO', 'COMPONENTE')",
+          "description": "Valores admitidos para rol."
+        },
+        {
+          "name": "CK_INC_BIM_OBJETIVO",
+          "columns": [
+            "ROL",
+            "ID_INCIDENTE",
+            "ID_BAJA"
+          ],
+          "expression": "(ROL = 'AFECTADO' AND ID_INCIDENTE IS NOT NULL AND ID_BAJA IS NULL) OR (ROL = 'COMPONENTE' AND ID_BAJA IS NOT NULL AND ID_INCIDENTE IS NULL)",
+          "description": "El rol determina la única referencia informada: incidencia para un afectado y baja para un componente."
+        },
+        {
+          "name": "CK_INC_BIM_AFECTADO",
+          "columns": [
+            "ROL",
+            "CANT_AFECTADA",
+            "REQUIERE_REPOSICION",
+            "FUENTE_EVALUACION",
+            "POSICION",
+            "FEC_RESOLUCION",
+            "RESOLUCION"
+          ],
+          "expression": "ROL <> 'AFECTADO' OR (CANT_AFECTADA IS NOT NULL AND REQUIERE_REPOSICION IS NOT NULL AND FUENTE_EVALUACION IS NOT NULL AND POSICION IS NULL AND FEC_RESOLUCION IS NULL AND RESOLUCION IS NULL)",
+          "description": "Un afectado exige su evaluación individual y no lleva datos de revisión de componente."
+        },
+        {
+          "name": "CK_INC_BIM_COMPONENTE",
+          "columns": [
+            "ROL",
+            "CANT_AFECTADA",
+            "REQUIERE_REPOSICION",
+            "FUENTE_EVALUACION",
+            "ID_CONDICION"
+          ],
+          "expression": "ROL <> 'COMPONENTE' OR (CANT_AFECTADA IS NULL AND REQUIERE_REPOSICION IS NULL AND FUENTE_EVALUACION IS NULL AND ID_CONDICION IS NULL)",
+          "description": "Un componente de baja no lleva evaluación de incidencia."
+        },
+        {
+          "name": "CK_INC_BIM_REQUIERE_REPOSICION",
+          "columns": [
+            "REQUIERE_REPOSICION"
+          ],
+          "expression": "REQUIERE_REPOSICION IN (0, 1)",
+          "description": "Indicador binario."
+        },
+        {
+          "name": "CK_INC_BIM_CANT_AFECTADA",
+          "columns": [
+            "CANT_AFECTADA"
+          ],
+          "expression": "CANT_AFECTADA > 0",
+          "description": "El valor informado debe ser positivo."
+        },
+        {
+          "name": "CK_INC_BIM_FUENTE_EVALUACION",
+          "columns": [
+            "FUENTE_EVALUACION"
+          ],
+          "expression": "FUENTE_EVALUACION IN ('INDIVIDUAL', 'HISTORICA')",
+          "description": "Valores admitidos para fuente_evaluacion."
+        },
+        {
+          "name": "CK_INC_BIM_RESOLUCION",
           "columns": [
             "RESOLUCION"
           ],
@@ -5290,240 +5320,61 @@
       ],
       "indexes": [
         {
-          "name": "IX_INC_BBI_BIE_BIE",
+          "name": "IX_INC_BIM_INC_PAR",
           "columns": [
+            "ID_INCIDENTE",
             "ID_BIEN"
           ],
-          "description": "Cobertura de FK_INC_BBI_BIE_BIE.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
-      "name": "SGR_REPOSICION",
-      "alias": "INC_REP",
-      "module": "incidencias",
-      "label": "Reposición",
-      "description": "Reposición de un bien dado de baja mediante el alta de su reemplazo.",
-      "executive": true,
-      "sources": [
-        "eventos",
-        "bienAccion",
-        "acciones",
-        "spec016"
-      ],
-      "columns": [
-        {
-          "name": "FEC_REPOSICION",
-          "type": "DATE",
-          "description": "Fecha de reposición.",
-          "nullable": false,
-          "granularity": "DIA"
-        },
-        {
-          "name": "DETALLE",
-          "type": "VARCHAR2(1000 CHAR)",
-          "description": "Detalle conservado del alta por reposición.",
-          "nullable": true,
-          "nullableReason": "Dato complementario sin informar."
-        },
-        {
-          "name": "ID_BAJA",
-          "type": "NUMBER(38,0)",
-          "description": "Baja patrimonial de origen.",
-          "nullable": false
-        },
-        {
-          "name": "ID_NUEVO_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Bien de reemplazo creado en el mismo acto.",
-          "nullable": false
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_INC_REP_INC_BAJ",
-          "columns": [
-            "ID_BAJA"
-          ],
-          "references": {
-            "table": "SGR_BAJA",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Baja patrimonial de origen",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": 1
-            }
-          },
-          "cardinalityScope": "VIGENTE",
-          "executive": true
-        },
-        {
-          "name": "FK_INC_REP_BIEN_NUE",
-          "columns": [
-            "ID_NUEVO_BIEN"
-          ],
-          "references": {
-            "table": "SGR_BIEN",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Bien de reemplazo creado en el mismo acto",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": 1
-            }
-          },
-          "executive": true
-        }
-      ],
-      "uniqueKeys": [
-        {
-          "name": "UK_INC_REP_BIEN_NUE",
-          "columns": [
-            "ID_NUEVO_BIEN"
-          ],
-          "description": "Un bien de reemplazo nace de una sola reposición."
-        }
-      ],
-      "checks": [],
-      "indexes": [
-        {
-          "name": "IX_INC_REP_BAJA",
-          "columns": [
-            "ID_BAJA"
-          ],
-          "description": "Una reposición vigente por baja.",
+          "description": "Un afectado vigente por bien e incidencia. Permite corregir la selección con trazabilidad.",
           "kind": "uniqueFunctional",
-          "predicate": "ESTADO = 1 AND ELIMINADO = 0"
+          "predicate": "ESTADO = 1 AND ELIMINADO = 0",
+          "whenNotNull": [
+            "ID_INCIDENTE"
+          ]
         },
         {
-          "name": "IX_INC_REP_INC_BAJ",
+          "name": "IX_INC_BIM_BAJ_PAR",
+          "columns": [
+            "ID_BAJA",
+            "ID_BIEN"
+          ],
+          "description": "Un componente vigente por instantánea de baja.",
+          "kind": "uniqueFunctional",
+          "predicate": "ESTADO = 1 AND ELIMINADO = 0",
+          "whenNotNull": [
+            "ID_BAJA"
+          ]
+        },
+        {
+          "name": "IX_INC_BIM_INC_INC",
+          "columns": [
+            "ID_INCIDENTE"
+          ],
+          "description": "Cobertura de FK_INC_BIM_INC_INC.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_INC_BIM_INC_BAJ",
           "columns": [
             "ID_BAJA"
           ],
-          "description": "Cobertura de FK_INC_REP_INC_BAJ.",
+          "description": "Cobertura de FK_INC_BIM_INC_BAJ.",
           "kind": "btree"
-        }
-      ]
-    },
-    {
-      "name": "SGR_REPOSICION_BIEN",
-      "alias": "INC_RBI",
-      "module": "incidencias",
-      "label": "Componente reasignado",
-      "description": "Componente que pasó del principal dado de baja al bien de reemplazo.",
-      "executive": false,
-      "junction": [
-        "ID_REPOSICION",
-        "ID_BIEN"
-      ],
-      "sources": [
-        "bienAccion",
-        "acciones",
-        "spec016"
-      ],
-      "columns": [
-        {
-          "name": "POSICION",
-          "type": "VARCHAR2(180 CHAR)",
-          "description": "Posición conservada durante la reasignación.",
-          "nullable": true,
-          "nullableReason": "Posición sin informar."
         },
         {
-          "name": "ID_REPOSICION",
-          "type": "NUMBER(38,0)",
-          "description": "Reposición que reasignó el componente.",
-          "nullable": false
-        },
-        {
-          "name": "ID_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Componente reasignado.",
-          "nullable": false
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_INC_RBI_INC_REP",
-          "columns": [
-            "ID_REPOSICION"
-          ],
-          "references": {
-            "table": "SGR_REPOSICION",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Reposición que reasignó el componente",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        },
-        {
-          "name": "FK_INC_RBI_BIE_BIE",
+          "name": "IX_INC_BIM_BIE_BIE",
           "columns": [
             "ID_BIEN"
           ],
-          "references": {
-            "table": "SGR_BIEN",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Componente reasignado",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        }
-      ],
-      "uniqueKeys": [
+          "description": "Cobertura de FK_INC_BIM_BIE_BIE.",
+          "kind": "btree"
+        },
         {
-          "name": "UK_INC_RBI_PAR",
+          "name": "IX_INC_BIM_CAT_COND",
           "columns": [
-            "ID_REPOSICION",
-            "ID_BIEN"
+            "ID_CONDICION"
           ],
-          "description": "Una reasignación por componente y reposición."
-        }
-      ],
-      "checks": [],
-      "indexes": [
-        {
-          "name": "IX_INC_RBI_BIE_BIE",
-          "columns": [
-            "ID_BIEN"
-          ],
-          "description": "Cobertura de FK_INC_RBI_BIE_BIE.",
+          "description": "Cobertura de FK_INC_BIM_CAT_COND.",
           "kind": "btree"
         }
       ]
@@ -8744,7 +8595,7 @@
       ],
       "tables": [
         "SGR_INCIDENTE",
-        "SGR_INCIDENTE_BIEN"
+        "SGR_BIEN_IMPLICADO"
       ]
     },
     {
@@ -8763,7 +8614,7 @@
       ],
       "tables": [
         "SGR_INCIDENTE",
-        "SGR_INCIDENTE_BIEN"
+        "SGR_BIEN_IMPLICADO"
       ]
     },
     {
@@ -8798,7 +8649,7 @@
       ],
       "tables": [
         "SGR_BAJA",
-        "SGR_BAJA_BIEN",
+        "SGR_BIEN_IMPLICADO",
         "SGR_BIEN"
       ]
     },
@@ -8808,7 +8659,7 @@
       "status": "OBSERVADO",
       "enforcement": "TRANSACCION_FUTURA",
       "title": "Reposición y reversión",
-      "description": "Reposición exige baja vigente y fecha no anterior a la baja. El reemplazo conserva tipo, ubicación y cantidad del bien dado de baja; reasignar únicamente los componentes elegidos. Ejecutar el alta, el vínculo y las reasignaciones en una transacción. Revertir primero la reposición, si el reemplazo no tiene hechos o componentes posteriores que lo impidan; anular el reemplazo y devolver los componentes. Después puede revertirse la baja.",
+      "description": "Reposición exige baja vigente y fecha no anterior a la baja. El reemplazo conserva tipo, ubicación y cantidad del bien dado de baja; reasignar únicamente los componentes elegidos. Ejecutar en una transacción el alta del reemplazo, su registro en la baja y la resolución REPOSICION de los componentes reasignados. Revertir primero la reposición, si el reemplazo no tiene hechos o componentes posteriores que lo impidan: anular el reemplazo, limpiar los datos de reposición de la baja y devolver los componentes como pendientes de revisión. Después puede revertirse la baja.",
       "sources": [
         "acciones",
         "bienAccion",
@@ -8816,9 +8667,7 @@
       ],
       "tables": [
         "SGR_BAJA",
-        "SGR_BAJA_BIEN",
-        "SGR_REPOSICION",
-        "SGR_REPOSICION_BIEN",
+        "SGR_BIEN_IMPLICADO",
         "SGR_BIEN"
       ]
     },
@@ -8855,8 +8704,8 @@
       ],
       "tables": [
         "SGR_BIEN",
-        "SGR_INCIDENTE_BIEN",
-        "SGR_REPOSICION",
+        "SGR_BIEN_IMPLICADO",
+        "SGR_BAJA",
         "SGR_PRECIO"
       ]
     },
@@ -8875,7 +8724,7 @@
       ],
       "tables": [
         "SGR_BIEN",
-        "SGR_INCIDENTE_BIEN",
+        "SGR_BIEN_IMPLICADO",
         "SGR_BAJA",
         "SGR_PRECIO"
       ]
@@ -9413,12 +9262,9 @@
       ],
       "tables": [
         "SGR_INCIDENTE",
-        "SGR_INCIDENTE_BIEN",
+        "SGR_BIEN_IMPLICADO",
         "SGR_TIPO_INCIDENCIA",
-        "SGR_BAJA",
-        "SGR_BAJA_BIEN",
-        "SGR_REPOSICION",
-        "SGR_REPOSICION_BIEN"
+        "SGR_BAJA"
       ],
       "description": "El visor general consulta hechos; alta, correcciones y reversión se ofrecen en el contexto de origen.",
       "mode": "PERSISTE_Y_DERIVA"
@@ -9437,9 +9283,8 @@
       ],
       "tables": [
         "SGR_BIEN",
-        "SGR_INCIDENTE_BIEN",
+        "SGR_BIEN_IMPLICADO",
         "SGR_BAJA",
-        "SGR_REPOSICION",
         "SGR_NOVEDAD",
         "SGR_ATENCION",
         "SGR_PRECIO"
