@@ -197,11 +197,13 @@ export function validateModel(model) {
         table.name + ' requiere dos FK reconocibles para la asociación.')
     }
     if (table.catalogValues) {
-      unique(table.catalogValues.map(value => value.CODIGO), 'El catálogo ' + table.name)
-      report(table.uniqueKeys.some(key => key.columns.length === 1 && key.columns[0] === 'CODIGO'),
-        table.name + ' requiere unicidad histórica de CODIGO.')
+      // SPEC 029: un catálogo con DOMINIO reúne varias listas y su código es único dentro de cada una.
+      const codeKey = columns.has('DOMINIO') ? ['DOMINIO', 'CODIGO'] : ['CODIGO']
+      unique(table.catalogValues.map(value => codeKey.map(name => value[name]).join(':')), 'El catálogo ' + table.name)
+      report(table.uniqueKeys.some(key => key.columns.join(',') === codeKey.join(',')),
+        table.name + ' requiere unicidad histórica de ' + codeKey.join(' y ') + '.')
       for (const entry of table.catalogValues) {
-        report(entry.CODIGO?.trim() && entry.NOMBRE?.trim() && Object.keys(entry).every(name => columns.has(name)),
+        report(codeKey.every(name => entry[name]?.trim()) && entry.NOMBRE?.trim() && Object.keys(entry).every(name => columns.has(name)),
           table.name + ' contiene un valor de catálogo inválido.')
       }
     }

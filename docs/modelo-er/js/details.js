@@ -149,7 +149,8 @@ function trace(model, table) {
     result.append(collapsible('Reglas vinculadas (' + rules.length + ')', list('source-list', entries)))
   }
   if (table.catalogValues) {
-    const entries = table.catalogValues.map(value => el('div', {}, value.NOMBRE, el('code', { text: value.CODIGO })))
+    // SPEC 029: en el catálogo único, el dominio distingue códigos repetidos entre listas.
+    const entries = table.catalogValues.map(value => el('div', {}, value.NOMBRE, el('code', { text: value.DOMINIO ? value.DOMINIO + ' · ' + value.CODIGO : value.CODIGO })))
     result.append(collapsible('Valores de catálogo (' + entries.length + ')', list('source-list', entries)))
   }
   return result

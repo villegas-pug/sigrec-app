@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "4.0.0",
+  "schemaVersion": "5.0.0",
   "title": "Modelo de datos SIGREC",
   "description": "Modelo relacional de los recursos y la operación de los Centros de Acogida Residencial de la USPNNA.",
   "platform": {
@@ -18,7 +18,7 @@
       "id": "centros",
       "label": "Centros e infraestructura",
       "color": "teal",
-      "summary": "Ficha del centro, ambientes, evidencia fotográfica y controles preventivos."
+      "summary": "Ficha del centro, ambientes, evaluación de elementos, intervenciones, evidencia fotográfica y catálogo de valores compartido."
     },
     {
       "id": "inventario",
@@ -30,13 +30,13 @@
       "id": "incidencias",
       "label": "Incidencias y patrimonio",
       "color": "orange",
-      "summary": "Afectados, baja patrimonial y reposición."
+      "summary": "Incidencias y novedades con su atención, afectados, baja patrimonial y reposición."
     },
     {
       "id": "planificacion",
       "label": "Necesidades y presupuesto",
       "color": "purple",
-      "summary": "Precios referenciales y cálculo de necesidades de renovación y reposición."
+      "summary": "Precios referenciales, mantenimiento preventivo y cálculo de necesidades de renovación y reposición."
     },
     {
       "id": "servicios",
@@ -810,118 +810,217 @@
   ],
   "tables": [
     {
-      "name": "SGR_CONDICION",
-      "alias": "CAT_COND",
+      "name": "SGR_CATALOGO",
+      "alias": "CAT_CAT",
       "module": "centros",
-      "label": "Condiciones físicas",
-      "description": "Condición general o por elemento y condición de bienes.",
+      "label": "Catálogo de valores",
+      "description": "Valores de las listas de dominio compartidas: condición física, elementos base, tipos de incidencia, de mantenimiento y de servicio, y categorías de bien. DOMINIO identifica la lista y CODIGO es estable dentro de ella.",
       "executive": false,
       "catalogValues": [
         {
+          "DOMINIO": "CONDICION",
           "CODIGO": "BUENO",
           "NOMBRE": "Bueno"
         },
         {
+          "DOMINIO": "CONDICION",
           "CODIGO": "REGULAR",
           "NOMBRE": "Regular"
         },
         {
+          "DOMINIO": "CONDICION",
           "CODIGO": "MALO",
           "NOMBRE": "Malo"
         },
         {
+          "DOMINIO": "CONDICION",
           "CODIGO": "INSERVIBLE",
           "NOMBRE": "Inservible"
-        }
-      ],
-      "sources": [
-        "catalogos"
-      ],
-      "columns": [
-        {
-          "name": "CODIGO",
-          "type": "VARCHAR2(40 CHAR)",
-          "description": "Código estable de condiciones físicas.",
-          "nullable": false
         },
         {
-          "name": "NOMBRE",
-          "type": "VARCHAR2(120 CHAR)",
-          "description": "Denominación visible.",
-          "nullable": false
-        },
-        {
-          "name": "DESCRIPCION",
-          "type": "VARCHAR2(500 CHAR)",
-          "description": "Definición funcional complementaria.",
-          "nullable": true,
-          "nullableReason": "Sin detalle adicional."
-        }
-      ],
-      "foreignKeys": [],
-      "uniqueKeys": [
-        {
-          "name": "UK_CAT_COND_CODIGO",
-          "columns": [
-            "CODIGO"
-          ],
-          "description": "Código estable, reservado aun cuando el catálogo se inactive."
-        }
-      ],
-      "checks": [],
-      "indexes": []
-    },
-    {
-      "name": "SGR_ELEMENTO_BASE",
-      "alias": "CAT_ELE",
-      "module": "centros",
-      "label": "Elementos de infraestructura",
-      "description": "Elementos base de la evaluación de centros, módulos y ambientes.",
-      "executive": false,
-      "catalogValues": [
-        {
+          "DOMINIO": "ELEMENTO_BASE",
           "CODIGO": "PUERTAS",
           "NOMBRE": "Puertas"
         },
         {
+          "DOMINIO": "ELEMENTO_BASE",
           "CODIGO": "VENTANAS",
           "NOMBRE": "Ventanas"
         },
         {
+          "DOMINIO": "ELEMENTO_BASE",
           "CODIGO": "PINTURA",
           "NOMBRE": "Pintura"
         },
         {
+          "DOMINIO": "ELEMENTO_BASE",
           "CODIGO": "PISOS",
           "NOMBRE": "Pisos"
         },
         {
+          "DOMINIO": "ELEMENTO_BASE",
           "CODIGO": "TECHO",
           "NOMBRE": "Techo"
         },
         {
+          "DOMINIO": "ELEMENTO_BASE",
           "CODIGO": "ESTRUCTURA",
           "NOMBRE": "Estructura"
         },
         {
+          "DOMINIO": "ELEMENTO_BASE",
           "CODIGO": "ELECTRICAS",
           "NOMBRE": "Instalaciones eléctricas"
         },
         {
+          "DOMINIO": "ELEMENTO_BASE",
           "CODIGO": "SANITARIAS",
           "NOMBRE": "Instalaciones sanitarias"
+        },
+        {
+          "DOMINIO": "TIPO_INCIDENCIA",
+          "CODIGO": "DANO",
+          "NOMBRE": "Daño"
+        },
+        {
+          "DOMINIO": "TIPO_INCIDENCIA",
+          "CODIGO": "ROBO",
+          "NOMBRE": "Robo"
+        },
+        {
+          "DOMINIO": "TIPO_INCIDENCIA",
+          "CODIGO": "INCENDIO",
+          "NOMBRE": "Incendio"
+        },
+        {
+          "DOMINIO": "TIPO_INCIDENCIA",
+          "CODIGO": "HUMEDAD",
+          "NOMBRE": "Humedad o filtración"
+        },
+        {
+          "DOMINIO": "TIPO_INCIDENCIA",
+          "CODIGO": "INSTALACIONES",
+          "NOMBRE": "Instalaciones eléctricas o sanitarias"
+        },
+        {
+          "DOMINIO": "TIPO_INCIDENCIA",
+          "CODIGO": "ESTRUCTURA",
+          "NOMBRE": "Estructura"
+        },
+        {
+          "DOMINIO": "TIPO_INCIDENCIA",
+          "CODIGO": "OTRO",
+          "NOMBRE": "Otro"
+        },
+        {
+          "DOMINIO": "TIPO_MANTENIMIENTO",
+          "CODIGO": "FUMIGACION",
+          "NOMBRE": "Fumigación",
+          "OBJETIVO": "CENTRO",
+          "CANT_MES_SUGERIDO": 6
+        },
+        {
+          "DOMINIO": "TIPO_MANTENIMIENTO",
+          "CODIGO": "RECARGA_EXTINTOR",
+          "NOMBRE": "Recarga de extintor",
+          "OBJETIVO": "BIEN",
+          "CANT_MES_SUGERIDO": 12
+        },
+        {
+          "DOMINIO": "TIPO_MANTENIMIENTO",
+          "CODIGO": "MANTENIMIENTO_EQUIPO",
+          "NOMBRE": "Mantenimiento de equipo",
+          "OBJETIVO": "BIEN",
+          "CANT_MES_SUGERIDO": 12
+        },
+        {
+          "DOMINIO": "TIPO_MANTENIMIENTO",
+          "CODIGO": "MANTENIMIENTO_VEHICULO",
+          "NOMBRE": "Mantenimiento de vehículo",
+          "OBJETIVO": "VEHICULO",
+          "CANT_MES_SUGERIDO": 6
+        },
+        {
+          "DOMINIO": "CATEGORIA_BIEN",
+          "CODIGO": "MOBILIARIO",
+          "NOMBRE": "Mobiliario"
+        },
+        {
+          "DOMINIO": "CATEGORIA_BIEN",
+          "CODIGO": "EQUIPO",
+          "NOMBRE": "Equipo"
+        },
+        {
+          "DOMINIO": "CATEGORIA_BIEN",
+          "CODIGO": "FUNGIBLE",
+          "NOMBRE": "Fungible"
+        },
+        {
+          "DOMINIO": "TIPO_SERVICIO",
+          "CODIGO": "LUZ",
+          "NOMBRE": "Luz"
+        },
+        {
+          "DOMINIO": "TIPO_SERVICIO",
+          "CODIGO": "AGUA",
+          "NOMBRE": "Agua"
+        },
+        {
+          "DOMINIO": "TIPO_SERVICIO",
+          "CODIGO": "INTERNET",
+          "NOMBRE": "Internet"
+        },
+        {
+          "DOMINIO": "TIPO_SERVICIO",
+          "CODIGO": "CABLE",
+          "NOMBRE": "Cable"
+        },
+        {
+          "DOMINIO": "TIPO_SERVICIO",
+          "CODIGO": "GAS_NATURAL",
+          "NOMBRE": "Gas natural"
+        },
+        {
+          "DOMINIO": "TIPO_SERVICIO",
+          "CODIGO": "GAS_BALON",
+          "NOMBRE": "Gas balón"
+        },
+        {
+          "DOMINIO": "TIPO_SERVICIO",
+          "CODIGO": "EXTINTORES",
+          "NOMBRE": "Extintores"
+        },
+        {
+          "DOMINIO": "TIPO_SERVICIO",
+          "CODIGO": "FUMIGACION",
+          "NOMBRE": "Fumigación"
+        },
+        {
+          "DOMINIO": "TIPO_SERVICIO",
+          "CODIGO": "ARBITRIOS",
+          "NOMBRE": "Arbitrios"
         }
       ],
       "sources": [
         "catalogos",
         "elementos",
-        "spec022"
+        "spec022",
+        "spec016",
+        "spec017",
+        "spec021",
+        "spec024"
       ],
       "columns": [
         {
+          "name": "DOMINIO",
+          "type": "VARCHAR2(30 CHAR)",
+          "description": "Lista de dominio a la que pertenece el valor.",
+          "nullable": false
+        },
+        {
           "name": "CODIGO",
           "type": "VARCHAR2(40 CHAR)",
-          "description": "Código estable de elementos de infraestructura.",
+          "description": "Código estable del valor dentro de su dominio.",
           "nullable": false
         },
         {
@@ -936,19 +1035,69 @@
           "description": "Definición funcional complementaria.",
           "nullable": true,
           "nullableReason": "Sin detalle adicional."
+        },
+        {
+          "name": "OBJETIVO",
+          "type": "VARCHAR2(8 CHAR)",
+          "description": "Clase de registro que admite el tipo de mantenimiento.",
+          "nullable": true,
+          "nullableReason": "Valor de un dominio distinto de TIPO_MANTENIMIENTO."
+        },
+        {
+          "name": "CANT_MES_SUGERIDO",
+          "type": "NUMBER(3,0)",
+          "description": "Meses sugeridos hasta el siguiente control.",
+          "nullable": true,
+          "nullableReason": "Valor de un dominio distinto de TIPO_MANTENIMIENTO."
         }
       ],
       "foreignKeys": [],
       "uniqueKeys": [
         {
-          "name": "UK_CAT_ELE_CODIGO",
+          "name": "UK_CAT_CAT_CODIGO",
           "columns": [
+            "DOMINIO",
             "CODIGO"
           ],
-          "description": "Código estable, reservado aun cuando el catálogo se inactive."
+          "description": "Código estable dentro de su dominio, reservado aun cuando el valor se inactive."
         }
       ],
-      "checks": [],
+      "checks": [
+        {
+          "name": "CK_CAT_CAT_DOMINIO",
+          "columns": [
+            "DOMINIO"
+          ],
+          "expression": "DOMINIO IN ('CONDICION', 'ELEMENTO_BASE', 'TIPO_INCIDENCIA', 'TIPO_MANTENIMIENTO', 'CATEGORIA_BIEN', 'TIPO_SERVICIO')",
+          "description": "Listas de dominio admitidas."
+        },
+        {
+          "name": "CK_CAT_CAT_MANTENIMIENTO",
+          "columns": [
+            "DOMINIO",
+            "OBJETIVO",
+            "CANT_MES_SUGERIDO"
+          ],
+          "expression": "(DOMINIO = 'TIPO_MANTENIMIENTO' AND OBJETIVO IS NOT NULL AND CANT_MES_SUGERIDO IS NOT NULL) OR (DOMINIO <> 'TIPO_MANTENIMIENTO' AND OBJETIVO IS NULL AND CANT_MES_SUGERIDO IS NULL)",
+          "description": "Objetivo y meses sugeridos solo se informan, y son obligatorios, en los tipos de mantenimiento."
+        },
+        {
+          "name": "CK_CAT_CAT_OBJETIVO",
+          "columns": [
+            "OBJETIVO"
+          ],
+          "expression": "OBJETIVO IN ('CENTRO', 'BIEN', 'VEHICULO')",
+          "description": "Valores admitidos para objetivo."
+        },
+        {
+          "name": "CK_CAT_CAT_CANT_MES_SUGERIDO",
+          "columns": [
+            "CANT_MES_SUGERIDO"
+          ],
+          "expression": "CANT_MES_SUGERIDO > 0",
+          "description": "El valor informado debe ser positivo."
+        }
+      ],
       "indexes": []
     },
     {
@@ -1098,7 +1247,7 @@
             "ID_CONDICION"
           ],
           "references": {
-            "table": "SGR_CONDICION",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -1300,7 +1449,7 @@
             "ID_CONDICION"
           ],
           "references": {
-            "table": "SGR_CONDICION",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -1510,7 +1659,7 @@
             "ID_CONDICION"
           ],
           "references": {
-            "table": "SGR_CONDICION",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -1731,7 +1880,7 @@
             "ID_ELEMENTO_BASE"
           ],
           "references": {
-            "table": "SGR_ELEMENTO_BASE",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -1754,7 +1903,7 @@
             "ID_CONDICION"
           ],
           "references": {
-            "table": "SGR_CONDICION",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -2092,166 +2241,6 @@
       ]
     },
     {
-      "name": "SGR_TIPO_INCIDENCIA",
-      "alias": "CAT_TIN",
-      "module": "centros",
-      "label": "Tipos de incidencia",
-      "description": "Clasificación compartida por incidencias y novedades. La clase y el origen del hecho determinan los códigos seleccionables.",
-      "executive": false,
-      "catalogValues": [
-        {
-          "CODIGO": "DANO",
-          "NOMBRE": "Daño"
-        },
-        {
-          "CODIGO": "ROBO",
-          "NOMBRE": "Robo"
-        },
-        {
-          "CODIGO": "INCENDIO",
-          "NOMBRE": "Incendio"
-        },
-        {
-          "CODIGO": "HUMEDAD",
-          "NOMBRE": "Humedad o filtración"
-        },
-        {
-          "CODIGO": "INSTALACIONES",
-          "NOMBRE": "Instalaciones eléctricas o sanitarias"
-        },
-        {
-          "CODIGO": "ESTRUCTURA",
-          "NOMBRE": "Estructura"
-        },
-        {
-          "CODIGO": "OTRO",
-          "NOMBRE": "Otro"
-        }
-      ],
-      "sources": [
-        "catalogos",
-        "spec016",
-        "spec017"
-      ],
-      "columns": [
-        {
-          "name": "CODIGO",
-          "type": "VARCHAR2(40 CHAR)",
-          "description": "Código estable de tipos de incidencia.",
-          "nullable": false
-        },
-        {
-          "name": "NOMBRE",
-          "type": "VARCHAR2(120 CHAR)",
-          "description": "Denominación visible.",
-          "nullable": false
-        },
-        {
-          "name": "DESCRIPCION",
-          "type": "VARCHAR2(500 CHAR)",
-          "description": "Definición funcional complementaria.",
-          "nullable": true,
-          "nullableReason": "Sin detalle adicional."
-        }
-      ],
-      "foreignKeys": [],
-      "uniqueKeys": [
-        {
-          "name": "UK_CAT_TIN_CODIGO",
-          "columns": [
-            "CODIGO"
-          ],
-          "description": "Código estable, reservado aun cuando el catálogo se inactive."
-        }
-      ],
-      "checks": [],
-      "indexes": []
-    },
-    {
-      "name": "SGR_ATENCION",
-      "alias": "CTR_ATE",
-      "module": "centros",
-      "label": "Atención de infraestructura",
-      "description": "Cierre informado de una novedad o de la evaluación de infraestructura de una incidencia.",
-      "executive": false,
-      "sources": [
-        "atencionForm",
-        "gestionHecho",
-        "acciones",
-        "spec016",
-        "spec028"
-      ],
-      "columns": [
-        {
-          "name": "FEC_ATENCION",
-          "type": "DATE",
-          "description": "Fecha de atención informada.",
-          "nullable": false,
-          "granularity": "DIA"
-        },
-        {
-          "name": "DETALLE",
-          "type": "VARCHAR2(1000 CHAR)",
-          "description": "Cómo se atendió la infraestructura.",
-          "nullable": true,
-          "nullableReason": "Dato complementario sin informar."
-        },
-        {
-          "name": "ID_INCIDENTE",
-          "type": "NUMBER(38,0)",
-          "description": "Incidencia o novedad objeto de la atención.",
-          "nullable": false
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_CTR_ATE_INC_INC",
-          "columns": [
-            "ID_INCIDENTE"
-          ],
-          "references": {
-            "table": "SGR_INCIDENTE",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Incidencia o novedad atendida",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": 1
-            }
-          },
-          "cardinalityScope": "VIGENTE"
-        }
-      ],
-      "uniqueKeys": [],
-      "checks": [],
-      "indexes": [
-        {
-          "name": "IX_CTR_ATE_INC_VIG",
-          "columns": [
-            "ID_INCIDENTE"
-          ],
-          "description": "Una atención vigente por incidencia o novedad.",
-          "kind": "uniqueFunctional",
-          "predicate": "ESTADO = 1 AND ELIMINADO = 0"
-        },
-        {
-          "name": "IX_CTR_ATE_INC_INC",
-          "columns": [
-            "ID_INCIDENTE"
-          ],
-          "description": "Cobertura de FK_CTR_ATE_INC_INC.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
       "name": "SGR_INTERVENCION",
       "alias": "CTR_INT",
       "module": "centros",
@@ -2348,397 +2337,6 @@
       ]
     },
     {
-      "name": "SGR_TIPO_MANTENIMIENTO",
-      "alias": "CAT_MAN",
-      "module": "centros",
-      "label": "Tipos de mantenimiento",
-      "description": "Tipos de control preventivo y periodicidad sugerida.",
-      "executive": false,
-      "catalogValues": [
-        {
-          "CODIGO": "FUMIGACION",
-          "NOMBRE": "Fumigación",
-          "OBJETIVO": "CENTRO",
-          "CANT_MES_SUGERIDO": 6
-        },
-        {
-          "CODIGO": "RECARGA_EXTINTOR",
-          "NOMBRE": "Recarga de extintor",
-          "OBJETIVO": "BIEN",
-          "CANT_MES_SUGERIDO": 12
-        },
-        {
-          "CODIGO": "MANTENIMIENTO_EQUIPO",
-          "NOMBRE": "Mantenimiento de equipo",
-          "OBJETIVO": "BIEN",
-          "CANT_MES_SUGERIDO": 12
-        },
-        {
-          "CODIGO": "MANTENIMIENTO_VEHICULO",
-          "NOMBRE": "Mantenimiento de vehículo",
-          "OBJETIVO": "VEHICULO",
-          "CANT_MES_SUGERIDO": 6
-        }
-      ],
-      "sources": [
-        "catalogos"
-      ],
-      "columns": [
-        {
-          "name": "CODIGO",
-          "type": "VARCHAR2(40 CHAR)",
-          "description": "Código estable de tipos de mantenimiento.",
-          "nullable": false
-        },
-        {
-          "name": "NOMBRE",
-          "type": "VARCHAR2(120 CHAR)",
-          "description": "Denominación visible.",
-          "nullable": false
-        },
-        {
-          "name": "DESCRIPCION",
-          "type": "VARCHAR2(500 CHAR)",
-          "description": "Definición funcional complementaria.",
-          "nullable": true,
-          "nullableReason": "Sin detalle adicional."
-        },
-        {
-          "name": "OBJETIVO",
-          "type": "VARCHAR2(8 CHAR)",
-          "description": "Clase de registro que admite el tipo de mantenimiento.",
-          "nullable": false
-        },
-        {
-          "name": "CANT_MES_SUGERIDO",
-          "type": "NUMBER(3,0)",
-          "description": "Meses sugeridos hasta el siguiente control.",
-          "nullable": false
-        }
-      ],
-      "foreignKeys": [],
-      "uniqueKeys": [
-        {
-          "name": "UK_CAT_MAN_CODIGO",
-          "columns": [
-            "CODIGO"
-          ],
-          "description": "Código estable, reservado aun cuando el catálogo se inactive."
-        }
-      ],
-      "checks": [
-        {
-          "name": "CK_CAT_MAN_OBJETIVO",
-          "columns": [
-            "OBJETIVO"
-          ],
-          "expression": "OBJETIVO IN ('CENTRO', 'BIEN', 'VEHICULO')",
-          "description": "Valores admitidos para objetivo."
-        },
-        {
-          "name": "CK_CAT_MAN_CANT_MES_SUGERIDO",
-          "columns": [
-            "CANT_MES_SUGERIDO"
-          ],
-          "expression": "CANT_MES_SUGERIDO > 0",
-          "description": "El valor informado debe ser positivo."
-        }
-      ],
-      "indexes": []
-    },
-    {
-      "name": "SGR_MANTENIMIENTO",
-      "alias": "CTR_MAN",
-      "module": "centros",
-      "label": "Mantenimiento preventivo",
-      "description": "Intervención física sobre el centro, un bien o un vehículo, con programación opcional del siguiente control.",
-      "executive": true,
-      "sources": [
-        "mantenimientos",
-        "mantenimientoForm",
-        "mantServicio",
-        "acciones",
-        "spec010"
-      ],
-      "columns": [
-        {
-          "name": "FEC_MANTENIMIENTO",
-          "type": "DATE",
-          "description": "Fecha en que se hizo el trabajo.",
-          "nullable": false,
-          "granularity": "DIA"
-        },
-        {
-          "name": "FEC_PROXIMO",
-          "type": "DATE",
-          "description": "Fecha informada del siguiente control.",
-          "nullable": true,
-          "nullableReason": "Control sin programación.",
-          "granularity": "DIA"
-        },
-        {
-          "name": "DETALLE",
-          "type": "VARCHAR2(1000 CHAR)",
-          "description": "Descripción del trabajo.",
-          "nullable": true,
-          "nullableReason": "Dato complementario sin informar."
-        },
-        {
-          "name": "MONTO_IMPORTE",
-          "type": "NUMBER(14,2)",
-          "description": "Importe informado del trabajo en soles.",
-          "nullable": true,
-          "nullableReason": "El dato puede ser desconocido o estar pendiente de constatación."
-        },
-        {
-          "name": "ID_TIPO_MANTENIMIENTO",
-          "type": "NUMBER(38,0)",
-          "description": "Clasificación del mantenimiento.",
-          "nullable": false
-        },
-        {
-          "name": "ID_CENTRO",
-          "type": "NUMBER(38,0)",
-          "description": "Centro fumigado.",
-          "nullable": true,
-          "nullableReason": "Trabajo sobre un bien o vehículo."
-        },
-        {
-          "name": "ID_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Equipo o extintor intervenido.",
-          "nullable": true,
-          "nullableReason": "Trabajo sobre un centro o vehículo."
-        },
-        {
-          "name": "ID_VEHICULO",
-          "type": "NUMBER(38,0)",
-          "description": "Vehículo intervenido.",
-          "nullable": true,
-          "nullableReason": "Trabajo sobre un centro o bien."
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_CTR_MAN_CAT_MAN",
-          "columns": [
-            "ID_TIPO_MANTENIMIENTO"
-          ],
-          "references": {
-            "table": "SGR_TIPO_MANTENIMIENTO",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Clasificación del mantenimiento",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        },
-        {
-          "name": "FK_CTR_MAN_CTR_CEN",
-          "columns": [
-            "ID_CENTRO"
-          ],
-          "references": {
-            "table": "SGR_CENTRO",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Centro fumigado",
-          "cardinality": {
-            "from": {
-              "min": 0,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          },
-          "executive": true
-        },
-        {
-          "name": "FK_CTR_MAN_BIE_BIE",
-          "columns": [
-            "ID_BIEN"
-          ],
-          "references": {
-            "table": "SGR_BIEN",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Equipo o extintor intervenido",
-          "cardinality": {
-            "from": {
-              "min": 0,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          },
-          "executive": true
-        },
-        {
-          "name": "FK_CTR_MAN_MOV_VEH",
-          "columns": [
-            "ID_VEHICULO"
-          ],
-          "references": {
-            "table": "SGR_VEHICULO",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Vehículo intervenido",
-          "cardinality": {
-            "from": {
-              "min": 0,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          },
-          "executive": true
-        }
-      ],
-      "uniqueKeys": [],
-      "checks": [
-        {
-          "name": "CK_CTR_MAN_OBJETIVO",
-          "columns": [
-            "ID_CENTRO",
-            "ID_BIEN",
-            "ID_VEHICULO"
-          ],
-          "expression": "CASE WHEN ID_CENTRO IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN ID_BIEN IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN ID_VEHICULO IS NOT NULL THEN 1 ELSE 0 END = 1",
-          "description": "Se informa exactamente una de las referencias alternativas."
-        },
-        {
-          "name": "CK_CTR_MAN_MONTO_IMPORTE",
-          "columns": [
-            "MONTO_IMPORTE"
-          ],
-          "expression": "MONTO_IMPORTE > 0",
-          "description": "El valor informado debe ser positivo."
-        },
-        {
-          "name": "CK_CTR_MAN_PROXIMA",
-          "columns": [
-            "FEC_MANTENIMIENTO",
-            "FEC_PROXIMO"
-          ],
-          "expression": "FEC_PROXIMO >= FEC_MANTENIMIENTO",
-          "description": "La fecha programada no es anterior al trabajo realizado."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "IX_CTR_MAN_CAT_MAN",
-          "columns": [
-            "ID_TIPO_MANTENIMIENTO"
-          ],
-          "description": "Cobertura de FK_CTR_MAN_CAT_MAN.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_CTR_MAN_CTR_CEN",
-          "columns": [
-            "ID_CENTRO"
-          ],
-          "description": "Cobertura de FK_CTR_MAN_CTR_CEN.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_CTR_MAN_BIE_BIE",
-          "columns": [
-            "ID_BIEN"
-          ],
-          "description": "Cobertura de FK_CTR_MAN_BIE_BIE.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_CTR_MAN_MOV_VEH",
-          "columns": [
-            "ID_VEHICULO"
-          ],
-          "description": "Cobertura de FK_CTR_MAN_MOV_VEH.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
-      "name": "SGR_CATEGORIA_BIEN",
-      "alias": "CAT_CAB",
-      "module": "inventario",
-      "label": "Categorías de bien",
-      "description": "Clasificación utilizada para agrupar el inventario.",
-      "executive": false,
-      "catalogValues": [
-        {
-          "CODIGO": "MOBILIARIO",
-          "NOMBRE": "Mobiliario"
-        },
-        {
-          "CODIGO": "EQUIPO",
-          "NOMBRE": "Equipo"
-        },
-        {
-          "CODIGO": "FUNGIBLE",
-          "NOMBRE": "Fungible"
-        }
-      ],
-      "sources": [
-        "catalogos"
-      ],
-      "columns": [
-        {
-          "name": "CODIGO",
-          "type": "VARCHAR2(40 CHAR)",
-          "description": "Código estable de categorías de bien.",
-          "nullable": false
-        },
-        {
-          "name": "NOMBRE",
-          "type": "VARCHAR2(120 CHAR)",
-          "description": "Denominación visible.",
-          "nullable": false
-        },
-        {
-          "name": "DESCRIPCION",
-          "type": "VARCHAR2(500 CHAR)",
-          "description": "Definición funcional complementaria.",
-          "nullable": true,
-          "nullableReason": "Sin detalle adicional."
-        }
-      ],
-      "foreignKeys": [],
-      "uniqueKeys": [
-        {
-          "name": "UK_CAT_CAB_CODIGO",
-          "columns": [
-            "CODIGO"
-          ],
-          "description": "Código estable, reservado aun cuando el catálogo se inactive."
-        }
-      ],
-      "checks": [],
-      "indexes": []
-    },
-    {
       "name": "SGR_TIPO_BIEN",
       "alias": "BIE_TIP",
       "module": "inventario",
@@ -2786,7 +2384,7 @@
             "ID_CATEGORIA_BIEN"
           ],
           "references": {
-            "table": "SGR_CATEGORIA_BIEN",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -3026,7 +2624,7 @@
             "ID_CATEGORIA_BIEN"
           ],
           "references": {
-            "table": "SGR_CATEGORIA_BIEN",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -3049,7 +2647,7 @@
             "ID_CONDICION"
           ],
           "references": {
-            "table": "SGR_CONDICION",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -3354,7 +2952,7 @@
             "ID_CONDICION"
           ],
           "references": {
-            "table": "SGR_CONDICION",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -3701,7 +3299,7 @@
             "ID_ANTERIOR_CONDICION"
           ],
           "references": {
-            "table": "SGR_CONDICION",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -3724,7 +3322,7 @@
             "ID_NUEVA_CONDICION"
           ],
           "references": {
-            "table": "SGR_CONDICION",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -4432,7 +4030,7 @@
             "ID_TIPO_INCIDENCIA"
           ],
           "references": {
-            "table": "SGR_TIPO_INCIDENCIA",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -4682,6 +4280,90 @@
             "ID_PRINCIPAL_BIEN"
           ],
           "description": "Cobertura de FK_INC_INC_BIEN_PAD.",
+          "kind": "btree"
+        }
+      ]
+    },
+    {
+      "name": "SGR_ATENCION",
+      "alias": "CTR_ATE",
+      "module": "incidencias",
+      "label": "Atención de infraestructura",
+      "description": "Cierre informado de una novedad o de la evaluación de infraestructura de una incidencia.",
+      "executive": false,
+      "sources": [
+        "atencionForm",
+        "gestionHecho",
+        "acciones",
+        "spec016",
+        "spec028"
+      ],
+      "columns": [
+        {
+          "name": "FEC_ATENCION",
+          "type": "DATE",
+          "description": "Fecha de atención informada.",
+          "nullable": false,
+          "granularity": "DIA"
+        },
+        {
+          "name": "DETALLE",
+          "type": "VARCHAR2(1000 CHAR)",
+          "description": "Cómo se atendió la infraestructura.",
+          "nullable": true,
+          "nullableReason": "Dato complementario sin informar."
+        },
+        {
+          "name": "ID_INCIDENTE",
+          "type": "NUMBER(38,0)",
+          "description": "Incidencia o novedad objeto de la atención.",
+          "nullable": false
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "FK_CTR_ATE_INC_INC",
+          "columns": [
+            "ID_INCIDENTE"
+          ],
+          "references": {
+            "table": "SGR_INCIDENTE",
+            "columns": [
+              "ID"
+            ]
+          },
+          "role": "Incidencia o novedad atendida",
+          "cardinality": {
+            "from": {
+              "min": 1,
+              "max": 1
+            },
+            "to": {
+              "min": 0,
+              "max": 1
+            }
+          },
+          "cardinalityScope": "VIGENTE"
+        }
+      ],
+      "uniqueKeys": [],
+      "checks": [],
+      "indexes": [
+        {
+          "name": "IX_CTR_ATE_INC_VIG",
+          "columns": [
+            "ID_INCIDENTE"
+          ],
+          "description": "Una atención vigente por incidencia o novedad.",
+          "kind": "uniqueFunctional",
+          "predicate": "ESTADO = 1 AND ELIMINADO = 0"
+        },
+        {
+          "name": "IX_CTR_ATE_INC_INC",
+          "columns": [
+            "ID_INCIDENTE"
+          ],
+          "description": "Cobertura de FK_CTR_ATE_INC_INC.",
           "kind": "btree"
         }
       ]
@@ -5145,7 +4827,7 @@
             "ID_CONDICION"
           ],
           "references": {
-            "table": "SGR_CONDICION",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -5500,88 +5182,238 @@
       ]
     },
     {
-      "name": "SGR_TIPO_SERVICIO",
-      "alias": "CAT_TSE",
-      "module": "servicios",
-      "label": "Tipos de servicio",
-      "description": "Catálogo de los nueve servicios habilitados para registro.",
-      "executive": false,
-      "catalogValues": [
-        {
-          "CODIGO": "LUZ",
-          "NOMBRE": "Luz"
-        },
-        {
-          "CODIGO": "AGUA",
-          "NOMBRE": "Agua"
-        },
-        {
-          "CODIGO": "INTERNET",
-          "NOMBRE": "Internet"
-        },
-        {
-          "CODIGO": "CABLE",
-          "NOMBRE": "Cable"
-        },
-        {
-          "CODIGO": "GAS_NATURAL",
-          "NOMBRE": "Gas natural"
-        },
-        {
-          "CODIGO": "GAS_BALON",
-          "NOMBRE": "Gas balón"
-        },
-        {
-          "CODIGO": "EXTINTORES",
-          "NOMBRE": "Extintores"
-        },
-        {
-          "CODIGO": "FUMIGACION",
-          "NOMBRE": "Fumigación"
-        },
-        {
-          "CODIGO": "ARBITRIOS",
-          "NOMBRE": "Arbitrios"
-        }
-      ],
+      "name": "SGR_MANTENIMIENTO",
+      "alias": "CTR_MAN",
+      "module": "planificacion",
+      "label": "Mantenimiento preventivo",
+      "description": "Intervención física sobre el centro, un bien o un vehículo, con programación opcional del siguiente control.",
+      "executive": true,
       "sources": [
-        "catalogos",
-        "spec021",
-        "spec024"
+        "mantenimientos",
+        "mantenimientoForm",
+        "mantServicio",
+        "acciones",
+        "spec010"
       ],
       "columns": [
         {
-          "name": "CODIGO",
-          "type": "VARCHAR2(40 CHAR)",
-          "description": "Código estable de tipos de servicio.",
-          "nullable": false
+          "name": "FEC_MANTENIMIENTO",
+          "type": "DATE",
+          "description": "Fecha en que se hizo el trabajo.",
+          "nullable": false,
+          "granularity": "DIA"
         },
         {
-          "name": "NOMBRE",
-          "type": "VARCHAR2(120 CHAR)",
-          "description": "Denominación visible.",
-          "nullable": false
-        },
-        {
-          "name": "DESCRIPCION",
-          "type": "VARCHAR2(500 CHAR)",
-          "description": "Definición funcional complementaria.",
+          "name": "FEC_PROXIMO",
+          "type": "DATE",
+          "description": "Fecha informada del siguiente control.",
           "nullable": true,
-          "nullableReason": "Sin detalle adicional."
-        }
-      ],
-      "foreignKeys": [],
-      "uniqueKeys": [
+          "nullableReason": "Control sin programación.",
+          "granularity": "DIA"
+        },
         {
-          "name": "UK_CAT_TSE_CODIGO",
-          "columns": [
-            "CODIGO"
-          ],
-          "description": "Código estable, reservado aun cuando el catálogo se inactive."
+          "name": "DETALLE",
+          "type": "VARCHAR2(1000 CHAR)",
+          "description": "Descripción del trabajo.",
+          "nullable": true,
+          "nullableReason": "Dato complementario sin informar."
+        },
+        {
+          "name": "MONTO_IMPORTE",
+          "type": "NUMBER(14,2)",
+          "description": "Importe informado del trabajo en soles.",
+          "nullable": true,
+          "nullableReason": "El dato puede ser desconocido o estar pendiente de constatación."
+        },
+        {
+          "name": "ID_TIPO_MANTENIMIENTO",
+          "type": "NUMBER(38,0)",
+          "description": "Clasificación del mantenimiento.",
+          "nullable": false
+        },
+        {
+          "name": "ID_CENTRO",
+          "type": "NUMBER(38,0)",
+          "description": "Centro fumigado.",
+          "nullable": true,
+          "nullableReason": "Trabajo sobre un bien o vehículo."
+        },
+        {
+          "name": "ID_BIEN",
+          "type": "NUMBER(38,0)",
+          "description": "Equipo o extintor intervenido.",
+          "nullable": true,
+          "nullableReason": "Trabajo sobre un centro o vehículo."
+        },
+        {
+          "name": "ID_VEHICULO",
+          "type": "NUMBER(38,0)",
+          "description": "Vehículo intervenido.",
+          "nullable": true,
+          "nullableReason": "Trabajo sobre un centro o bien."
         }
       ],
-      "checks": [],
-      "indexes": []
+      "foreignKeys": [
+        {
+          "name": "FK_CTR_MAN_CAT_MAN",
+          "columns": [
+            "ID_TIPO_MANTENIMIENTO"
+          ],
+          "references": {
+            "table": "SGR_CATALOGO",
+            "columns": [
+              "ID"
+            ]
+          },
+          "role": "Clasificación del mantenimiento",
+          "cardinality": {
+            "from": {
+              "min": 1,
+              "max": 1
+            },
+            "to": {
+              "min": 0,
+              "max": "N"
+            }
+          }
+        },
+        {
+          "name": "FK_CTR_MAN_CTR_CEN",
+          "columns": [
+            "ID_CENTRO"
+          ],
+          "references": {
+            "table": "SGR_CENTRO",
+            "columns": [
+              "ID"
+            ]
+          },
+          "role": "Centro fumigado",
+          "cardinality": {
+            "from": {
+              "min": 0,
+              "max": 1
+            },
+            "to": {
+              "min": 0,
+              "max": "N"
+            }
+          },
+          "executive": true
+        },
+        {
+          "name": "FK_CTR_MAN_BIE_BIE",
+          "columns": [
+            "ID_BIEN"
+          ],
+          "references": {
+            "table": "SGR_BIEN",
+            "columns": [
+              "ID"
+            ]
+          },
+          "role": "Equipo o extintor intervenido",
+          "cardinality": {
+            "from": {
+              "min": 0,
+              "max": 1
+            },
+            "to": {
+              "min": 0,
+              "max": "N"
+            }
+          },
+          "executive": true
+        },
+        {
+          "name": "FK_CTR_MAN_MOV_VEH",
+          "columns": [
+            "ID_VEHICULO"
+          ],
+          "references": {
+            "table": "SGR_VEHICULO",
+            "columns": [
+              "ID"
+            ]
+          },
+          "role": "Vehículo intervenido",
+          "cardinality": {
+            "from": {
+              "min": 0,
+              "max": 1
+            },
+            "to": {
+              "min": 0,
+              "max": "N"
+            }
+          },
+          "executive": true
+        }
+      ],
+      "uniqueKeys": [],
+      "checks": [
+        {
+          "name": "CK_CTR_MAN_OBJETIVO",
+          "columns": [
+            "ID_CENTRO",
+            "ID_BIEN",
+            "ID_VEHICULO"
+          ],
+          "expression": "CASE WHEN ID_CENTRO IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN ID_BIEN IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN ID_VEHICULO IS NOT NULL THEN 1 ELSE 0 END = 1",
+          "description": "Se informa exactamente una de las referencias alternativas."
+        },
+        {
+          "name": "CK_CTR_MAN_MONTO_IMPORTE",
+          "columns": [
+            "MONTO_IMPORTE"
+          ],
+          "expression": "MONTO_IMPORTE > 0",
+          "description": "El valor informado debe ser positivo."
+        },
+        {
+          "name": "CK_CTR_MAN_PROXIMA",
+          "columns": [
+            "FEC_MANTENIMIENTO",
+            "FEC_PROXIMO"
+          ],
+          "expression": "FEC_PROXIMO >= FEC_MANTENIMIENTO",
+          "description": "La fecha programada no es anterior al trabajo realizado."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IX_CTR_MAN_CAT_MAN",
+          "columns": [
+            "ID_TIPO_MANTENIMIENTO"
+          ],
+          "description": "Cobertura de FK_CTR_MAN_CAT_MAN.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_CTR_MAN_CTR_CEN",
+          "columns": [
+            "ID_CENTRO"
+          ],
+          "description": "Cobertura de FK_CTR_MAN_CTR_CEN.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_CTR_MAN_BIE_BIE",
+          "columns": [
+            "ID_BIEN"
+          ],
+          "description": "Cobertura de FK_CTR_MAN_BIE_BIE.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_CTR_MAN_MOV_VEH",
+          "columns": [
+            "ID_VEHICULO"
+          ],
+          "description": "Cobertura de FK_CTR_MAN_MOV_VEH.",
+          "kind": "btree"
+        }
+      ]
     },
     {
       "name": "SGR_SERVICIO",
@@ -5721,7 +5553,7 @@
             "ID_TIPO_SERVICIO"
           ],
           "references": {
-            "table": "SGR_TIPO_SERVICIO",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -8131,7 +7963,7 @@
         "spec022"
       ],
       "tables": [
-        "SGR_ELEMENTO_BASE",
+        "SGR_CATALOGO",
         "SGR_ELEMENTO"
       ]
     },
@@ -8172,7 +8004,7 @@
     },
     {
       "id": "CTR-06",
-      "module": "centros",
+      "module": "planificacion",
       "status": "OBSERVADO",
       "enforcement": "TRANSACCION_FUTURA",
       "title": "Objetivos de mantenimiento y lote",
@@ -8184,13 +8016,13 @@
         "spec010"
       ],
       "tables": [
-        "SGR_TIPO_MANTENIMIENTO",
+        "SGR_CATALOGO",
         "SGR_MANTENIMIENTO"
       ]
     },
     {
       "id": "CTR-07",
-      "module": "centros",
+      "module": "planificacion",
       "status": "CRITERIO_PROVISIONAL",
       "enforcement": "CONSULTA_DERIVADA",
       "title": "Controles y dotación",
@@ -8208,7 +8040,7 @@
     },
     {
       "id": "CTR-08",
-      "module": "centros",
+      "module": "incidencias",
       "status": "OBSERVADO",
       "enforcement": "TRANSACCION_FUTURA",
       "title": "Evaluación y atención de infraestructura",
@@ -8225,6 +8057,32 @@
       "tables": [
         "SGR_INCIDENTE",
         "SGR_ATENCION"
+      ]
+    },
+    {
+      "id": "CTR-09",
+      "module": "centros",
+      "status": "SUPUESTO_DISENO",
+      "enforcement": "TRANSACCION_FUTURA",
+      "title": "Dominio de los valores de catálogo",
+      "description": "Cada referencia a SGR_CATALOGO apunta a un valor vigente de su dominio: condición física (ID_CONDICION, ID_ANTERIOR_CONDICION, ID_NUEVA_CONDICION); elemento base (ID_ELEMENTO_BASE); tipo de incidencia (ID_TIPO_INCIDENCIA); tipo de mantenimiento (ID_TIPO_MANTENIMIENTO); categoría de bien (ID_CATEGORIA_BIEN); tipo de servicio (ID_TIPO_SERVICIO). La FK garantiza que el valor exista; la aplicación valida el dominio en la misma transacción del alta o la corrección.",
+      "sources": [
+        "catalogos"
+      ],
+      "tables": [
+        "SGR_CATALOGO",
+        "SGR_CENTRO",
+        "SGR_MODULO",
+        "SGR_AMBIENTE",
+        "SGR_ELEMENTO",
+        "SGR_MANTENIMIENTO",
+        "SGR_TIPO_BIEN",
+        "SGR_BIEN",
+        "SGR_INVENTARIO_PREVIO",
+        "SGR_CAMBIO_CONDICION",
+        "SGR_INCIDENTE",
+        "SGR_BIEN_IMPLICADO",
+        "SGR_SERVICIO"
       ]
     },
     {
@@ -8314,7 +8172,7 @@
         "bienes"
       ],
       "tables": [
-        "SGR_CATEGORIA_BIEN",
+        "SGR_CATALOGO",
         "SGR_TIPO_BIEN",
         "SGR_BIEN"
       ]
@@ -8376,7 +8234,7 @@
       "tables": [
         "SGR_INCIDENTE",
         "SGR_BIEN_IMPLICADO",
-        "SGR_TIPO_INCIDENCIA"
+        "SGR_CATALOGO"
       ]
     },
     {
@@ -8550,7 +8408,7 @@
       ],
       "tables": [
         "SGR_SERVICIO",
-        "SGR_TIPO_SERVICIO"
+        "SGR_CATALOGO"
       ]
     },
     {
@@ -8919,7 +8777,7 @@
         "SGR_MODULO",
         "SGR_AMBIENTE",
         "SGR_ELEMENTO",
-        "SGR_ELEMENTO_BASE"
+        "SGR_CATALOGO"
       ],
       "description": "Alta y actualización, inmueble, grupos de descendientes, infraestructura y condiciones.",
       "mode": "PERSISTE_Y_DERIVA"
@@ -8968,7 +8826,7 @@
     },
     {
       "id": "mantenimiento",
-      "module": "centros",
+      "module": "planificacion",
       "screen": "Gestión de centros y vehículos · mantenimiento",
       "sources": [
         "mantenimientoForm",
@@ -8978,7 +8836,7 @@
       ],
       "tables": [
         "SGR_MANTENIMIENTO",
-        "SGR_TIPO_MANTENIMIENTO",
+        "SGR_CATALOGO",
         "SGR_CENTRO",
         "SGR_BIEN",
         "SGR_VEHICULO"
@@ -9003,7 +8861,7 @@
       "tables": [
         "SGR_BIEN",
         "SGR_TIPO_BIEN",
-        "SGR_CATEGORIA_BIEN",
+        "SGR_CATALOGO",
         "SGR_ASOCIACION",
         "SGR_TRASLADO",
         "SGR_TRASLADO_BIEN",
@@ -9050,7 +8908,7 @@
       "tables": [
         "SGR_INCIDENTE",
         "SGR_BIEN_IMPLICADO",
-        "SGR_TIPO_INCIDENCIA",
+        "SGR_CATALOGO",
         "SGR_BAJA",
         "SGR_REPOSICION"
       ],
@@ -9096,7 +8954,7 @@
       "tables": [
         "SGR_BIEN",
         "SGR_TIPO_BIEN",
-        "SGR_CATEGORIA_BIEN",
+        "SGR_CATALOGO",
         "SGR_VERIFICACION",
         "SGR_PRECIO",
         "SGR_MANTENIMIENTO"
@@ -9118,7 +8976,7 @@
       ],
       "tables": [
         "SGR_TIPO_BIEN",
-        "SGR_CATEGORIA_BIEN",
+        "SGR_CATALOGO",
         "SGR_PRECIO"
       ],
       "description": "Catálogo, clasificación, vida útil sugerida, precio vigente e historial de cotización.",
@@ -9142,7 +9000,7 @@
       ],
       "tables": [
         "SGR_SERVICIO",
-        "SGR_TIPO_SERVICIO",
+        "SGR_CATALOGO",
         "SGR_PERIODO",
         "SGR_HECHO"
       ],

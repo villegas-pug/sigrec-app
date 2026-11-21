@@ -63,6 +63,18 @@ El modelo pasa de **44 a 42 tablas**. Tres consolidaciones reducen registros y r
 
 Los catálogos de condición y tipo de servicio conservan sus códigos y FK. También se conservan los registros con historial o ciclo de vida propio, como las atenciones, los períodos y sus hechos, la ejecución del itinerario y los precios referenciales. Las reglas del JSON distinguen las restricciones de fila y unicidad de las validaciones que requieren una transacción futura, como confirmar el ámbito de combustible, validar afectados y revertir una reposición junto con las reasignaciones.
 
+## Catálogo único en 5.0.0
+
+El modelo pasa de **42 a 37 tablas**, mantiene los siete módulos y deja «Centros e infraestructura» en siete tablas. [SPEC 029](../spec/029-modelo-er-catalogo-unico.md)
+
+| Cambio | Justificación e integridad |
+| --- | --- |
+| `SGR_CATALOGO` | Reúne las listas de condición física, elementos base, tipos de incidencia, de mantenimiento y de servicio, y categorías de bien. `DOMINIO` identifica la lista y la clave única `(DOMINIO, CODIGO)` admite códigos repetidos entre listas. Las FK consumidoras conservan su nombre y apuntan a `SGR_CATALOGO.ID`. La regla `CTR-09` documenta que la aplicación valida el dominio. |
+| `SGR_ATENCION` en «Incidencias y patrimonio» | Su único padre es `SGR_INCIDENTE`; la tabla no cambia. |
+| `SGR_MANTENIMIENTO` en «Necesidades y presupuesto» | Abarca centros, bienes y vehículos, y programa el siguiente control. |
+
+Perfiles y permisos siguen como entidades de autorización. Las enumeraciones resueltas con `CHECK` se conservan porque las reglas condicionales comparan sus literales.
+
 ## Validación y aceptación
 
 La verificación estática del visor valida nombres, tipos, auditoría, claves, destinos, índices, cardinalidades, catálogos y referencias. El módulo [model.js](js/model.js) expone `expandModel` y `validateModel` para revisar el JSON con un consumidor local. Cada columna que admite `NULL` declara su motivo. Las reglas de más de una fila indican la frontera transaccional para una futura implementación.
