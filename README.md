@@ -2,7 +2,7 @@
 
 Prototipo funcional para la USPNNA – INABIF. Permite administrar y revisar centros, módulos, ambientes, bienes, necesidades y presupuesto, servicios básicos, movilidad y combustible de los CAR con **datos ficticios**. No contiene información de NNA ni de personal del INABIF.
 
-- Especificación (SDD), en orden: [`001`](docs/spec/001-prototipo-sigrec.md) prototipo, [`002`](docs/spec/002-acciones-y-jerarquia.md) acciones y jerarquía, [`003`](docs/spec/003-centros-mantenedores-y-ux.md) centros sin «Local», mantenedores y UI adaptable, [`004`](docs/spec/004-incidencias-contexto-y-recorrido.md) incidencias, [`005`](docs/spec/005-navegacion-contexto-y-captura.md) navegación y captura rápida, [`006`](docs/spec/006-fotografias-pagos-itinerarios.md) fotografías, pagos e itinerarios, [`007`](docs/spec/007-dictado-por-voz.md) dictado por voz, [`008`](docs/spec/008-gestion-de-centros-unificada.md) gestión de centros unificada, [`009`](docs/spec/009-responsabilidad-combustible.md) responsabilidad del combustible , [`010`](docs/spec/010-fichas-planificacion-y-estado-operativo.md) fichas ampliadas, inventario para planificación, estado de vehículos y control preventivo y [`011`](docs/spec/011-auditoria-navegacion-y-unificacion.md) Inicio como panel único (situación por centro y atención requerida con acciones), enlaces con contexto, una sola fuente por dato, flujos simplificados (recorrido de verificación, mantenimiento en lote, captura rápida, valoración en línea y ayuda contextual) y funciones nuevas (buscador global con Ctrl + K, escaneo del rótulo, registro rápido en una frase, simulador de presupuesto y «Mi jornada» del chofer), más la Ola 4: escaneo QR también en PC y laptops (jsQR como respaldo; la cámara exige HTTPS o `localhost`), botón «Volver a ‹pantalla de origen›» y resaltado del registro elegido, y la Ola 5: retorno a la ficha anterior dentro de una pantalla, «Volver» al terminar una tarea abierta por un enlace, salida en las pantallas sin registro o sin acceso, y enlaces profundos que no reabren su formulario al volver. Ampliaciones posteriores: [`020`](docs/spec/020-modulos-jerarquia.md) nivel Módulo (casas y módulos de uso común), [`021`](docs/spec/021-servicios-catalogos-y-muestra.md) catálogos de servicios y periodicidades y [`022`](docs/spec/022-elementos-infraestructura-adicionales.md) elementos de infraestructura agregados en centros y módulos. Donde difieran, prevalecen las posteriores.
+- Especificación (SDD), en orden: [`001`](frontend/docs/spec/001-prototipo-sigrec.md) prototipo, [`002`](frontend/docs/spec/002-acciones-y-jerarquia.md) acciones y jerarquía, [`003`](frontend/docs/spec/003-centros-mantenedores-y-ux.md) centros sin «Local», mantenedores y UI adaptable, [`004`](frontend/docs/spec/004-incidencias-contexto-y-recorrido.md) incidencias, [`005`](frontend/docs/spec/005-navegacion-contexto-y-captura.md) navegación y captura rápida, [`006`](frontend/docs/spec/006-fotografias-pagos-itinerarios.md) fotografías, pagos e itinerarios, [`007`](frontend/docs/spec/007-dictado-por-voz.md) dictado por voz, [`008`](frontend/docs/spec/008-gestion-de-centros-unificada.md) gestión de centros unificada, [`009`](frontend/docs/spec/009-responsabilidad-combustible.md) responsabilidad del combustible , [`010`](frontend/docs/spec/010-fichas-planificacion-y-estado-operativo.md) fichas ampliadas, inventario para planificación, estado de vehículos y control preventivo y [`011`](frontend/docs/spec/011-auditoria-navegacion-y-unificacion.md) Inicio como panel único (situación por centro y atención requerida con acciones), enlaces con contexto, una sola fuente por dato, flujos simplificados (recorrido de verificación, mantenimiento en lote, captura rápida, valoración en línea y ayuda contextual) y funciones nuevas (buscador global con Ctrl + K, escaneo del rótulo, registro rápido en una frase, simulador de presupuesto y «Mi jornada» del chofer), más la Ola 4: escaneo QR también en PC y laptops (jsQR como respaldo; la cámara exige HTTPS o `localhost`), botón «Volver a ‹pantalla de origen›» y resaltado del registro elegido, y la Ola 5: retorno a la ficha anterior dentro de una pantalla, «Volver» al terminar una tarea abierta por un enlace, salida en las pantallas sin registro o sin acceso, y enlaces profundos que no reabren su formulario al volver. Ampliaciones posteriores: [`020`](frontend/docs/spec/020-modulos-jerarquia.md) nivel Módulo (casas y módulos de uso común), [`021`](frontend/docs/spec/021-servicios-catalogos-y-muestra.md) catálogos de servicios y periodicidades y [`022`](frontend/docs/spec/022-elementos-infraestructura-adicionales.md) elementos de infraestructura agregados en centros y módulos. Donde difieran, prevalecen las posteriores.
 - Jerarquía: Centro › Módulo › Ambiente › Bien › Componente (bien asociado a otro, p. ej. el colchón de una cama). Un módulo es una casa o un módulo de uso común (comedor, lavandería) del centro. El inmueble donde funciona el centro es parte de su ficha; no existe el nivel «Local».
 - Mantenedores: cada módulo permite registrar, actualizar y anular (baja lógica con motivo, reversible con «Mostrar inactivos»).
 - Stack: Vue 3.5 + Quasar 2.35 (`@quasar/app-vite` 2.4.1 + Vite 7, compatible con Node 22.12 o superior). Las versiones 2.5+ de `@quasar/app-vite` exigen Node 22.22.
@@ -10,27 +10,27 @@ Prototipo funcional para la USPNNA – INABIF. Permite administrar y revisar cen
 ## Ejecución
 
 ```bash
-cd aplicaciones/sigrec/frontend
+cd frontend
 npm install
 npm run dev     # quasar dev
 npm run build   # quasar build → dist/spa
 ```
 
-La instalación prepara la configuración local de Quasar. El servidor de desarrollo usa `http://localhost:9000` y el build se genera en `aplicaciones/sigrec/frontend/dist/spa/`.
+La instalación prepara la configuración local de Quasar. El servidor de desarrollo usa `http://localhost:9000` y el build se genera en `frontend/dist/spa/`.
 
 ## Estructura
 
 ```text
-aplicaciones/sigrec/
-  frontend/      SPA Quasar y guiones de producción del manual
-  backend/       espacio para la futura API
-  database/      modelo entidad-relación Oracle y visor estático
-docs/            especificaciones, actas y documentación del manual
+frontend/         SPA Quasar y guiones de producción del manual
+  docs/           especificaciones, actas y documentación del manual
+  artifacts/      informe E2E e intermedios locales del manual
+backend/          espacio para la futura API
+database/         modelo entidad-relación Oracle y visor estático
 ```
 
-La [SPEC 035](docs/spec/035-reorganizacion-carpetas-sigrec.md) documenta la migración. El [visor del modelo ER](aplicaciones/sigrec/database/modelo-er/README.md) se inicia por separado desde la raíz del repositorio.
+La [SPEC 035](frontend/docs/spec/035-reorganizacion-carpetas-sigrec.md) documenta la migración inicial. La [SPEC 036](frontend/docs/spec/036-estructura-raiz-frontend-backend-database.md) define las rutas vigentes. El [visor del modelo ER](database/modelo-er/README.md) se inicia por separado desde la raíz del repositorio.
 
-Dentro de `aplicaciones/sigrec/frontend/`:
+Dentro de `frontend/`:
 
 ```
 src/
@@ -44,7 +44,7 @@ src/
 
 ## Perfiles de demostración
 
-El perfil se elige al pie del menú lateral y se recuerda en el navegador. Los accesos, acciones y ámbitos son **provisionales** y deben validarse con el jefe de proyecto. La matriz completa de acciones está en la [SPEC 003](docs/spec/003-centros-mantenedores-y-ux.md) §4.
+El perfil se elige al pie del menú lateral y se recuerda en el navegador. Los accesos, acciones y ámbitos son **provisionales** y deben validarse con el jefe de proyecto. La matriz completa de acciones está en la [SPEC 003](frontend/docs/spec/003-centros-mantenedores-y-ux.md) §4.
 
 | Perfil | Accede a | Puede registrar o actualizar | Ámbito |
 | --- | --- | --- | --- |

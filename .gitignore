@@ -1,19 +1,22 @@
 .DS_Store
 .thumbs.db
 node_modules
+/frontend/node_modules/
 
 # .env files
 .env*
 
 # Quasar core related directories
 .quasar
+/frontend/.quasar/
 /dist
 /quasar.config.*.temporary.compiled*
-/aplicaciones/sigrec/frontend/dist/
-/aplicaciones/sigrec/frontend/quasar.config.*.temporary.compiled*
+/frontend/dist/
+/frontend/quasar.config.*.temporary.compiled*
 
 # Playwright CLI
 .playwright-cli
+/frontend/.playwright-cli/
 
 # Log files
 npm-debug.log*
@@ -23,5 +26,5 @@ yarn-error.log*
 # Audios de reuniones (no versionar)
 *.m4a
 
-# Intermedios del manual. Los medios finales viven en aplicaciones/sigrec/frontend/public/manual/.
-/artifacts/manual-usuario/
+# Intermedios del manual. Los medios finales viven en frontend/public/manual/.
+/frontend/artifacts/manual-usuario/
