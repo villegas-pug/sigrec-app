@@ -34,10 +34,10 @@
             <span v-if="node.codigo" class="sg-muted">{{ node.codigo }}</span>
             <status-chip v-if="node.car?.anulacion || node.modulo?.anulacion || node.ambiente?.anulacion" v-bind="CHIP_ANULADO" />
             <status-chip v-if="nuevos.includes(node.id)" tono="ok" label="Nuevo" />
-            <status-chip v-if="node.bien && node.bien.situacion === 'baja'" tono="ne" label="Baja" />
-            <status-chip v-else-if="node.bien && node.bien.situacion === 'anulado'" v-bind="CHIP_ANULADO" />
+            <status-chip v-if="node.bien && situacionDe(node.bien) === 'baja'" tono="ne" label="Baja" />
+            <status-chip v-else-if="node.bien && situacionDe(node.bien) === 'anulado'" v-bind="CHIP_ANULADO" />
             <status-chip v-else-if="node.bien && ['malo', 'inservible'].includes(node.bien.condicion)" v-bind="condicion(node.bien.condicion)" />
-            <status-chip v-if="node.bien?.revisionPendiente" tono="wa" label="Revisar" />
+            <status-chip v-if="revisionPendienteDe(node.bien)" tono="wa" label="Revisar" />
           </div>
         </template>
       </q-tree>
@@ -48,6 +48,7 @@
 
 <script setup>
 import { nextTick, ref } from 'vue'
+import { revisionPendienteDe, situacionDe } from 'src/services/datos'
 // Árbol Centro › Módulo › Ambiente › Bien › Componente con sus filtros (SPEC 020). Todos los niveles se pueden seleccionar.
 import BotonDictado from 'components/common/BotonDictado.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'

@@ -26,7 +26,7 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import SelectorAfectados from './SelectorAfectados.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { usePerfil } from 'src/composables/usePerfil'
-import { bienPorId, bienesDeAmbiente } from 'src/services/datos'
+import { bienPorId, bienesDeAmbiente, situacionDe } from 'src/services/datos'
 import { contextoIncidencia, origenIncidencia, requiereReposicion, unidadesAfectadas } from 'src/services/incidencias'
 import { actualizarIncidente, registrarIncidente } from 'src/services/acciones'
 import { OPCIONES_INCIDENTE, OPCIONES_INCIDENCIA_INFRAESTRUCTURA } from 'src/config/catalogos'
@@ -46,7 +46,7 @@ const contexto = computed(() => origen.value ? props.evento?.contextoOrigen ?? c
 const ubicacion = computed(() => contexto.value ? `${etiquetas[origen.value.tipo]} · ${origen.value.id}` : '')
 const form = reactive({ bienIds: [], evaluaciones: {}, condiciones: {}, requiereEvaluacion: false })
 const { modificado, fijar } = useBorrador(form)
-const candidatos = computed(() => contexto.value?.ambienteId ? bienesDeAmbiente(contexto.value.ambienteId).filter((b) => b.situacion === 'activo' || props.evento?.bienIds?.includes(b.id)) : [])
+const candidatos = computed(() => contexto.value?.ambienteId ? bienesDeAmbiente(contexto.value.ambienteId).filter((b) => situacionDe(b) === 'activo' || props.evento?.bienIds?.includes(b.id)) : [])
 const recursos = computed(() => origen.value?.tipo === 'ambiente' ? [...new Map([...candidatos.value, ...(props.evento?.bienIds ?? []).map(bienPorId).filter(Boolean)].map((b) => [b.id, b])).values()] : props.bien ? [props.bien] : form.bienIds.map(bienPorId).filter(Boolean))
 const decisionesPendientes = computed(() => form.bienIds.filter((id) => typeof form.evaluaciones[id]?.requiereReposicion !== 'boolean').length)
 const cantidadReposicion = computed(() => form.bienIds.filter((id) => form.evaluaciones[id]?.requiereReposicion === true).length)

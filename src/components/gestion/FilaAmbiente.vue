@@ -8,8 +8,8 @@
       <status-chip v-bind="condicion(ambiente.condicion)" />
       <status-chip v-if="ambiente.anulacion" v-bind="CHIP_ANULADO" />
       <status-chip v-if="novedadesAbiertas(ambiente).length" tono="da" :label="plural(novedadesAbiertas(ambiente).length, 'novedad abierta', 'novedades abiertas')" />
-      <status-chip v-if="elementosCriticos(ambiente.estadoElementos).length" tono="wa" :label="plural(elementosCriticos(ambiente.estadoElementos).length, 'elemento crítico', 'elementos críticos')" />
-      <status-chip tono="ne" :label="`${textoConteoRecursos(contarRecursos(bienesDeAmbiente(ambiente.id).filter((b) => b.situacion === 'activo')))} activos`" />
+      <status-chip v-if="elementosCriticos(estadoElementosDe('ambiente', ambiente.id)).length" tono="wa" :label="plural(elementosCriticos(estadoElementosDe('ambiente', ambiente.id)).length, 'elemento crítico', 'elementos críticos')" />
+      <status-chip tono="ne" :label="`${textoConteoRecursos(contarRecursos(bienesDeAmbiente(ambiente.id).filter((b) => situacionDe(b) === 'activo')))} activos`" />
     </div>
   </div>
 </template>
@@ -18,10 +18,11 @@
 // Fila de un ambiente con su condición, novedades, elementos críticos y bienes; la usan las fichas del centro y del módulo.
 import { contarRecursos, textoConteoRecursos } from 'src/services/jerarquiaRecursos'
 import StatusChip from 'components/common/StatusChip.vue'
-import { bienesDeAmbiente } from 'src/services/datos'
+import { bienesDeAmbiente, situacionDe } from 'src/services/datos'
 import { nodoAmbienteId } from 'src/services/bienes'
 import { elementosCriticos } from 'src/services/infraestructura'
 import { novedadesAbiertas } from 'src/services/situacion'
+import { estadoElementosDe } from 'src/services/centros'
 import { CHIP_ANULADO, condicion } from 'src/config/catalogos'
 import { plural } from 'src/utils/formato'
 

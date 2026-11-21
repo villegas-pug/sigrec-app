@@ -48,7 +48,7 @@
         icono="fact_check"
         :subtitulo="evaluados ? `${evaluados} de ${ELEMENTOS_INFRAESTRUCTURA.length} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
       >
-        <estado-elementos :model-value="ambiente.estadoElementos" solo-lectura sugerir-novedad etiqueta-accion="Registrar incidente" :accion-novedad="activo && puedeHacer('ambiente.incidente')" @registrar-novedad="novedadDesdeElementos" />
+        <estado-elementos :model-value="estadoElementos" solo-lectura sugerir-novedad etiqueta-accion="Registrar incidente" :accion-novedad="activo && puedeHacer('ambiente.incidente')" @registrar-novedad="novedadDesdeElementos" />
       </section-card>
       <section-card titulo="Mobiliario y equipos" icono="chair" subtitulo="Se calcula con los bienes activos del ambiente; no se captura aparte">
         <div v-if="totalActivos" class="sg-chips">
@@ -78,7 +78,7 @@
           <div v-for="n in novedades" :id="`novedad-${n.id}`" :key="n.id" class="sg-box" :class="{ 'sg-box--resaltada': n.id === novedadResaltada }">
             <div class="row items-start no-wrap justify-between">
               <div class="sg-chips items-center">
-                <status-chip :tono="n.atendida ? 'ok' : 'da'" :label="n.atendida ? 'Atendida' : 'Abierta'" />
+                <status-chip :tono="estaAtendida(n) ? 'ok' : 'da'" :label="estaAtendida(n) ? 'Atendida' : 'Abierta'" />
                 <status-chip v-if="n.anulacion" v-bind="CHIP_ANULADO" />
                 <span class="text-weight-bold">{{ n.titulo }}</span>
               </div>
@@ -89,7 +89,7 @@
             <span class="sg-muted">Informada el {{ fecha(n.fecha) }} por {{ n.informadoPor }}</span>
             <span v-if="n.atencion" class="sg-muted">Atendida el {{ fecha(n.atencion.fecha) }}<template v-if="n.atencion.detalle">: {{ n.atencion.detalle }}</template></span>
             <span v-if="n.anulacion" class="sg-muted">Anulada el {{ fecha(n.anulacion.fecha) }}: {{ n.anulacion.motivo }}</span>
-            <div v-if="n.requiereEvaluacion && !n.atendida && !n.anulacion" class="sg-chips">
+            <div v-if="n.requiereEvaluacion && !estaAtendida(n) && !n.anulacion" class="sg-chips">
               <status-chip tono="in" label="Necesidad de infraestructura: requiere evaluación" />
               <status-chip tono="si" label="Costo no estimado" />
             </div>
@@ -158,7 +158,8 @@ import EstadoElementos from 'components/common/EstadoElementos.vue'
 import RecorridoVerificacion from 'components/bienes/RecorridoVerificacion.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { bienesDeAmbiente, carPorId, etiquetaAmbiente, textoUbicacion, ubicacionDeAmbiente, vigente } from 'src/services/datos'
+import { bienesDeAmbiente, carPorId, etiquetaAmbiente, textoUbicacion, ubicacionDeAmbiente, vigente, estaAtendida, situacionDe, verificacionDe } from 'src/services/datos'
+import { estadoElementosDe, intervencionesDe, novedadesDe } from 'src/services/centros'
 import { nodoAmbienteId } from 'src/services/bienes'
 import { anular, anularAmbiente, dependenciasDeAmbiente, pendientesDeAmbiente } from 'src/services/acciones'
 import { cantidadEvaluados, conteoPorCondicion } from 'src/services/infraestructura'
@@ -187,10 +188,12 @@ const activo = computed(() => vigente(props.ambiente))
 const bienes = computed(() => bienesDeAmbiente(props.ambiente.id).filter((b) => coincideSituacion(b, props.situacion)))
 const grupos = computed(() => gruposBienes(props.ambiente.id, { situacion: props.situacion }))
 const resumenRecursos = computed(() => textoConteoRecursos(contarRecursos(bienes.value)))
-const novedades = computed(() => (props.ambiente.novedades ?? []).filter((n) => props.inactivos || vigente(n)))
-const intervenciones = computed(() => (props.ambiente.intervenciones ?? []).filter((i) => props.inactivos || vigente(i)))
-const abiertas = computed(() => (props.ambiente.novedades ?? []).filter((n) => vigente(n) && !n.atendida))
-const evaluados = computed(() => cantidadEvaluados(props.ambiente.estadoElementos))
+// SPEC 033: novedades, intervenciones y elementos se leen de sus colecciones.
+const estadoElementos = computed(() => estadoElementosDe('ambiente', props.ambiente.id))
+const novedades = computed(() => novedadesDe(props.ambiente.id).filter((n) => props.inactivos || vigente(n)))
+const intervenciones = computed(() => intervencionesDe(props.ambiente.id).filter((i) => props.inactivos || vigente(i)))
+const abiertas = computed(() => novedadesDe(props.ambiente.id).filter((n) => vigente(n) && !estaAtendida(n)))
+const evaluados = computed(() => cantidadEvaluados(estadoElementos.value))
 // Unidades activas por condición, ponderadas por cantidad (los componentes cuentan como bienes del ambiente).
 const conteoBienes = computed(() => conteoPorCondicion(bienesDeAmbiente(props.ambiente.id)))
 const totalActivos = computed(() => Object.values(conteoBienes.value).reduce((suma, n) => suma + n, 0))
@@ -217,7 +220,7 @@ const caracteristicas = computed(() => {
 
 const dialogos = reactive({ ambiente: false, pendientes: false, recorrido: false })
 // Bienes activos sin ninguna verificación: invitan a hacer el recorrido.
-const porVerificar = computed(() => bienesDeAmbiente(props.ambiente.id).filter((b) => b.situacion === 'activo' && !b.verificacion).length)
+const porVerificar = computed(() => bienesDeAmbiente(props.ambiente.id).filter((b) => situacionDe(b) === 'activo' && !verificacionDe(b)).length)
 const dialogoNovedad = reactive({ abierto: false, novedad: null, sugerencia: null })
 const dialogoIntervencion = reactive({ abierto: false, intervencion: null })
 const dialogoAtencion = reactive({ abierto: false, novedad: null })
@@ -226,7 +229,7 @@ const abrirNovedad = (novedad, sugerencia = null) => { if (!novedad) abrirIncide
 // Desde los elementos en mal estado: la novedad se precarga, pero la persona la revisa y la registra.
 const novedadDesdeElementos = (criticos) => abrirNovedad(null, {
   titulo: `${criticos.map((c) => c.label).join(', ')} en mal estado`,
-  detalle: `Elementos evaluados en condición mala o inservible: ${criticos.map((c) => `${c.label} (${condicion(props.ambiente.estadoElementos[c.key]).label.toLowerCase()})`).join(', ')}.`,
+  detalle: `Elementos evaluados en condición mala o inservible: ${criticos.map((c) => `${c.label} (${condicion(estadoElementos.value[c.key]).label.toLowerCase()})`).join(', ')}.`,
   requiereEvaluacion: true
 })
 const abrirIntervencion = (intervencion) => Object.assign(dialogoIntervencion, { abierto: true, intervencion })
@@ -281,7 +284,7 @@ const accionesAmbiente = computed(() => [
 
 const accionesNovedad = (n) => [
   { label: 'Actualizar novedad', icono: 'edit', visible: puedeHacer('novedad.actualizar') && vigente(n), accion: () => abrirNovedad(n) },
-  { label: 'Marcar como atendida', icono: 'task_alt', visible: puedeHacer('novedad.atender') && vigente(n) && !n.atendida, accion: () => abrirAtencion(n) },
+  { label: 'Marcar como atendida', icono: 'task_alt', visible: puedeHacer('novedad.atender') && vigente(n) && !estaAtendida(n), accion: () => abrirAtencion(n) },
   {
     label: 'Anular novedad',
     icono: 'block',

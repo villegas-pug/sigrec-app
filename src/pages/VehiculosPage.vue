@@ -76,7 +76,7 @@
                   <status-chip v-if="controlVeh(v).proxima" v-bind="ESTADOS_CONTROL[controlVeh(v).estado]" :label="`Próximo: ${fecha(controlVeh(v).proxima)}`" />
                   <div v-if="registroMantenimiento(v)"><router-link :to="registroMantenimiento(v)">Ver registro</router-link></div>
                 </td>
-                <td>{{ v.combustible }} · {{ v.unidad === 'L' ? 'litros' : v.unidad }}</td>
+                <td>{{ v.combustible }} · litros</td>
                 <td>
                   <template v-if="v.rendimientoKmL">{{ v.rendimientoKmL }} km/L</template>
                   <status-chip v-else tono="si" label="No informado" />
@@ -123,7 +123,7 @@
             <div v-if="controlVeh(v).proxima" class="sg-chips"><status-chip v-bind="ESTADOS_CONTROL[controlVeh(v).estado]" :label="`Próximo: ${fecha(controlVeh(v).proxima)}`" /></div>
             <router-link v-if="registroMantenimiento(v)" :to="registroMantenimiento(v)">Ver registro del mantenimiento</router-link>
             <span v-if="v.chofer" class="sg-muted">Chofer: {{ v.chofer }}</span>
-            <span class="sg-muted">{{ v.combustible }} · {{ v.unidad === 'L' ? 'litros' : v.unidad }}<template v-if="v.rendimientoKmL"> · {{ v.rendimientoKmL }} km/L</template></span>
+            <span class="sg-muted">{{ v.combustible }} · litros<template v-if="v.rendimientoKmL"> · {{ v.rendimientoKmL }} km/L</template></span>
             <span class="sg-muted">{{ plural(itinerariosDeVehiculo(v.id).length, 'itinerario', 'itinerarios') }}</span>
             <div v-if="!v.anulacion" class="row q-gutter-sm">
               <q-btn v-if="puedeAcceder('itinerarios')" dense outline no-caps color="secondary" icon="route" label="Itinerarios" :to="{ name: 'itinerarios', query: { vehiculo: v.id } }" />

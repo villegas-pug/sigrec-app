@@ -49,7 +49,8 @@ import FotoDialog from 'components/centros/FotoDialog.vue'
 import VisorFotos from 'components/centros/VisorFotos.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
-import { ambientePorId, etiquetaAmbiente, vigente } from 'src/services/datos'
+import { ambientePorId, etiquetaAmbiente, vigente, situacionDe } from 'src/services/datos'
+import { fotosDe } from 'src/services/centros'
 import { anular } from 'src/services/acciones'
 import { CHIP_ANULADO } from 'src/config/catalogos'
 import { fecha } from 'src/utils/formato'
@@ -73,11 +74,12 @@ const visorAbierto = ref(false)
 const indiceInicial = ref(0)
 let focoAnterior = null
 
-const activo = computed(() => props.bien ? props.bien.situacion === 'activo' : vigente(props.centro) && (!props.ambienteId || vigente(ambientePorId(props.ambienteId) ?? {})))
+const activo = computed(() => props.bien ? situacionDe(props.bien) === 'activo' : vigente(props.centro) && (!props.ambienteId || vigente(ambientePorId(props.ambienteId) ?? {})))
 
 // Se conserva el índice original para dar una clave estable aunque cambien los filtros.
 const items = computed(() =>
-  (props.bien ? (props.bien.fotos ?? []) : (props.centro.inmueble?.fotos ?? []))
+  // SPEC 033: las fotografías tienen colección propia; la del centro incluye las de sus ambientes, en orden de registro.
+  (props.bien ? fotosDe({ bienId: props.bien.id }) : fotosDe({ carId: props.centro.id }))
     .map((foto, i) => ({ foto, i }))
     .filter(({ foto }) => !props.ambienteId || foto.ambienteId === props.ambienteId)
     .filter(({ foto }) => mostrarInactivas.value || vigente(foto))

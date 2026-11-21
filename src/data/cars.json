@@ -17,16 +17,9 @@
         "pisos": 2,
         "areaM2": null,
         "areaTerrenoM2": null,
-        "estadoElementos": { "techo": "regular", "estructura": "bueno", "electricas": "regular", "sanitarias": "bueno", "extra-cisterna": "regular" },
-        "elementosAdicionales": [{ "key": "extra-cisterna", "label": "Cisterna" }],
         "estado": "regular",
         "caracteristicas": "Techo aligerado, escalera interior, cisterna de 5 m³, patio techado"
       },
-      "fotos": [
-        { "titulo": "Fachada", "fecha": "2026-03-12" },
-        { "titulo": "Patio techado", "fecha": "2026-03-12" },
-        { "titulo": "Ventana del Dormitorio 1", "fecha": "2026-10-14", "nota": "Novedad" }
-      ],
       "actualizado": { "fecha": "2026-10-21", "por": "Personal del CAR" }
     }
   },
@@ -48,14 +41,9 @@
         "pisos": 1,
         "areaM2": 640,
         "areaTerrenoM2": 900,
-        "estadoElementos": { "techo": "regular", "estructura": "bueno", "electricas": "malo", "sanitarias": "regular" },
         "estado": "regular",
         "caracteristicas": "Un piso, patio central, cocina con instalaciones a gas"
       },
-      "fotos": [
-        { "titulo": "Fachada", "fecha": "2026-02-20" },
-        { "titulo": "Cocina después del incendio", "fecha": "2026-09-03", "nota": "Novedad" }
-      ],
       "actualizado": { "fecha": "2026-09-03", "por": "Dirección del CAR" }
     }
   },
@@ -79,7 +67,6 @@
         "estado": "bueno",
         "caracteristicas": "Dos pisos, lavandería independiente, áreas verdes"
       },
-      "fotos": [],
       "actualizado": { "fecha": "2026-07-15", "por": "Personal del CAR" }
     }
   }

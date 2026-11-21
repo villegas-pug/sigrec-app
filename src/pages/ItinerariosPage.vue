@@ -62,7 +62,7 @@
                   <status-chip v-else tono="si" label="No informado" />
                 </td>
                 <td class="sg-num">
-                  <template v-if="fila.it.consumoDeclaradoL != null">{{ litros(fila.it.consumoDeclaradoL) }}</template>
+                  <template v-if="consumoDeclaradoL(fila.it.id) != null">{{ litros(consumoDeclaradoL(fila.it.id)) }}</template>
                   <status-chip v-else tono="si" label="No informado" />
                 </td>
                 <td><status-chip v-bind="etiquetaEvaluacion(fila.ev)" /></td>
@@ -90,7 +90,7 @@
             </div>
             <span class="sg-muted">Previsto: {{ fila.it.previsto ? tramo(fila.it.previsto) : 'no programado' }}</span>
             <span class="sg-muted">Realizado: {{ fila.it.realizado ? tramo(fila.it.realizado) : 'no informado' }}</span>
-            <span class="sg-muted">Consumo declarado: {{ fila.it.consumoDeclaradoL != null ? litros(fila.it.consumoDeclaradoL) : 'no informado' }}</span>
+            <span class="sg-muted">Consumo declarado: {{ consumoDeclaradoL(fila.it.id) != null ? litros(consumoDeclaradoL(fila.it.id)) : 'no informado' }}</span>
             <div class="row q-gutter-sm">
               <q-btn v-if="!fila.it.realizado && vigente(fila.it) && puedeHacer('itinerario.ejecucion')" dense outline no-caps color="secondary" icon="flag" label="Informar ejecución" @click="abrir('ejecucion', fila.it)" />
               <q-btn v-if="puedeRegistrarConsumo(fila.it)" dense outline no-caps color="secondary" icon="local_gas_station" label="Registrar consumo" :to="{ name: 'combustible', query: { vehiculo: vehiculoId, itinerario: fila.it.id } }" />
@@ -175,7 +175,7 @@ import { usePerfil } from 'src/composables/usePerfil'
 import { useVehiculoSeleccionado } from 'src/composables/useVehiculoSeleccionado'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { itinerarioPorId, vehiculoPorId, vigente } from 'src/services/datos'
-import { evaluarItinerario, itinerariosDeVehiculo } from 'src/services/combustible'
+import { consumoDeclaradoL, evaluarItinerario, itinerariosDeVehiculo } from 'src/services/combustible'
 import { anular, dependenciasDeItinerario } from 'src/services/acciones'
 import { CHIP_ANULADO, EVALUACIONES_COMBUSTIBLE } from 'src/config/catalogos'
 import { fecha, litros } from 'src/utils/formato'
@@ -200,7 +200,7 @@ const compacto = computed(() => $q.screen.lt.md)
 
 // Salidas contextuales: declarar el consumo de un recorrido ejecutado y completar el rendimiento del vehículo.
 const puedeRegistrarConsumo = (it) =>
-  !!it.realizado && it.consumoDeclaradoL == null && vigente(it) && puedeHacer('combustible.informar') && puedeAcceder('combustible')
+  !!it.realizado && consumoDeclaradoL(it.id) == null && vigente(it) && puedeHacer('combustible.informar') && puedeAcceder('combustible')
 const puedeCompletarRendimiento = (ev) =>
   ev.faltantes.includes('rendimiento de referencia') && puedeHacer('vehiculo.actualizar') && puedeAcceder('vehiculos')
 const detalleRef = ref(null)

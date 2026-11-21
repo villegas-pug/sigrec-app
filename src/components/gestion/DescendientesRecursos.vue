@@ -15,9 +15,9 @@
         </div>
         <div class="sg-chips">
           <status-chip v-if="nodo.registro.condicion" v-bind="condicion(nodo.registro.condicion)" />
-          <status-chip v-if="!nodo.referencia || nodo.registro.situacion" v-bind="SITUACIONES[estadoNivel(nodo)]" />
+          <status-chip v-if="!nodo.referencia || situacionDeRegistro(nodo.registro)" v-bind="SITUACIONES[estadoNivel(nodo)]" />
           <status-chip v-if="nodo.tipo === 'ambiente' && novedadesAbiertas(nodo.registro).length" tono="da" :label="`${novedadesAbiertas(nodo.registro).length} novedades abiertas`" />
-          <status-chip v-if="['ambiente', 'modulo'].includes(nodo.tipo) && elementosCriticos(nodo.registro.estadoElementos, nodo.registro.elementosAdicionales).length" tono="wa" :label="`${elementosCriticos(nodo.registro.estadoElementos, nodo.registro.elementosAdicionales).length} elementos críticos`" />
+          <status-chip v-if="['ambiente', 'modulo'].includes(nodo.tipo) && elementosCriticos(estadoElementosDe(nodo.tipo, nodo.registro.id), elementosAdicionalesDe(nodo.tipo, nodo.registro.id)).length" tono="wa" :label="`${elementosCriticos(estadoElementosDe(nodo.tipo, nodo.registro.id), elementosAdicionalesDe(nodo.tipo, nodo.registro.id)).length} elementos críticos`" />
           <q-btn v-if="nodo.tipo === 'modulo' && puedeRegistrarAmbiente && estadoNivel(nodo) === 'activo'" flat dense no-caps color="secondary" icon="add" label="Ambiente" :aria-label="`Registrar ambiente en ${nodo.registro.nombre}`" @click="$emit('registrar-ambiente', nodo.registro)" />
         </div>
       </div>
@@ -33,7 +33,9 @@ import { condicion, SITUACIONES } from 'src/config/catalogos'
 import { nodoModuloId, nodoAmbienteId } from 'src/services/bienes'
 import { estadoNivel } from 'src/services/jerarquiaRecursos'
 import { novedadesAbiertas } from 'src/services/situacion'
+import { elementosAdicionalesDe, estadoElementosDe } from 'src/services/centros'
 import { elementosCriticos } from 'src/services/infraestructura'
+import { situacionDeRegistro } from 'src/services/datos'
 
 defineProps({ nodos: { type: Array, required: true }, puedeRegistrarAmbiente: { type: Boolean, default: false } })
 defineEmits(['seleccionar', 'registrar-ambiente'])

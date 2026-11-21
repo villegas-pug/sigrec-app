@@ -145,7 +145,8 @@ import { useAnulacion } from 'src/composables/useAnulacion'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { useRecorridoInterno } from 'src/composables/useRecorridoInterno'
 import { primeraVisita } from 'src/router/retorno'
-import { ambientePorId, bienPorId, db, ambientesDeCar, mantenimientoPorId, moduloPorId, ordenarPorModulo, ubicacionDeBien } from 'src/services/datos'
+import { ambientePorId, bienPorId, db, ambientesDeCar, mantenimientoPorId, moduloPorId, ordenarPorModulo, ubicacionDeBien, situacionDe, situacionDeRegistro } from 'src/services/datos'
+import { eventosRegistrados, novedadPorId } from 'src/services/centros'
 import { antecesoresDeNodo, arbolDeCentros, idsExpandibles, nodoAmbienteId, nodoCentroId, nodoModuloId, resolverNodo, rutaHasta } from 'src/services/bienes'
 import { anularBien, cerrarRevision, dependenciasDeBien, desasociarBien, reactivarBien } from 'src/services/acciones'
 import { TIPOS_HECHO, origenIncidencia, ubicacionHecho } from 'src/services/incidencias'
@@ -170,7 +171,8 @@ const altoPagina = (offset) => (movil.value || esConsulta ? {} : { height: `calc
 // Lo pedido solo se acepta dentro del ámbito del perfil; si no existe se avisa y no se elige otro registro.
 const bienPedido = parametro(route.query.bien)
 const novedadPedida = parametro(route.query.novedad)
-const ambienteDeNovedad = novedadPedida ? db.ambientes.find((a) => a.novedades?.some((n) => n.id === novedadPedida)) : null
+const novedadSolicitada = novedadPedida ? novedadPorId(novedadPedida) : null
+const ambienteDeNovedad = novedadSolicitada ? ambientePorId(novedadSolicitada.ambienteId) : null
 const ambientePedido = ambienteDeNovedad?.id ?? parametro(route.query.ambiente)
 const moduloPedido = parametro(route.query.modulo)
 const carPedido = parametro(route.query.car)
@@ -182,7 +184,7 @@ const registrarPedido = parametro(route.query.registrar) === '1' && puedeHacer('
 const mantenimientoPedido = parametro(route.query.mantenimiento)
 const tabPedida = parametro(route.query.tab) ?? (parametro(route.query.seguridad) === '1' ? 'seguridad' : null)
 const hechoPedido = parametro(route.query.hecho)
-const hechoSolicitado = hechoPedido ? db.eventos.find((e) => e.id === hechoPedido && TIPOS_HECHO.includes(e.tipo)) : null
+const hechoSolicitado = hechoPedido ? eventosRegistrados().find((e) => e.id === hechoPedido && TIPOS_HECHO.includes(e.tipo)) : null
 const contextoHechoValido = () => {
   if (!hechoSolicitado) return false
   const u = ubicacionHecho(hechoSolicitado)
@@ -240,11 +242,11 @@ const mantenimientoResaltado = pedidoNoDisponible.value ? null : mantenimientoPe
 const nodoPedido = resolverNodo(seleccion.value)
 const ambienteDelNodo = !nodoPedido || nodoPedido.tipo === 'centro' || nodoPedido.tipo === 'modulo' ? null : nodoPedido.tipo === 'ambiente' ? nodoPedido.registro : ambientePorId(nodoPedido.registro.ambienteId)
 const moduloDelNodo = nodoPedido?.tipo === 'modulo' ? nodoPedido.registro : ambienteDelNodo ? moduloPorId(ambienteDelNodo.moduloId) : null
-const novedadAnulada = !!ambienteDeNovedad?.novedades.find((n) => n.id === novedadPedida)?.anulacion
+const novedadAnulada = !!(ambienteDeNovedad && novedadSolicitada?.anulacion)
 const anuladoPedido = !!(ambienteDelNodo?.anulacion || moduloDelNodo?.anulacion || novedadAnulada || mantenimientoSolicitado?.anulacion || (nodoPedido?.tipo === 'centro' && nodoPedido.registro.anulacion))
 
 const texto = ref('')
-const situacion = ref(nodoPedido?.registro.situacion === 'anulado' ? 'anulado' : TODOS)
+const situacion = ref(situacionDeRegistro(nodoPedido?.registro) === 'anulado' ? 'anulado' : TODOS)
 const inactivos = ref(anuladoPedido)
 const vista = ref('detalle')
 const nuevos = ref([])
@@ -298,7 +300,7 @@ async function mostrarEnArbol () {
   texto.value = ''
   const n = nodo.value
   if (!n) return
-  situacion.value = n.registro.situacion === 'anulado' ? 'anulado' : TODOS
+  situacion.value = situacionDeRegistro(n.registro) === 'anulado' ? 'anulado' : TODOS
   if ([...antecesoresDeNodo(seleccion.value), seleccion.value].some((id) => resolverNodo(id)?.registro.anulacion)) inactivos.value = true
   expandirHasta(seleccion.value)
   if (movil.value) vista.value = 'arbol'
@@ -364,7 +366,7 @@ function alTerminarRegistro (nuevo) {
 // otra) pero no se reabre el formulario (SPEC 011, Ola 5).
 if (registrarPedido && !pedidoNoDisponible.value) {
   const padre = asociarPedido ? bienPorId(asociarPedido) : null
-  const padreValido = padre && padre.situacion === 'activo' && !padre.asociadoA && enAmbitoCar(ubicacionDeBien(padre).car.id)
+  const padreValido = padre && situacionDe(padre) === 'activo' && !padre.asociadoA && enAmbitoCar(ubicacionDeBien(padre).car.id)
   const ambienteId = padreValido ? padre.ambienteId : ambientePedido ?? ordenarPorModulo(ambientesDeCar(carPedido ?? carsDelAmbito()[0]?.id))[0]?.id
   if (ambienteId && ambientePorId(ambienteId) && enAmbitoCar(ambientePorId(ambienteId).carId)) {
     if (!seleccionRestaurada) seleccion.value = padreValido ? padre.id : nodoAmbienteId(ambienteId)

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "7.0.0",
+  "schemaVersion": "7.3.0",
   "title": "Modelo de datos SIGREC",
   "description": "Modelo relacional de los recursos y la operación de los Centros de Acogida Residencial de la USPNNA.",
   "platform": {
@@ -428,7 +428,7 @@
     {
       "id": "cars",
       "path": "src/data/cars.json",
-      "label": "Datos de centro, inmueble y fotos"
+      "label": "Datos de centro e inmueble"
     },
     {
       "id": "modulos",
@@ -438,7 +438,7 @@
     {
       "id": "ambientes",
       "path": "src/data/ambientes.json",
-      "label": "Datos de ambientes, novedades e intervenciones"
+      "label": "Datos de ambientes"
     },
     {
       "id": "bienes",
@@ -448,7 +448,7 @@
     {
       "id": "eventos",
       "path": "src/data/eventos.json",
-      "label": "Antecedentes históricos de inventario e incidencias"
+      "label": "Antecedentes históricos de inventario, incidencias y novedades"
     },
     {
       "id": "previo",
@@ -806,6 +806,41 @@
       "id": "spec028",
       "path": "docs/spec/028-modelo-er-consolidation.md",
       "label": "Consolidación del modelo y trazabilidad patrimonial"
+    },
+    {
+      "id": "spec032",
+      "path": "docs/spec/032-mocks-alineados-erd.md",
+      "label": "SPEC 032 · Mocks alineados con el ERD"
+    },
+    {
+      "id": "fotosDatos",
+      "path": "src/data/fotos.json",
+      "label": "Fotografías de centros, ambientes y bienes"
+    },
+    {
+      "id": "elementosDatos",
+      "path": "src/data/elementos.json",
+      "label": "Elementos evaluados de centros, módulos y ambientes"
+    },
+    {
+      "id": "intervencionesDatos",
+      "path": "src/data/intervenciones.json",
+      "label": "Intervenciones en ambientes"
+    },
+    {
+      "id": "centrosServicio",
+      "path": "src/services/centros.js",
+      "label": "Accesos a los datos de centros"
+    },
+    {
+      "id": "spec033",
+      "path": "docs/spec/033-mocks-centros-relacionales.md",
+      "label": "SPEC 033 · Datos de centros en colecciones"
+    },
+    {
+      "id": "spec034",
+      "path": "docs/spec/034-mocks-inventario-derivado.md",
+      "label": "SPEC 034 · Estado del bien derivado de sus hechos"
     }
   ],
   "tables": [
@@ -1821,7 +1856,10 @@
         "fichaCentro",
         "moduloForm",
         "ambienteForm",
-        "spec022"
+        "spec022",
+        "elementosDatos",
+        "centrosServicio",
+        "spec033"
       ],
       "columns": [
         {
@@ -2123,7 +2161,10 @@
         "cars",
         "foto",
         "galeria",
-        "spec006"
+        "spec006",
+        "fotosDatos",
+        "centrosServicio",
+        "spec033"
       ],
       "columns": [
         {
@@ -2319,7 +2360,10 @@
       "sources": [
         "ambientes",
         "intervencionForm",
-        "acciones"
+        "acciones",
+        "intervencionesDatos",
+        "centrosServicio",
+        "spec033"
       ],
       "columns": [
         {
@@ -2418,7 +2462,10 @@
         "bienEdit",
         "bienAccion",
         "acciones",
-        "spec023"
+        "spec023",
+        "spec032",
+        "datos",
+        "spec034"
       ],
       "columns": [
         {
@@ -2532,7 +2579,8 @@
           "name": "ID_CONDICION",
           "type": "NUMBER(38,0)",
           "description": "Condición física registrada.",
-          "nullable": false
+          "nullable": true,
+          "nullableReason": "Condición no constatable, por ejemplo en un bien robado o no ubicado."
         },
         {
           "name": "ID_PRINCIPAL_BIEN",
@@ -2628,7 +2676,7 @@
           "role": "Condición física registrada",
           "cardinality": {
             "from": {
-              "min": 1,
+              "min": 0,
               "max": 1
             },
             "to": {
@@ -3043,7 +3091,9 @@
         "recorrido",
         "acciones",
         "spec002",
-        "bienEdit"
+        "bienEdit",
+        "datos",
+        "spec034"
       ],
       "columns": [
         {
@@ -3580,7 +3630,9 @@
         "spec017",
         "ambientes",
         "novedadForm",
-        "spec028"
+        "spec028",
+        "centrosServicio",
+        "spec033"
       ],
       "columns": [
         {
@@ -4040,7 +4092,9 @@
         "eventos",
         "bienAccion",
         "acciones",
-        "spec016"
+        "spec016",
+        "datos",
+        "spec034"
       ],
       "columns": [
         {

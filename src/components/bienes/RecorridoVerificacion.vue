@@ -32,7 +32,7 @@
           <span class="sg-muted">
             <template v-if="b.asociadoA">Componente de {{ b.asociadoA.bienId }} · </template>
             {{ (b.cantidad ?? 1) > 1 ? `${b.cantidad} unidades · ` : '' }}{{ condicion(b.condicion).label }}
-            · {{ b.verificacion ? `verificado el ${fecha(b.verificacion.fecha)}` : 'sin verificar' }}
+            · {{ verificacionDe(b) ? `verificado el ${fecha(verificacionDe(b).fecha)}` : 'sin verificar' }}
           </span>
         </div>
         <q-btn-toggle
@@ -78,7 +78,7 @@ import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import EscanerRotulo from 'components/common/EscanerRotulo.vue'
 import { useBorrador } from 'src/composables/useBorrador'
-import { bienPorId, bienesDeAmbiente, textoUbicacion, ubicacionDeAmbiente } from 'src/services/datos'
+import { bienPorId, bienesDeAmbiente, textoUbicacion, ubicacionDeAmbiente, situacionDe, verificacionDe } from 'src/services/datos'
 import { informarVerificacion } from 'src/services/acciones'
 import { condicion } from 'src/config/catalogos'
 import { FECHA_CORTE } from 'src/config/demo'
@@ -105,8 +105,8 @@ const { modificado, fijar } = useBorrador(form)
 // Primero los que nunca se verificaron; luego por rótulo.
 const bienes = computed(() =>
   bienesDeAmbiente(props.ambiente.id)
-    .filter((b) => b.situacion === 'activo')
-    .sort((a, b) => (!!a.verificacion - !!b.verificacion) || a.id.localeCompare(b.id))
+    .filter((b) => situacionDe(b) === 'activo')
+    .sort((a, b) => (!!verificacionDe(a) - !!verificacionDe(b)) || a.id.localeCompare(b.id))
 )
 const marcados = computed(() => Object.keys(form.marcas).length)
 const pendientes = computed(() => bienes.value.filter((b) => !form.marcas[b.id]))

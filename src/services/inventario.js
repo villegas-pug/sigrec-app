@@ -1,6 +1,6 @@
 // Reporte de inventario para planificación (SPEC 010 §4): cantidades por tipo de bien o categoría, condición, valor aproximado
 // y necesidades del año. Solo cuenta bienes activos; no cambia las reglas de necesidades, las reutiliza.
-import { ambientesDeCar, bienPorId, bienesActivosDeCentros, posicionModulo, tipoPorId, ubicacionDeBien, db } from './datos'
+import { ambientesDeCar, bienPorId, bienesActivosDeCentros, posicionModulo, tipoPorId, ubicacionDeBien, db, situacionDe, verificacionDe } from './datos'
 import { calcularNecesidades } from './necesidades'
 import { controlDeBien } from './mantenimientos'
 import { CATEGORIAS, CONDICIONES, CONDICIONES_CRITICAS } from 'src/config/catalogos'
@@ -14,7 +14,7 @@ export function detalleInventario ({ carIds, tipoId = null, verificacion = null,
   return bienesActivosDeCentros(carIds)
     .filter((bien) => (!tipoId || bien.tipoId === tipoId) &&
       (!malEstado || CONDICIONES_CRITICAS.includes(bien.condicion)) &&
-      (!verificacion || (verificacion === 'registrada' ? !!bien.verificacion : !bien.verificacion)) &&
+      (!verificacion || (verificacion === 'registrada' ? !!verificacionDe(bien) : !verificacionDe(bien))) &&
       (control !== 'vencido' || controlDeBien(bien, fechaCorte).estado === 'vencido'))
     .map((bien) => ({ bien, ...ubicacionDeBien(bien), principal: bien.asociadoA ? bienPorId(bien.asociadoA.bienId) : null, control: fechaCorte ? controlDeBien(bien, fechaCorte) : null }))
     .sort((a, b) => a.car.nombre.localeCompare(b.car.nombre, 'es') ||
@@ -126,7 +126,7 @@ const ORDEN_ESTADOS = ['vencido', 'por_vencer', 'sin_programar', 'al_dia']
 export function consultaPorTipo (tipoId, cars, { anio, fechaCorte }) {
   return cars.map((car) => {
     const fila = resumenInventario({ carIds: [car.id], agruparPor: 'tipo', anio }).find((f) => f.clave === tipoId) ?? null
-    const bienes = ambientesDeCar(car.id).flatMap((a) => db.bienes.filter((b) => b.ambienteId === a.id && b.situacion === 'activo' && b.tipoId === tipoId))
+    const bienes = ambientesDeCar(car.id).flatMap((a) => db.bienes.filter((b) => b.ambienteId === a.id && situacionDe(b) === 'activo' && b.tipoId === tipoId))
     const controles = bienes.map((b) => controlDeBien(b, fechaCorte))
     const estados = controles.map((c) => c.estado)
     const ultimas = controles.map((c) => c.ultimo?.fecha).filter(Boolean).sort()

@@ -1,5 +1,6 @@
 // Consultas de bienes: árbol de ubicación, componentes y antecedentes (RF-01, RF-04, RF-08, RF-20).
-import { db, ambientePorId, bienPorId, carPorId, moduloPorId, modulosDeCar, ambientesDeModulo, bienesDeAmbiente, vigente } from './datos'
+import { db, ambientePorId, bienPorId, carPorId, moduloPorId, modulosDeCar, ambientesDeModulo, bienesDeAmbiente, vigente, situacionDe } from './datos'
+import { eventosRegistrados } from './centros'
 import { contarRecursos, textoConteoRecursos } from './jerarquiaRecursos'
 import { TIPOS_MANTENIMIENTO, condicionInmueble } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
@@ -12,7 +13,7 @@ const coincide = (bien, texto) => {
 }
 
 // «todos» muestra activos y dados de baja; los bienes anulados (registro erróneo) solo se ven al pedirlos.
-const cumpleSituacion = (bien, situacion) => (situacion === 'todos' ? bien.situacion !== 'anulado' : bien.situacion === situacion)
+const cumpleSituacion = (bien, situacion) => (situacion === 'todos' ? situacionDe(bien) !== 'anulado' : situacionDe(bien) === situacion)
 
 function nodoBien (bien, hijos) {
   return {
@@ -145,7 +146,7 @@ export function antecesoresDeNodo (id) {
 }
 
 // Los componentes anulados (registro erróneo) no figuran entre las asociaciones.
-const esComponenteDe = (b, bienId) => b.asociadoA?.bienId === bienId && b.situacion !== 'anulado'
+const esComponenteDe = (b, bienId) => b.asociadoA?.bienId === bienId && situacionDe(b) !== 'anulado'
 
 export function asociacionesDeBien (bien) {
   const padre = bien.asociadoA ? bienPorId(bien.asociadoA.bienId) : null
@@ -156,7 +157,7 @@ export function asociacionesDeBien (bien) {
 
 // Antecedentes del bien, del más reciente al más antiguo; incluye el alta si se conoce la adquisición.
 export function antecedentesDeBien (bien) {
-  const eventos = db.eventos.filter(
+  const eventos = eventosRegistrados().filter(
     (e) => vigente(e) && (e.bienIds?.includes(bien.id) || e.bienAnteriorId === bien.id || e.bienNuevoId === bien.id)
   )
   const alta = bien.adquisicion?.fecha
@@ -177,12 +178,11 @@ export function antecedentesDeBien (bien) {
   return [...eventos.reverse(), ...mantenimientos, ...alta].sort((a, b) => b.fecha.localeCompare(a.fecha))
 }
 
-// Baja patrimonial y reposición vigentes de un bien (null si no tiene).
-export const bajaDe = (bienId) =>
-  db.eventos.find((e) => vigente(e) && e.tipo === 'baja' && e.bienIds?.[0] === bienId) ?? null
+export { bajaDe } from './datos'
 
+// Reposición vigente de un bien (null si no tiene).
 export const reposicionDe = (bienId) =>
-  db.eventos.find((e) => vigente(e) && e.tipo === 'reposicion' && e.bienAnteriorId === bienId) ?? null
+  eventosRegistrados().find((e) => vigente(e) && e.tipo === 'reposicion' && e.bienAnteriorId === bienId) ?? null
 
 const PASOS = {
   baja: { modo: 'baja', permiso: 'bien.baja', label: 'Dar de baja', icono: 'remove_circle', color: 'negative' },
@@ -193,7 +193,7 @@ const PASOS = {
 // La reposición exige la baja previa y ninguno de los dos pasos se ejecuta solo. Nulo si no hay paso (anulado o ya repuesto).
 export function siguientePaso (bien) {
   if (!bien) return null
-  if (bien.situacion === 'activo') return PASOS.baja
-  if (bien.situacion === 'baja' && !reposicionDe(bien.id)) return PASOS.reposicion
+  if (situacionDe(bien) === 'activo') return PASOS.baja
+  if (situacionDe(bien) === 'baja' && !reposicionDe(bien.id)) return PASOS.reposicion
   return null
 }

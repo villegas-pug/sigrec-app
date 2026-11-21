@@ -186,7 +186,7 @@ import CampoAdquisicion from 'components/common/CampoAdquisicion.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useBorrador } from 'src/composables/useBorrador'
 import { useRetorno } from 'src/composables/useRetorno'
-import { db, bienPorId, bienesDeAmbiente, textoUbicacion, tipoPorId, ubicacionDeAmbiente, vigentes } from 'src/services/datos'
+import { db, bienPorId, bienesDeAmbiente, textoUbicacion, tipoPorId, ubicacionDeAmbiente, vigentes, situacionDe } from 'src/services/datos'
 import { informarVerificacion, numeroONulo, registrarBien, rotuloSugerido } from 'src/services/acciones'
 import { OPCIONES_CATEGORIA, condicion } from 'src/config/catalogos'
 import { interpretarRegistro } from 'src/utils/interpretacionVoz'
@@ -225,7 +225,7 @@ const opcionesTipo = computed(() => vigentes(db.tiposBien).map((t) => ({ label: 
 // Un componente solo se asocia a un bien que a su vez no sea componente (un solo nivel).
 const opcionesAsociar = computed(() =>
   bienesDeAmbiente(props.ambiente.id)
-    .filter((b) => b.situacion === 'activo' && !b.asociadoA)
+    .filter((b) => situacionDe(b) === 'activo' && !b.asociadoA)
     .map((b) => ({ label: `${b.nombre} · ${b.id}`, value: b.id }))
 )
 

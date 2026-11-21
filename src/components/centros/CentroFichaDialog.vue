@@ -82,6 +82,7 @@ import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarCentro, numeroONulo } from 'src/services/acciones'
 import { completarElementos, normalizarElementos } from 'src/services/infraestructura'
+import { elementosAdicionalesDe, estadoElementosDe } from 'src/services/centros'
 import { OPCIONES_CONDICION, OPCIONES_INMUEBLE } from 'src/config/catalogos'
 import { requerido } from 'src/utils/validaciones'
 
@@ -117,8 +118,8 @@ watch(() => props.modelValue, (abierto) => {
     areaTerrenoM2: c.areaTerrenoM2 ?? null,
     estado: c.estado,
     caracteristicas: c.caracteristicas ?? '',
-    elementosAdicionales: [...(c.elementosAdicionales ?? [])],
-    estadoElementos: completarElementos(c.estadoElementos, c.elementosAdicionales),
+    elementosAdicionales: [...elementosAdicionalesDe('centro', props.centro.id)],
+    estadoElementos: completarElementos(estadoElementosDe('centro', props.centro.id), elementosAdicionalesDe('centro', props.centro.id)),
     extintoresRequeridos: i.seguridad?.extintoresRequeridos ?? null
   })
   fijar()

@@ -1,6 +1,6 @@
 // Buscador global (SPEC 011, Ola 3): un índice de centros, módulos (SPEC 020), ambientes, bienes, vehículos, servicios y tipos de bien del ámbito,
 // con su destino (enlace profundo). Funciones puras: el ámbito y los accesos los decide quien llama.
-import { db, moduloPorId, vigente } from './datos'
+import { db, moduloPorId, vigente, situacionDe } from './datos'
 import { celdasDelServicio } from './servicios'
 import { normalizar } from 'src/utils/interpretacionVoz'
 import { CONDICIONES, SITUACIONES, TIPOS_SERVICIO } from 'src/config/catalogos'
@@ -36,8 +36,8 @@ export function indiceDeBusqueda ({ cars, vehiculos, fechaCorte = null, anioServ
   const ambientePorId = new Map(ambientes.map((a) => [a.id, a]))
   for (const b of db.bienes) {
     const a = ambientePorId.get(b.ambienteId)
-    if (!a || b.situacion === 'anulado') continue
-    const estado = b.situacion === 'activo' ? CONDICIONES[b.condicion]?.label ?? 'Sin condición' : SITUACIONES[b.situacion]?.label ?? b.situacion
+    if (!a || situacionDe(b) === 'anulado') continue
+    const estado = situacionDe(b) === 'activo' ? CONDICIONES[b.condicion]?.label ?? 'Sin condición' : SITUACIONES[situacionDe(b)]?.label ?? situacionDe(b)
     agregar({ clave: `bien-${b.id}`, tipo: 'bien', id: b.id, titulo: b.nombre, detalle: `${rutaAmbiente(a)} › ${a.nombre} · ${estado}${b.codigoPatrimonial ? ` · ${b.codigoPatrimonial}` : ''}`, icono: b.asociadoA ? 'extension' : 'label', destino: { name: 'centros', query: { bien: b.id } } })
   }
   for (const v of vehiculos) {

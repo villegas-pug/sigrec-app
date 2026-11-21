@@ -84,7 +84,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { usePerfil } from 'src/composables/usePerfil'
-import { ambientePorId, db, etiquetaAmbiente, vehiculoPorId, vigentes } from 'src/services/datos'
+import { ambientePorId, db, etiquetaAmbiente, vehiculoPorId, vigentes, situacionDe } from 'src/services/datos'
 import { actualizarMantenimiento, actualizarVehiculo, registrarMantenimiento } from 'src/services/acciones'
 import { requiereAtencion } from 'src/services/vehiculos'
 import { extintoresDeCentro } from 'src/services/mantenimientos'
@@ -120,7 +120,7 @@ const sugerida = computed(() => (tipoActual.value && form.fecha ? sumarMeses(for
 
 const rotuloBien = (b) => `${b.nombre} ${b.id}`
 const bienesDelCentro = computed(() =>
-  db.bienes.filter((b) => b.situacion === 'activo' && db.ambientes.some((a) => a.id === b.ambienteId && a.carId === props.centro.id))
+  db.bienes.filter((b) => situacionDe(b) === 'activo' && db.ambientes.some((a) => a.id === b.ambienteId && a.carId === props.centro.id))
 )
 
 const opcionesObjetivo = computed(() => {

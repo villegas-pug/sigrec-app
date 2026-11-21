@@ -231,7 +231,7 @@ import BienesMalEstado from 'components/bienes/BienesMalEstado.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
-import { bienesActivosDeCentros, carPorId, db, etiquetaAmbiente, tipoPorId, vigentes } from 'src/services/datos'
+import { bienesActivosDeCentros, carPorId, db, etiquetaAmbiente, tipoPorId, vigentes, verificacionDe } from 'src/services/datos'
 import { detalleInventario, consultaPorTipo, estadoValoracion, requiereAtencionEquipo, resumenInventario, totalizarInventario } from 'src/services/inventario'
 import { CATEGORIAS, CONDICIONES, CONDICION_DESCONOCIDA, ESTADOS_CONTROL, OPCIONES_CATEGORIA, TIPO_EXTINTOR, TODOS, condicion } from 'src/config/catalogos'
 import { ANIO_REVISION, ANIOS_REVISION, FECHA_CORTE } from 'src/config/demo'
@@ -356,7 +356,10 @@ function exportar () {
       { titulo: 'Ambiente', valor: (f) => etiquetaAmbiente(f.ambiente) },
       { titulo: 'Cantidad', valor: (f) => f.bien.cantidad ?? 1 },
       { titulo: 'Condición', valor: (f) => condicion(f.bien.condicion).label },
-      { titulo: 'Verificación', valor: (f) => f.bien.verificacion ? `${f.bien.verificacion.fecha} · ${f.bien.verificacion.resultado}` : 'Sin verificación registrada' },
+      { titulo: 'Verificación', valor: (f) => {
+        const dato = verificacionDe(f.bien)
+        return dato ? `${dato.fecha} · ${dato.resultado}` : 'Sin verificación registrada'
+      } },
       { titulo: 'Control', valor: (f) => f.control ? ESTADOS_CONTROL[f.control.estado].label : '' },
       { titulo: 'Próxima fecha de control', valor: (f) => f.control?.proxima ?? '' },
       { titulo: 'Deterioro informado', valor: (f) => f.bien.deterioro || 'Sin deterioro informado' },

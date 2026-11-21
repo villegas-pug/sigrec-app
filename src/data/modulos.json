@@ -1,14 +1,11 @@
 [
   {
     "id": "AMA-M01", "carId": "AMA", "nombre": "Módulo 1", "tipo": "casa", "capacidad": 12, "pisos": 2, "areaM2": 160,
-    "condicion": "regular", "ubicacion": "Frente al ingreso principal",
-    "estadoElementos": { "techo": "regular", "pintura": "regular", "puertas": "bueno", "estructura": "bueno" }
+    "condicion": "regular", "ubicacion": "Frente al ingreso principal"
   },
   {
     "id": "AMA-M02", "carId": "AMA", "nombre": "Módulo 2", "tipo": "comun", "capacidad": null, "pisos": 1, "areaM2": 90,
-    "condicion": "bueno", "ubicacion": "Junto al patio techado",
-    "estadoElementos": { "sanitarias": "bueno", "extra-campana-extractora": "malo" },
-    "elementosAdicionales": [{ "key": "extra-campana-extractora", "label": "Campana extractora" }]
+    "condicion": "bueno", "ubicacion": "Junto al patio techado"
   },
   {
     "id": "HOR-M01", "carId": "HOR", "nombre": "Módulo 1", "tipo": "casa", "capacidad": 8, "pisos": 1, "areaM2": null,

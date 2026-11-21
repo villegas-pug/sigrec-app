@@ -1,5 +1,6 @@
 // Reglas de necesidades y presupuesto (RF-05, RF-06, RF-19, RF-20, RF-21).
-import { db, bienPorId, tipoPorId, ubicacionDeBien, ubicacionDeAmbiente, vigente } from './datos'
+import { db, bienPorId, tipoPorId, ubicacionDeBien, ubicacionDeAmbiente, vigente, estaAtendida, situacionDe } from './datos'
+import { eventosRegistrados, novedadesDe } from './centros'
 import { esIncidencia, requiereReposicion, unidadesAfectadas, ubicacionHecho } from './incidencias'
 import { reposicionDe } from './bienes'
 import { plural } from 'src/utils/formato'
@@ -25,7 +26,7 @@ export function antecedentesFaltantes (bien) {
 
 // Incidentes vigentes que reportan necesidad y ocurrieron hasta el año revisado (`anio` null = sin límite).
 export function incidentesConNecesidad (bienId, anio = null) {
-  return db.eventos.filter(
+  return eventosRegistrados().filter(
     (e) =>
       vigente(e) &&
       esIncidencia(e) &&
@@ -51,7 +52,7 @@ export function calcularNecesidades ({ anio, carIds = null }) {
   const insuficientes = []
 
   for (const bien of db.bienes) {
-    if (bien.situacion !== 'activo') continue
+    if (situacionDe(bien) !== 'activo') continue
     const ubicacion = ubicacionDeBien(bien)
     if (!enAmbito(carIds, ubicacion.car.id)) continue
 
@@ -96,16 +97,16 @@ export function calcularNecesidades ({ anio, carIds = null }) {
     .flatMap((ambiente) => {
       const ubicacion = ubicacionDeAmbiente(ambiente.id)
       if (!enAmbito(carIds, ubicacion.car.id)) return []
-      return (ambiente.novedades ?? [])
-        .filter((n) => vigente(n) && n.requiereEvaluacion && !n.atendida)
+      return novedadesDe(ambiente.id)
+        .filter((n) => vigente(n) && n.requiereEvaluacion && !estaAtendida(n))
         .map((novedad) => ({ id: novedad.id, novedad, ubicacion }))
     })
 
-  infraestructura.push(...db.eventos.filter((e) => vigente(e) && e.requiereEvaluacion && !e.atendida && e.origen && ['centro', 'ambiente'].includes(e.origen.tipo))
+  infraestructura.push(...eventosRegistrados().filter((e) => vigente(e) && e.requiereEvaluacion && !estaAtendida(e) && e.origen && ['centro', 'ambiente'].includes(e.origen.tipo))
     .map((e) => ({ id: e.id, novedad: e, ubicacion: ubicacionHecho(e), esIncidencia: true }))
     .filter((i) => i.ubicacion.car && enAmbito(carIds, i.ubicacion.car.id)))
 
-  const atendidas = db.eventos
+  const atendidas = eventosRegistrados()
     .filter((e) => vigente(e) && e.tipo === 'reposicion' && anioDe(e.fecha) <= anio)
     .map((evento) => {
       const anterior = bienPorId(evento.bienAnteriorId)
@@ -116,7 +117,7 @@ export function calcularNecesidades ({ anio, carIds = null }) {
   // Bienes ya dados de baja por un incidente con necesidad y todavía sin reposición. Es informativo: no suma a los pendientes
   // (regla por validar), porque la baja saca al bien del cálculo.
   const porReponer = db.bienes
-    .filter((b) => b.situacion === 'baja' && !reposicionDe(b.id))
+    .filter((b) => situacionDe(b) === 'baja' && !reposicionDe(b.id))
     .map((bien) => ({ id: bien.id, bien, ubicacion: ubicacionDeBien(bien), incidentes: incidentesConNecesidad(bien.id, anio) }))
     .filter((r) => r.incidentes.length && enAmbito(carIds, r.ubicacion.car.id))
 

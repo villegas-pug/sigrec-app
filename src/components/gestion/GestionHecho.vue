@@ -17,7 +17,7 @@ import AnularDialog from 'components/common/AnularDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { permisoIncidencia, esIncidencia as esHechoIncidente } from 'src/services/incidencias'
-import { vigente } from 'src/services/datos'
+import { estaAtendida, vigente } from 'src/services/datos'
 import { anular, anularBaja, anularReposicion, dependenciasDeBaja, dependenciasDeReposicion } from 'src/services/acciones'
 const props = defineProps({ evento: { type: Object, required: true }, operable: { type: Boolean, default: true } })
 defineEmits(['seleccionar'])
@@ -69,7 +69,7 @@ const accionesEvento = computed(() => {
   }
   if (!esIncidente.value) return []
   return [
-    { label: 'Marcar infraestructura como atendida', icono: 'task_alt', visible: !!e.requiereEvaluacion && !e.atendida && vigente(e) && puedeHacer('novedad.atender'), accion: () => { atencionAbierta.value = true } },
+    { label: 'Marcar infraestructura como atendida', icono: 'task_alt', visible: !!e.requiereEvaluacion && !estaAtendida(e) && vigente(e) && puedeHacer('novedad.atender'), accion: () => { atencionAbierta.value = true } },
     {
       label: 'Actualizar incidente',
       icono: 'edit',

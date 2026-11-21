@@ -57,7 +57,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { ambientesDeCar, opcionesAmbientes } from 'src/services/datos'
-import { actualizarFoto, registrarFoto } from 'src/services/acciones'
+import { actualizarFoto, registrarFoto, registrarFotoDeBien } from 'src/services/acciones'
 import { requerido } from 'src/utils/validaciones'
 import { FECHA_CORTE } from 'src/config/demo'
 
@@ -98,10 +98,8 @@ function guardar () {
   if (props.foto) {
     actualizarFoto(props.foto, { titulo: form.titulo, nota: form.nota, url, nombreArchivo: form.archivo?.name, ambienteId: form.ambienteId })
   } else {
-    if (props.bien) {
-      props.bien.fotos ??= []
-      props.bien.fotos.push({ titulo: form.titulo, nota: form.nota || null, url, nombreArchivo: form.archivo?.name, fecha: FECHA_CORTE })
-    } else registrarFoto(props.centro, { titulo: form.titulo, nota: form.nota, url, nombreArchivo: form.archivo?.name, ambienteId: form.ambienteId })
+    if (props.bien) registrarFotoDeBien(props.bien, { titulo: form.titulo, nota: form.nota, url, nombreArchivo: form.archivo?.name })
+    else registrarFoto(props.centro, { titulo: form.titulo, nota: form.nota, url, nombreArchivo: form.archivo?.name, ambienteId: form.ambienteId })
   }
   $q.notify({ type: 'positive', message: props.foto ? 'Fotografía actualizada.' : 'Fotografía incorporada.' })
   emit('update:modelValue', false)

@@ -53,7 +53,7 @@ import { usePerfil } from 'src/composables/usePerfil'
 import { useBorrador } from 'src/composables/useBorrador'
 import { useRetorno } from 'src/composables/useRetorno'
 import { actualizarCombustible, registrarCombustible } from 'src/services/acciones'
-import { itinerariosDeVehiculo } from 'src/services/combustible'
+import { consumoDeclaradoL, itinerariosDeVehiculo } from 'src/services/combustible'
 import { FECHA_CORTE } from 'src/config/demo'
 import { fecha as formatoFecha } from 'src/utils/formato'
 import { mayorQueCero, noFutura, requerido } from 'src/utils/validaciones'
@@ -80,7 +80,7 @@ const { modificado, fijar } = useBorrador(form)
 // Recorridos realizados sin consumo declarado; al corregir un consumo se conserva su propio recorrido.
 const opcionesItinerario = computed(() =>
   itinerariosDeVehiculo(props.vehiculo.id)
-    .filter((it) => it.realizado && (it.consumoDeclaradoL == null || it.id === props.registro?.itinerarioId))
+    .filter((it) => it.realizado && (consumoDeclaradoL(it.id) == null || it.id === props.registro?.itinerarioId))
     .map((it) => ({ label: `${it.id} · ${formatoFecha(it.fecha)} · ${it.proposito}`, value: it.id }))
 )
 

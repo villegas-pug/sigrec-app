@@ -76,6 +76,7 @@ import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { useRecorridoInterno } from 'src/composables/useRecorridoInterno'
 import { db, ambientesDeCar, bienPorId, opcionesAmbientes } from 'src/services/datos'
+import { eventosRegistrados } from 'src/services/centros'
 import { calcularNecesidades } from 'src/services/necesidades'
 import DetalleHecho from 'components/bienes/DetalleHecho.vue'
 import { TIPOS_HECHO, ESTADOS, estadoNecesidad as estadoHecho, hechosRegistrados, ubicacionHecho } from 'src/services/incidencias'
@@ -110,7 +111,7 @@ const opcionesTipo = [{ label: 'Todos', value: TODOS }, ...TIPOS_HISTORIAL.map((
 // Los años del filtro salen de los hechos registrados, del más reciente al más antiguo.
 const opcionesAnio = computed(() => [
   { label: 'Todos los períodos', value: TODOS },
-  ...[...new Set(db.eventos.map((ev) => ev.fecha.slice(0, 4)))].sort().reverse().map((a) => ({ label: a, value: a }))
+  ...[...new Set(eventosRegistrados().map((ev) => ev.fecha.slice(0, 4)))].sort().reverse().map((a) => ({ label: a, value: a }))
 ])
 
 const pendientes = computed(() => calcularNecesidades({ anio: ANIO_REVISION, carIds: carIdsEnAmbito.value }).pendientes)
@@ -118,7 +119,7 @@ const estadoNecesidad = (ev) => estadoHecho(ev, pendientes.value)
 
 const filtros = reactive({ ambienteId: TODOS, texto: '', tipo: TODOS, necesidad: TODOS, anio: TODOS })
 // Un hecho anulado pedido por enlace solo se ve con los inactivos.
-const mostrarInactivos = ref(!!db.eventos.find((e) => e.id === parametro(route.query.hecho))?.anulacion)
+const mostrarInactivos = ref(!!eventosRegistrados().find((e) => e.id === parametro(route.query.hecho))?.anulacion)
 const detalleRef = ref(null)
 
 function limpiarFiltros () {

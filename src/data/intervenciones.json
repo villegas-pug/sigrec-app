@@ -1,0 +1,9 @@
+[
+  { "id": "INT-001", "ambienteId": "AMA-D1", "descripcion": "Pintado de muros y techo", "fecha": "2023-03", "esPintado": false },
+  { "id": "INT-002", "ambienteId": "AMA-D1", "descripcion": "Cambio de chapa de la puerta", "fecha": null, "esPintado": false },
+  { "id": "INT-003", "ambienteId": "AMA-COM", "descripcion": "Pintado de muros", "fecha": "2024-08", "esPintado": false },
+  { "id": "INT-004", "ambienteId": "AMA-SES", "descripcion": "Pintado de muros", "fecha": "2025-01", "esPintado": false },
+  { "id": "INT-005", "ambienteId": "AMA-SEA", "descripcion": "Pintado de muros", "fecha": "2024-08", "esPintado": false },
+  { "id": "INT-006", "ambienteId": "HOR-D1", "descripcion": "Pintado de muros", "fecha": "2025-06", "esPintado": false },
+  { "id": "INT-007", "ambienteId": "ESP-D1", "descripcion": "Pintado de muros", "fecha": "2024-02", "esPintado": false }
+]

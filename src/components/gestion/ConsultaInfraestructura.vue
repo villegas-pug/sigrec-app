@@ -14,6 +14,7 @@ import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { ambientesDeCar, carPorId, moduloPorId, modulosDeCar, ordenarPorModulo, textoUbicacion } from 'src/services/datos'
 import { elementosCriticos } from 'src/services/infraestructura'
 import { novedadesAbiertas } from 'src/services/situacion'
+import { elementosAdicionalesDe, estadoElementosDe } from 'src/services/centros'
 import { CONDICIONES_CRITICAS, condicion } from 'src/config/catalogos'
 import { parametro } from 'src/utils/navegacion'
 const route = useRoute()
@@ -40,9 +41,9 @@ const filas = computed(() => carIdsVisibles.value.flatMap((id) => {
   // Lugares evaluados: inmueble y módulos (con sus elementos agregados, SPEC 022) y ambientes.
   const construccion = car.inmueble.construccion
   return [
-    { id: car.id, estados: construccion.estadoElementos, adicionales: construccion.elementosAdicionales, contexto: `${car.nombre} › Inmueble`, to: to(null) },
-    ...modulos.map((m) => ({ id: m.id, estados: m.estadoElementos, adicionales: m.elementosAdicionales, contexto: textoUbicacion({ car, modulo: m }), to: { name: 'centros', query: { modulo: m.id } } })),
-    ...ambientes.map((a) => ({ id: a.id, estados: a.estadoElementos, adicionales: [], contexto: ruta(a), to: to(a) }))
+    { id: car.id, estados: estadoElementosDe('centro', car.id), adicionales: elementosAdicionalesDe('centro', car.id), contexto: `${car.nombre} › Inmueble`, to: to(null) },
+    ...modulos.map((m) => ({ id: m.id, estados: estadoElementosDe('modulo', m.id), adicionales: elementosAdicionalesDe('modulo', m.id), contexto: textoUbicacion({ car, modulo: m }), to: { name: 'centros', query: { modulo: m.id } } })),
+    ...ambientes.map((a) => ({ id: a.id, estados: estadoElementosDe('ambiente', a.id), adicionales: [], contexto: ruta(a), to: to(a) }))
   ].flatMap((lugar) => elementosCriticos(lugar.estados, lugar.adicionales).map((e) => ({ id: `${lugar.id}-${e.key}`, titulo: e.label, contexto: lugar.contexto, detalle: condicion(lugar.estados[e.key]).label, to: lugar.to })))
 }))
 </script>

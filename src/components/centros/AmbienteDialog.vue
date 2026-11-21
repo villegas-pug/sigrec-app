@@ -75,6 +75,7 @@ import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarAmbiente, numeroONulo, registrarAmbiente } from 'src/services/acciones'
 import { completarElementos, normalizarElementos } from 'src/services/infraestructura'
+import { estadoElementosDe } from 'src/services/centros'
 import { modulosDeCar } from 'src/services/datos'
 import { iconoModulo } from 'src/services/bienes'
 import { TIPOS_MODULO } from 'src/config/catalogos'
@@ -115,7 +116,7 @@ watch(() => props.modelValue, (abierto) => {
     ventanas: a?.ventanas ?? null,
     condicion: a?.condicion ?? 'bueno',
     ultimoPintado: a?.ultimoPintado ?? '',
-    estadoElementos: completarElementos(a?.estadoElementos)
+    estadoElementos: completarElementos(a ? estadoElementosDe('ambiente', a.id) : null)
   })
   fijar()
 })

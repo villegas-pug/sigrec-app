@@ -17,21 +17,21 @@
             Todos los bienes quedaron resueltos. Ya puede continuar con la anulación del ambiente.
           </note-banner>
 
-          <div v-for="b in pendientes" :key="b.id" class="sg-box" :class="{ 'sg-box--dashed': b.revisionPendiente }">
+          <div v-for="b in pendientes" :key="b.id" class="sg-box" :class="{ 'sg-box--dashed': revisionPendienteDe(b) }">
             <div class="sg-chips items-center">
               <span class="text-weight-bold">{{ b.nombre }} · {{ b.id }}</span>
               <status-chip v-bind="condicion(b.condicion)" />
-              <status-chip v-bind="SITUACIONES[b.situacion]" />
-              <status-chip v-if="b.revisionPendiente" tono="wa" label="Situación por revisar" />
+              <status-chip v-bind="SITUACIONES[situacionDe(b)]" />
+              <status-chip v-if="revisionPendienteDe(b)" tono="wa" label="Situación por revisar" />
             </div>
             <span v-if="b.asociadoA" class="sg-muted">Componente de {{ b.asociadoA.bienId }} ({{ b.asociadoA.posicion ?? 'posición no informada' }})</span>
             <span v-if="hijosDe(b).length" class="sg-muted">
               {{ plural(hijosDe(b).length, 'componente asociado', 'componentes asociados') }}: {{ hijosDe(b).map((h) => h.id).join(', ') }}. Si reubica este bien, viajan con él.
             </span>
             <div class="row items-center q-gutter-sm">
-              <q-btn v-if="b.situacion === 'activo' && puedeHacer('bien.trasladar')" dense outline no-caps color="secondary" icon="swap_horiz" label="Reubicar" :disable="!hayDestino" @click="abrirTraslado(b)" />
-              <q-btn v-if="b.situacion === 'activo' && puedeHacer('bien.baja')" dense outline no-caps color="negative" icon="remove_circle" label="Dar de baja" @click="abrirBaja(b)" />
-              <q-btn v-if="b.situacion !== 'activo' && b.revisionPendiente && puedeHacer('bien.baja')" dense outline no-caps color="secondary" icon="task_alt" label="Cerrar revisión" @click="cerrarRevision(b)" />
+              <q-btn v-if="situacionDe(b) === 'activo' && puedeHacer('bien.trasladar')" dense outline no-caps color="secondary" icon="swap_horiz" label="Reubicar" :disable="!hayDestino" @click="abrirTraslado(b)" />
+              <q-btn v-if="situacionDe(b) === 'activo' && puedeHacer('bien.baja')" dense outline no-caps color="negative" icon="remove_circle" label="Dar de baja" @click="abrirBaja(b)" />
+              <q-btn v-if="situacionDe(b) !== 'activo' && revisionPendienteDe(b) && puedeHacer('bien.baja')" dense outline no-caps color="secondary" icon="task_alt" label="Cerrar revisión" @click="cerrarRevision(b)" />
               <q-btn v-if="puedeAcceder('centros')" flat dense no-caps color="secondary" icon="visibility" label="Ver ficha" :to="{ name: 'centros', query: { bien: b.id } }" />
             </div>
           </div>
@@ -59,7 +59,7 @@ import StatusChip from 'components/common/StatusChip.vue'
 import BienEdicionDialog from 'components/bienes/BienEdicionDialog.vue'
 import BienAccionDialog from 'components/bienes/BienAccionDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { ambientesDeCar, db, textoUbicacion, ubicacionDeAmbiente } from 'src/services/datos'
+import { ambientesDeCar, db, textoUbicacion, ubicacionDeAmbiente, revisionPendienteDe, situacionDe } from 'src/services/datos'
 import { cerrarRevision, pendientesDeAmbiente } from 'src/services/acciones'
 import { SITUACIONES, condicion } from 'src/config/catalogos'
 import { plural } from 'src/utils/formato'
@@ -73,7 +73,7 @@ const emit = defineEmits(['update:modelValue', 'continuar'])
 const { puedeAcceder, puedeHacer } = usePerfil()
 
 const pendientes = computed(() => pendientesDeAmbiente(props.ambiente))
-const hijosDe = (bien) => db.bienes.filter((b) => b.asociadoA?.bienId === bien.id && b.situacion === 'activo')
+const hijosDe = (bien) => db.bienes.filter((b) => b.asociadoA?.bienId === bien.id && situacionDe(b) === 'activo')
 const hayDestino = computed(() => ambientesDeCar(props.ambiente.carId).some((a) => a.id !== props.ambiente.id))
 
 const accion = reactive({ bien: null, traslado: false, baja: false })

@@ -5,7 +5,7 @@
           Hecho anulado el {{ fecha(evento.anulacion.fecha) }} por {{ evento.anulacion.por }}. Motivo: {{ evento.anulacion.motivo }}
           No genera necesidades.
         </note-banner>
-        <p v-if="evento.requiereEvaluacion" class="sg-muted">Infraestructura: {{ evento.atendida ? 'Atendida' : 'Requiere evaluación, sin costo estimado' }}</p>
+        <p v-if="evento.requiereEvaluacion" class="sg-muted">Infraestructura: {{ estaAtendida(evento) ? 'Atendida' : 'Requiere evaluación, sin costo estimado' }}</p>
         <p v-if="evento.detalle">{{ evento.detalle }}</p>
         <router-link v-if="esIncidente && puedeAcceder('centros')" :to="{ name: 'centros', query: { hecho: evento.id } }">Ver hecho en su origen</router-link>
         <p v-if="evento.registradoEl && evento.registradoEl !== evento.fecha" class="sg-muted">Registrado el {{ fecha(evento.registradoEl) }}.</p>
@@ -13,7 +13,7 @@
         <div v-if="evento.tipo === 'reposicion'" class="sg-grid-2">
           <div v-for="(b, idx) in [bienPorId(evento.bienAnteriorId), bienPorId(evento.bienNuevoId)]" :key="b.id" class="sg-box">
             <div class="sg-chips">
-              <status-chip v-bind="SITUACIONES[b.situacion]" />
+              <status-chip v-bind="SITUACIONES[situacionDe(b)]" />
               <status-chip :tono="idx === 0 ? 'ne' : 'in'" :label="idx === 0 ? 'Bien anterior' : 'Reposición'" />
             </div>
             <router-link v-if="puedeAcceder('centros')" :to="enlaceBien(b)" class="text-weight-bold">{{ b.nombre }} · {{ b.id }}</router-link>
@@ -43,7 +43,7 @@
                     <div v-if="evento.unidades && afectados.length === 1" class="sg-muted">{{ evento.unidades }} de {{ b.cantidad }} unidades afectadas</div>
                   </td>
                   <td><status-chip v-bind="condicion(b.condicion)" /><div class="sg-muted">{{ unidadesAfectadas(evento, b) }} unidades afectadas · {{ requiereReposicion(evento, b.id) ? 'Requiere reposición' : 'No requiere reposición por este hecho' }}</div></td>
-                  <td><status-chip v-bind="SITUACIONES[b.situacion]" /></td>
+                  <td><status-chip v-bind="SITUACIONES[situacionDe(b)]" /></td>
                   <td>
                     <status-chip :tono="estadoDeBien(evento, b.id).tono" :label="estadoDeBien(evento, b.id).label" />
                     <div v-if="necesidadDe(b.id)" class="sg-muted">
@@ -78,11 +78,11 @@
               La baja no da de baja los bienes asociados. La relación se conserva como antecedente y cada uno requiere revisar su situación.
             </note-banner>
             <div class="sg-grid-2 q-mt-md">
-              <div v-for="a in asociados" :key="a.bien.id" class="sg-box" :class="{ 'sg-box--dashed': a.bien.revisionPendiente }">
+              <div v-for="a in asociados" :key="a.bien.id" class="sg-box" :class="{ 'sg-box--dashed': revisionPendienteDe(a.bien) }">
                 <div class="sg-chips">
                   <status-chip v-bind="condicion(a.bien.condicion)" />
-                  <status-chip v-bind="SITUACIONES[a.bien.situacion]" />
-                  <status-chip v-if="a.bien.revisionPendiente" tono="wa" label="Situación por revisar" />
+                  <status-chip v-bind="SITUACIONES[situacionDe(a.bien)]" />
+                  <status-chip v-if="revisionPendienteDe(a.bien)" tono="wa" label="Situación por revisar" />
                 </div>
                 <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: a.bien.id } }" class="text-weight-bold">{{ a.bien.nombre }} · {{ a.bien.id }}</router-link>
                 <span v-else class="text-weight-bold">{{ a.bien.nombre }} · {{ a.bien.id }}</span>
@@ -100,7 +100,7 @@ import StatusChip from 'components/common/StatusChip.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import HistorialBien from './HistorialBien.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { db, bienPorId, bienesDeAmbiente, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien } from 'src/services/datos'
+import { db, bienPorId, bienesDeAmbiente, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien, estaAtendida, revisionPendienteDe, situacionDe } from 'src/services/datos'
 import { calcularNecesidades } from 'src/services/necesidades'
 import { siguientePaso } from 'src/services/bienes'
 import { esIncidencia as esHechoIncidente, TIPOS_HECHO, estadoDeBien as estadoBien, ubicacionHecho, origenIncidencia, requiereReposicion, unidadesAfectadas } from 'src/services/incidencias'
@@ -123,14 +123,15 @@ const CLASES = { renovacion: 'Renovación', reposicion: 'Reposición' }
 const TIPOS_HISTORIAL = TIPOS_HECHO
 const afectados = computed(() => (evento.value ? evento.value.bienIds.map(bienPorId).filter(Boolean) : []))
 const noAfectados = computed(() =>
-  evento.value?.ambienteId ? bienesDeAmbiente(evento.value.ambienteId).filter((b) => !evento.value.bienIds.includes(b.id) && b.situacion === 'activo') : []
+  evento.value?.ambienteId ? bienesDeAmbiente(evento.value.ambienteId).filter((b) => !evento.value.bienIds.includes(b.id) && situacionDe(b) === 'activo') : []
 )
 
-// Componentes que tenía el bien al darse de baja (si el hecho los guardó) o, en su defecto, los que tiene hoy.
+// SPEC 034: el detalle de una baja semilla sigue mostrando las asociaciones actuales.
+// Las bajas registradas muestran los componentes asociados en el momento del registro.
 const asociados = computed(() => {
   const e = evento.value
   if (!e) return []
-  if (e.componentes) return e.componentes.map((c) => ({ bien: bienPorId(c.bienId), posicion: c.posicion })).filter((a) => a.bien)
+  if (e.registradoEl && e.componentes) return e.componentes.map((c) => ({ bien: bienPorId(c.bienId), posicion: c.posicion })).filter((a) => a.bien)
   return db.bienes
     .filter((b) => b.asociadoA?.bienId === e.bienIds[0])
     .map((b) => ({ bien: b, posicion: b.asociadoA.posicion }))

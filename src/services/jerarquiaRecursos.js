@@ -1,7 +1,7 @@
 // Consultas de presentación: registros de cada nivel, sin modificar las reglas de inventario.
-import { bienesDeAmbiente, ambientesDeModulo, modulosDeCar, vigente } from './datos'
+import { bienesDeAmbiente, ambientesDeModulo, modulosDeCar, vigente, situacionDe, situacionDeRegistro } from './datos'
 
-export const coincideSituacion = (bien, situacion = 'todos') => situacion === 'todos' ? bien.situacion !== 'anulado' : bien.situacion === situacion
+export const coincideSituacion = (bien, situacion = 'todos') => situacion === 'todos' ? situacionDe(bien) !== 'anulado' : situacionDe(bien) === situacion
 
 export function contarRecursos (bienes) {
   return {
@@ -42,5 +42,5 @@ export function nodosModulos (centroId, filtros = {}) {
 }
 
 export function estadoNivel (nodo) {
-  return nodo.registro.situacion ?? (vigente(nodo.registro) ? 'activo' : 'anulado')
+  return situacionDeRegistro(nodo.registro) ?? (vigente(nodo.registro) ? 'activo' : 'anulado')
 }

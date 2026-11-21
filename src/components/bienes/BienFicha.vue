@@ -12,10 +12,10 @@
     <template #chips>
       <status-chip tono="ne" :label="esComponente ? `Componente · ${CATEGORIAS[bien.categoria]}` : CATEGORIAS[bien.categoria]" />
       <status-chip v-bind="condicionBien" :label="`Condición: ${condicionBien.label}`" />
-      <status-chip v-bind="SITUACIONES[bien.situacion]" />
-      <status-chip v-if="bien.verificacion" :tono="bien.verificacion.resultado === 'coincide' ? 'ok' : 'wa'" :label="`Verificado el ${fecha(bien.verificacion.fecha)}`" />
+      <status-chip v-bind="SITUACIONES[situacionDe(bien)]" />
+      <status-chip v-if="verificacion" :tono="verificacion.resultado === 'coincide' ? 'ok' : 'wa'" :label="`Verificado el ${fecha(verificacion.fecha)}`" />
       <status-chip v-else tono="si" label="Pendiente de verificación" />
-      <status-chip v-if="bien.revisionPendiente" tono="wa" label="Situación por revisar" />
+      <status-chip v-if="revisionPendienteDe(bien)" tono="wa" label="Situación por revisar" />
     </template>
 
     <template #acciones>
@@ -108,11 +108,11 @@
           <q-btn v-if="puedeHacer('bien.componente') && !asociaciones.hijos.length" outline color="secondary" icon="link" label="Asociar a otro bien" @click="$emit('accion', 'componente')" />
         </template>
         <div class="sg-kv-grid">
-          <div v-for="h in componentesVisibles" :key="h.id" class="sg-box" :class="{ 'sg-box--dashed': h.revisionPendiente }">
+          <div v-for="h in componentesVisibles" :key="h.id" class="sg-box" :class="{ 'sg-box--dashed': revisionPendienteDe(h) }">
             <span class="sg-kv__label">Componente</span>
             <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ h.nombre }} {{ h.id }}</button>
-            <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
-            <status-chip v-if="h.revisionPendiente" tono="wa" label="Situación por revisar" />
+            <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[situacionDe(h)].label }}</span>
+            <status-chip v-if="revisionPendienteDe(h)" tono="wa" label="Situación por revisar" />
           </div>
         </div>
         <p v-if="!componentesVisibles.length" class="sg-muted q-mb-none">Sin componentes para los filtros seleccionados.</p>
@@ -129,15 +129,15 @@
           <div v-if="asociaciones.padre" class="sg-box">
             <span class="sg-kv__label">Bien</span>
             <button type="button" class="sg-row-btn" @click="$emit('seleccionar', asociaciones.padre.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ asociaciones.padre.nombre }} {{ asociaciones.padre.id }}</button>
-            <span class="sg-muted">Posición: {{ bien.asociadoA.posicion }} · {{ SITUACIONES[asociaciones.padre.situacion].label }}</span>
+            <span class="sg-muted">Posición: {{ bien.asociadoA.posicion }} · {{ SITUACIONES[situacionDe(asociaciones.padre)].label }}</span>
           </div>
           <div v-for="h in hermanosVisibles" :key="h.id" class="sg-box">
             <span class="sg-kv__label">Componente del mismo bien</span>
             <button type="button" class="sg-row-btn" @click="$emit('seleccionar', h.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />{{ h.nombre }} {{ h.id }}</button>
-            <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[h.situacion].label }}</span>
+            <span class="sg-muted">{{ h.asociadoA.posicion }} · {{ condicion(h.condicion).label }} · {{ SITUACIONES[situacionDe(h)].label }}</span>
           </div>
         </div>
-        <div v-if="bien.revisionPendiente" class="row q-gutter-sm q-mt-md">
+        <div v-if="revisionPendienteDe(bien)" class="row q-gutter-sm q-mt-md">
           <span class="self-center">El bien del que forma parte fue dado de baja. Revise su situación:</span>
           <template v-if="puedeHacer('bien.baja')">
             <q-btn outline color="secondary" icon="check_circle" label="Mantener activo" @click="$emit('mantener')" />
@@ -180,7 +180,8 @@ import MenuAcciones from 'components/common/MenuAcciones.vue'
 import HistorialBien from 'components/bienes/HistorialBien.vue'
 import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
 import MantenimientoDialog from 'components/centros/MantenimientoDialog.vue'
-import { db, bienPorId, tipoPorId, textoUbicacion, ubicacionDeBien } from 'src/services/datos'
+import { db, bienPorId, tipoPorId, textoUbicacion, ubicacionDeBien, revisionPendienteDe, situacionDe, verificacionDe } from 'src/services/datos'
+import { eventosRegistrados } from 'src/services/centros'
 import { coincideSituacion } from 'src/services/jerarquiaRecursos'
 import { asociacionesDeBien } from 'src/services/bienes'
 import { antecedentesFaltantes, calcularNecesidades, finVidaUtil } from 'src/services/necesidades'
@@ -202,10 +203,11 @@ const emit = defineEmits(['accion', 'seleccionar', 'mantener', 'volver'])
 
 const { puedeAcceder, puedeHacer } = usePerfil()
 
+const verificacion = computed(() => verificacionDe(props.bien))
 const ubicacion = computed(() => ubicacionDeBien(props.bien))
 const tipo = computed(() => tipoPorId(props.bien.tipoId))
-const activo = computed(() => props.bien.situacion === 'activo')
-const anulado = computed(() => props.bien.situacion === 'anulado')
+const activo = computed(() => situacionDe(props.bien) === 'activo')
+const anulado = computed(() => situacionDe(props.bien) === 'anulado')
 const esComponente = computed(() => !!props.bien.asociadoA)
 const condicionBien = computed(() => condicion(props.bien.condicion))
 const fin = computed(() => finVidaUtil(props.bien))
@@ -221,7 +223,7 @@ const esExtintor = computed(() => props.bien.tipoId === TIPO_EXTINTOR)
 // Control único del bien (SPEC 011): recarga si es extintor; mantenimiento de equipo en lo demás.
 const control = computed(() => controlDeBien(props.bien, FECHA_CORTE))
 const muestraMantenimiento = computed(() => !anulado.value && (props.bien.categoria === 'equipo' || esExtintor.value || !!control.value.ultimo))
-const reemplazaA = computed(() => db.eventos.find((e) => !e.anulacion && e.tipo === 'reposicion' && e.bienNuevoId === props.bien.id) ?? null)
+const reemplazaA = computed(() => eventosRegistrados().find((e) => !e.anulacion && e.tipo === 'reposicion' && e.bienNuevoId === props.bien.id) ?? null)
 
 // Un bien muestra sus componentes; un componente, el bien del que forma parte.
 const tabs = computed(() => [

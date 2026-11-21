@@ -1,0 +1,7 @@
+[
+  { "id": "FOT-001", "carId": "AMA", "ambienteId": null, "bienId": null, "titulo": "Fachada", "fecha": "2026-03-12" },
+  { "id": "FOT-002", "carId": "AMA", "ambienteId": null, "bienId": null, "titulo": "Patio techado", "fecha": "2026-03-12" },
+  { "id": "FOT-003", "carId": "AMA", "ambienteId": null, "bienId": null, "titulo": "Ventana del Dormitorio 1", "fecha": "2026-10-14", "nota": "Novedad" },
+  { "id": "FOT-004", "carId": "HOR", "ambienteId": null, "bienId": null, "titulo": "Fachada", "fecha": "2026-02-20" },
+  { "id": "FOT-005", "carId": "HOR", "ambienteId": null, "bienId": null, "titulo": "Cocina después del incendio", "fecha": "2026-09-03", "nota": "Novedad" }
+]

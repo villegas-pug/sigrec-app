@@ -44,6 +44,7 @@ import NoteBanner from 'components/common/NoteBanner.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { vigente } from 'src/services/datos'
 import { requiereAtencion } from 'src/services/vehiculos'
+import { consumoDeclaradoL } from 'src/services/combustible'
 import { estadoVehiculo } from 'src/config/catalogos'
 import { fecha } from 'src/utils/formato'
 
@@ -64,7 +65,7 @@ const tareas = computed(() => {
   const vigentes = props.itinerarios.filter(vigente).sort((a, b) => a.fecha.localeCompare(b.fecha))
   return [
     ...(puedeHacer('itinerario.ejecucion') ? vigentes.filter((it) => !it.realizado).map((it) => ({ tipo: 'ejecucion', it })) : []),
-    ...(puedeHacer('combustible.informar') ? vigentes.filter((it) => it.realizado && it.consumoDeclaradoL == null).map((it) => ({ tipo: 'consumo', it })) : [])
+    ...(puedeHacer('combustible.informar') ? vigentes.filter((it) => it.realizado && consumoDeclaradoL(it.id) == null).map((it) => ({ tipo: 'consumo', it })) : [])
   ]
 })
 </script>

@@ -14,8 +14,16 @@ import itinerarios from 'src/data/itinerarios.json'
 import combustible from 'src/data/combustible.json'
 import inventarioPrevio from 'src/data/inventario-previo.json'
 import mantenimientos from 'src/data/mantenimientos.json'
+// SPEC 033: fotos, elementos evaluados e intervenciones tienen colección propia (SGR_FOTO, SGR_ELEMENTO, SGR_INTERVENCION);
+// las novedades viven en `eventos` con `clase: 'novedad'` (SGR_INCIDENTE). Los accesos están en services/centros.js.
+import fotos from 'src/data/fotos.json'
+import elementos from 'src/data/elementos.json'
+import intervenciones from 'src/data/intervenciones.json'
 
 export const db = reactive({
+  fotos,
+  elementos,
+  intervenciones,
   cars,
   modulos,
   ambientes,
@@ -46,6 +54,35 @@ export const mantenimientoPorId = (id) => porId(db.mantenimientos, id)
 export const vigente = (registro) => !registro.anulacion
 export const vigentes = (lista) => lista.filter(vigente)
 
+// SPEC 034: la baja, la verificación y la revisión se derivan del historial vigente.
+const esHechoVigente = (evento, tipo) =>
+  evento.clase !== 'novedad' && evento.tipo === tipo && vigente(evento)
+
+export const bajaDe = (bienId) =>
+  db.eventos.find((e) => esHechoVigente(e, 'baja') && e.bienIds?.[0] === bienId) ?? null
+
+export function situacionDe (bien) {
+  if (!bien) return undefined
+  if (!vigente(bien)) return 'anulado'
+  return bajaDe(bien.id) ? 'baja' : 'activo'
+}
+
+export function verificacionDe (bien) {
+  if (!bien) return null
+  const evento = db.eventos.findLast((e) => esHechoVigente(e, 'verificacion') && e.bienIds?.includes(bien.id))
+  return evento ? { fecha: evento.fecha, resultado: evento.resultado, nota: evento.detalle || null } : null
+}
+
+export const revisionPendienteDe = (bien) =>
+  !!bien && db.eventos.some((e) =>
+    esHechoVigente(e, 'baja') && (e.componentes ?? []).some((c) => c.bienId === bien.id && !c.resolucion)
+  )
+
+export const situacionDeRegistro = (registro) => registro?.tipoId ? situacionDe(registro) : undefined
+
+// SPEC 032: una novedad o incidencia está atendida cuando tiene su atención registrada (SGR_ATENCION); no se guarda otra marca.
+export const estaAtendida = (registro) => !!registro.atencion
+
 // Las casas van antes que los módulos de uso común; dentro de cada grupo se conserva el orden de registro.
 export const modulosDeCar = (carId, { inactivos = false } = {}) =>
   db.modulos
@@ -62,7 +99,7 @@ export const bienesDeAmbiente = (ambienteId) => db.bienes.filter((b) => b.ambien
 export function bienesActivosDeCentros (carIds = null) {
   const centros = db.cars.filter((c) => vigente(c) && (!carIds || carIds.includes(c.id)))
   const ambientes = new Set(centros.flatMap((c) => ambientesDeCar(c.id).map((a) => a.id)))
-  return db.bienes.filter((b) => b.situacion === 'activo' && ambientes.has(b.ambienteId))
+  return db.bienes.filter((b) => situacionDe(b) === 'activo' && ambientes.has(b.ambienteId))
 }
 
 export function ubicacionDeAmbiente (ambienteId) {

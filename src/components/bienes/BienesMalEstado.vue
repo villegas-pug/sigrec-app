@@ -25,7 +25,7 @@
             <td>{{ f.car.nombre }}<div class="sg-muted">{{ etiquetaAmbiente(f.ambiente) }}</div></td>
             <td class="sg-num">{{ numero(f.bien.cantidad ?? 1) }}</td>
             <td><status-chip v-bind="condicion(f.bien.condicion)" /><div v-if="f.control" class="sg-muted">{{ ESTADOS_CONTROL[f.control.estado].label }} · {{ f.control.proxima || 'Sin próxima fecha' }}</div></td>
-            <td>{{ f.bien.deterioro || 'Sin deterioro informado' }} · {{ f.bien.verificacion ? `Verificación: ${f.bien.verificacion.fecha} · ${f.bien.verificacion.resultado}` : 'Sin verificación registrada' }}</td>
+            <td>{{ f.bien.deterioro || 'Sin deterioro informado' }} · {{ textoVerificacion(f.bien) }}</td>
             <td><router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: f.bien.id } }"
                              :aria-label="`Ver ficha de ${f.bien.nombre} · ${f.bien.id}`" @click="$emit('seleccionar', f.bien.id)">Ver ficha</router-link></td>
           </tr>
@@ -41,7 +41,7 @@
         <span v-if="f.bien.asociadoA" class="sg-muted">Componente de {{ f.principal?.nombre || 'Bien principal' }} · {{ f.bien.asociadoA.bienId }}</span>
         <span>Cantidad: <strong>{{ numero(f.bien.cantidad ?? 1) }}</strong></span>
         <div><status-chip v-bind="condicion(f.bien.condicion)" /><span v-if="f.control"> · {{ ESTADOS_CONTROL[f.control.estado].label }} · {{ f.control.proxima || 'Sin próxima fecha' }}</span></div>
-        <span>{{ f.bien.deterioro || 'Sin deterioro informado' }} · {{ f.bien.verificacion ? `Verificación: ${f.bien.verificacion.fecha} · ${f.bien.verificacion.resultado}` : 'Sin verificación registrada' }}</span>
+        <span>{{ f.bien.deterioro || 'Sin deterioro informado' }} · {{ textoVerificacion(f.bien) }}</span>
         <router-link v-if="puedeAcceder('centros')" :to="{ name: 'centros', query: { bien: f.bien.id } }"
                      :aria-label="`Ver ficha de ${f.bien.nombre} · ${f.bien.id}`" @click="$emit('seleccionar', f.bien.id)">Ver ficha</router-link>
       </div>
@@ -55,7 +55,7 @@ import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { condicion, ESTADOS_CONTROL } from 'src/config/catalogos'
-import { etiquetaAmbiente, textoUbicacion } from 'src/services/datos'
+import { etiquetaAmbiente, textoUbicacion, verificacionDe } from 'src/services/datos'
 import { numero, plural } from 'src/utils/formato'
 
 defineProps({
@@ -70,4 +70,9 @@ defineProps({
 })
 defineEmits(['seleccionar', 'resumen'])
 const { puedeAcceder } = usePerfil()
+
+function textoVerificacion (bien) {
+  const verificacion = verificacionDe(bien)
+  return verificacion ? `Verificación: ${verificacion.fecha} · ${verificacion.resultado}` : 'Sin verificación registrada'
+}
 </script>

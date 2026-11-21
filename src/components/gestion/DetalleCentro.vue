@@ -59,7 +59,7 @@
         icono="fact_check"
         :subtitulo="evaluados ? `${evaluados} de ${totalElementos} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
       >
-        <estado-elementos :model-value="inmueble.construccion.estadoElementos" :adicionales="inmueble.construccion.elementosAdicionales ?? []" solo-lectura />
+        <estado-elementos :model-value="estadoElementos" :adicionales="adicionales" solo-lectura />
       </section-card>
     </template>
 
@@ -124,6 +124,7 @@ import { ambientesDeCar, modulosDeCar, vigente } from 'src/services/datos'
 import { nodoAmbienteId, nodoModuloId } from 'src/services/bienes'
 import { anular, dependenciasDeCentro } from 'src/services/acciones'
 import { cantidadEvaluados, elementosDe } from 'src/services/infraestructura'
+import { elementosAdicionalesDe, estadoElementosDe } from 'src/services/centros'
 import { controlesPendientes, resumirControles } from 'src/services/mantenimientos'
 import { FECHA_CORTE } from 'src/config/demo'
 import { CHIP_ANULADO, TIPO_EXTINTOR, condicion, condicionInmueble } from 'src/config/catalogos'
@@ -165,8 +166,11 @@ const gruposModulos = computed(() => [
   { tipo: 'comun', titulo: 'Módulos de uso común', icono: 'groups', subtitulo: 'Los comparten todas las casas del centro: comedor, cocina, lavandería, administración' }
 ].map((g) => ({ ...g, modulos: modulos.value.filter((m) => (m.tipo === 'comun' ? 'comun' : 'casa') === g.tipo) })).filter((g) => g.modulos.length))
 
-const evaluados = computed(() => cantidadEvaluados(inmueble.value.construccion.estadoElementos, inmueble.value.construccion.elementosAdicionales))
-const totalElementos = computed(() => elementosDe(inmueble.value.construccion.elementosAdicionales).length)
+// SPEC 033: los elementos del inmueble se leen de su colección.
+const estadoElementos = computed(() => estadoElementosDe('centro', props.centro.id))
+const adicionales = computed(() => elementosAdicionalesDe('centro', props.centro.id))
+const evaluados = computed(() => cantidadEvaluados(estadoElementos.value, adicionales.value))
+const totalElementos = computed(() => elementosDe(adicionales.value).length)
 const resumenControles = computed(() => resumirControles(controlesPendientes([props.centro.id], FECHA_CORTE)))
 
 const tabs = computed(() => [

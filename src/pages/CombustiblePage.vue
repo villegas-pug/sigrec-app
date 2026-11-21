@@ -149,7 +149,7 @@ import { usePerfil } from 'src/composables/usePerfil'
 import { useVehiculoSeleccionado } from 'src/composables/useVehiculoSeleccionado'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { itinerarioPorId, vehiculoPorId, vigente } from 'src/services/datos'
-import { evaluarItinerario, itinerariosDeVehiculo, registrosDeVehiculo } from 'src/services/combustible'
+import { consumoDeclaradoL, evaluarItinerario, itinerariosDeVehiculo, registrosDeVehiculo } from 'src/services/combustible'
 import { anularCombustible, reactivarCombustible } from 'src/services/acciones'
 import { CHIP_ANULADO } from 'src/config/catalogos'
 import { fecha, litros } from 'src/utils/formato'
@@ -174,7 +174,7 @@ const sumar = (tipo) => registros.value.filter((r) => vigente(r) && r.tipo === t
 const evaluados = computed(() =>
   vehiculo.value ? itinerariosDeVehiculo(vehiculo.value.id).map((it) => ({ it, ev: evaluarItinerario(it, vehiculo.value) })) : []
 )
-const conConsumo = computed(() => evaluados.value.filter((e) => e.it.consumoDeclaradoL != null))
+const conConsumo = computed(() => evaluados.value.filter((e) => consumoDeclaradoL(e.it.id) != null))
 const comparables = computed(() => conConsumo.value.filter((e) => e.ev.estado === 'comparable'))
 
 // `conRetorno`: el formulario lo abrió un enlace desde otra pantalla; al guardar se ofrece volver a ella.
@@ -190,7 +190,7 @@ const avisoRecorrido = computed(() => {
   const it = itinerarioSolicitado
   if (!it || itinerarioNoDisponible.value || it.vehiculoId !== vehiculoId.value) return ''
   if (!it.realizado) return `El recorrido ${it.id} aún no tiene ejecución informada: infórmela antes de declarar su consumo.`
-  if (it.consumoDeclaradoL != null) return `El recorrido ${it.id} ya tiene un consumo declarado (${litros(it.consumoDeclaradoL)}).`
+  if (consumoDeclaradoL(it.id) != null) return `El recorrido ${it.id} ya tiene un consumo declarado (${litros(consumoDeclaradoL(it.id))}).`
   return ''
 })
 

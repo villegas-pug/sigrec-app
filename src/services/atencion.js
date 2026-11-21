@@ -3,6 +3,7 @@ import { esIncidencia, requiereReposicion } from './incidencias'
 // Reúne reglas que ya existen en cada módulo (servicios, controles preventivos, vehículos, necesidades y combustible);
 // no crea reglas nuevas. Cada aviso trae su destino (enlace profundo) y, si corresponde, la acción que lo resuelve.
 import { db, carPorId, textoUbicacion, ubicacionDeBien, vigente } from './datos'
+import { eventosRegistrados } from './centros'
 import { calcularNecesidades } from './necesidades'
 import { avisosDeServicios, problemasRecurrentes } from './servicios'
 import { controlesPendientes, proximosControles } from './mantenimientos'
@@ -153,7 +154,7 @@ function avisosVehiculos (vehiculos) {
 function avisosBienes (carIds, { anio }) {
   const necesidades = calcularNecesidades({ anio, carIds })
   const lista = []
-  for (const evento of db.eventos.filter((e) => vigente(e) && esIncidencia(e) && (e.bienIds ?? []).some((id) => requiereReposicion(e, id)))) {
+  for (const evento of eventosRegistrados().filter((e) => vigente(e) && esIncidencia(e) && (e.bienIds ?? []).some((id) => requiereReposicion(e, id)))) {
     const abiertas = necesidades.pendientes.filter((n) => evento.bienIds.includes(n.id) && requiereReposicion(evento, n.id))
     if (!abiertas.length) continue
     const ubicacion = ubicacionDeBien(abiertas[0].bien)

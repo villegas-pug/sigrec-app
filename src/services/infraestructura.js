@@ -4,6 +4,7 @@
 import { CONDICIONES, CONDICIONES_CRITICAS, ELEMENTOS_INFRAESTRUCTURA } from 'src/config/catalogos'
 import { identificador } from 'src/utils/formato'
 import { normalizar } from 'src/utils/interpretacionVoz'
+import { situacionDe } from './datos'
 
 export const LARGO_MAXIMO_ELEMENTO = 40
 
@@ -50,7 +51,7 @@ export const cantidadEvaluados = (estadoElementos, adicionales = []) =>
 export function conteoPorCondicion (bienes) {
   const conteo = { ...Object.fromEntries(Object.keys(CONDICIONES).map((c) => [c, 0])), sin_dato: 0 }
   for (const bien of bienes) {
-    if (bien.situacion !== 'activo') continue
+    if (situacionDe(bien) !== 'activo') continue
     conteo[CONDICIONES[bien.condicion] ? bien.condicion : 'sin_dato'] += bien.cantidad ?? 1
   }
   return conteo

@@ -1,6 +1,6 @@
 // Control preventivo y mantenimientos (SPEC 010 §7): fumigación, recarga de extintores y mantenimiento de equipos y vehículos.
 // Un solo registro (`db.mantenimientos`) cubre todos los tipos. Reglas puras: no modifican datos.
-import { db, ambientesDeCar, bienPorId, carPorId, vehiculoPorId, vigente } from './datos'
+import { db, ambientesDeCar, bienPorId, carPorId, vehiculoPorId, vigente, situacionDe } from './datos'
 import { PARAMETROS_CONTROL } from 'src/config/demo'
 import { TIPO_EXTINTOR } from 'src/config/catalogos'
 import { diasEntre } from 'src/utils/fechas'
@@ -56,7 +56,7 @@ export const tipoMantenimientoDeBien = (bien) => (bien.tipoId === TIPO_EXTINTOR 
 // Control único de un bien (SPEC 011): lo usan la ficha del bien, la pestaña de seguridad y la consulta por equipo.
 export const controlDeBien = (bien, fechaCorte) => controlDe({ bienId: bien.id, tipo: tipoMantenimientoDeBien(bien) }, fechaCorte)
 
-const esExtintor = (bien) => bien.tipoId === TIPO_EXTINTOR && bien.situacion === 'activo'
+const esExtintor = (bien) => bien.tipoId === TIPO_EXTINTOR && situacionDe(bien) === 'activo'
 const unidades = (bien) => bien.cantidad ?? 1
 
 /**
@@ -112,7 +112,7 @@ export function objetivoDe (m) {
 
 // ¿El objetivo sigue vigente? Un bien dado de baja o un vehículo anulado ya no genera controles.
 function objetivoVigente (m) {
-  if (m.bienId) return bienPorId(m.bienId)?.situacion === 'activo'
+  if (m.bienId) return situacionDe(bienPorId(m.bienId)) === 'activo'
   if (m.vehiculoId) {
     const v = vehiculoPorId(m.vehiculoId)
     return !!v && vigente(v)

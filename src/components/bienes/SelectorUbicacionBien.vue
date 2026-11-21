@@ -56,7 +56,7 @@
           <q-item-section>
             <q-item-label>{{ opt.label }}</q-item-label>
             <q-item-label caption>
-              {{ condicion(opt.bien.condicion).label }} · {{ SITUACIONES[opt.bien.situacion].label }}<template v-if="opt.bien.asociadoA"> · componente de {{ opt.bien.asociadoA.bienId }}</template>
+              {{ condicion(opt.bien.condicion).label }} · {{ SITUACIONES[situacionDe(opt.bien)].label }}<template v-if="opt.bien.asociadoA"> · componente de {{ opt.bien.asociadoA.bienId }}</template>
             </q-item-label>
           </q-item-section>
         </q-item>
@@ -72,7 +72,7 @@
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, watch } from 'vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { ambientesDeCar, bienesDeAmbiente, etiquetaAmbiente, ordenarPorModulo } from 'src/services/datos'
+import { ambientesDeCar, bienesDeAmbiente, etiquetaAmbiente, ordenarPorModulo, situacionDe } from 'src/services/datos'
 import { SITUACIONES, condicion } from 'src/config/catalogos'
 import { requerido } from 'src/utils/validaciones'
 import { plural } from 'src/utils/formato'
@@ -84,7 +84,7 @@ const props = defineProps({
   ambienteId: { type: String, default: null },
   multiple: { type: Boolean, default: false },
   // Qué bienes se pueden elegir. Por defecto, los activos.
-  filtro: { type: Function, default: (b) => b.situacion === 'activo' },
+  filtro: { type: Function, default: (b) => situacionDe(b) === 'activo' },
   // Centro y ambiente solo se muestran (p. ej. al corregir un hecho ya registrado).
   ubicacionFija: { type: Boolean, default: false },
   sinCandidatos: { type: String, default: 'No hay bienes elegibles en este ambiente.' }

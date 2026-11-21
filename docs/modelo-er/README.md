@@ -96,6 +96,21 @@ El modelo pasa de **32 a 28 tablas** y deja «Movilidad y combustible» en tres 
 | Ruta, destinos y geometría en el itinerario | Proveedor, distancia y geometría se informan juntos y solo en el modo mapa. `DESTINOS` y `GEOMETRIA_RUTA` son `CLOB` con `IS JSON`; la regla `MOV-07` documenta su estructura, validada en la transacción. |
 | Consumo por itinerario | `SGR_COMBUSTIBLE.ID_ITINERARIO` y un índice único funcional admiten un solo consumo vigente por itinerario. |
 
+## Datos ficticios alineados en 7.1.0
+
+Los datos ficticios de la SPA dejan de guardar copias y marcas que el modelo deriva: consumo declarado, vehículo del consumo, unidad y atención. Además, adoptan el formato vigente de incidencias y hechos de servicio, sin cambios visibles en la aplicación. `SGR_BIEN.ID_CONDICION` admite `NULL` para la condición no constatable. La correspondencia completa y las fases siguientes están en la [SPEC 032](../spec/032-mocks-alineados-erd.md).
+
+En la versión 7.2.0, los datos de centros pasan a colecciones propias, como en el modelo:
+
+- fotos (`SGR_FOTO`);
+- elementos evaluados (`SGR_ELEMENTO`);
+- intervenciones (`SGR_INTERVENCION`);
+- novedades, como eventos de clase `novedad` (`SGR_INCIDENTE`).
+
+`src/services/centros.js` los devuelve con la forma y el orden anteriores. [SPEC 033](../spec/033-mocks-centros-relacionales.md)
+
+En la versión 7.3.0, `SGR_BIEN`, `SGR_BAJA` y `SGR_HISTORIAL_BIEN` incorporan como fuentes la especificación y los helpers de `src/services/datos.js` que derivan la situación, la verificación y la revisión pendiente. La actualización se limita a las fuentes y conserva la estructura del modelo. [SPEC 034](../spec/034-mocks-inventario-derivado.md)
+
 ## Validación y aceptación
 
 La verificación estática del visor valida nombres, tipos, auditoría, claves, destinos, índices, cardinalidades, catálogos y referencias. El módulo [model.js](js/model.js) expone `expandModel` y `validateModel` para revisar el JSON con un consumidor local. Cada columna que admite `NULL` declara su motivo. Las reglas de más de una fila indican la frontera transaccional para una futura implementación.

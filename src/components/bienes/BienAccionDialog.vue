@@ -43,7 +43,7 @@
         <span class="sg-muted">{{ textoUbicacion(ubicacionDeBien(bienActivo)) }}</span>
         <div class="sg-chips">
           <status-chip v-bind="condicion(bienActivo.condicion)" :label="`Condición: ${condicion(bienActivo.condicion).label}`" />
-          <status-chip v-bind="SITUACIONES[bienActivo.situacion]" />
+          <status-chip v-bind="SITUACIONES[situacionDe(bienActivo)]" />
         </div>
       </div>
       <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la baja *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
@@ -102,8 +102,8 @@
         <div v-for="h in hijosActivos" :key="h.id" class="row items-center q-gutter-x-sm">
           <q-checkbox v-model="form.componentesIds" :val="h.id" :label="etiquetaComponente(h)" />
           <status-chip v-bind="condicion(h.condicion)" />
-          <status-chip v-bind="SITUACIONES[h.situacion]" />
-          <status-chip v-if="h.revisionPendiente" tono="wa" label="Situación por revisar" />
+          <status-chip v-bind="SITUACIONES[situacionDe(h)]" />
+          <status-chip v-if="revisionPendienteDe(h)" tono="wa" label="Situación por revisar" />
         </div>
         <div class="sg-muted">Los componentes sin marcar siguen asociados al bien dado de baja, pendientes de revisión.</div>
       </div>
@@ -121,7 +121,7 @@ import StatusChip from 'components/common/StatusChip.vue'
 import SelectorUbicacionBien from 'components/bienes/SelectorUbicacionBien.vue'
 import CampoAdquisicion from 'components/common/CampoAdquisicion.vue'
 import { useBorrador } from 'src/composables/useBorrador'
-import { db, bienPorId, textoUbicacion, tipoPorId, ubicacionDeBien } from 'src/services/datos'
+import { db, bienPorId, textoUbicacion, tipoPorId, ubicacionDeBien, revisionPendienteDe, situacionDe } from 'src/services/datos'
 import { bajaDe, darDeBaja, informarVerificacion, registrarReposicion, reposicionDe, rotuloSugerido } from 'src/services/acciones'
 import { FECHA_CORTE } from 'src/config/demo'
 import { SITUACIONES, condicion } from 'src/config/catalogos'
@@ -166,16 +166,16 @@ const { modificado, fijar } = useBorrador(form, { excluir: ['carId'] })
 const bienActivo = computed(() => props.bien ?? bienPorId(form.bienId) ?? null)
 
 const hijosActivos = computed(() =>
-  bienActivo.value ? db.bienes.filter((b) => b.asociadoA?.bienId === bienActivo.value.id && b.situacion === 'activo') : []
+  bienActivo.value ? db.bienes.filter((b) => b.asociadoA?.bienId === bienActivo.value.id && situacionDe(b) === 'activo') : []
 )
 
 const etiquetaComponente = (h) => `${h.nombre} ${h.id}${h.asociadoA?.posicion ? ` (${h.asociadoA.posicion})` : ''}`
 
 // Baja: bienes activos. Reposición: bienes dados de baja sin una reposición vigente. Verificación: cualquier bien no anulado.
 function esCandidato (b) {
-  if (props.modo === 'baja') return b.situacion === 'activo'
-  if (props.modo === 'reposicion') return b.situacion === 'baja' && !reposicionDe(b.id)
-  return b.situacion !== 'anulado'
+  if (props.modo === 'baja') return situacionDe(b) === 'activo'
+  if (props.modo === 'reposicion') return situacionDe(b) === 'baja' && !reposicionDe(b.id)
+  return situacionDe(b) !== 'anulado'
 }
 
 const bajaPrevia = computed(() => (bienActivo.value ? bajaDe(bienActivo.value.id) : null))

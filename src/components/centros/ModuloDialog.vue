@@ -67,6 +67,7 @@ import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarModulo, numeroONulo, registrarModulo, siguienteCodigo } from 'src/services/acciones'
 import { moduloPorId } from 'src/services/datos'
 import { completarElementos, normalizarElementos } from 'src/services/infraestructura'
+import { elementosAdicionalesDe, estadoElementosDe } from 'src/services/centros'
 import { OPCIONES_TIPO_MODULO, TIPOS_MODULO } from 'src/config/catalogos'
 import { opcionalMayorQueCero, requerido } from 'src/utils/validaciones'
 
@@ -101,8 +102,8 @@ watch(() => props.modelValue, (abierto) => {
     areaM2: m?.areaM2 ?? null,
     condicion: m?.condicion ?? 'bueno',
     ubicacion: m?.ubicacion ?? '',
-    elementosAdicionales: [...(m?.elementosAdicionales ?? [])],
-    estadoElementos: completarElementos(m?.estadoElementos, m?.elementosAdicionales)
+    elementosAdicionales: m ? [...elementosAdicionalesDe('modulo', m.id)] : [],
+    estadoElementos: m ? completarElementos(estadoElementosDe('modulo', m.id), elementosAdicionalesDe('modulo', m.id)) : completarElementos(null)
   })
   fijar()
 })

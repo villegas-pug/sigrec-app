@@ -1,5 +1,12 @@
 // Reglas de movilidad y combustible (RF-16, RF-17, RF-18).
-import { db, vigente } from './datos'
+import { db, itinerarioPorId, vigente } from './datos'
+
+// SPEC 032: el consumo declarado no se copia en el itinerario; se deriva del registro de combustible vigente (MOV-04).
+export const consumoDeclaradoL = (itinerarioId) =>
+  db.combustible.find((r) => vigente(r) && r.tipo === 'consumo' && r.itinerarioId === itinerarioId)?.cantidad ?? null
+
+// SPEC 032: una carga referencia al vehículo y un consumo a su itinerario; el vehículo del consumo se obtiene del recorrido.
+export const vehiculoDeRegistro = (registro) => registro.vehiculoId ?? itinerarioPorId(registro.itinerarioId)?.vehiculoId ?? null
 
 /**
  * Evalúa un itinerario sin concluir irregularidades.
@@ -11,7 +18,7 @@ export function evaluarItinerario (itinerario, vehiculo) {
   const rendimiento = vehiculo?.rendimientoKmL ?? null
   const realizado = itinerario.realizado
   const kmRealizados = realizado?.km ?? null
-  const consumo = itinerario.consumoDeclaradoL ?? null
+  const consumo = consumoDeclaradoL(itinerario.id)
   const faltantes = []
 
   if (!realizado) faltantes.push('ejecución del recorrido')
@@ -46,5 +53,5 @@ export const itinerariosDeVehiculo = (vehiculoId, { inactivos = false } = {}) =>
 
 export const registrosDeVehiculo = (vehiculoId, { inactivos = false } = {}) =>
   db.combustible
-    .filter((r) => r.vehiculoId === vehiculoId && (inactivos || vigente(r)))
+    .filter((r) => vehiculoDeRegistro(r) === vehiculoId && (inactivos || vigente(r)))
     .sort((a, b) => b.fecha.localeCompare(a.fecha))

@@ -1,5 +1,6 @@
 // Consultas y estados compartidos por el visor y Gestión de centros (SPEC 015).
-import { db, bienPorId, ambientePorId, carPorId, etiquetaAmbiente, moduloPorId, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien, vigente } from './datos'
+import { db, bienPorId, ambientePorId, carPorId, etiquetaAmbiente, moduloPorId, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien, vigente, estaAtendida, situacionDe } from './datos'
+import { eventosRegistrados } from './centros'
 import { reposicionDe } from './bienes'
 import { INCIDENTES, TIPOS_NOVEDAD } from 'src/config/catalogos'
 import { plural } from 'src/utils/formato'
@@ -15,12 +16,14 @@ export function ubicacionHecho (e) {
   const modulo = ambiente ? moduloPorId(ambiente.moduloId) : null
   return { car, modulo, ambiente, nombre: textoUbicacion({ car: car ?? { nombre: 'Centro no disponible' }, modulo, ambiente }) }
 }
+// SPEC 032: la decisión de reposición es individual por bien afectado (SGR_BIEN_IMPLICADO.REQUIERE_REPOSICION);
+// la marca global `reportaNecesidad` de los datos anteriores ya no se usa.
 export function requiereReposicion (e, id) {
-  const evaluacion = e.evaluaciones?.[id]
-  return evaluacion && Object.hasOwn(evaluacion, 'requiereReposicion') ? evaluacion.requiereReposicion === true : e.reportaNecesidad === true
+  return e.evaluaciones?.[id]?.requiereReposicion === true
 }
+// Sin cantidad informada, el hecho afecta a todas las unidades del bien.
 export function unidadesAfectadas (e, bien) {
-  return e.evaluaciones?.[bien.id]?.unidades ?? (e.bienIds?.length === 1 && e.unidades ? e.unidades : bien.cantidad ?? 1)
+  return e.evaluaciones?.[bien.id]?.unidades ?? bien.cantidad ?? 1
 }
 export function contextoIncidencia (origen) {
   if (origen.tipo === 'centro') {
@@ -44,7 +47,7 @@ export function contextoIncidencia (origen) {
 }
 export const permisoIncidencia = (e) => ['centro', 'ambiente'].includes(origenIncidencia(e).tipo) ? `${origenIncidencia(e).tipo}.incidente` : 'bien.incidente'
 export function hechosRegistrados ({ bienId = null, ambienteId = null, centroId = null, inactivos = false } = {}) {
-  return db.eventos.filter((e) => TIPOS_HECHO.includes(e.tipo) && (inactivos || vigente(e)) &&
+  return eventosRegistrados().filter((e) => TIPOS_HECHO.includes(e.tipo) && (inactivos || vigente(e)) &&
     (!bienId || e.bienIds?.includes(bienId) || e.bienAnteriorId === bienId || e.bienNuevoId === bienId) &&
     (!ambienteId || (origenIncidencia(e).tipo === 'ambiente' && origenIncidencia(e).id === ambienteId)) &&
     (!centroId || (origenIncidencia(e).tipo === 'centro' && origenIncidencia(e).id === centroId)))
@@ -61,14 +64,14 @@ export function estadoDeBien (ev, bienId, pendientes) {
   if (ev.anulacion) return ESTADOS.anulado
   if (ev.tipo === 'reposicion' || reposicionDe(bienId)) return ESTADOS.atendida
   if (!esIncidencia(ev) || !requiereReposicion(ev, bienId)) return ESTADOS.sin
-  if (bienPorId(bienId)?.situacion === 'baja') return ESTADOS.pendiente
+  if (situacionDe(bienPorId(bienId)) === 'baja') return ESTADOS.pendiente
   return pendientes.find((n) => n.id === bienId) ? ESTADOS.pendiente : ESTADOS.sinAbierta
 }
 
 // Resumen del hecho: pendiente si algún bien lo está; si no, atendida si alguno lo está.
 export function estadoNecesidad (ev, pendientes) {
   if (ev.anulacion) return ESTADOS.anulado
-  if (ev.requiereEvaluacion && !ev.atendida && !(ev.bienIds ?? []).some((id) => requiereReposicion(ev, id))) return { clave: 'evaluacion', tono: 'in', label: 'Infraestructura en evaluación' }
+  if (ev.requiereEvaluacion && !estaAtendida(ev) && !(ev.bienIds ?? []).some((id) => requiereReposicion(ev, id))) return { clave: 'evaluacion', tono: 'in', label: 'Infraestructura en evaluación' }
   const estados = (ev.bienIds ?? []).map((id) => estadoDeBien(ev, id, pendientes))
   const pend = estados.filter((e) => e === ESTADOS.pendiente).length
   if (pend) return { ...ESTADOS.pendiente, label: ev.bienIds.length > 1 ? plural(pend, 'pendiente', 'pendientes') : ESTADOS.pendiente.label }

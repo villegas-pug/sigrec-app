@@ -89,34 +89,46 @@
     },
     "hechos": [
       {
+        "id": "HS-001",
         "fecha": "2026-02-10",
         "tipo": "interrupcion",
-        "detalle": "Corte de energía durante la tarde."
+        "detalle": "Corte de energía durante la tarde.",
+        "informadoPor": "Personal del CAR"
       },
       {
+        "id": "HS-002",
         "fecha": "2026-02-11",
         "tipo": "restablecimiento",
-        "detalle": "Servicio normal."
+        "detalle": "Servicio normal.",
+        "informadoPor": "Personal del CAR"
       },
       {
+        "id": "HS-003",
         "fecha": "2026-06-05",
         "tipo": "interrupcion",
-        "detalle": "Corte de energía por la noche."
+        "detalle": "Corte de energía por la noche.",
+        "informadoPor": "Personal del CAR"
       },
       {
+        "id": "HS-004",
         "fecha": "2026-06-06",
         "tipo": "restablecimiento",
-        "detalle": "Servicio normal."
+        "detalle": "Servicio normal.",
+        "informadoPor": "Personal del CAR"
       },
       {
+        "id": "HS-005",
         "fecha": "2026-09-14",
         "tipo": "interrupcion",
-        "detalle": "Corte de energía de varias horas."
+        "detalle": "Corte de energía de varias horas.",
+        "informadoPor": "Personal del CAR"
       },
       {
+        "id": "HS-006",
         "fecha": "2026-09-15",
         "tipo": "restablecimiento",
-        "detalle": "Servicio normal."
+        "detalle": "Servicio normal.",
+        "informadoPor": "Personal del CAR"
       }
     ]
   }

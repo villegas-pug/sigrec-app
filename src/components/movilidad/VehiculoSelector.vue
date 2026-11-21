@@ -21,7 +21,7 @@
         <template v-if="vehiculo.chofer">{{ vehiculo.chofer }}</template>
         <status-chip v-else tono="si" label="No asignado" />
       </key-value>
-      <key-value etiqueta="Combustible · unidad">{{ vehiculo.combustible }} · {{ unidad }}</key-value>
+      <key-value etiqueta="Combustible · unidad">{{ vehiculo.combustible }} · litros</key-value>
       <key-value etiqueta="Rendimiento de referencia" nota="Orientativo; no es norma de consumo">
         <template v-if="vehiculo.rendimientoKmL">{{ vehiculo.rendimientoKmL }} km/L</template>
         <status-chip v-else tono="si" label="No informado" />
@@ -49,5 +49,5 @@ defineEmits(['update:modelValue'])
 
 const opcionesVehiculo = computed(() => props.vehiculos.map((v) => ({ label: `${v.id} · ${carPorId(v.carId).nombre}`, value: v.id })))
 const vehiculo = computed(() => (props.modelValue ? vehiculoPorId(props.modelValue) : null))
-const unidad = computed(() => (vehiculo.value?.unidad === 'L' ? 'litros' : vehiculo.value?.unidad))
+// SPEC 032: el modelo registra el combustible en litros (CANT_LITRO); el vehículo no guarda unidad.
 </script>

@@ -54,7 +54,7 @@
         icono="fact_check"
         :subtitulo="evaluados ? `${evaluados} de ${totalElementos} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
       >
-        <estado-elementos :model-value="modulo.estadoElementos" :adicionales="modulo.elementosAdicionales ?? []" solo-lectura />
+        <estado-elementos :model-value="estadoElementos" :adicionales="adicionales" solo-lectura />
       </section-card>
     </template>
 
@@ -95,6 +95,7 @@ import { ambientesDeModulo, carPorId, vigente } from 'src/services/datos'
 import { iconoModulo, nodoAmbienteId, nodoModuloId } from 'src/services/bienes'
 import { anularModulo, dependenciasDeModulo } from 'src/services/acciones'
 import { cantidadEvaluados, elementosCriticos, elementosDe } from 'src/services/infraestructura'
+import { elementosAdicionalesDe, estadoElementosDe } from 'src/services/centros'
 import { CHIP_ANULADO, TIPOS_MODULO, condicion } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
 
@@ -117,9 +118,12 @@ const activo = computed(() => vigente(props.modulo))
 const ambientes = computed(() => ambientesDeModulo(props.modulo.id, { inactivos: props.inactivos }))
 const descendientes = computed(() => ambientes.value.map((a) => nodoAmbienteRecursos(a, { situacion: props.situacion })))
 const ambientesActivos = computed(() => ambientesDeModulo(props.modulo.id).length)
-const evaluados = computed(() => cantidadEvaluados(props.modulo.estadoElementos, props.modulo.elementosAdicionales))
-const totalElementos = computed(() => elementosDe(props.modulo.elementosAdicionales).length)
-const criticos = computed(() => elementosCriticos(props.modulo.estadoElementos, props.modulo.elementosAdicionales).length)
+// SPEC 033: los elementos del módulo se leen de su colección.
+const estadoElementos = computed(() => estadoElementosDe('modulo', props.modulo.id))
+const adicionales = computed(() => elementosAdicionalesDe('modulo', props.modulo.id))
+const evaluados = computed(() => cantidadEvaluados(estadoElementos.value, adicionales.value))
+const totalElementos = computed(() => elementosDe(adicionales.value).length)
+const criticos = computed(() => elementosCriticos(estadoElementos.value, adicionales.value).length)
 
 const tabs = computed(() => [
   { name: 'ficha', label: 'Ficha' },
