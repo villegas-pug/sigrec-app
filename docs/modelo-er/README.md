@@ -86,6 +86,16 @@ El modelo pasa de **37 a 32 tablas**, mantiene los siete módulos y deja «Biene
 
 La regla `BIE-08` documenta la agrupación de los traslados, que se valida en la transacción.
 
+## Itinerario consolidado en 7.0.0
+
+El modelo pasa de **32 a 28 tablas** y deja «Movilidad y combustible» en tres tablas: `SGR_VEHICULO`, `SGR_ITINERARIO` y `SGR_COMBUSTIBLE`. Reemplaza el criterio de la SPEC 028 sobre ruta y ejecución. [SPEC 031](../spec/031-modelo-er-movilidad-tres-tablas.md)
+
+| Cambio | Justificación e integridad |
+| --- | --- |
+| Ejecución en `SGR_ITINERARIO` | `EJECUTADO` y las columnas `*_REAL` mantienen lo realizado separado de lo previsto, como `previsto` y `realizado` en el prototipo. Un `CHECK` impide datos reales sin ejecución. |
+| Ruta, destinos y geometría en el itinerario | Proveedor, distancia y geometría se informan juntos y solo en el modo mapa. `DESTINOS` y `GEOMETRIA_RUTA` son `CLOB` con `IS JSON`; la regla `MOV-07` documenta su estructura, validada en la transacción. |
+| Consumo por itinerario | `SGR_COMBUSTIBLE.ID_ITINERARIO` y un índice único funcional admiten un solo consumo vigente por itinerario. |
+
 ## Validación y aceptación
 
 La verificación estática del visor valida nombres, tipos, auditoría, claves, destinos, índices, cardinalidades, catálogos y referencias. El módulo [model.js](js/model.js) expone `expandModel` y `validateModel` para revisar el JSON con un consumidor local. Cada columna que admite `NULL` declara su motivo. Las reglas de más de una fila indican la frontera transaccional para una futura implementación.

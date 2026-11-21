@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "6.0.0",
+  "schemaVersion": "7.0.0",
   "title": "Modelo de datos SIGREC",
   "description": "Modelo relacional de los recursos y la operación de los Centros de Acogida Residencial de la USPNNA.",
   "platform": {
@@ -48,7 +48,7 @@
       "id": "movilidad",
       "label": "Movilidad y combustible",
       "color": "green",
-      "summary": "Vehículos, itinerarios, ejecución y control de combustible."
+      "summary": "Vehículos, itinerarios con destinos, ruta y ejecución, y control de combustible."
     },
     {
       "id": "seguridad",
@@ -5877,7 +5877,7 @@
       "alias": "MOV_ITI",
       "module": "movilidad",
       "label": "Itinerario",
-      "description": "Recorrido programado de un vehículo para un día, con propósito y destino manual o trazado en mapa.",
+      "description": "Recorrido programado de un vehículo para un día, con propósito, destinos en orden, ruta trazada en mapa cuando corresponde y datos de ejecución separados de los previstos.",
       "executive": true,
       "sources": [
         "itinerarios",
@@ -5885,7 +5885,9 @@
         "itinerariosPage",
         "acciones",
         "spec006",
-        "spec014"
+        "spec014",
+        "mapa",
+        "miJornada"
       ],
       "columns": [
         {
@@ -5939,6 +5941,62 @@
           "type": "NUMBER(38,0)",
           "description": "Vehículo asignado al recorrido.",
           "nullable": false
+        },
+        {
+          "name": "EJECUTADO",
+          "type": "NUMBER(1,0)",
+          "description": "Marca que el recorrido se realizó, aunque falten sus horas o su distancia.",
+          "nullable": false,
+          "default": 0
+        },
+        {
+          "name": "MIN_SALIDA_REAL",
+          "type": "NUMBER(4,0)",
+          "description": "Minuto de salida desde la medianoche del día del itinerario. Datos de ejecución.",
+          "nullable": true,
+          "nullableReason": "Hora de salida no informada."
+        },
+        {
+          "name": "MIN_LLEGADA_REAL",
+          "type": "NUMBER(4,0)",
+          "description": "Minuto de llegada desde la medianoche del día del itinerario. Datos de ejecución.",
+          "nullable": true,
+          "nullableReason": "Hora de llegada no informada."
+        },
+        {
+          "name": "DISTANCIA_KM_REAL",
+          "type": "NUMBER(12,2)",
+          "description": "Distancia expresada en kilómetros. Datos de ejecución.",
+          "nullable": true,
+          "nullableReason": "Distancia realizada no informada."
+        },
+        {
+          "name": "PROVEEDOR_RUTA",
+          "type": "VARCHAR2(60 CHAR)",
+          "description": "Proveedor que calculó el trazado.",
+          "nullable": true,
+          "nullableReason": "Itinerario manual o trazado en mapa sin ruta calculada."
+        },
+        {
+          "name": "DISTANCIA_RUTA_M",
+          "type": "NUMBER(14,3)",
+          "description": "Distancia calculada en metros.",
+          "nullable": true,
+          "nullableReason": "Itinerario manual o trazado en mapa sin ruta calculada."
+        },
+        {
+          "name": "GEOMETRIA_RUTA",
+          "type": "CLOB",
+          "description": "Geometría lineal de la ruta en JSON: arreglo de pares [longitud, latitud] WGS 84 en orden de dibujo.",
+          "nullable": true,
+          "nullableReason": "Itinerario manual o trazado en mapa sin ruta calculada."
+        },
+        {
+          "name": "DESTINOS",
+          "type": "CLOB",
+          "description": "Origen, paradas y destino en orden de visita, en JSON: arreglo de objetos {nombre, latitud, longitud}. El retorno repite un punto; las coordenadas faltan en destinos manuales.",
+          "nullable": true,
+          "nullableReason": "Itinerario sin destinos informados."
         }
       ],
       "foreignKeys": [
@@ -6026,6 +6084,93 @@
           ],
           "expression": "MODO_RUTA = 'MANUAL' OR DISTANCIA_KM IS NULL",
           "description": "En mapa, la distancia prevista se obtiene del recorrido calculado."
+        },
+        {
+          "name": "CK_MOV_ITI_EJECUTADO",
+          "columns": [
+            "EJECUTADO"
+          ],
+          "expression": "EJECUTADO IN (0, 1)",
+          "description": "Marca binaria de ejecución."
+        },
+        {
+          "name": "CK_MOV_ITI_MIN_SALIDA_REAL",
+          "columns": [
+            "MIN_SALIDA_REAL"
+          ],
+          "expression": "MIN_SALIDA_REAL BETWEEN 0 AND 1439",
+          "description": "La hora de salida se expresa en minutos de un día."
+        },
+        {
+          "name": "CK_MOV_ITI_MIN_LLEGADA_REAL",
+          "columns": [
+            "MIN_LLEGADA_REAL"
+          ],
+          "expression": "MIN_LLEGADA_REAL BETWEEN 0 AND 1439",
+          "description": "La hora de llegada se expresa en minutos de un día."
+        },
+        {
+          "name": "CK_MOV_ITI_HORARIO_REAL",
+          "columns": [
+            "MIN_SALIDA_REAL",
+            "MIN_LLEGADA_REAL"
+          ],
+          "expression": "MIN_LLEGADA_REAL >= MIN_SALIDA_REAL",
+          "description": "Si se informan ambas horas, la llegada ocurre el mismo día y no es anterior."
+        },
+        {
+          "name": "CK_MOV_ITI_DISTANCIA_KM_REAL",
+          "columns": [
+            "DISTANCIA_KM_REAL"
+          ],
+          "expression": "DISTANCIA_KM_REAL >= 0",
+          "description": "El valor informado debe ser cero o positivo."
+        },
+        {
+          "name": "CK_MOV_ITI_REAL",
+          "columns": [
+            "EJECUTADO",
+            "MIN_SALIDA_REAL",
+            "MIN_LLEGADA_REAL",
+            "DISTANCIA_KM_REAL"
+          ],
+          "expression": "EJECUTADO = 1 OR (MIN_SALIDA_REAL IS NULL AND MIN_LLEGADA_REAL IS NULL AND DISTANCIA_KM_REAL IS NULL)",
+          "description": "Los datos de ejecución solo se informan en un recorrido realizado."
+        },
+        {
+          "name": "CK_MOV_ITI_DISTANCIA_RUTA_M",
+          "columns": [
+            "DISTANCIA_RUTA_M"
+          ],
+          "expression": "DISTANCIA_RUTA_M >= 0",
+          "description": "El valor informado debe ser cero o positivo."
+        },
+        {
+          "name": "CK_MOV_ITI_RUTA",
+          "columns": [
+            "MODO_RUTA",
+            "PROVEEDOR_RUTA",
+            "DISTANCIA_RUTA_M",
+            "GEOMETRIA_RUTA"
+          ],
+          "expression": "(PROVEEDOR_RUTA IS NULL AND DISTANCIA_RUTA_M IS NULL AND GEOMETRIA_RUTA IS NULL) OR (MODO_RUTA = 'MAPA' AND PROVEEDOR_RUTA IS NOT NULL AND DISTANCIA_RUTA_M IS NOT NULL AND GEOMETRIA_RUTA IS NOT NULL)",
+          "description": "Proveedor, distancia y geometría de la ruta se informan juntos y solo en el modo mapa."
+        },
+        {
+          "name": "CK_MOV_ITI_GEOMETRIA_RUTA",
+          "columns": [
+            "GEOMETRIA_RUTA"
+          ],
+          "expression": "GEOMETRIA_RUTA IS JSON",
+          "description": "La geometría es un documento JSON válido."
+        },
+        {
+          "name": "CK_MOV_ITI_DESTINOS",
+          "columns": [
+            "DESTINOS"
+          ],
+          "expression": "DESTINOS IS JSON",
+          "description": "Los destinos son un documento JSON válido."
         }
       ],
       "indexes": [
@@ -6041,456 +6186,11 @@
       ]
     },
     {
-      "name": "SGR_PUNTO",
-      "alias": "MOV_PUN",
-      "module": "movilidad",
-      "label": "Punto de itinerario",
-      "description": "Origen, parada o destino en el orden de visita de un itinerario, incluso cuando un punto se repite al retornar.",
-      "executive": false,
-      "sources": [
-        "itinerarioForm",
-        "mapa",
-        "itinerarios",
-        "spec014"
-      ],
-      "columns": [
-        {
-          "name": "NUM_ORDEN",
-          "type": "NUMBER(10,0)",
-          "description": "Orden dentro del registro padre.",
-          "nullable": false
-        },
-        {
-          "name": "NOMBRE",
-          "type": "VARCHAR2(180 CHAR)",
-          "description": "Nombre visible del punto.",
-          "nullable": false
-        },
-        {
-          "name": "LATITUD",
-          "type": "NUMBER(9,6)",
-          "description": "Latitud WGS 84 en grados decimales.",
-          "nullable": true,
-          "nullableReason": "Destino ingresado manualmente sin coordenadas."
-        },
-        {
-          "name": "LONGITUD",
-          "type": "NUMBER(9,6)",
-          "description": "Longitud WGS 84 en grados decimales.",
-          "nullable": true,
-          "nullableReason": "Destino ingresado manualmente sin coordenadas."
-        },
-        {
-          "name": "ID_ITINERARIO",
-          "type": "NUMBER(38,0)",
-          "description": "Itinerario cuyos destinos se ordenan.",
-          "nullable": false
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_MOV_PUN_MOV_ITI",
-          "columns": [
-            "ID_ITINERARIO"
-          ],
-          "references": {
-            "table": "SGR_ITINERARIO",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Itinerario cuyos destinos se ordenan",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        }
-      ],
-      "uniqueKeys": [],
-      "checks": [
-        {
-          "name": "CK_MOV_PUN_NUM_ORDEN",
-          "columns": [
-            "NUM_ORDEN"
-          ],
-          "expression": "NUM_ORDEN > 0",
-          "description": "El valor informado debe ser positivo."
-        },
-        {
-          "name": "CK_MOV_PUN_LATITUD",
-          "columns": [
-            "LATITUD"
-          ],
-          "expression": "LATITUD BETWEEN -90 AND 90",
-          "description": "Rango de latitud geográfica."
-        },
-        {
-          "name": "CK_MOV_PUN_LONGITUD",
-          "columns": [
-            "LONGITUD"
-          ],
-          "expression": "LONGITUD BETWEEN -180 AND 180",
-          "description": "Rango de longitud geográfica."
-        },
-        {
-          "name": "CK_MOV_PUN_COORDENADAS",
-          "columns": [
-            "LATITUD",
-            "LONGITUD"
-          ],
-          "expression": "(LATITUD IS NULL AND LONGITUD IS NULL) OR (LATITUD IS NOT NULL AND LONGITUD IS NOT NULL)",
-          "description": "Los dos valores se informan juntos."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "IX_MOV_PUN_ORDEN",
-          "columns": [
-            "ID_ITINERARIO",
-            "NUM_ORDEN"
-          ],
-          "description": "Un punto vigente por posición del itinerario.",
-          "kind": "uniqueFunctional",
-          "predicate": "ESTADO = 1 AND ELIMINADO = 0"
-        },
-        {
-          "name": "IX_MOV_PUN_MOV_ITI",
-          "columns": [
-            "ID_ITINERARIO"
-          ],
-          "description": "Cobertura de FK_MOV_PUN_MOV_ITI.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
-      "name": "SGR_RUTA",
-      "alias": "MOV_RUT",
-      "module": "movilidad",
-      "label": "Ruta calculada",
-      "description": "Trazado en mapa del itinerario con la distancia devuelta por el proveedor de rutas.",
-      "executive": false,
-      "sources": [
-        "itinerarioForm",
-        "mapa",
-        "spec014"
-      ],
-      "columns": [
-        {
-          "name": "PROVEEDOR",
-          "type": "VARCHAR2(60 CHAR)",
-          "description": "Proveedor que calculó el trazado.",
-          "nullable": false
-        },
-        {
-          "name": "DISTANCIA_M",
-          "type": "NUMBER(14,3)",
-          "description": "Distancia calculada en metros.",
-          "nullable": false
-        },
-        {
-          "name": "ID_ITINERARIO",
-          "type": "NUMBER(38,0)",
-          "description": "Itinerario trazado en mapa.",
-          "nullable": false
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_MOV_RUT_MOV_ITI",
-          "columns": [
-            "ID_ITINERARIO"
-          ],
-          "references": {
-            "table": "SGR_ITINERARIO",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Itinerario trazado en mapa",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": 1
-            }
-          },
-          "cardinalityScope": "VIGENTE"
-        }
-      ],
-      "uniqueKeys": [],
-      "checks": [
-        {
-          "name": "CK_MOV_RUT_DISTANCIA_M",
-          "columns": [
-            "DISTANCIA_M"
-          ],
-          "expression": "DISTANCIA_M >= 0",
-          "description": "El valor informado debe ser cero o positivo."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "IX_MOV_RUT_ITINERARIO",
-          "columns": [
-            "ID_ITINERARIO"
-          ],
-          "description": "Una ruta cartográfica vigente por itinerario.",
-          "kind": "uniqueFunctional",
-          "predicate": "ESTADO = 1 AND ELIMINADO = 0"
-        },
-        {
-          "name": "IX_MOV_RUT_MOV_ITI",
-          "columns": [
-            "ID_ITINERARIO"
-          ],
-          "description": "Cobertura de FK_MOV_RUT_MOV_ITI.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
-      "name": "SGR_VERTICE",
-      "alias": "MOV_VER",
-      "module": "movilidad",
-      "label": "Vértice de ruta",
-      "description": "Coordenada de la geometría lineal de la ruta en orden de dibujo.",
-      "executive": false,
-      "sources": [
-        "mapa",
-        "spec014"
-      ],
-      "columns": [
-        {
-          "name": "NUM_ORDEN",
-          "type": "NUMBER(10,0)",
-          "description": "Orden dentro del registro padre.",
-          "nullable": false
-        },
-        {
-          "name": "LATITUD",
-          "type": "NUMBER(9,6)",
-          "description": "Latitud WGS 84 en grados decimales.",
-          "nullable": false
-        },
-        {
-          "name": "LONGITUD",
-          "type": "NUMBER(9,6)",
-          "description": "Longitud WGS 84 en grados decimales.",
-          "nullable": false
-        },
-        {
-          "name": "ID_RUTA",
-          "type": "NUMBER(38,0)",
-          "description": "Ruta a la que pertenece la geometría.",
-          "nullable": false
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_MOV_VER_MOV_RUT",
-          "columns": [
-            "ID_RUTA"
-          ],
-          "references": {
-            "table": "SGR_RUTA",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Ruta a la que pertenece la geometría",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        }
-      ],
-      "uniqueKeys": [
-        {
-          "name": "UK_MOV_VER_ORDEN",
-          "columns": [
-            "ID_RUTA",
-            "NUM_ORDEN"
-          ],
-          "description": "Una coordenada por posición en la geometría de la ruta."
-        }
-      ],
-      "checks": [
-        {
-          "name": "CK_MOV_VER_NUM_ORDEN",
-          "columns": [
-            "NUM_ORDEN"
-          ],
-          "expression": "NUM_ORDEN > 0",
-          "description": "El valor informado debe ser positivo."
-        },
-        {
-          "name": "CK_MOV_VER_LATITUD",
-          "columns": [
-            "LATITUD"
-          ],
-          "expression": "LATITUD BETWEEN -90 AND 90",
-          "description": "Rango de latitud geográfica."
-        },
-        {
-          "name": "CK_MOV_VER_LONGITUD",
-          "columns": [
-            "LONGITUD"
-          ],
-          "expression": "LONGITUD BETWEEN -180 AND 180",
-          "description": "Rango de longitud geográfica."
-        }
-      ],
-      "indexes": []
-    },
-    {
-      "name": "SGR_EJECUCION",
-      "alias": "MOV_EJE",
-      "module": "movilidad",
-      "label": "Ejecución del itinerario",
-      "description": "Constancia de que se realizó el recorrido, con sus horas y distancia efectivas cuando se conozcan.",
-      "executive": true,
-      "sources": [
-        "itinerarios",
-        "itinerarioForm",
-        "itinerariosPage",
-        "miJornada",
-        "acciones",
-        "spec006"
-      ],
-      "columns": [
-        {
-          "name": "MIN_SALIDA",
-          "type": "NUMBER(4,0)",
-          "description": "Minuto de salida desde la medianoche del día del itinerario. Datos de ejecución.",
-          "nullable": true,
-          "nullableReason": "Hora de salida no informada."
-        },
-        {
-          "name": "MIN_LLEGADA",
-          "type": "NUMBER(4,0)",
-          "description": "Minuto de llegada desde la medianoche del día del itinerario. Datos de ejecución.",
-          "nullable": true,
-          "nullableReason": "Hora de llegada no informada."
-        },
-        {
-          "name": "DISTANCIA_KM",
-          "type": "NUMBER(12,2)",
-          "description": "Distancia expresada en kilómetros. Datos de ejecución.",
-          "nullable": true,
-          "nullableReason": "Distancia no informada o calculada por la ruta en mapa."
-        },
-        {
-          "name": "ID_ITINERARIO",
-          "type": "NUMBER(38,0)",
-          "description": "Itinerario realizado.",
-          "nullable": false
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_MOV_EJE_MOV_ITI",
-          "columns": [
-            "ID_ITINERARIO"
-          ],
-          "references": {
-            "table": "SGR_ITINERARIO",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Itinerario realizado",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": 1
-            }
-          },
-          "cardinalityScope": "VIGENTE",
-          "executive": true
-        }
-      ],
-      "uniqueKeys": [],
-      "checks": [
-        {
-          "name": "CK_MOV_EJE_MIN_SALIDA",
-          "columns": [
-            "MIN_SALIDA"
-          ],
-          "expression": "MIN_SALIDA BETWEEN 0 AND 1439",
-          "description": "La hora de salida se expresa en minutos de un día."
-        },
-        {
-          "name": "CK_MOV_EJE_MIN_LLEGADA",
-          "columns": [
-            "MIN_LLEGADA"
-          ],
-          "expression": "MIN_LLEGADA BETWEEN 0 AND 1439",
-          "description": "La hora de llegada se expresa en minutos de un día."
-        },
-        {
-          "name": "CK_MOV_EJE_HORARIO",
-          "columns": [
-            "MIN_SALIDA",
-            "MIN_LLEGADA"
-          ],
-          "expression": "MIN_LLEGADA >= MIN_SALIDA",
-          "description": "Si se informan ambas horas, la llegada ocurre el mismo día y no es anterior."
-        },
-        {
-          "name": "CK_MOV_EJE_DISTANCIA_KM",
-          "columns": [
-            "DISTANCIA_KM"
-          ],
-          "expression": "DISTANCIA_KM >= 0",
-          "description": "El valor informado debe ser cero o positivo."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "IX_MOV_EJE_ITINERARIO",
-          "columns": [
-            "ID_ITINERARIO"
-          ],
-          "description": "Una ejecución vigente por itinerario.",
-          "kind": "uniqueFunctional",
-          "predicate": "ESTADO = 1 AND ELIMINADO = 0"
-        },
-        {
-          "name": "IX_MOV_EJE_MOV_ITI",
-          "columns": [
-            "ID_ITINERARIO"
-          ],
-          "description": "Cobertura de FK_MOV_EJE_MOV_ITI.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
       "name": "SGR_COMBUSTIBLE",
       "alias": "MOV_COM",
       "module": "movilidad",
       "label": "Registro de combustible",
-      "description": "Carga al vehículo o consumo declarado para una ejecución. Conserva código, volumen en litros, sustento y autoría original.",
+      "description": "Carga al vehículo o consumo declarado para un itinerario ejecutado. Conserva código, volumen en litros, sustento y autoría original.",
       "executive": true,
       "sources": [
         "combustible",
@@ -6539,12 +6239,12 @@
           "type": "NUMBER(38,0)",
           "description": "Vehículo que recibió la carga.",
           "nullable": true,
-          "nullableReason": "En un consumo, el vehículo se obtiene desde la ejecución y su itinerario."
+          "nullableReason": "En un consumo, el vehículo se obtiene desde el itinerario."
         },
         {
-          "name": "ID_EJECUCION",
+          "name": "ID_ITINERARIO",
           "type": "NUMBER(38,0)",
-          "description": "Ejecución a la que corresponde el consumo.",
+          "description": "Itinerario ejecutado al que corresponde el consumo.",
           "nullable": true,
           "nullableReason": "Una carga se relaciona directamente con el vehículo."
         }
@@ -6575,17 +6275,17 @@
           "executive": true
         },
         {
-          "name": "FK_MOV_COM_MOV_EJE",
+          "name": "FK_MOV_COM_MOV_ITI",
           "columns": [
-            "ID_EJECUCION"
+            "ID_ITINERARIO"
           ],
           "references": {
-            "table": "SGR_EJECUCION",
+            "table": "SGR_ITINERARIO",
             "columns": [
               "ID"
             ]
           },
-          "role": "Ejecución a la que corresponde el consumo",
+          "role": "Itinerario ejecutado al que corresponde el consumo",
           "cardinality": {
             "from": {
               "min": 0,
@@ -6615,9 +6315,9 @@
           "columns": [
             "TIPO",
             "ID_VEHICULO",
-            "ID_EJECUCION"
+            "ID_ITINERARIO"
           ],
-          "expression": "(TIPO = 'CARGA' AND ID_VEHICULO IS NOT NULL AND ID_EJECUCION IS NULL) OR (TIPO = 'CONSUMO' AND ID_VEHICULO IS NULL AND ID_EJECUCION IS NOT NULL)",
+          "expression": "(TIPO = 'CARGA' AND ID_VEHICULO IS NOT NULL AND ID_ITINERARIO IS NULL) OR (TIPO = 'CONSUMO' AND ID_VEHICULO IS NULL AND ID_ITINERARIO IS NOT NULL)",
           "description": "El tipo determina la única referencia admitida."
         },
         {
@@ -6640,20 +6340,20 @@
           "kind": "btree"
         },
         {
-          "name": "IX_MOV_COM_EJE_VIG",
+          "name": "IX_MOV_COM_ITI_VIG",
           "columns": [
-            "ID_EJECUCION"
+            "ID_ITINERARIO"
           ],
-          "description": "Un solo consumo vigente por ejecución.",
+          "description": "Un solo consumo vigente por itinerario.",
           "kind": "uniqueFunctional",
           "predicate": "ESTADO = 1 AND ELIMINADO = 0"
         },
         {
-          "name": "IX_MOV_COM_MOV_EJE",
+          "name": "IX_MOV_COM_MOV_ITI",
           "columns": [
-            "ID_EJECUCION"
+            "ID_ITINERARIO"
           ],
-          "description": "Cobertura de FK_MOV_COM_MOV_EJE.",
+          "description": "Cobertura de FK_MOV_COM_MOV_ITI.",
           "kind": "btree"
         }
       ]
@@ -8188,10 +7888,7 @@
         "spec014"
       ],
       "tables": [
-        "SGR_ITINERARIO",
-        "SGR_PUNTO",
-        "SGR_RUTA",
-        "SGR_VERTICE"
+        "SGR_ITINERARIO"
       ]
     },
     {
@@ -8208,9 +7905,7 @@
         "spec006"
       ],
       "tables": [
-        "SGR_ITINERARIO",
-        "SGR_RUTA",
-        "SGR_EJECUCION"
+        "SGR_ITINERARIO"
       ]
     },
     {
@@ -8230,7 +7925,6 @@
       "tables": [
         "SGR_VEHICULO",
         "SGR_ITINERARIO",
-        "SGR_EJECUCION",
         "SGR_COMBUSTIBLE"
       ]
     },
@@ -8251,8 +7945,6 @@
       "tables": [
         "SGR_VEHICULO",
         "SGR_ITINERARIO",
-        "SGR_RUTA",
-        "SGR_EJECUCION",
         "SGR_COMBUSTIBLE"
       ]
     },
@@ -8269,7 +7961,24 @@
       ],
       "tables": [
         "SGR_VEHICULO",
-        "SGR_EJECUCION",
+        "SGR_ITINERARIO",
+        "SGR_COMBUSTIBLE"
+      ]
+    },
+    {
+      "id": "MOV-07",
+      "module": "movilidad",
+      "status": "SUPUESTO_DISENO",
+      "enforcement": "TRANSACCION_FUTURA",
+      "title": "Destinos, trazado y ejecución en el itinerario",
+      "description": "DESTINOS es un arreglo ordenado de puntos con nombre y, cuando se conocen, latitud y longitud WGS 84 en rango; el modo mapa exige al menos dos puntos con coordenadas. GEOMETRIA_RUTA es un arreglo ordenado de pares [longitud, latitud] en rango. La aplicación valida ambas estructuras en la misma transacción que el itinerario. En las reglas, la ejecución equivale a EJECUTADO = 1, y un consumo exige un itinerario vigente y ejecutado.",
+      "sources": [
+        "itinerarioForm",
+        "mapa",
+        "acciones"
+      ],
+      "tables": [
+        "SGR_ITINERARIO",
         "SGR_COMBUSTIBLE"
       ]
     },
@@ -8706,10 +8415,6 @@
       ],
       "tables": [
         "SGR_ITINERARIO",
-        "SGR_PUNTO",
-        "SGR_RUTA",
-        "SGR_VERTICE",
-        "SGR_EJECUCION",
         "SGR_COMBUSTIBLE"
       ],
       "description": "Planificación, destinos, retorno, ruta y ejecución. Las tareas abiertas derivan de los datos reportados.",
@@ -8730,7 +8435,7 @@
       "tables": [
         "SGR_COMBUSTIBLE",
         "SGR_VEHICULO",
-        "SGR_EJECUCION",
+        "SGR_ITINERARIO",
         "SGR_USUARIO"
       ],
       "description": "Carga, declaración, sustento, corrección, anulación, autoría original y comparación.",

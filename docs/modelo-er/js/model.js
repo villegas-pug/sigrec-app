@@ -1,5 +1,5 @@
 const IDENTIFIER = /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/
-const ORACLE_TYPE = /^(NUMBER(?:\((?:[1-9]|[1-2]\d|3[0-8])(?:,\d{1,2})?\))?|(?:VARCHAR2|CHAR)\([1-9]\d{0,3} CHAR\)|DATE|BLOB)$/
+const ORACLE_TYPE = /^(NUMBER(?:\((?:[1-9]|[1-2]\d|3[0-8])(?:,\d{1,2})?\))?|(?:VARCHAR2|CHAR)\([1-9]\d{0,3} CHAR\)|DATE|BLOB|CLOB)$/ // SPEC 031: CLOB para documentos JSON del itinerario.
 
 export const statuses = {
   OBSERVADO: 'Observado en el frontend',
