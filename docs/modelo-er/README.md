@@ -75,6 +75,17 @@ El modelo pasa de **42 a 37 tablas**, mantiene los siete módulos y deja «Centr
 
 Perfiles y permisos siguen como entidades de autorización. Las enumeraciones resueltas con `CHECK` se conservan porque las reglas condicionales comparan sus literales.
 
+## Historial del bien en 6.0.0
+
+El modelo pasa de **37 a 32 tablas**, mantiene los siete módulos y deja «Bienes e inventario» en tres tablas: `SGR_BIEN`, `SGR_INVENTARIO_PREVIO` y `SGR_HISTORIAL_BIEN`. [SPEC 030](../spec/030-modelo-er-inventario-tres-tablas.md)
+
+| Cambio | Justificación e integridad |
+| --- | --- |
+| `SGR_HISTORIAL_BIEN` | Reúne verificaciones, cambios de condición, asociaciones y traslados, como el arreglo `eventos` del prototipo. `TIPO` y un `CHECK` por tipo controlan las columnas aplicables. Cada componente que acompaña un traslado tiene su propia fila, vinculada al traslado principal por `ID_TRASLADO`, y un índice único funcional impide repetirlo entre los vigentes. |
+| Tipo de bien en `SGR_CATALOGO` | Dominio `TIPO_BIEN`, con vida útil sugerida y categoría sugerida en una autorreferencia, ambas exclusivas de ese dominio. Las FK de bien, inventario previo y precio conservan su nombre. El catálogo es ejecutivo para mantener el recorrido precio → tipo → bien. |
+
+La regla `BIE-08` documenta la agrupación de los traslados, que se valida en la transacción.
+
 ## Validación y aceptación
 
 La verificación estática del visor valida nombres, tipos, auditoría, claves, destinos, índices, cardinalidades, catálogos y referencias. El módulo [model.js](js/model.js) expone `expandModel` y `validateModel` para revisar el JSON con un consumidor local. Cada columna que admite `NULL` declara su motivo. Las reglas de más de una fila indican la frontera transaccional para una futura implementación.

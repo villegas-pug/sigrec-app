@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "5.0.0",
+  "schemaVersion": "6.0.0",
   "title": "Modelo de datos SIGREC",
   "description": "Modelo relacional de los recursos y la operación de los Centros de Acogida Residencial de la USPNNA.",
   "platform": {
@@ -18,13 +18,13 @@
       "id": "centros",
       "label": "Centros e infraestructura",
       "color": "teal",
-      "summary": "Ficha del centro, ambientes, evaluación de elementos, intervenciones, evidencia fotográfica y catálogo de valores compartido."
+      "summary": "Ficha del centro, ambientes, evaluación de elementos, intervenciones, evidencia fotográfica y catálogo de valores compartido, con los tipos de bien."
     },
     {
       "id": "inventario",
       "label": "Bienes e inventario",
       "color": "blue",
-      "summary": "Bienes, componentes, verificación e inventario de referencia."
+      "summary": "Bienes, componentes, historial del bien e inventario de referencia."
     },
     {
       "id": "incidencias",
@@ -814,8 +814,8 @@
       "alias": "CAT_CAT",
       "module": "centros",
       "label": "Catálogo de valores",
-      "description": "Valores de las listas de dominio compartidas: condición física, elementos base, tipos de incidencia, de mantenimiento y de servicio, y categorías de bien. DOMINIO identifica la lista y CODIGO es estable dentro de ella.",
-      "executive": false,
+      "description": "Valores de las listas de dominio compartidas: condición física, elementos base, tipos de incidencia, de mantenimiento, de servicio y de bien, y categorías de bien. DOMINIO identifica la lista y CODIGO es estable dentro de ella. El tipo de bien es administrable: sugiere su categoría y vida útil, y agrupa precios referenciales.",
+      "executive": true,
       "catalogValues": [
         {
           "DOMINIO": "CONDICION",
@@ -1008,7 +1008,11 @@
         "spec016",
         "spec017",
         "spec021",
-        "spec024"
+        "spec024",
+        "tipos",
+        "tipoForm",
+        "catalogoPrecios",
+        "acciones"
       ],
       "columns": [
         {
@@ -1025,7 +1029,7 @@
         },
         {
           "name": "NOMBRE",
-          "type": "VARCHAR2(120 CHAR)",
+          "type": "VARCHAR2(180 CHAR)",
           "description": "Denominación visible.",
           "nullable": false
         },
@@ -1049,9 +1053,47 @@
           "description": "Meses sugeridos hasta el siguiente control.",
           "nullable": true,
           "nullableReason": "Valor de un dominio distinto de TIPO_MANTENIMIENTO."
+        },
+        {
+          "name": "CANT_ANIO_VIDA_UTIL",
+          "type": "NUMBER(4,0)",
+          "description": "Vida útil sugerida en años.",
+          "nullable": true,
+          "nullableReason": "Valor de un dominio distinto de TIPO_BIEN, o tipo de bien sin vida útil de referencia."
+        },
+        {
+          "name": "ID_CATEGORIA_BIEN",
+          "type": "NUMBER(38,0)",
+          "description": "Categoría sugerida al dar de alta un bien del tipo.",
+          "nullable": true,
+          "nullableReason": "Valor de un dominio distinto de TIPO_BIEN."
         }
       ],
-      "foreignKeys": [],
+      "foreignKeys": [
+        {
+          "name": "FK_CAT_CAT_CAT_CAB",
+          "columns": [
+            "ID_CATEGORIA_BIEN"
+          ],
+          "references": {
+            "table": "SGR_CATALOGO",
+            "columns": [
+              "ID"
+            ]
+          },
+          "role": "Categoría sugerida al dar de alta",
+          "cardinality": {
+            "from": {
+              "min": 0,
+              "max": 1
+            },
+            "to": {
+              "min": 0,
+              "max": "N"
+            }
+          }
+        }
+      ],
       "uniqueKeys": [
         {
           "name": "UK_CAT_CAT_CODIGO",
@@ -1068,7 +1110,7 @@
           "columns": [
             "DOMINIO"
           ],
-          "expression": "DOMINIO IN ('CONDICION', 'ELEMENTO_BASE', 'TIPO_INCIDENCIA', 'TIPO_MANTENIMIENTO', 'CATEGORIA_BIEN', 'TIPO_SERVICIO')",
+          "expression": "DOMINIO IN ('CONDICION', 'ELEMENTO_BASE', 'TIPO_INCIDENCIA', 'TIPO_MANTENIMIENTO', 'CATEGORIA_BIEN', 'TIPO_SERVICIO', 'TIPO_BIEN')",
           "description": "Listas de dominio admitidas."
         },
         {
@@ -1096,9 +1138,36 @@
           ],
           "expression": "CANT_MES_SUGERIDO > 0",
           "description": "El valor informado debe ser positivo."
+        },
+        {
+          "name": "CK_CAT_CAT_TIPO_BIEN",
+          "columns": [
+            "DOMINIO",
+            "ID_CATEGORIA_BIEN",
+            "CANT_ANIO_VIDA_UTIL"
+          ],
+          "expression": "(DOMINIO = 'TIPO_BIEN' AND ID_CATEGORIA_BIEN IS NOT NULL) OR (DOMINIO <> 'TIPO_BIEN' AND ID_CATEGORIA_BIEN IS NULL AND CANT_ANIO_VIDA_UTIL IS NULL)",
+          "description": "La categoría sugerida es obligatoria en los tipos de bien; la categoría y la vida útil solo se informan en ellos."
+        },
+        {
+          "name": "CK_CAT_CAT_CANT_ANIO_VIDA_UTIL",
+          "columns": [
+            "CANT_ANIO_VIDA_UTIL"
+          ],
+          "expression": "CANT_ANIO_VIDA_UTIL > 0",
+          "description": "El valor informado debe ser positivo."
         }
       ],
-      "indexes": []
+      "indexes": [
+        {
+          "name": "IX_CAT_CAT_CAT_CAB",
+          "columns": [
+            "ID_CATEGORIA_BIEN"
+          ],
+          "description": "Cobertura de FK_CAT_CAT_CAT_CAB.",
+          "kind": "btree"
+        }
+      ]
     },
     {
       "name": "SGR_CENTRO",
@@ -2337,102 +2406,6 @@
       ]
     },
     {
-      "name": "SGR_TIPO_BIEN",
-      "alias": "BIE_TIP",
-      "module": "inventario",
-      "label": "Tipo de bien",
-      "description": "Tipo administrable que sugiere la clasificación y vida útil del bien y agrupa precios referenciales.",
-      "executive": true,
-      "sources": [
-        "tipos",
-        "catalogos",
-        "tipoForm",
-        "catalogoPrecios",
-        "acciones"
-      ],
-      "columns": [
-        {
-          "name": "CODIGO",
-          "type": "VARCHAR2(40 CHAR)",
-          "description": "Código estable del tipo de bien.",
-          "nullable": false
-        },
-        {
-          "name": "NOMBRE",
-          "type": "VARCHAR2(180 CHAR)",
-          "description": "Nombre del tipo de bien.",
-          "nullable": false
-        },
-        {
-          "name": "CANT_ANIO_VIDA_UTIL",
-          "type": "NUMBER(4,0)",
-          "description": "Vida útil sugerida en años.",
-          "nullable": true,
-          "nullableReason": "El tipo puede no tener una vida útil de referencia."
-        },
-        {
-          "name": "ID_CATEGORIA_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Categoría sugerida al dar de alta.",
-          "nullable": false
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_BIE_TIP_CAT_CAB",
-          "columns": [
-            "ID_CATEGORIA_BIEN"
-          ],
-          "references": {
-            "table": "SGR_CATALOGO",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Categoría sugerida al dar de alta",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        }
-      ],
-      "uniqueKeys": [
-        {
-          "name": "UK_BIE_TIP_CODIGO",
-          "columns": [
-            "CODIGO"
-          ],
-          "description": "Identificador de negocio estable. No se reutiliza al anular."
-        }
-      ],
-      "checks": [
-        {
-          "name": "CK_BIE_TIP_CANT_ANIO_VIDA_UTIL",
-          "columns": [
-            "CANT_ANIO_VIDA_UTIL"
-          ],
-          "expression": "CANT_ANIO_VIDA_UTIL > 0",
-          "description": "El valor informado debe ser positivo."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "IX_BIE_TIP_CAT_CAB",
-          "columns": [
-            "ID_CATEGORIA_BIEN"
-          ],
-          "description": "Cobertura de FK_BIE_TIP_CAT_CAB.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
       "name": "SGR_BIEN",
       "alias": "BIE_BIE",
       "module": "inventario",
@@ -2600,7 +2573,7 @@
             "ID_TIPO_BIEN"
           ],
           "references": {
-            "table": "SGR_TIPO_BIEN",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -2929,7 +2902,7 @@
             "ID_TIPO_BIEN"
           ],
           "references": {
-            "table": "SGR_TIPO_BIEN",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -3057,24 +3030,32 @@
       ]
     },
     {
-      "name": "SGR_VERIFICACION",
-      "alias": "BIE_VER",
+      "name": "SGR_HISTORIAL_BIEN",
+      "alias": "BIE_HIS",
       "module": "inventario",
-      "label": "Verificación física",
-      "description": "Resultado de la constatación individual del bien, informada desde ficha o recorrido.",
+      "label": "Historial del bien",
+      "description": "Antecedentes cronológicos del bien: verificación física, cambio de condición, asociación de componente y traslado entre ambientes. TIPO determina las columnas aplicables. Cada componente que acompaña un traslado tiene su propia fila, vinculada al traslado principal.",
       "executive": false,
       "sources": [
         "bienes",
         "eventos",
         "bienAccion",
         "recorrido",
-        "acciones"
+        "acciones",
+        "spec002",
+        "bienEdit"
       ],
       "columns": [
         {
-          "name": "FEC_VERIFICACION",
+          "name": "TIPO",
+          "type": "VARCHAR2(15 CHAR)",
+          "description": "Clase de antecedente: VERIFICACION, CONDICION, ASOCIACION o TRASLADO.",
+          "nullable": false
+        },
+        {
+          "name": "FEC_EVENTO",
           "type": "DATE",
-          "description": "Fecha de la verificación física.",
+          "description": "Fecha informada de la verificación, el cambio de condición, la asociación o el traslado.",
           "nullable": false,
           "granularity": "DIA"
         },
@@ -3083,172 +3064,95 @@
           "type": "VARCHAR2(15 CHAR)",
           "description": "Resultado estructurado de la verificación.",
           "nullable": true,
-          "nullableReason": "Evento histórico sin resultado explícito ni coincidencia inequívoca con la ficha."
-        },
-        {
-          "name": "NOTA",
-          "type": "VARCHAR2(1000 CHAR)",
-          "description": "Observación que acompaña al resultado.",
-          "nullable": true,
-          "nullableReason": "Dato complementario sin informar."
-        },
-        {
-          "name": "ID_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Bien verificado.",
-          "nullable": false
-        },
-        {
-          "name": "ID_AMBIENTE",
-          "type": "NUMBER(38,0)",
-          "description": "Ambiente al verificar.",
-          "nullable": true,
-          "nullableReason": "Antecedente sin ubicación conservada."
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_BIE_VER_BIE_BIE",
-          "columns": [
-            "ID_BIEN"
-          ],
-          "references": {
-            "table": "SGR_BIEN",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Bien verificado",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        },
-        {
-          "name": "FK_BIE_VER_CTR_AMB",
-          "columns": [
-            "ID_AMBIENTE"
-          ],
-          "references": {
-            "table": "SGR_AMBIENTE",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Ambiente al verificar",
-          "cardinality": {
-            "from": {
-              "min": 0,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        }
-      ],
-      "uniqueKeys": [],
-      "checks": [
-        {
-          "name": "CK_BIE_VER_RESULTADO",
-          "columns": [
-            "RESULTADO"
-          ],
-          "expression": "RESULTADO IN ('COINCIDE', 'DIFERENCIAS')",
-          "description": "Valores admitidos para resultado."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "IX_BIE_VER_BIE_BIE",
-          "columns": [
-            "ID_BIEN"
-          ],
-          "description": "Cobertura de FK_BIE_VER_BIE_BIE.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_BIE_VER_CTR_AMB",
-          "columns": [
-            "ID_AMBIENTE"
-          ],
-          "description": "Cobertura de FK_BIE_VER_CTR_AMB.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
-      "name": "SGR_CAMBIO_CONDICION",
-      "alias": "BIE_CCO",
-      "module": "inventario",
-      "label": "Cambio de condición",
-      "description": "Antecedente cronológico del cambio de condición de un bien.",
-      "executive": false,
-      "sources": [
-        "eventos",
-        "acciones",
-        "spec002"
-      ],
-      "columns": [
-        {
-          "name": "FEC_CAMBIO",
-          "type": "DATE",
-          "description": "Fecha informada del cambio de condición.",
-          "nullable": false,
-          "granularity": "DIA"
+          "nullableReason": "Antecedente de otro tipo, o verificación histórica sin resultado explícito ni coincidencia inequívoca con la ficha."
         },
         {
           "name": "DETALLE",
           "type": "VARCHAR2(1000 CHAR)",
-          "description": "Descripción del cambio registrado.",
+          "description": "Nota de la verificación, o detalle del cambio, la asociación o el traslado.",
           "nullable": true,
           "nullableReason": "Dato complementario sin informar."
         },
         {
+          "name": "POSICION_ANTERIOR",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Posición anterior del componente.",
+          "nullable": true,
+          "nullableReason": "Antecedente de otro tipo, sin principal anterior o sin posición informada."
+        },
+        {
+          "name": "POSICION_NUEVA",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Posición asignada al componente.",
+          "nullable": true,
+          "nullableReason": "Antecedente de otro tipo, desasociación o posición nueva sin informar."
+        },
+        {
           "name": "ID_BIEN",
           "type": "NUMBER(38,0)",
-          "description": "Bien cuya condición cambió.",
+          "description": "Bien del antecedente: el verificado o evaluado, el componente asociado o el bien trasladado.",
           "nullable": false
         },
         {
           "name": "ID_AMBIENTE",
           "type": "NUMBER(38,0)",
-          "description": "Ambiente del bien al evaluar.",
+          "description": "Ambiente del bien al registrar el antecedente; en un traslado, el ambiente de origen.",
           "nullable": true,
-          "nullableReason": "Antecedente sin ubicación conservada."
+          "nullableReason": "Antecedente sin ubicación u origen conservado."
+        },
+        {
+          "name": "ID_DESTINO_AMBIENTE",
+          "type": "NUMBER(38,0)",
+          "description": "Ambiente de destino.",
+          "nullable": true,
+          "nullableReason": "Solo se informa en los traslados."
         },
         {
           "name": "ID_ANTERIOR_CONDICION",
           "type": "NUMBER(38,0)",
           "description": "Condición anterior.",
           "nullable": true,
-          "nullableReason": "Antecedente sin valor estructurado de origen."
+          "nullableReason": "Antecedente de otro tipo, o cambio sin valor estructurado de origen."
         },
         {
           "name": "ID_NUEVA_CONDICION",
           "type": "NUMBER(38,0)",
           "description": "Condición nueva.",
           "nullable": true,
-          "nullableReason": "Antecedente sin valor estructurado de destino."
+          "nullableReason": "Antecedente de otro tipo, o cambio sin valor estructurado de destino."
         },
         {
           "name": "ID_INCIDENTE",
           "type": "NUMBER(38,0)",
           "description": "Incidencia que motivó el cambio.",
           "nullable": true,
-          "nullableReason": "Cambio informado por otra acción o vínculo histórico no constatado."
+          "nullableReason": "Antecedente de otro tipo, cambio informado por otra acción o vínculo histórico no constatado."
+        },
+        {
+          "name": "ID_ANTERIOR_BIEN",
+          "type": "NUMBER(38,0)",
+          "description": "Principal anterior del componente asociado o trasladado por separado.",
+          "nullable": true,
+          "nullableReason": "Primera asociación, bien independiente, otro tipo de antecedente o antecedente sin principal estructurado."
+        },
+        {
+          "name": "ID_NUEVO_BIEN",
+          "type": "NUMBER(38,0)",
+          "description": "Principal nuevo.",
+          "nullable": true,
+          "nullableReason": "Antecedente de otro tipo o cierre de la asociación."
+        },
+        {
+          "name": "ID_TRASLADO",
+          "type": "NUMBER(38,0)",
+          "description": "Traslado principal al que acompaña este componente.",
+          "nullable": true,
+          "nullableReason": "Antecedente que no corresponde a un componente acompañante."
         }
       ],
       "foreignKeys": [
         {
-          "name": "FK_BIE_CCO_BIE_BIE",
+          "name": "FK_BIE_HIS_BIE_BIE",
           "columns": [
             "ID_BIEN"
           ],
@@ -3258,7 +3162,7 @@
               "ID"
             ]
           },
-          "role": "Bien cuya condición cambió",
+          "role": "Bien del antecedente",
           "cardinality": {
             "from": {
               "min": 1,
@@ -3271,7 +3175,7 @@
           }
         },
         {
-          "name": "FK_BIE_CCO_CTR_AMB",
+          "name": "FK_BIE_HIS_CTR_AMB",
           "columns": [
             "ID_AMBIENTE"
           ],
@@ -3281,7 +3185,7 @@
               "ID"
             ]
           },
-          "role": "Ambiente del bien al evaluar",
+          "role": "Ambiente del bien o de origen",
           "cardinality": {
             "from": {
               "min": 0,
@@ -3294,7 +3198,30 @@
           }
         },
         {
-          "name": "FK_BIE_CCO_COND_ANT",
+          "name": "FK_BIE_HIS_AMB_DES",
+          "columns": [
+            "ID_DESTINO_AMBIENTE"
+          ],
+          "references": {
+            "table": "SGR_AMBIENTE",
+            "columns": [
+              "ID"
+            ]
+          },
+          "role": "Ambiente de destino",
+          "cardinality": {
+            "from": {
+              "min": 0,
+              "max": 1
+            },
+            "to": {
+              "min": 0,
+              "max": "N"
+            }
+          }
+        },
+        {
+          "name": "FK_BIE_HIS_COND_ANT",
           "columns": [
             "ID_ANTERIOR_CONDICION"
           ],
@@ -3317,7 +3244,7 @@
           }
         },
         {
-          "name": "FK_BIE_CCO_COND_NUE",
+          "name": "FK_BIE_HIS_COND_NUE",
           "columns": [
             "ID_NUEVA_CONDICION"
           ],
@@ -3340,7 +3267,7 @@
           }
         },
         {
-          "name": "FK_BIE_CCO_INC_INC",
+          "name": "FK_BIE_HIS_INC_INC",
           "columns": [
             "ID_INCIDENTE"
           ],
@@ -3361,151 +3288,9 @@
               "max": "N"
             }
           }
-        }
-      ],
-      "uniqueKeys": [],
-      "checks": [
-        {
-          "name": "CK_BIE_CCO_COND",
-          "columns": [
-            "ID_ANTERIOR_CONDICION",
-            "ID_NUEVA_CONDICION"
-          ],
-          "expression": "ID_ANTERIOR_CONDICION <> ID_NUEVA_CONDICION",
-          "description": "Las referencias representan filas distintas."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "IX_BIE_CCO_BIE_BIE",
-          "columns": [
-            "ID_BIEN"
-          ],
-          "description": "Cobertura de FK_BIE_CCO_BIE_BIE.",
-          "kind": "btree"
         },
         {
-          "name": "IX_BIE_CCO_CTR_AMB",
-          "columns": [
-            "ID_AMBIENTE"
-          ],
-          "description": "Cobertura de FK_BIE_CCO_CTR_AMB.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_BIE_CCO_COND_ANT",
-          "columns": [
-            "ID_ANTERIOR_CONDICION"
-          ],
-          "description": "Cobertura de FK_BIE_CCO_COND_ANT.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_BIE_CCO_COND_NUE",
-          "columns": [
-            "ID_NUEVA_CONDICION"
-          ],
-          "description": "Cobertura de FK_BIE_CCO_COND_NUE.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_BIE_CCO_INC_INC",
-          "columns": [
-            "ID_INCIDENTE"
-          ],
-          "description": "Cobertura de FK_BIE_CCO_INC_INC.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
-      "name": "SGR_ASOCIACION",
-      "alias": "BIE_ASO",
-      "module": "inventario",
-      "label": "Historial de asociación",
-      "description": "Registro del alta, cambio o cierre de una asociación de componente.",
-      "executive": false,
-      "sources": [
-        "bienEdit",
-        "acciones",
-        "spec002"
-      ],
-      "columns": [
-        {
-          "name": "FEC_ASOCIACION",
-          "type": "DATE",
-          "description": "Fecha del movimiento de asociación.",
-          "nullable": false,
-          "granularity": "DIA"
-        },
-        {
-          "name": "POSICION_ANTERIOR",
-          "type": "VARCHAR2(180 CHAR)",
-          "description": "Posición anterior del componente.",
-          "nullable": true,
-          "nullableReason": "Sin principal anterior o sin posición informada."
-        },
-        {
-          "name": "POSICION_NUEVA",
-          "type": "VARCHAR2(180 CHAR)",
-          "description": "Posición asignada al componente.",
-          "nullable": true,
-          "nullableReason": "Desasociación o posición nueva sin informar."
-        },
-        {
-          "name": "DETALLE",
-          "type": "VARCHAR2(1000 CHAR)",
-          "description": "Sustento o detalle del movimiento.",
-          "nullable": true,
-          "nullableReason": "Dato complementario sin informar."
-        },
-        {
-          "name": "ID_COMPONENTE_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Bien tratado como componente.",
-          "nullable": false
-        },
-        {
-          "name": "ID_ANTERIOR_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Principal anterior.",
-          "nullable": true,
-          "nullableReason": "Primera asociación o antecedente sin identificación del principal."
-        },
-        {
-          "name": "ID_NUEVO_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Principal nuevo.",
-          "nullable": true,
-          "nullableReason": "Cierre de la asociación."
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_BIE_ASO_COMP",
-          "columns": [
-            "ID_COMPONENTE_BIEN"
-          ],
-          "references": {
-            "table": "SGR_BIEN",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Bien tratado como componente",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        },
-        {
-          "name": "FK_BIE_ASO_PADRE_ANT",
+          "name": "FK_BIE_HIS_PADRE_ANT",
           "columns": [
             "ID_ANTERIOR_BIEN"
           ],
@@ -3528,7 +3313,7 @@
           }
         },
         {
-          "name": "FK_BIE_ASO_PADRE_NUE",
+          "name": "FK_BIE_HIS_PADRE_NUE",
           "columns": [
             "ID_NUEVO_BIEN"
           ],
@@ -3549,328 +3334,22 @@
               "max": "N"
             }
           }
-        }
-      ],
-      "uniqueKeys": [],
-      "checks": [
-        {
-          "name": "CK_BIE_ASO_PADRE",
-          "columns": [
-            "ID_ANTERIOR_BIEN",
-            "ID_NUEVO_BIEN"
-          ],
-          "expression": "ID_ANTERIOR_BIEN IS NOT NULL OR ID_NUEVO_BIEN IS NOT NULL",
-          "description": "Debe constar al menos uno de los principales del movimiento."
         },
         {
-          "name": "CK_BIE_ASO_ANTERIOR",
-          "columns": [
-            "ID_COMPONENTE_BIEN",
-            "ID_ANTERIOR_BIEN"
-          ],
-          "expression": "ID_COMPONENTE_BIEN <> ID_ANTERIOR_BIEN",
-          "description": "Las referencias representan filas distintas."
-        },
-        {
-          "name": "CK_BIE_ASO_NUEVO",
-          "columns": [
-            "ID_COMPONENTE_BIEN",
-            "ID_NUEVO_BIEN"
-          ],
-          "expression": "ID_COMPONENTE_BIEN <> ID_NUEVO_BIEN",
-          "description": "Las referencias representan filas distintas."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "IX_BIE_ASO_COMP",
-          "columns": [
-            "ID_COMPONENTE_BIEN"
-          ],
-          "description": "Cobertura de FK_BIE_ASO_COMP.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_BIE_ASO_PADRE_ANT",
-          "columns": [
-            "ID_ANTERIOR_BIEN"
-          ],
-          "description": "Cobertura de FK_BIE_ASO_PADRE_ANT.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_BIE_ASO_PADRE_NUE",
-          "columns": [
-            "ID_NUEVO_BIEN"
-          ],
-          "description": "Cobertura de FK_BIE_ASO_PADRE_NUE.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
-      "name": "SGR_TRASLADO",
-      "alias": "BIE_TRA",
-      "module": "inventario",
-      "label": "Traslado de bienes",
-      "description": "Movimiento de un bien principal o un componente entre ambientes del mismo centro.",
-      "executive": false,
-      "sources": [
-        "bienEdit",
-        "acciones",
-        "spec002"
-      ],
-      "columns": [
-        {
-          "name": "FEC_TRASLADO",
-          "type": "DATE",
-          "description": "Fecha en que se cambió la ubicación.",
-          "nullable": false,
-          "granularity": "DIA"
-        },
-        {
-          "name": "DETALLE",
-          "type": "VARCHAR2(1000 CHAR)",
-          "description": "Observación del traslado.",
-          "nullable": true,
-          "nullableReason": "Dato complementario sin informar."
-        },
-        {
-          "name": "ID_PRINCIPAL_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Bien elegido para iniciar el traslado.",
-          "nullable": false
-        },
-        {
-          "name": "ID_ORIGEN_AMBIENTE",
-          "type": "NUMBER(38,0)",
-          "description": "Ambiente anterior.",
-          "nullable": true,
-          "nullableReason": "Antecedente sin origen estructurado."
-        },
-        {
-          "name": "ID_DESTINO_AMBIENTE",
-          "type": "NUMBER(38,0)",
-          "description": "Ambiente de destino.",
-          "nullable": false
-        },
-        {
-          "name": "ID_ANTERIOR_PADRE_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Principal anterior si se trasladó un componente por separado.",
-          "nullable": true,
-          "nullableReason": "Traslado de bien independiente o antecedente sin principal estructurado."
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_BIE_TRA_BIE_BIE",
-          "columns": [
-            "ID_PRINCIPAL_BIEN"
-          ],
-          "references": {
-            "table": "SGR_BIEN",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Bien elegido para iniciar el traslado",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        },
-        {
-          "name": "FK_BIE_TRA_AMB_ORI",
-          "columns": [
-            "ID_ORIGEN_AMBIENTE"
-          ],
-          "references": {
-            "table": "SGR_AMBIENTE",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Ambiente anterior",
-          "cardinality": {
-            "from": {
-              "min": 0,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        },
-        {
-          "name": "FK_BIE_TRA_AMB_DES",
-          "columns": [
-            "ID_DESTINO_AMBIENTE"
-          ],
-          "references": {
-            "table": "SGR_AMBIENTE",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Ambiente de destino",
-          "cardinality": {
-            "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        },
-        {
-          "name": "FK_BIE_TRA_PADRE_ANT",
-          "columns": [
-            "ID_ANTERIOR_PADRE_BIEN"
-          ],
-          "references": {
-            "table": "SGR_BIEN",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Principal anterior si se trasladó un componente por separado",
-          "cardinality": {
-            "from": {
-              "min": 0,
-              "max": 1
-            },
-            "to": {
-              "min": 0,
-              "max": "N"
-            }
-          }
-        }
-      ],
-      "uniqueKeys": [],
-      "checks": [
-        {
-          "name": "CK_BIE_TRA_AMBIENTE",
-          "columns": [
-            "ID_ORIGEN_AMBIENTE",
-            "ID_DESTINO_AMBIENTE"
-          ],
-          "expression": "ID_ORIGEN_AMBIENTE <> ID_DESTINO_AMBIENTE",
-          "description": "Las referencias representan filas distintas."
-        }
-      ],
-      "indexes": [
-        {
-          "name": "IX_BIE_TRA_BIE_BIE",
-          "columns": [
-            "ID_PRINCIPAL_BIEN"
-          ],
-          "description": "Cobertura de FK_BIE_TRA_BIE_BIE.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_BIE_TRA_AMB_ORI",
-          "columns": [
-            "ID_ORIGEN_AMBIENTE"
-          ],
-          "description": "Cobertura de FK_BIE_TRA_AMB_ORI.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_BIE_TRA_AMB_DES",
-          "columns": [
-            "ID_DESTINO_AMBIENTE"
-          ],
-          "description": "Cobertura de FK_BIE_TRA_AMB_DES.",
-          "kind": "btree"
-        },
-        {
-          "name": "IX_BIE_TRA_PADRE_ANT",
-          "columns": [
-            "ID_ANTERIOR_PADRE_BIEN"
-          ],
-          "description": "Cobertura de FK_BIE_TRA_PADRE_ANT.",
-          "kind": "btree"
-        }
-      ]
-    },
-    {
-      "name": "SGR_TRASLADO_BIEN",
-      "alias": "BIE_TRB",
-      "module": "inventario",
-      "label": "Bienes trasladados",
-      "description": "Recursos que acompañan al bien seleccionado para un traslado.",
-      "executive": false,
-      "junction": [
-        "ID_TRASLADO",
-        "ID_BIEN"
-      ],
-      "sources": [
-        "acciones",
-        "spec002"
-      ],
-      "columns": [
-        {
-          "name": "ID_TRASLADO",
-          "type": "NUMBER(38,0)",
-          "description": "Traslado que los agrupó.",
-          "nullable": false
-        },
-        {
-          "name": "ID_BIEN",
-          "type": "NUMBER(38,0)",
-          "description": "Componente que acompañó al bien trasladado.",
-          "nullable": false
-        }
-      ],
-      "foreignKeys": [
-        {
-          "name": "FK_BIE_TRB_BIE_TRA",
+          "name": "FK_BIE_HIS_TRASLADO",
           "columns": [
             "ID_TRASLADO"
           ],
           "references": {
-            "table": "SGR_TRASLADO",
+            "table": "SGR_HISTORIAL_BIEN",
             "columns": [
               "ID"
             ]
           },
-          "role": "Traslado que los agrupó",
+          "role": "Traslado principal que acompaña",
           "cardinality": {
             "from": {
-              "min": 1,
-              "max": 1
-            },
-            "to": {
               "min": 0,
-              "max": "N"
-            }
-          }
-        },
-        {
-          "name": "FK_BIE_TRB_BIE_BIE",
-          "columns": [
-            "ID_BIEN"
-          ],
-          "references": {
-            "table": "SGR_BIEN",
-            "columns": [
-              "ID"
-            ]
-          },
-          "role": "Componente que acompañó al bien trasladado",
-          "cardinality": {
-            "from": {
-              "min": 1,
               "max": 1
             },
             "to": {
@@ -3880,25 +3359,207 @@
           }
         }
       ],
-      "uniqueKeys": [
+      "uniqueKeys": [],
+      "checks": [
         {
-          "name": "UK_BIE_TRB_PAR",
+          "name": "CK_BIE_HIS_TIPO",
+          "columns": [
+            "TIPO"
+          ],
+          "expression": "TIPO IN ('VERIFICACION', 'CONDICION', 'ASOCIACION', 'TRASLADO')",
+          "description": "Clases de antecedente admitidas."
+        },
+        {
+          "name": "CK_BIE_HIS_RESULTADO",
+          "columns": [
+            "RESULTADO"
+          ],
+          "expression": "RESULTADO IN ('COINCIDE', 'DIFERENCIAS')",
+          "description": "Valores admitidos para resultado."
+        },
+        {
+          "name": "CK_BIE_HIS_VERIFICACION",
+          "columns": [
+            "TIPO",
+            "RESULTADO"
+          ],
+          "expression": "TIPO = 'VERIFICACION' OR RESULTADO IS NULL",
+          "description": "Solo una verificación informa resultado."
+        },
+        {
+          "name": "CK_BIE_HIS_CONDICION",
+          "columns": [
+            "TIPO",
+            "ID_ANTERIOR_CONDICION",
+            "ID_NUEVA_CONDICION",
+            "ID_INCIDENTE"
+          ],
+          "expression": "TIPO = 'CONDICION' OR (ID_ANTERIOR_CONDICION IS NULL AND ID_NUEVA_CONDICION IS NULL AND ID_INCIDENTE IS NULL)",
+          "description": "Las condiciones y la incidencia de origen solo se informan en un cambio de condición."
+        },
+        {
+          "name": "CK_BIE_HIS_COND",
+          "columns": [
+            "ID_ANTERIOR_CONDICION",
+            "ID_NUEVA_CONDICION"
+          ],
+          "expression": "ID_ANTERIOR_CONDICION <> ID_NUEVA_CONDICION",
+          "description": "Las referencias representan filas distintas."
+        },
+        {
+          "name": "CK_BIE_HIS_ASOCIACION",
+          "columns": [
+            "TIPO",
+            "ID_ANTERIOR_BIEN",
+            "ID_NUEVO_BIEN",
+            "POSICION_ANTERIOR",
+            "POSICION_NUEVA"
+          ],
+          "expression": "(TIPO = 'ASOCIACION' AND (ID_ANTERIOR_BIEN IS NOT NULL OR ID_NUEVO_BIEN IS NOT NULL)) OR (TIPO <> 'ASOCIACION' AND ID_NUEVO_BIEN IS NULL AND POSICION_ANTERIOR IS NULL AND POSICION_NUEVA IS NULL)",
+          "description": "Una asociación informa al menos uno de sus principales; el principal nuevo y las posiciones solo se informan en ella."
+        },
+        {
+          "name": "CK_BIE_HIS_TRASLADO",
+          "columns": [
+            "TIPO",
+            "ID_DESTINO_AMBIENTE",
+            "ID_TRASLADO"
+          ],
+          "expression": "(TIPO = 'TRASLADO' AND ID_DESTINO_AMBIENTE IS NOT NULL) OR (TIPO <> 'TRASLADO' AND ID_DESTINO_AMBIENTE IS NULL AND ID_TRASLADO IS NULL)",
+          "description": "Un traslado exige destino; el destino y el traslado principal solo se informan en traslados."
+        },
+        {
+          "name": "CK_BIE_HIS_PRINCIPAL",
+          "columns": [
+            "TIPO",
+            "ID_ANTERIOR_BIEN"
+          ],
+          "expression": "TIPO IN ('ASOCIACION', 'TRASLADO') OR ID_ANTERIOR_BIEN IS NULL",
+          "description": "El principal anterior solo se informa en asociaciones y traslados."
+        },
+        {
+          "name": "CK_BIE_HIS_AMBIENTE",
+          "columns": [
+            "ID_AMBIENTE",
+            "ID_DESTINO_AMBIENTE"
+          ],
+          "expression": "ID_AMBIENTE <> ID_DESTINO_AMBIENTE",
+          "description": "Las referencias representan filas distintas."
+        },
+        {
+          "name": "CK_BIE_HIS_ANTERIOR",
+          "columns": [
+            "ID_BIEN",
+            "ID_ANTERIOR_BIEN"
+          ],
+          "expression": "ID_BIEN <> ID_ANTERIOR_BIEN",
+          "description": "Las referencias representan filas distintas."
+        },
+        {
+          "name": "CK_BIE_HIS_NUEVO",
+          "columns": [
+            "ID_BIEN",
+            "ID_NUEVO_BIEN"
+          ],
+          "expression": "ID_BIEN <> ID_NUEVO_BIEN",
+          "description": "Las referencias representan filas distintas."
+        },
+        {
+          "name": "CK_BIE_HIS_ACOMPANA",
+          "columns": [
+            "ID",
+            "ID_TRASLADO",
+            "ID_ANTERIOR_BIEN"
+          ],
+          "expression": "ID_TRASLADO IS NULL OR (ID_TRASLADO <> ID AND ID_ANTERIOR_BIEN IS NULL)",
+          "description": "Un componente acompañante apunta a otro traslado y conserva su asociación."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IX_BIE_HIS_BIE_BIE",
+          "columns": [
+            "ID_BIEN"
+          ],
+          "description": "Cobertura de FK_BIE_HIS_BIE_BIE.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_BIE_HIS_CTR_AMB",
+          "columns": [
+            "ID_AMBIENTE"
+          ],
+          "description": "Cobertura de FK_BIE_HIS_CTR_AMB.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_BIE_HIS_AMB_DES",
+          "columns": [
+            "ID_DESTINO_AMBIENTE"
+          ],
+          "description": "Cobertura de FK_BIE_HIS_AMB_DES.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_BIE_HIS_COND_ANT",
+          "columns": [
+            "ID_ANTERIOR_CONDICION"
+          ],
+          "description": "Cobertura de FK_BIE_HIS_COND_ANT.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_BIE_HIS_COND_NUE",
+          "columns": [
+            "ID_NUEVA_CONDICION"
+          ],
+          "description": "Cobertura de FK_BIE_HIS_COND_NUE.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_BIE_HIS_INC_INC",
+          "columns": [
+            "ID_INCIDENTE"
+          ],
+          "description": "Cobertura de FK_BIE_HIS_INC_INC.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_BIE_HIS_PADRE_ANT",
+          "columns": [
+            "ID_ANTERIOR_BIEN"
+          ],
+          "description": "Cobertura de FK_BIE_HIS_PADRE_ANT.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_BIE_HIS_PADRE_NUE",
+          "columns": [
+            "ID_NUEVO_BIEN"
+          ],
+          "description": "Cobertura de FK_BIE_HIS_PADRE_NUE.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_BIE_HIS_TRASLADO",
+          "columns": [
+            "ID_TRASLADO"
+          ],
+          "description": "Cobertura de FK_BIE_HIS_TRASLADO.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_BIE_HIS_TRASLADO_BIEN",
           "columns": [
             "ID_TRASLADO",
             "ID_BIEN"
           ],
-          "description": "Cada componente figura una sola vez por traslado."
-        }
-      ],
-      "checks": [],
-      "indexes": [
-        {
-          "name": "IX_BIE_TRB_BIE_BIE",
-          "columns": [
-            "ID_BIEN"
+          "description": "Cada componente figura una sola vez entre los acompañantes vigentes de un traslado.",
+          "kind": "uniqueFunctional",
+          "whenNotNull": [
+            "ID_TRASLADO"
           ],
-          "description": "Cobertura de FK_BIE_TRB_BIE_BIE.",
-          "kind": "btree"
+          "predicate": "ESTADO = 1 AND ELIMINADO = 0"
         }
       ]
     },
@@ -5083,7 +4744,7 @@
             "ID_TIPO_BIEN"
           ],
           "references": {
-            "table": "SGR_TIPO_BIEN",
+            "table": "SGR_CATALOGO",
             "columns": [
               "ID"
             ]
@@ -8065,7 +7726,7 @@
       "status": "SUPUESTO_DISENO",
       "enforcement": "TRANSACCION_FUTURA",
       "title": "Dominio de los valores de catálogo",
-      "description": "Cada referencia a SGR_CATALOGO apunta a un valor vigente de su dominio: condición física (ID_CONDICION, ID_ANTERIOR_CONDICION, ID_NUEVA_CONDICION); elemento base (ID_ELEMENTO_BASE); tipo de incidencia (ID_TIPO_INCIDENCIA); tipo de mantenimiento (ID_TIPO_MANTENIMIENTO); categoría de bien (ID_CATEGORIA_BIEN); tipo de servicio (ID_TIPO_SERVICIO). La FK garantiza que el valor exista; la aplicación valida el dominio en la misma transacción del alta o la corrección.",
+      "description": "Cada referencia a SGR_CATALOGO apunta a un valor vigente de su dominio: condición física (ID_CONDICION, ID_ANTERIOR_CONDICION, ID_NUEVA_CONDICION); elemento base (ID_ELEMENTO_BASE); tipo de incidencia (ID_TIPO_INCIDENCIA); tipo de mantenimiento (ID_TIPO_MANTENIMIENTO); categoría de bien (ID_CATEGORIA_BIEN); tipo de servicio (ID_TIPO_SERVICIO); tipo de bien (ID_TIPO_BIEN). La FK garantiza que el valor exista; la aplicación valida el dominio en la misma transacción del alta o la corrección.",
       "sources": [
         "catalogos"
       ],
@@ -8076,13 +7737,13 @@
         "SGR_AMBIENTE",
         "SGR_ELEMENTO",
         "SGR_MANTENIMIENTO",
-        "SGR_TIPO_BIEN",
         "SGR_BIEN",
         "SGR_INVENTARIO_PREVIO",
-        "SGR_CAMBIO_CONDICION",
+        "SGR_HISTORIAL_BIEN",
         "SGR_INCIDENTE",
         "SGR_BIEN_IMPLICADO",
-        "SGR_SERVICIO"
+        "SGR_SERVICIO",
+        "SGR_PRECIO"
       ]
     },
     {
@@ -8100,7 +7761,7 @@
       ],
       "tables": [
         "SGR_BIEN",
-        "SGR_ASOCIACION"
+        "SGR_HISTORIAL_BIEN"
       ]
     },
     {
@@ -8117,9 +7778,7 @@
       ],
       "tables": [
         "SGR_BIEN",
-        "SGR_TRASLADO",
-        "SGR_TRASLADO_BIEN",
-        "SGR_ASOCIACION"
+        "SGR_HISTORIAL_BIEN"
       ]
     },
     {
@@ -8154,8 +7813,7 @@
         "inventario"
       ],
       "tables": [
-        "SGR_VERIFICACION",
-        "SGR_CAMBIO_CONDICION",
+        "SGR_HISTORIAL_BIEN",
         "SGR_BIEN"
       ]
     },
@@ -8173,7 +7831,6 @@
       ],
       "tables": [
         "SGR_CATALOGO",
-        "SGR_TIPO_BIEN",
         "SGR_BIEN"
       ]
     },
@@ -8208,7 +7865,22 @@
         "catalogoPrecios"
       ],
       "tables": [
-        "SGR_TIPO_BIEN",
+        "SGR_CATALOGO",
+        "SGR_BIEN"
+      ]
+    },
+    {
+      "id": "BIE-08",
+      "module": "inventario",
+      "status": "SUPUESTO_DISENO",
+      "enforcement": "TRANSACCION_FUTURA",
+      "title": "Historial unificado del bien",
+      "description": "Cada verificación, cambio de condición, asociación o traslado se registra como una fila con su TIPO. Al trasladar un principal, cada componente que lo acompaña recibe su propia fila TRASLADO que apunta al traslado principal, con la misma fecha, origen y destino, en la misma transacción. La verificación vigente más reciente se consulta filtrando TIPO = VERIFICACION.",
+      "sources": [
+        "acciones"
+      ],
+      "tables": [
+        "SGR_HISTORIAL_BIEN",
         "SGR_BIEN"
       ]
     },
@@ -8270,7 +7942,7 @@
       ],
       "tables": [
         "SGR_INCIDENTE",
-        "SGR_CAMBIO_CONDICION"
+        "SGR_HISTORIAL_BIEN"
       ]
     },
     {
@@ -8328,7 +8000,7 @@
         "spec019"
       ],
       "tables": [
-        "SGR_TIPO_BIEN",
+        "SGR_CATALOGO",
         "SGR_PRECIO"
       ]
     },
@@ -8860,11 +8532,8 @@
       ],
       "tables": [
         "SGR_BIEN",
-        "SGR_TIPO_BIEN",
         "SGR_CATALOGO",
-        "SGR_ASOCIACION",
-        "SGR_TRASLADO",
-        "SGR_TRASLADO_BIEN",
+        "SGR_HISTORIAL_BIEN",
         "SGR_INVENTARIO_PREVIO"
       ],
       "description": "Alta, datos de adquisición, reconocimiento de rótulo, referencia previa, asociación, desasociación y traslado.",
@@ -8882,8 +8551,7 @@
         "acciones"
       ],
       "tables": [
-        "SGR_VERIFICACION",
-        "SGR_CAMBIO_CONDICION",
+        "SGR_HISTORIAL_BIEN",
         "SGR_BIEN"
       ],
       "description": "Verificación individual o en recorrido, discrepancias e historial de condición.",
@@ -8953,9 +8621,8 @@
       ],
       "tables": [
         "SGR_BIEN",
-        "SGR_TIPO_BIEN",
         "SGR_CATALOGO",
-        "SGR_VERIFICACION",
+        "SGR_HISTORIAL_BIEN",
         "SGR_PRECIO",
         "SGR_MANTENIMIENTO"
       ],
@@ -8975,7 +8642,6 @@
         "spec019"
       ],
       "tables": [
-        "SGR_TIPO_BIEN",
         "SGR_CATALOGO",
         "SGR_PRECIO"
       ],
