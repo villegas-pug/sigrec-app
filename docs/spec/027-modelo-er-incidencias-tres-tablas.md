@@ -2,7 +2,7 @@
 
 ## Problema
 
-En el modelo entidad-relación (`docs/modelo-er/data/modelo.json`), el módulo «Incidencias y patrimonio» tiene siete tablas: `SGR_TIPO_INCIDENCIA`, `SGR_INCIDENTE`, `SGR_INCIDENTE_BIEN`, `SGR_BAJA`, `SGR_BAJA_BIEN`, `SGR_REPOSICION` y `SGR_REPOSICION_BIEN`. Varias son redundantes:
+En el modelo entidad-relación (`aplicaciones/sigrec/database/modelo-er/data/modelo.json`), el módulo «Incidencias y patrimonio» tiene siete tablas: `SGR_TIPO_INCIDENCIA`, `SGR_INCIDENTE`, `SGR_INCIDENTE_BIEN`, `SGR_BAJA`, `SGR_BAJA_BIEN`, `SGR_REPOSICION` y `SGR_REPOSICION_BIEN`. Varias son redundantes:
 
 - `SGR_REPOSICION` admite a lo sumo una fila vigente por baja.
 - `SGR_REPOSICION_BIEN` repite lo que ya expresa `SGR_BAJA_BIEN.RESOLUCION = 'REPOSICION'`.
@@ -23,7 +23,7 @@ Reducir el módulo a tres tablas sin perder reglas ni trazabilidad al prototipo.
 
 ## Mapeo desde el prototipo
 
-| Prototipo (`src/services/acciones.js`) | Modelo |
+| Prototipo (`aplicaciones/sigrec/frontend/src/services/acciones.js`) | Modelo |
 | --- | --- |
 | Incidencia: `bienIds` + `evaluaciones` | Filas `AFECTADO` (`CANT_AFECTADA`, `REQUIERE_REPOSICION`, `FUENTE_EVALUACION`, `ID_CONDICION`) |
 | Baja: `componentes[{ bienId, posicion }]` | Filas `COMPONENTE` con `POSICION` |

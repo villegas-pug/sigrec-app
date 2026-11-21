@@ -1,10 +1,12 @@
 $ErrorActionPreference = 'Stop'
+$repositoryDir = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../../..'))
+$jobsPath = Join-Path $repositoryDir 'artifacts/manual-usuario/clean/voice-jobs.json'
 Add-Type -AssemblyName System.Speech
 $manualSynth = New-Object System.Speech.Synthesis.SpeechSynthesizer
 $manualSynth.SelectVoice('Microsoft Sabina Desktop')
 $manualSynth.Rate = 2
 $manualFormat = New-Object System.Speech.AudioFormat.SpeechAudioFormatInfo(22050, [System.Speech.AudioFormat.AudioBitsPerSample]::Sixteen, [System.Speech.AudioFormat.AudioChannel]::Mono)
-$manualJobs = Get-Content -LiteralPath 'artifacts/manual-usuario/clean/voice-jobs.json' -Raw | ConvertFrom-Json
+$manualJobs = Get-Content -LiteralPath $jobsPath -Raw | ConvertFrom-Json
 foreach ($manualJob in $manualJobs) {
     if ($manualJob.reuse -and (Test-Path -LiteralPath $manualJob.reuse)) {
         Copy-Item -LiteralPath $manualJob.reuse -Destination $manualJob.path -Force

@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Reducir el contrato Oracle de 44 a 42 tablas desde la versión 3.0.0. Esta especificación actualiza la decisión de la SPEC 027 sobre la reposición y conserva la tabla compartida de bienes implicados. El visor sigue leyendo el mismo formato de JSON. La implementación del modelo se limita a `docs/modelo-er/`.
+Reducir el contrato Oracle de 44 a 42 tablas desde la versión 3.0.0. Esta especificación actualiza la decisión de la SPEC 027 sobre la reposición y conserva la tabla compartida de bienes implicados. El visor sigue leyendo el mismo formato de JSON. La implementación del modelo se limita a `aplicaciones/sigrec/database/modelo-er/`.
 
 ## Diseño
 

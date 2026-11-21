@@ -2,7 +2,7 @@
 
 ## Problema
 
-Los datos ficticios de la SPA (`src/data/*.json`, cargados tal cual en `src/services/datos.js`) y el modelo ER optimizado (`docs/modelo-er/data/modelo.json`, 7.0.0) describen el mismo dominio. El ERD es la fuente de verdad y se dedujo de estos datos y de `src/services/acciones.js`.
+Los datos ficticios de la SPA (`aplicaciones/sigrec/frontend/src/data/*.json`, cargados tal cual en `aplicaciones/sigrec/frontend/src/services/datos.js`) y el modelo ER optimizado (`aplicaciones/sigrec/database/modelo-er/data/modelo.json`, 7.0.0) describen el mismo dominio. El ERD es la fuente de verdad y se dedujo de estos datos y de `aplicaciones/sigrec/frontend/src/services/acciones.js`.
 
 Las diferencias son de dos clases:
 

@@ -13,7 +13,7 @@ Catálogo central con identificadores estables, duraciones medidas, temas y ruta
 Comprobaciones estáticas, inspección de medios y revisión manual en la instancia existente. Sin builds, servidores, suites de pruebas, commits, push ni publicación sin autorización. Conservar los cambios anteriores de navegación.
 
 ## Implementación y gestión
-Vue y Quasar con reproductor HTML nativo. `src/config/manual.js` reúne los identificadores, temas, rutas, medios y duraciones. `public/manual/v1/` contiene los 14 MP4, WebVTT y portadas. La clave de montaje del manual usa el nombre de ruta para conservar el reproductor al cambiar de capítulo o instante. Se descarga el medio anterior y solo se precargan metadatos del seleccionado.
+Vue y Quasar con reproductor HTML nativo. `aplicaciones/sigrec/frontend/src/config/manual.js` reúne los identificadores, temas, rutas, medios y duraciones. `aplicaciones/sigrec/frontend/public/manual/v1/` contiene los 14 MP4, WebVTT y portadas. La clave de montaje del manual usa el nombre de ruta para conservar el reproductor al cambiar de capítulo o instante. Se descarga el medio anterior y solo se precargan metadatos del seleccionado.
 
 La ayuda de cada pantalla utiliza el retorno existente del historial, que conserva la consulta y el estado de origen. Todos los perfiles consultan el manual; los enlaces hacia pantallas funcionales aplican sus permisos actuales. Cada MP4 incorpora una pista de subtítulos para descarga y la web activa exclusivamente la pista WebVTT, evitando duplicarla.
 

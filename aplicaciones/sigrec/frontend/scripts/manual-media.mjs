@@ -1,12 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
-import { mediaTool } from './manual-tools.mjs'
-const root = process.cwd()
-const production = path.join(root, 'artifacts/manual-usuario', process.argv[2] === 'clean' ? 'clean' : 'produccion')
+import { frontendDir, manualArtifactsDir, mediaTool, repositoryDir } from './manual-tools.mjs'
+const production = path.join(manualArtifactsDir, process.argv[2] === 'clean' ? 'clean' : 'produccion')
 const ffmpeg = mediaTool('ffmpeg')
 const ffprobe = mediaTool('ffprobe')
-const out = path.join(root,'public/manual/v1')
+const out = path.join(frontendDir,'public/manual/v1')
 fs.mkdirSync(out,{recursive:true})
 const definitions = [
  ['start','Inicio y navegación',['inicio'],'menú buscar avisos indicadores ayuda manual'],
@@ -46,5 +45,5 @@ for(let i=0;i<groups.length;i++){
  chapters.push({id,title,routes,topics:keywords.split(' '),duration:Number(info.format.duration),video:`manual/v1/${id}.mp4`,subtitles:`manual/v1/${id}.vtt`,poster:`manual/v1/${id}.jpg`})
  console.log(`${id}: ${chapters.at(-1).duration}s`)
 }
-fs.writeFileSync(path.join(root,'src/config/manual.js'),`// Catálogo generado desde los medios finales; duraciones medidas con ffprobe.\nexport const MANUAL_CHAPTERS = ${JSON.stringify(chapters,null,2)}\n`)
-fs.writeFileSync(path.join(root,'docs/manual-demonstrations.md'),demonstrations.join('\n')+'\n')
+fs.writeFileSync(path.join(frontendDir,'src/config/manual.js'),`// Catálogo generado desde los medios finales; duraciones medidas con ffprobe.\nexport const MANUAL_CHAPTERS = ${JSON.stringify(chapters,null,2)}\n`)
+fs.writeFileSync(path.join(repositoryDir,'docs/manual-demonstrations.md'),demonstrations.join('\n')+'\n')

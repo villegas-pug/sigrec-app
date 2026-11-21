@@ -7,7 +7,7 @@ En el modelo 5.0.0 (SPEC 029), el módulo «Bienes e inventario» tiene ocho tab
 - `SGR_TIPO_BIEN`, `SGR_BIEN` y `SGR_INVENTARIO_PREVIO`.
 - Cinco tablas de antecedentes del bien: `SGR_VERIFICACION`, `SGR_CAMBIO_CONDICION`, `SGR_ASOCIACION`, `SGR_TRASLADO` y `SGR_TRASLADO_BIEN`.
 
-El prototipo registra esos antecedentes en un único arreglo `eventos`, con `tipo` (`verificacion`, `condicion`, `asociacion`, `traslado`) y `bienIds` (`src/services/acciones.js`). El tipo de bien repite la estructura de código y nombre del catálogo único.
+El prototipo registra esos antecedentes en un único arreglo `eventos`, con `tipo` (`verificacion`, `condicion`, `asociacion`, `traslado`) y `bienIds` (`aplicaciones/sigrec/frontend/src/services/acciones.js`). El tipo de bien repite la estructura de código y nombre del catálogo único.
 
 ## Comportamiento requerido
 
@@ -52,7 +52,7 @@ El contrato pasa a la versión 6.0.0, con 32 tablas.
 
 - `validateModel(expandModel(modelo))` devuelve una lista vacía.
 - Conteos: `inventario` = 3, `centros` = 7, total = 32.
-- Ninguna referencia a las tablas retiradas en `docs/modelo-er/`.
+- Ninguna referencia a las tablas retiradas en `aplicaciones/sigrec/database/modelo-er/`.
 - Comparación contra el modelo 5.0.0: solo cambian `SGR_CATALOGO`, el destino de las tres FK de tipo de bien, la nueva tabla, las reglas `BIE-01`, `BIE-02`, `BIE-04`, `BIE-05`, `BIE-07`, `BIE-08`, `INC-03`, `PLA-01` y `CTR-09`, y los procesos `bienes`, `verificacion`, `inventario` y `precios`.
 - `git diff --check`.
 - La revisión visual del visor queda a cargo del usuario.

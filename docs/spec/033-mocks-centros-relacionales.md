@@ -17,9 +17,9 @@ Tras la SPEC 032, los datos de «Centros e infraestructura» siguen anidados en 
 
 | Dato | Colección | Forma del registro |
 | --- | --- | --- |
-| Fotografías | `db.fotos` (`src/data/fotos.json`) | `{ id, carId \| ambienteId \| bienId, titulo, fecha, nota, url, nombreArchivo, registradoPor }`. Una foto de ambiente referencia solo al ambiente, y su centro se obtiene del ambiente. |
-| Elementos | `db.elementos` (`src/data/elementos.json`) | `{ id, carId \| moduloId \| ambienteId, clave, nombre, condicion }`. `nombre` solo se informa en un elemento agregado; un elemento base solo existe si está evaluado. |
-| Intervenciones | `db.intervenciones` (`src/data/intervenciones.json`) | `{ id, ambienteId, descripcion, fecha, esPintado, informadoPor }` |
+| Fotografías | `db.fotos` (`aplicaciones/sigrec/frontend/src/data/fotos.json`) | `{ id, carId \| ambienteId \| bienId, titulo, fecha, nota, url, nombreArchivo, registradoPor }`. Una foto de ambiente referencia solo al ambiente, y su centro se obtiene del ambiente. |
+| Elementos | `db.elementos` (`aplicaciones/sigrec/frontend/src/data/elementos.json`) | `{ id, carId \| moduloId \| ambienteId, clave, nombre, condicion }`. `nombre` solo se informa en un elemento agregado; un elemento base solo existe si está evaluado. |
+| Intervenciones | `db.intervenciones` (`aplicaciones/sigrec/frontend/src/data/intervenciones.json`) | `{ id, ambienteId, descripcion, fecha, esPintado, informadoPor }` |
 | Novedades | `db.eventos`, con `clase: 'novedad'` | `{ id, clase, fecha, tipo, titulo, detalle, ubicacion, requiereEvaluacion, origen: { tipo: 'ambiente', id }, ambienteId, carId, informadoPor, atencion? }` |
 
 **Lectura y escritura sin cambios en los componentes:**

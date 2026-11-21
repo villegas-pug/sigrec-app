@@ -4,7 +4,7 @@
 
 En el modelo 6.0.0 (SPEC 030), el módulo «Movilidad y combustible» tiene siete tablas: `SGR_VEHICULO`, `SGR_ITINERARIO`, `SGR_PUNTO`, `SGR_RUTA`, `SGR_VERTICE`, `SGR_EJECUCION` y `SGR_COMBUSTIBLE`.
 
-En el prototipo (`src/data/itinerarios.json`, `src/services/acciones.js`), el itinerario es un único objeto con `destinos` (arreglo ordenado), `previsto`, `realizado` y `ruta`. El consumo de combustible apunta a `itinerarioId`. La ruta y la ejecución admiten a lo sumo un registro vigente por itinerario.
+En el prototipo (`aplicaciones/sigrec/frontend/src/data/itinerarios.json`, `aplicaciones/sigrec/frontend/src/services/acciones.js`), el itinerario es un único objeto con `destinos` (arreglo ordenado), `previsto`, `realizado` y `ruta`. El consumo de combustible apunta a `itinerarioId`. La ruta y la ejecución admiten a lo sumo un registro vigente por itinerario.
 
 ## Comportamiento requerido
 
@@ -47,7 +47,7 @@ Esta especificación reemplaza el criterio de la SPEC 028, según el cual la rut
 
 - `validateModel(expandModel(modelo))` devuelve una lista vacía.
 - Conteos esperados: `movilidad` = 3, total = 28.
-- Ninguna referencia a las tablas retiradas en `docs/modelo-er/`.
+- Ninguna referencia a las tablas retiradas en `aplicaciones/sigrec/database/modelo-er/`.
 - Comparación contra la versión 6.0.0: solo cambian `SGR_ITINERARIO`, `SGR_COMBUSTIBLE`, las reglas `MOV-02` a `MOV-07` y los procesos `itinerarios` y `combustible`.
 - `node --check` de `model.js` y `git diff --check`.
 - La revisión visual del visor queda a cargo del usuario.

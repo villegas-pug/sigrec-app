@@ -297,402 +297,402 @@
     },
     {
       "id": "rutas",
-      "path": "src/router/routes.js",
+      "path": "aplicaciones/sigrec/frontend/src/router/routes.js",
       "label": "Rutas vigentes y redirecciones"
     },
     {
       "id": "menu",
-      "path": "src/config/menu.js",
+      "path": "aplicaciones/sigrec/frontend/src/config/menu.js",
       "label": "Menú de navegación"
     },
     {
       "id": "perfiles",
-      "path": "src/config/perfiles.js",
+      "path": "aplicaciones/sigrec/frontend/src/config/perfiles.js",
       "label": "Perfiles, rutas, acciones y ámbitos de demostración"
     },
     {
       "id": "perfilActual",
-      "path": "src/composables/usePerfil.js",
+      "path": "aplicaciones/sigrec/frontend/src/composables/usePerfil.js",
       "label": "Resolución de permisos y ámbitos del perfil activo"
     },
     {
       "id": "autor",
-      "path": "src/services/autor.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/autor.js",
       "label": "Autor en memoria del prototipo"
     },
     {
       "id": "catalogos",
-      "path": "src/config/catalogos.js",
+      "path": "aplicaciones/sigrec/frontend/src/config/catalogos.js",
       "label": "Catálogos y constantes visibles"
     },
     {
       "id": "demo",
-      "path": "src/config/demo.js",
+      "path": "aplicaciones/sigrec/frontend/src/config/demo.js",
       "label": "Fechas y parámetros provisionales de la demostración"
     },
     {
       "id": "datos",
-      "path": "src/services/datos.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/datos.js",
       "label": "Almacén en memoria y relaciones de la jerarquía"
     },
     {
       "id": "acciones",
-      "path": "src/services/acciones.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/acciones.js",
       "label": "Operaciones de alta, actualización, baja y reactivación"
     },
     {
       "id": "incidenciaServicio",
-      "path": "src/services/incidencias.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/incidencias.js",
       "label": "Origen, afectados y compatibilidad de incidencias"
     },
     {
       "id": "necesidades",
-      "path": "src/services/necesidades.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/necesidades.js",
       "label": "Cálculo de necesidades y simulación de presupuesto"
     },
     {
       "id": "inventario",
-      "path": "src/services/inventario.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/inventario.js",
       "label": "Resumen y consulta de inventario"
     },
     {
       "id": "servicioReglas",
-      "path": "src/services/servicios.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/servicios.js",
       "label": "Períodos, interrupciones, alertas y renovación"
     },
     {
       "id": "mantServicio",
-      "path": "src/services/mantenimientos.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/mantenimientos.js",
       "label": "Controles de mantenimiento y alertas"
     },
     {
       "id": "vehiculoServicio",
-      "path": "src/services/vehiculos.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/vehiculos.js",
       "label": "Consultas y condiciones de vehículos"
     },
     {
       "id": "combustibleServicio",
-      "path": "src/services/combustible.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/combustible.js",
       "label": "Comparación de consumo y recorrido"
     },
     {
       "id": "infraestructura",
-      "path": "src/services/infraestructura.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/infraestructura.js",
       "label": "Evaluación de elementos y normalización de nombres"
     },
     {
       "id": "situacion",
-      "path": "src/services/situacion.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/situacion.js",
       "label": "Indicadores de situación por centro"
     },
     {
       "id": "atencion",
-      "path": "src/services/atencion.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/atencion.js",
       "label": "Avisos actuales y próximos de Inicio"
     },
     {
       "id": "busqueda",
-      "path": "src/services/busqueda.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/busqueda.js",
       "label": "Índice de búsqueda global"
     },
     {
       "id": "navegacion",
-      "path": "src/composables/useEstadoNavegacion.js",
+      "path": "aplicaciones/sigrec/frontend/src/composables/useEstadoNavegacion.js",
       "label": "Estado de navegación y restauración"
     },
     {
       "id": "voz",
-      "path": "src/composables/useDictado.js",
+      "path": "aplicaciones/sigrec/frontend/src/composables/useDictado.js",
       "label": "Asistencia de dictado y captura"
     },
     {
       "id": "anulacion",
-      "path": "src/composables/useAnulacion.js",
+      "path": "aplicaciones/sigrec/frontend/src/composables/useAnulacion.js",
       "label": "Flujo de anulación y reactivación"
     },
     {
       "id": "anularForm",
-      "path": "src/components/common/AnularDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/common/AnularDialog.vue",
       "label": "Captura de motivo y confirmación de la anulación"
     },
     {
       "id": "pendientesAmbiente",
-      "path": "src/components/centros/PendientesAmbienteDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/centros/PendientesAmbienteDialog.vue",
       "label": "Resolución de bienes pendientes antes de anular un ambiente"
     },
     {
       "id": "csv",
-      "path": "src/utils/csv.js",
+      "path": "aplicaciones/sigrec/frontend/src/utils/csv.js",
       "label": "Exportaciones de consultas a CSV"
     },
     {
       "id": "cars",
-      "path": "src/data/cars.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/cars.json",
       "label": "Datos de centro e inmueble"
     },
     {
       "id": "modulos",
-      "path": "src/data/modulos.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/modulos.json",
       "label": "Datos de módulos"
     },
     {
       "id": "ambientes",
-      "path": "src/data/ambientes.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/ambientes.json",
       "label": "Datos de ambientes"
     },
     {
       "id": "bienes",
-      "path": "src/data/bienes.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/bienes.json",
       "label": "Datos de bienes y componentes"
     },
     {
       "id": "eventos",
-      "path": "src/data/eventos.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/eventos.json",
       "label": "Antecedentes históricos de inventario, incidencias y novedades"
     },
     {
       "id": "previo",
-      "path": "src/data/inventario-previo.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/inventario-previo.json",
       "label": "Inventario informático anterior"
     },
     {
       "id": "tipos",
-      "path": "src/data/tipos-bien.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/tipos-bien.json",
       "label": "Tipos de bien y precios de referencia"
     },
     {
       "id": "mantenimientos",
-      "path": "src/data/mantenimientos.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/mantenimientos.json",
       "label": "Controles informados de centro, bien y vehículo"
     },
     {
       "id": "servicios",
-      "path": "src/data/servicios.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/servicios.json",
       "label": "Servicio de muestra, períodos y hechos"
     },
     {
       "id": "vehiculos",
-      "path": "src/data/vehiculos.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/vehiculos.json",
       "label": "Vehículos, chofer de referencia y estado operativo"
     },
     {
       "id": "itinerarios",
-      "path": "src/data/itinerarios.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/itinerarios.json",
       "label": "Itinerarios manuales y ejecución"
     },
     {
       "id": "combustible",
-      "path": "src/data/combustible.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/combustible.json",
       "label": "Cargas y consumos de muestra"
     },
     {
       "id": "inicioPage",
-      "path": "src/pages/InicioPage.vue",
+      "path": "aplicaciones/sigrec/frontend/src/pages/InicioPage.vue",
       "label": "Panel de situación de centros"
     },
     {
       "id": "gestionPage",
-      "path": "src/pages/GestionCentrosPage.vue",
+      "path": "aplicaciones/sigrec/frontend/src/pages/GestionCentrosPage.vue",
       "label": "Explorador y registro contextual"
     },
     {
       "id": "incidenciasPage",
-      "path": "src/pages/IncidenciasPage.vue",
+      "path": "aplicaciones/sigrec/frontend/src/pages/IncidenciasPage.vue",
       "label": "Visor de incidencias y patrimonio"
     },
     {
       "id": "necesidadesPage",
-      "path": "src/pages/NecesidadesPage.vue",
+      "path": "aplicaciones/sigrec/frontend/src/pages/NecesidadesPage.vue",
       "label": "Clasificación, valoración, consolidados y simulación"
     },
     {
       "id": "inventarioPage",
-      "path": "src/pages/InventarioPage.vue",
+      "path": "aplicaciones/sigrec/frontend/src/pages/InventarioPage.vue",
       "label": "Detalle y agrupamientos de inventario"
     },
     {
       "id": "serviciosPage",
-      "path": "src/pages/ServiciosPage.vue",
+      "path": "aplicaciones/sigrec/frontend/src/pages/ServiciosPage.vue",
       "label": "Grilla anual, alertas y gestión de hechos"
     },
     {
       "id": "vehiculosPage",
-      "path": "src/pages/VehiculosPage.vue",
+      "path": "aplicaciones/sigrec/frontend/src/pages/VehiculosPage.vue",
       "label": "Consulta y gestión de vehículos"
     },
     {
       "id": "itinerariosPage",
-      "path": "src/pages/ItinerariosPage.vue",
+      "path": "aplicaciones/sigrec/frontend/src/pages/ItinerariosPage.vue",
       "label": "Itinerarios y Mi jornada"
     },
     {
       "id": "combustiblePage",
-      "path": "src/pages/CombustiblePage.vue",
+      "path": "aplicaciones/sigrec/frontend/src/pages/CombustiblePage.vue",
       "label": "Registro y corrección de combustible"
     },
     {
       "id": "manualPage",
-      "path": "src/pages/ManualPage.vue",
+      "path": "aplicaciones/sigrec/frontend/src/pages/ManualPage.vue",
       "label": "Manual audiovisual integrado"
     },
     {
       "id": "centroForm",
-      "path": "src/components/centros/CentroDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/centros/CentroDialog.vue",
       "label": "Alta de centro"
     },
     {
       "id": "fichaCentro",
-      "path": "src/components/centros/CentroFichaDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/centros/CentroFichaDialog.vue",
       "label": "Actualización de la ficha del centro"
     },
     {
       "id": "moduloForm",
-      "path": "src/components/centros/ModuloDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/centros/ModuloDialog.vue",
       "label": "Alta y edición de módulo"
     },
     {
       "id": "ambienteForm",
-      "path": "src/components/centros/AmbienteDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/centros/AmbienteDialog.vue",
       "label": "Alta y edición de ambientes"
     },
     {
       "id": "novedadForm",
-      "path": "src/components/centros/NovedadDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/centros/NovedadDialog.vue",
       "label": "Novedad de infraestructura"
     },
     {
       "id": "atencionForm",
-      "path": "src/components/centros/AtencionDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/centros/AtencionDialog.vue",
       "label": "Atención de una novedad o incidencia"
     },
     {
       "id": "intervencionForm",
-      "path": "src/components/centros/IntervencionDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/centros/IntervencionDialog.vue",
       "label": "Intervención y pintado"
     },
     {
       "id": "mantenimientoForm",
-      "path": "src/components/centros/MantenimientoDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/centros/MantenimientoDialog.vue",
       "label": "Mantenimiento individual o en lote"
     },
     {
       "id": "foto",
-      "path": "src/components/centros/FotoDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/centros/FotoDialog.vue",
       "label": "Registro y edición de fotografía"
     },
     {
       "id": "galeria",
-      "path": "src/components/centros/GaleriaFotos.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/centros/GaleriaFotos.vue",
       "label": "Galería y filtros por contexto"
     },
     {
       "id": "elementos",
-      "path": "src/components/common/EstadoElementos.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/common/EstadoElementos.vue",
       "label": "Evaluación y alta de elementos"
     },
     {
       "id": "registroBien",
-      "path": "src/components/gestion/RegistroBienPanel.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/gestion/RegistroBienPanel.vue",
       "label": "Alta y contraste con el inventario previo"
     },
     {
       "id": "bienEdit",
-      "path": "src/components/bienes/BienEdicionDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/bienes/BienEdicionDialog.vue",
       "label": "Edición, traslado y asociación de bienes"
     },
     {
       "id": "bienAccion",
-      "path": "src/components/bienes/BienAccionDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/bienes/BienAccionDialog.vue",
       "label": "Verificación, baja y reposición"
     },
     {
       "id": "adquisicion",
-      "path": "src/components/common/CampoAdquisicion.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/common/CampoAdquisicion.vue",
       "label": "Precisión del dato de adquisición"
     },
     {
       "id": "recorrido",
-      "path": "src/components/bienes/RecorridoVerificacion.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/bienes/RecorridoVerificacion.vue",
       "label": "Recorrido de verificación"
     },
     {
       "id": "incidenteForm",
-      "path": "src/components/bienes/IncidenteDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/bienes/IncidenteDialog.vue",
       "label": "Registro y corrección de incidentes"
     },
     {
       "id": "afectados",
-      "path": "src/components/bienes/SelectorAfectados.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/bienes/SelectorAfectados.vue",
       "label": "Evaluación individual de bienes y componentes"
     },
     {
       "id": "gestionHecho",
-      "path": "src/components/gestion/GestionHecho.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/gestion/GestionHecho.vue",
       "label": "Operaciones contextuales del historial"
     },
     {
       "id": "tipoForm",
-      "path": "src/components/precios/TipoBienDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/precios/TipoBienDialog.vue",
       "label": "Registro de tipos de bien"
     },
     {
       "id": "precioForm",
-      "path": "src/components/precios/PrecioDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/precios/PrecioDialog.vue",
       "label": "Precio referencial e historial"
     },
     {
       "id": "catalogoPrecios",
-      "path": "src/components/precios/CatalogoPreciosDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/precios/CatalogoPreciosDialog.vue",
       "label": "Catálogo único en modal"
     },
     {
       "id": "simulador",
-      "path": "src/components/necesidades/SimuladorPresupuesto.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/necesidades/SimuladorPresupuesto.vue",
       "label": "Simulador del techo presupuestal"
     },
     {
       "id": "servicioForm",
-      "path": "src/components/servicios/ServicioDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/servicios/ServicioDialog.vue",
       "label": "Alta y edición del servicio"
     },
     {
       "id": "periodoForm",
-      "path": "src/components/servicios/PeriodoDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/servicios/PeriodoDialog.vue",
       "label": "Pendientes, pago y retiro de información del período"
     },
     {
       "id": "hechoForm",
-      "path": "src/components/servicios/HechoServicioDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/servicios/HechoServicioDialog.vue",
       "label": "Hechos de suministro, pago y corrección"
     },
     {
       "id": "vehiculoForm",
-      "path": "src/components/movilidad/VehiculoDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/movilidad/VehiculoDialog.vue",
       "label": "Datos y estado del vehículo"
     },
     {
       "id": "itinerarioForm",
-      "path": "src/components/movilidad/ItinerarioDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/movilidad/ItinerarioDialog.vue",
       "label": "Captura manual, en mapa y ejecución"
     },
     {
       "id": "mapa",
-      "path": "src/components/movilidad/MapaItinerario.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/movilidad/MapaItinerario.vue",
       "label": "Puntos ordenados y trazado"
     },
     {
       "id": "miJornada",
-      "path": "src/components/movilidad/MiJornada.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/movilidad/MiJornada.vue",
       "label": "Tareas pendientes del vehículo"
     },
     {
       "id": "combustibleForm",
-      "path": "src/components/movilidad/CombustibleDialog.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/movilidad/CombustibleDialog.vue",
       "label": "Declaración de carga y consumo"
     },
     {
       "id": "escaner",
-      "path": "src/components/common/EscanerRotulo.vue",
+      "path": "aplicaciones/sigrec/frontend/src/components/common/EscanerRotulo.vue",
       "label": "Captura del rótulo por cámara"
     },
     {
@@ -814,22 +814,22 @@
     },
     {
       "id": "fotosDatos",
-      "path": "src/data/fotos.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/fotos.json",
       "label": "Fotografías de centros, ambientes y bienes"
     },
     {
       "id": "elementosDatos",
-      "path": "src/data/elementos.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/elementos.json",
       "label": "Elementos evaluados de centros, módulos y ambientes"
     },
     {
       "id": "intervencionesDatos",
-      "path": "src/data/intervenciones.json",
+      "path": "aplicaciones/sigrec/frontend/src/data/intervenciones.json",
       "label": "Intervenciones en ambientes"
     },
     {
       "id": "centrosServicio",
-      "path": "src/services/centros.js",
+      "path": "aplicaciones/sigrec/frontend/src/services/centros.js",
       "label": "Accesos a los datos de centros"
     },
     {

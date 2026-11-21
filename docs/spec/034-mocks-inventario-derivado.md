@@ -2,7 +2,7 @@
 
 ## Problema
 
-Al cierre de la SPEC 033, `src/data/bienes.json` aún guardaba tres estados que el ERD 7.2.0 deriva de otras tablas.
+Al cierre de la SPEC 033, `aplicaciones/sigrec/frontend/src/data/bienes.json` aún guardaba tres estados que el ERD 7.2.0 deriva de otras tablas.
 
 | Campo guardado | Regla del ERD |
 | --- | --- |

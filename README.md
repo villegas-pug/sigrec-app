@@ -10,12 +10,27 @@ Prototipo funcional para la USPNNA – INABIF. Permite administrar y revisar cen
 ## Ejecución
 
 ```bash
+cd aplicaciones/sigrec/frontend
 npm install
 npm run dev     # quasar dev
 npm run build   # quasar build → dist/spa
 ```
 
+La instalación prepara la configuración local de Quasar. El servidor de desarrollo usa `http://localhost:9000` y el build se genera en `aplicaciones/sigrec/frontend/dist/spa/`.
+
 ## Estructura
+
+```text
+aplicaciones/sigrec/
+  frontend/      SPA Quasar y guiones de producción del manual
+  backend/       espacio para la futura API
+  database/      modelo entidad-relación Oracle y visor estático
+docs/            especificaciones, actas y documentación del manual
+```
+
+La [SPEC 035](docs/spec/035-reorganizacion-carpetas-sigrec.md) documenta la migración. El [visor del modelo ER](aplicaciones/sigrec/database/modelo-er/README.md) se inicia por separado desde la raíz del repositorio.
+
+Dentro de `aplicaciones/sigrec/frontend/`:
 
 ```
 src/

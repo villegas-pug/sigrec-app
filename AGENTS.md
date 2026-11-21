@@ -8,9 +8,12 @@ SIGREC (Sistema Integrado de Gestión de Recursos de Centros) es un **prototipo 
 
 Stack: Vue 3.5 + Quasar 2.35 (`@quasar/app-vite` 2.4.1, Vite 7), Vue Router 5 en modo `hash`. Node `^22.12` (no actualizar `@quasar/app-vite` a 2.5+ sin Node 22.22). JavaScript (sin TypeScript); alias de import `src/`, `pages/`, `layouts/`, `components/` provistos por Quasar.
 
+La raíz Git reúne la documentación y las capas de SIGREC. La SPA vive en `aplicaciones/sigrec/frontend/`. Las rutas abreviadas a archivos de la SPA son relativas a esa carpeta. El visor ER está en `aplicaciones/sigrec/database/modelo-er/` y `aplicaciones/sigrec/backend/` reserva el espacio para la futura API.
+
 ## Commands
 
 ```bash
+cd aplicaciones/sigrec/frontend
 npm install      # ejecuta `quasar prepare` en postinstall (genera .quasar/)
 npm run dev      # quasar dev → http://localhost:9000
 npm run build    # quasar build → dist/spa
@@ -20,7 +23,7 @@ No hay linter, formatter ni suite de pruebas configurados. La validación habitu
 
 ## Spec-driven development
 
-Los cambios relevantes se especifican antes en `docs/spec/NNN-*.md` (numeración correlativa, hoy hasta 026). **Donde dos specs difieran, prevalece la posterior.** El código cita las specs en comentarios (`SPEC 011, Ola 5`, `SPEC 020`…); conservar esa trazabilidad al modificar comportamiento. `docs/reuniones/` contiene actas con decisiones del jefe de proyecto.
+Los cambios relevantes se especifican antes en `docs/spec/NNN-*.md` (numeración correlativa, hoy hasta 035). **Donde dos specs difieran, prevalece la posterior.** La [SPEC 035](docs/spec/035-reorganizacion-carpetas-sigrec.md) define la estructura vigente. El código cita las specs en comentarios (`SPEC 011, Ola 5`, `SPEC 020`…); conservar esa trazabilidad al modificar comportamiento. `docs/reuniones/` contiene actas con decisiones del jefe de proyecto.
 
 ## Architecture
 
@@ -46,5 +49,5 @@ Los cambios relevantes se especifican antes en `docs/spec/NNN-*.md` (numeración
 ### Otras piezas
 - `src/services/voz/`: dictado por voz con motor del navegador o Whisper en Web Worker (`@huggingface/transformers`) (SPEC 007).
 - Escaneo QR con cámara (`useEscaneo`, `jsqr` como respaldo); requiere HTTPS o `localhost`.
-- Manual de usuario (SPEC 026): catálogo en `src/config/manual.js`, medios finales en `public/manual/v1/` (MP4 + WebVTT). Ruta `manual?chapter=<id>&t=<segundos>`. La producción (`scripts/manual-*.mjs|ps1`, guiones en `scripts/manual/scenarios/`) usa playwright-cli, ffmpeg y voz SAPI; los intermedios viven en `artifacts/manual-usuario/` (excluido de Git).
-- `docs/modelo-er/`: visor independiente del modelo entidad-relación (no forma parte de la SPA).
+- Manual de usuario (SPEC 026): catálogo en `src/config/manual.js`, medios finales en `public/manual/v1/` (MP4 + WebVTT). Ruta `manual?chapter=<id>&t=<segundos>`. La producción (`scripts/manual-*.mjs|ps1`, guiones en `scripts/manual/scenarios/`) usa playwright-cli, ffmpeg y voz SAPI. Los intermedios viven en `artifacts/manual-usuario/` en la raíz Git y se excluyen del índice.
+- El [visor del modelo entidad-relación](aplicaciones/sigrec/database/modelo-er/README.md) es independiente de la SPA. Desde la raíz Git se inicia con `npm --prefix aplicaciones/sigrec/database/modelo-er start`.

@@ -2,10 +2,10 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
-import { mediaTool } from './manual-tools.mjs'
+import { manualArtifactsDir, mediaTool, repositoryDir } from './manual-tools.mjs'
 import { MANUAL_CHAPTERS } from '../src/config/manual.js'
-const root=process.cwd(), base=path.join(root,'artifacts/manual-usuario'), clean=path.join(base,'clean'), old=path.join(base,'produccion')
-const run=(exe,args)=>{const r=spawnSync(mediaTool(exe),args,{encoding:'utf8',maxBuffer:20e6});if(r.status!==0)throw Error(r.stderr||String(r.error));return r.stdout}
+const clean=path.join(manualArtifactsDir,'clean'), old=path.join(manualArtifactsDir,'produccion')
+const run=(exe,args)=>{const r=spawnSync(mediaTool(exe),args,{cwd:repositoryDir,encoding:'utf8',maxBuffer:20e6});if(r.status!==0)throw Error(r.stderr||String(r.error));return r.stdout}
 const partial=process.argv.includes('--partial')
 if(!partial&&process.argv[2]!=='prepare'&&fs.existsSync(path.join(clean,'prefix-manifest.json'))){
  const prefix=JSON.parse(fs.readFileSync(path.join(clean,'prefix-manifest.json'),'utf8'))

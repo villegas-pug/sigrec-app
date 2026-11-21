@@ -9,6 +9,8 @@ node_modules
 .quasar
 /dist
 /quasar.config.*.temporary.compiled*
+/aplicaciones/sigrec/frontend/dist/
+/aplicaciones/sigrec/frontend/quasar.config.*.temporary.compiled*
 
 # Playwright CLI
 .playwright-cli
@@ -21,5 +23,5 @@ yarn-error.log*
 # Audios de reuniones (no versionar)
 *.m4a
 
-# Producción local del manual; los medios finales viven en public/manual.
+# Intermedios del manual. Los medios finales viven en aplicaciones/sigrec/frontend/public/manual/.
 /artifacts/manual-usuario/

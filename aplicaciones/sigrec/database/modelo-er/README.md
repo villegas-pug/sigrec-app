@@ -7,7 +7,7 @@ El visor documenta el modelo relacional de la operación de los Centros de Acogi
 Desde la raíz Git, inicia el servidor HTTP estático con Node.js y npm:
 
 ~~~powershell
-npm --prefix docs/modelo-er start
+npm --prefix aplicaciones/sigrec/database/modelo-er start
 ~~~
 
 Abre [http://127.0.0.1:8080/](http://127.0.0.1:8080/). Pulsa **Ctrl+C** en la terminal cuando quieras detener el servidor.
@@ -31,7 +31,7 @@ En **Vista completa**, la columna Cardinalidad muestra hijos por padre / padres 
 
 Para imprimir las tablas con sus campos, selecciona **Vista completa** y pulsa **Imprimir / PDF**. La salida se encuadra en una sola lámina **A3 horizontal**. Selecciona **Todos los módulos** para imprimir el modelo global o filtra un módulo para leer los campos con mayor tamaño. El diálogo del navegador permite imprimir o guardar como PDF.
 
-Para publicar desde la carpeta `docs` de la rama que elijas en GitHub Pages, la entrada será `modelo-er/`. Si publicas esta carpeta como raíz del sitio, la entrada será `index.html`. Las rutas de los recursos son relativas en ambos casos. Los nombres de archivo del diccionario y sus carpetas deben conservarse al copiar el visor.
+Para una publicación estática, la fuente es `aplicaciones/sigrec/database/modelo-er/` y la entrada es `index.html`. Conserva el árbol de recursos relativo al copiar el visor. Si se habilita GitHub Pages con una URL bajo `modelo-er/`, el workflow de Pages debe empaquetar el visor bajo ese subdirectorio.
 
 ## Contrato de datos
 
@@ -46,13 +46,13 @@ Para publicar desde la carpeta `docs` de la rama que elijas en GitHub Pages, la 
 
 Para un índice `uniqueFunctional`, aplica `transforms` de izquierda a derecha sobre cada columna indicada. Con el mismo `predicate` en todas las posiciones, la expresión entrega el valor transformado únicamente si se cumple la condición. `whenNotNull` agrega condiciones de presencia al predicado completo. Fuera de la condición, todas las expresiones devuelven `NULL`, lo que permite conservar varias filas históricas. Los fragmentos de `checks` e índices describen restricciones para una generación futura a partir del JSON. [Oracle 19c · CREATE INDEX](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/CREATE-INDEX.html)
 
-La ficha del inmueble vive en el centro. Las cifras de Inicio, necesidades, avisos, inventario consolidado y simulación se derivan de sus registros de origen. Los datos históricos con fecha parcial conservan su granularidad. La identidad se propone mediante un proveedor externo y un actor de auditoría local. Las fotografías admiten metadatos históricos sin imagen y el modelo propone un BLOB para contenido nuevo. Las reglas de pólizas, expedientes de NNA, ejecución de pagos y aprobación de compras quedan fuera del dominio documentado por el prototipo. [Alcance del prototipo](../spec/001-prototipo-sigrec.md) · [Ficha y estado operativo](../spec/010-fichas-planificacion-y-estado-operativo.md)
+La ficha del inmueble vive en el centro. Las cifras de Inicio, necesidades, avisos, inventario consolidado y simulación se derivan de sus registros de origen. Los datos históricos con fecha parcial conservan su granularidad. La identidad se propone mediante un proveedor externo y un actor de auditoría local. Las fotografías admiten metadatos históricos sin imagen y el modelo propone un BLOB para contenido nuevo. Las reglas de pólizas, expedientes de NNA, ejecución de pagos y aprobación de compras quedan fuera del dominio documentado por el prototipo. [Alcance del prototipo](../../../../docs/spec/001-prototipo-sigrec.md) · [Ficha y estado operativo](../../../../docs/spec/010-fichas-planificacion-y-estado-operativo.md)
 
 Desde la versión `2.0.0`, los nombres Oracle usan `SGR_ENTIDAD` o `SGR_PADRE_HIJO` para asociaciones. Ejemplos: `SGR_CENTRO`, `SGR_VEHICULO` y `SGR_PERFIL_PERMISO`. Las restricciones e índices conservan su alias técnico.
 
 ## Consolidación del modelo en 4.0.0
 
-El modelo pasa de **44 a 42 tablas**. Tres consolidaciones reducen registros y relaciones redundantes. Se recupera una tabla para conservar el historial de reposiciones. [SPEC 028](../spec/028-modelo-er-consolidation.md)
+El modelo pasa de **44 a 42 tablas**. Tres consolidaciones reducen registros y relaciones redundantes. Se recupera una tabla para conservar el historial de reposiciones. [SPEC 028](../../../../docs/spec/028-modelo-er-consolidation.md)
 
 | Cambio | Justificación e integridad |
 | --- | --- |
@@ -65,7 +65,7 @@ Los catálogos de condición y tipo de servicio conservan sus códigos y FK. Tam
 
 ## Catálogo único en 5.0.0
 
-El modelo pasa de **42 a 37 tablas**, mantiene los siete módulos y deja «Centros e infraestructura» en siete tablas. [SPEC 029](../spec/029-modelo-er-catalogo-unico.md)
+El modelo pasa de **42 a 37 tablas**, mantiene los siete módulos y deja «Centros e infraestructura» en siete tablas. [SPEC 029](../../../../docs/spec/029-modelo-er-catalogo-unico.md)
 
 | Cambio | Justificación e integridad |
 | --- | --- |
@@ -77,7 +77,7 @@ Perfiles y permisos siguen como entidades de autorización. Las enumeraciones re
 
 ## Historial del bien en 6.0.0
 
-El modelo pasa de **37 a 32 tablas**, mantiene los siete módulos y deja «Bienes e inventario» en tres tablas: `SGR_BIEN`, `SGR_INVENTARIO_PREVIO` y `SGR_HISTORIAL_BIEN`. [SPEC 030](../spec/030-modelo-er-inventario-tres-tablas.md)
+El modelo pasa de **37 a 32 tablas**, mantiene los siete módulos y deja «Bienes e inventario» en tres tablas: `SGR_BIEN`, `SGR_INVENTARIO_PREVIO` y `SGR_HISTORIAL_BIEN`. [SPEC 030](../../../../docs/spec/030-modelo-er-inventario-tres-tablas.md)
 
 | Cambio | Justificación e integridad |
 | --- | --- |
@@ -88,7 +88,7 @@ La regla `BIE-08` documenta la agrupación de los traslados, que se valida en la
 
 ## Itinerario consolidado en 7.0.0
 
-El modelo pasa de **32 a 28 tablas** y deja «Movilidad y combustible» en tres tablas: `SGR_VEHICULO`, `SGR_ITINERARIO` y `SGR_COMBUSTIBLE`. Reemplaza el criterio de la SPEC 028 sobre ruta y ejecución. [SPEC 031](../spec/031-modelo-er-movilidad-tres-tablas.md)
+El modelo pasa de **32 a 28 tablas** y deja «Movilidad y combustible» en tres tablas: `SGR_VEHICULO`, `SGR_ITINERARIO` y `SGR_COMBUSTIBLE`. Reemplaza el criterio de la SPEC 028 sobre ruta y ejecución. [SPEC 031](../../../../docs/spec/031-modelo-er-movilidad-tres-tablas.md)
 
 | Cambio | Justificación e integridad |
 | --- | --- |
@@ -98,7 +98,7 @@ El modelo pasa de **32 a 28 tablas** y deja «Movilidad y combustible» en tres 
 
 ## Datos ficticios alineados en 7.1.0
 
-Los datos ficticios de la SPA dejan de guardar copias y marcas que el modelo deriva: consumo declarado, vehículo del consumo, unidad y atención. Además, adoptan el formato vigente de incidencias y hechos de servicio, sin cambios visibles en la aplicación. `SGR_BIEN.ID_CONDICION` admite `NULL` para la condición no constatable. La correspondencia completa y las fases siguientes están en la [SPEC 032](../spec/032-mocks-alineados-erd.md).
+Los datos ficticios de la SPA dejan de guardar copias y marcas que el modelo deriva: consumo declarado, vehículo del consumo, unidad y atención. Además, adoptan el formato vigente de incidencias y hechos de servicio, sin cambios visibles en la aplicación. `SGR_BIEN.ID_CONDICION` admite `NULL` para la condición no constatable. La correspondencia completa y las fases siguientes están en la [SPEC 032](../../../../docs/spec/032-mocks-alineados-erd.md).
 
 En la versión 7.2.0, los datos de centros pasan a colecciones propias, como en el modelo:
 
@@ -107,9 +107,9 @@ En la versión 7.2.0, los datos de centros pasan a colecciones propias, como en 
 - intervenciones (`SGR_INTERVENCION`);
 - novedades, como eventos de clase `novedad` (`SGR_INCIDENTE`).
 
-`src/services/centros.js` los devuelve con la forma y el orden anteriores. [SPEC 033](../spec/033-mocks-centros-relacionales.md)
+`aplicaciones/sigrec/frontend/src/services/centros.js` los devuelve con la forma y el orden anteriores. [SPEC 033](../../../../docs/spec/033-mocks-centros-relacionales.md)
 
-En la versión 7.3.0, `SGR_BIEN`, `SGR_BAJA` y `SGR_HISTORIAL_BIEN` incorporan como fuentes la especificación y los helpers de `src/services/datos.js` que derivan la situación, la verificación y la revisión pendiente. La actualización se limita a las fuentes y conserva la estructura del modelo. [SPEC 034](../spec/034-mocks-inventario-derivado.md)
+En la versión 7.3.0, `SGR_BIEN`, `SGR_BAJA` y `SGR_HISTORIAL_BIEN` incorporan como fuentes la especificación y los helpers de `aplicaciones/sigrec/frontend/src/services/datos.js` que derivan la situación, la verificación y la revisión pendiente. La actualización se limita a las fuentes y conserva la estructura del modelo. [SPEC 034](../../../../docs/spec/034-mocks-inventario-derivado.md)
 
 ## Validación y aceptación
 

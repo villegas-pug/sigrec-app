@@ -27,4 +27,4 @@ Cámara, geolocalización física y transcripción exitosa requieren validación
 
 ## Producción
 
-`scripts/manual-record.mjs` regraba en una instancia existente, con contornos aplicados al elemento y retirados antes de actuar. `manual-finalize.mjs` sincroniza narración e identificación del capítulo; `manual-media.mjs clean` publica los capítulos y WebVTT y mide su duración. El maestro y los intermedios permanecen fuera de Git.
+Desde `aplicaciones/sigrec/frontend/`, `node scripts/manual-record.mjs` regraba en una instancia existente, con contornos aplicados al elemento y retirados antes de actuar. `manual-finalize.mjs` sincroniza la narración y la identificación del capítulo. `manual-media.mjs clean` publica los capítulos y WebVTT en `public/manual/v1/` y mide su duración. El maestro y los intermedios se guardan en `artifacts/manual-usuario/` de la raíz Git.

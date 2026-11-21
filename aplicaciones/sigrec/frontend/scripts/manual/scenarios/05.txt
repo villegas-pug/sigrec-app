@@ -1,6 +1,6 @@
 await chapter('05 · Fotografías e infraestructura','Imágenes, intervenciones y mantenimiento preventivo');
 await go('centros?car=AMA');await click(tab('Fotografías'));
-await click(btn('Incorporar fotografía'));await page.locator('input[type=file]').setInputFiles('artifacts/manual-usuario/clean/example.png');await fill('Título *','Imagen de demostración');await fill('Nota','Archivo de ejemplo para mostrar la incorporación.');
+await click(btn('Incorporar fotografía'));await page.locator('input[type=file]').setInputFiles(manualExamplePath);await fill('Título *','Imagen de demostración');await fill('Nota','Archivo de ejemplo para mostrar la incorporación.');
 await say('Incorpore una imagen y un título. Puede asociarla a un ambiente. El prototipo admite hasta cinco megabytes.');
 await click(btn('Incorporar'));
 await click(btn('Ampliar fotografía Imagen de demostración'));await say('El visor amplía la fotografía y permite recorrer o descargar las imágenes disponibles.');await page.keyboard.press('Escape');
