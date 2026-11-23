@@ -10,7 +10,7 @@ import java.util.Map;
 import pe.gob.inabif.sigrec.elemento.dtos.ElementoDatos.Adicional;
 
 public record ModuloDatos(String carId, @NotBlank @Size(max = 180) String nombre, @NotNull @Pattern(regexp = "casa|comun") String tipo,
-                       @Min(1) @Max(99999999) Integer capacidad, @NotNull @Min(1) @Max(999) Integer pisos,
+                        @Min(0) @Max(99999999) Integer capacidad, @NotNull @Min(1) @Max(999) Integer pisos,
                        @DecimalMin(value = "0", inclusive = false) @Digits(integer = 10, fraction = 2) BigDecimal areaM2,
                        @NotBlank String condicion, @Size(max = 1000) String ubicacion,
                        @Size(max = 100) Map<String, String> estadoElementos,

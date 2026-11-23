@@ -13,7 +13,8 @@
       <section v-if="cargando" aria-busy="true" aria-live="polite" class="q-gutter-md">
         <p role="status" class="sg-muted">Cargando indicadores y situación de los centros…</p>
         <div class="sg-kpi-panel">
-          <q-skeleton v-for="n in 8" :key="n" height="110px" />
+          <kpi-card v-if="kpiJerarquia" v-bind="kpiJerarquia" />
+          <q-skeleton v-for="n in kpiJerarquia ? 7 : 8" :key="n" height="110px" />
         </div>
         <q-skeleton height="180px" />
         <q-skeleton height="240px" />
@@ -94,7 +95,7 @@ import ManualHelp from 'components/common/ManualHelp.vue'
 // Inicio (SPEC 011): panel único. Reúne los indicadores, la atención requerida y la situación por centro que antes se
 // repartían entre Inicio y el «Tablero de control». Ninguna cifra ni aviso se calcula aquí: vienen de services/situacion.js
 // y services/atencion.js.
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import KpiCard from 'components/common/KpiCard.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
@@ -111,23 +112,36 @@ import { condicion, condicionInmueble } from 'src/config/catalogos'
 import { anioRevision, anioServicios, hoy } from 'src/config/reglas'
 import { numero, plural, porcentaje, soles } from 'src/utils/formato'
 import { asegurarDatos } from 'src/services/cargaDatos'
+import { api } from 'src/services/api'
 
 const cargando = ref(true)
 const errorCarga = ref('')
+const resumenJerarquia = ref(null)
+let intento = 0
 
 async function cargarInicio () {
+  const actual = ++intento
   cargando.value = true
   errorCarga.value = ''
+  resumenJerarquia.value = null
+  // El resumen es opcional: un fallo no impide recuperar los datos completos.
+  api('/inicio/resumen-jerarquia').then((resumen) => {
+    if (actual === intento && cargando.value && resumen &&
+      ['centros', 'modulos', 'ambientes'].every((clave) => Number.isSafeInteger(resumen[clave]) && resumen[clave] >= 0)) {
+      resumenJerarquia.value = resumen
+    }
+  }).catch(() => {})
   try {
     await asegurarDatos(['catalogos', 'inicio'])
   } catch (error) {
-    errorCarga.value = error.message || 'Intente nuevamente.'
+    if (actual === intento) errorCarga.value = error.message || 'Intente nuevamente.'
   } finally {
-    cargando.value = false
+    if (actual === intento) cargando.value = false
   }
 }
 
 onMounted(cargarInicio)
+onUnmounted(() => { intento++ })
 
 const COLUMNAS = [
   { clave: 'necesidades', titulo: 'Necesidades' },
@@ -142,6 +156,17 @@ const COLUMNAS = [
 const $q = useQuasar()
 const { perfil, carsEnAmbito, vehiculosEnAmbito, puedeAcceder } = usePerfil()
 const { avisos } = useAtencion()
+
+const kpiJerarquia = computed(() => {
+  const r = resumenJerarquia.value
+  if (!r) return null
+  return {
+    icono: 'home_work', tono: 'azul', valor: r.centros,
+    etiqueta: r.centros === 1 ? 'Centro de Acogida Residencial' : 'Centros de Acogida Residencial',
+    nota: `${plural(r.modulos, 'módulo', 'módulos')} · ${plural(r.ambientes, 'ambiente registrado', 'ambientes registrados')}`,
+    to: puedeAcceder('centros') ? { name: 'centros' } : null
+  }
+})
 
 const compacto = computed(() => $q.screen.lt.lg)
 

@@ -2,6 +2,7 @@ package pe.gob.inabif.sigrec.vehiculo.repository;
 
 import java.util.*;
 import pe.gob.inabif.sigrec.vehiculo.model.Vehiculo;
+import pe.gob.inabif.sigrec.vehiculo.dtos.VehiculoAtencion;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -18,6 +19,12 @@ public class VehiculoRepositoryImpl implements VehiculoRepository {
 
     @Override
     public List<Vehiculo> listarAmbito(Collection<String> centros, Collection<String> codigos) { return jpaRepository.listarAmbito(centros, codigos); }
+
+    @Override
+    public List<VehiculoAtencion> atencionGlobal() { return jpaRepository.atencionGlobal(); }
+
+    @Override
+    public List<VehiculoAtencion> atencionAmbito(Collection<String> centros, Collection<String> codigos) { return jpaRepository.atencionAmbito(centros, codigos); }
 
     @Override
     public boolean existsByCodigo(String codigo) { return jpaRepository.existsByCodigo(codigo); }

@@ -1,0 +1,59 @@
+[
+  {
+    "nombre": "vacio",
+    "cars": [],
+    "modulos": [],
+    "ambientes": [],
+    "esperado": { "centros": 0, "modulos": 0, "ambientes": 0 }
+  },
+  {
+    "nombre": "bajas y modulo anulado",
+    "cars": [
+      { "id": 1, "anulado": false },
+      { "id": 2, "anulado": true },
+      { "id": 3, "anulado": false }
+    ],
+    "modulos": [
+      { "id": 10, "carId": 1, "anulado": false },
+      { "id": 11, "carId": 1, "anulado": true },
+      { "id": 12, "carId": 2, "anulado": false }
+    ],
+    "ambientes": [
+      { "id": 20, "moduloId": 10, "carId": 1, "anulado": false },
+      { "id": 21, "moduloId": 11, "carId": 1, "anulado": false },
+      { "id": 22, "moduloId": 10, "carId": 1, "anulado": true },
+      { "id": 23, "moduloId": 12, "carId": 2, "anulado": false }
+    ],
+    "esperado": { "centros": 2, "modulos": 1, "ambientes": 2 }
+  },
+  {
+    "nombre": "solo centros anulados",
+    "cars": [{ "id": 1, "anulado": true }],
+    "modulos": [{ "id": 10, "carId": 1, "anulado": false }],
+    "ambientes": [{ "id": 20, "moduloId": 10, "carId": 1, "anulado": false }],
+    "esperado": { "centros": 0, "modulos": 0, "ambientes": 0 }
+  },
+  {
+    "nombre": "varios centros y ambientes",
+    "cars": [{ "id": 1, "anulado": false }, { "id": 2, "anulado": false }],
+    "modulos": [
+      { "id": 10, "carId": 1, "anulado": false },
+      { "id": 11, "carId": 2, "anulado": false },
+      { "id": 12, "carId": 2, "anulado": false }
+    ],
+    "ambientes": [
+      { "id": 20, "moduloId": 10, "carId": 1, "anulado": false },
+      { "id": 21, "moduloId": 11, "carId": 2, "anulado": false },
+      { "id": 22, "moduloId": 12, "carId": 2, "anulado": false },
+      { "id": 23, "moduloId": 12, "carId": 2, "anulado": true }
+    ],
+    "esperado": { "centros": 2, "modulos": 3, "ambientes": 3 }
+  },
+  {
+    "nombre": "un centro sin jerarquia",
+    "cars": [{ "id": 1, "anulado": false }],
+    "modulos": [],
+    "ambientes": [],
+    "esperado": { "centros": 1, "modulos": 0, "ambientes": 0 }
+  }
+]

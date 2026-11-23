@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 import pe.gob.inabif.sigrec.vehiculo.model.Vehiculo;
+import pe.gob.inabif.sigrec.vehiculo.dtos.VehiculoAtencion;
 import pe.gob.inabif.sigrec.vehiculo.repository.VehiculoRepository;
 
 import static pe.gob.inabif.sigrec.bien.service.ReglasBien.*;
@@ -16,11 +17,24 @@ public class MovilidadAcceso {
     private final VehiculoRepository vehiculos;
 
     public List<Vehiculo> listar(String... rutas) {
+        var ambito = ambito(rutas);
+        return ambito.global() ? vehiculos.findAllByOrderById() : vehiculos.listarAmbito(ambito.centros(), ambito.codigos());
+    }
+
+    /** Conserva exactamente el ámbito de listar, pero evita cargar vehículos ajenos al indicador. */
+    public List<VehiculoAtencion> listarAtencion(String... rutas) {
+        var ambito = ambito(rutas);
+        return ambito.global() ? vehiculos.atencionGlobal() : vehiculos.atencionAmbito(ambito.centros(), ambito.codigos());
+    }
+
+    private record Ambito(boolean global, List<String> centros, List<String> codigos) {}
+
+    private Ambito ambito(String... rutas) {
         var grants = porRuta(rutas);
-        if (grants.stream().anyMatch(Acceso.Asignacion::global)) return vehiculos.findAllByOrderById();
+        if (grants.stream().anyMatch(Acceso.Asignacion::global)) return new Ambito(true, List.of(), List.of());
         var centros = grants.stream().filter(a -> "CENTRO".equals(a.alcance())).map(a -> a.centro().codigo()).distinct().toList();
         var codigos = grants.stream().map(Acceso.Asignacion::vehiculo).filter(Objects::nonNull).distinct().toList();
-        return vehiculos.listarAmbito(centros, codigos);
+        return new Ambito(false, centros, codigos);
     }
 
     public List<Acceso.Asignacion> porRuta(String... rutas) {

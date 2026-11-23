@@ -40,29 +40,29 @@
         dense
         icon="notifications"
         :to="{ name: 'inicio', hash: '#atencion' }"
-        :aria-label="inicioListo ? `Atención requerida: ${plural(pendientes, 'aviso', 'avisos')}` : 'Atención requerida: avisos no cargados'"
+        :aria-label="avisosDisponibles ? `Atención requerida: ${plural(pendientes, 'aviso', 'avisos')}` : 'Atención requerida: avisos no cargados'"
       >
         <q-badge v-if="pendientes" color="negative" floating rounded>{{ pendientes > 99 ? '99+' : pendientes }}</q-badge>
-        <q-tooltip>{{ !inicioListo ? 'Avisos no cargados; abra Inicio para consultarlos' : pendientes ? `Atención requerida: ${plural(pendientes, 'aviso', 'avisos')}` : 'Sin avisos pendientes' }}</q-tooltip>
+        <q-tooltip>{{ !avisosDisponibles ? 'Avisos no cargados; abra Inicio para consultarlos' : pendientes ? `Atención requerida: ${plural(pendientes, 'aviso', 'avisos')}` : 'Sin avisos pendientes' }}</q-tooltip>
       </q-btn>
       <q-btn flat round dense icon="exit_to_app" aria-label="Regresar a la intranet" @click="salir">
         <q-tooltip>REGRESAR</q-tooltip>
       </q-btn>
     </q-toolbar>
-    <buscador-global v-model="buscador" />
+    <buscador-global v-if="buscador" v-model="buscador" />
   </q-header>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import BuscadorGlobal from 'components/layout/BuscadorGlobal.vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useSesionIntranet } from 'src/composables/useSesionIntranet'
-import { useAtencion } from 'src/composables/useAtencion'
 import { inicioListo } from 'src/services/cargaDatos'
 import { plural } from 'src/utils/formato'
 // El logo es navegación principal; la lupa y la campana sí permiten volver a la pantalla en la que se estaba.
 import { marcarNavegacionPrincipal } from 'src/router/retorno'
+
+const BuscadorGlobal = defineAsyncComponent(() => import('components/layout/BuscadorGlobal.vue'))
 
 defineProps({
   drawerAbierto: { type: Boolean, default: false }
@@ -72,9 +72,22 @@ defineEmits(['alternar-menu'])
 
 const { rutaInicial, puedeAcceder } = usePerfil()
 const { usuario, salir } = useSesionIntranet()
-const { avisos } = useAtencion()
+const avisos = shallowRef(null)
+watch(inicioListo, async (listo) => {
+  if (!listo) {
+    avisos.value = null
+    return
+  }
+  try {
+    const { useAtencion } = await import('src/composables/useAtencion')
+    if (inicioListo.value) avisos.value = useAtencion().avisos
+  } catch (error) {
+    console.error(error)
+  }
+}, { immediate: true })
+const avisosDisponibles = computed(() => inicioListo.value && !!avisos.value)
 // Solo cuenta lo que requiere atención ahora; los próximos vencimientos se ven en Inicio.
-const pendientes = computed(() => (puedeAcceder('inicio') ? avisos.value.ahora.length : 0))
+const pendientes = computed(() => (puedeAcceder('inicio') && avisosDisponibles.value ? avisos.value.value.ahora.length : 0))
 
 const buscador = ref(false)
 const atajo = (e) => {

@@ -47,24 +47,25 @@
       <q-card-section v-else class="sg-muted">Escriba al menos una palabra. Puede buscar por rótulo SIGREC (p. ej. AMA-COM-EXT01) o escanearlo.</q-card-section>
     </q-card>
 
-    <escaner-rotulo v-model="escaner" @leido="alEscanear" />
+    <escaner-rotulo v-if="escaner" v-model="escaner" @leido="alEscanear" />
   </q-dialog>
 </template>
 
 <script setup>
 // Buscador global y paleta de navegación (SPEC 011, Ola 3). Busca en el ámbito del perfil y solo ofrece destinos a los que
 // el perfil tiene acceso. Un rótulo escaneado o escrito exactamente abre su ficha directamente.
-import { computed, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import BotonDictado from 'components/common/BotonDictado.vue'
-import EscanerRotulo from 'components/common/EscanerRotulo.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { buscar, indiceDeBusqueda } from 'src/services/busqueda'
 import { asegurarDatos } from 'src/services/cargaDatos'
 import { MENU } from 'src/config/menu'
 import { anioServicios, hoy } from 'src/config/reglas'
 import { normalizar } from 'src/utils/interpretacionVoz'
+
+const EscanerRotulo = defineAsyncComponent(() => import('components/common/EscanerRotulo.vue'))
 
 defineProps({ modelValue: { type: Boolean, default: false } })
 const emit = defineEmits(['update:modelValue'])

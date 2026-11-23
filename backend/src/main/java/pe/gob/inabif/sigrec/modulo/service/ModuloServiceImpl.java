@@ -93,9 +93,7 @@ public class ModuloServiceImpl implements ModuloService {
     private CambioResponse<ModuloResponse> guardarModulo(Modulo m, String codigo, ModuloDatos datos, Usuario actor, boolean alta) {
         entityMapper.fromModelToEntity(datos, m);
         m.setNombre(datos.nombre().strip());
-        if ("casa".equals(datos.tipo()) && datos.capacidad() == null) {
-            throw error(HttpStatus.BAD_REQUEST, "Indique la capacidad de la casa.");
-        }
+        // La capacidad es opcional para casas; para módulos comunes se fuerza a nula (SPEC 020/043).
         m.setCodigo(codigo);
         m.setTipo(datos.tipo().toUpperCase(Locale.ROOT));
         m.setCapacidad("casa".equals(datos.tipo()) ? datos.capacidad() : null);

@@ -1,0 +1,72 @@
+[
+  {
+    "nombre": "sin vehículos",
+    "cars": [{"id":"A","anulado":false}],
+    "vehiculos": [],
+    "esperado": {"requierenAtencion":0,"presupuestoEstimado":0,"sinEstimar":0}
+  },
+  {
+    "nombre": "estados, bajas y presupuestos",
+    "cars": [{"id":"A","anulado":false},{"id":"B","anulado":true}],
+    "vehiculos": [
+      {"id":"1","carId":"A","estadoOperativo":"detenido","monto":100.25},
+      {"id":"2","carId":"A","estadoOperativo":"requiereMantenimiento","monto":null},
+      {"id":"3","carId":"A","estadoOperativo":"operativo","monto":50},
+      {"id":"4","carId":"A","estadoOperativo":null,"monto":null},
+      {"id":"5","carId":"A","estadoOperativo":"detenido","monto":20,"anulado":true},
+      {"id":"6","carId":"B","estadoOperativo":"detenido","monto":30},
+      {"id":"7","carId":"C","estadoOperativo":"detenido","monto":40}
+    ],
+    "esperado": {"requierenAtencion":2,"presupuestoEstimado":100.25,"sinEstimar":1}
+  },
+  {
+    "nombre": "múltiples centros y presupuesto cero",
+    "cars": [{"id":"A","anulado":false},{"id":"B","anulado":false}],
+    "vehiculos": [
+      {"id":"1","carId":"A","estadoOperativo":"detenido","monto":0},
+      {"id":"2","carId":"B","estadoOperativo":"requiereMantenimiento","monto":10},
+      {"id":"3","carId":"B","estadoOperativo":"detenido","monto":null}
+    ],
+    "esperado": {"requierenAtencion":3,"presupuestoEstimado":10,"sinEstimar":1}
+  },
+  {
+    "nombre": "sin centros accesibles",
+    "cars": [],
+    "vehiculos": [
+      {"id":"1","carId":"A","estadoOperativo":"detenido","monto":9}
+    ],
+    "esperado": {"requierenAtencion":0,"presupuestoEstimado":0,"sinEstimar":0}
+  },
+  {
+    "nombre": "precisión decimal y presupuestos ausentes",
+    "cars": [{"id":"A","anulado":false}],
+    "vehiculos": [
+      {"id":"1","carId":"A","estadoOperativo":"detenido","monto":10.25},
+      {"id":"2","carId":"A","estadoOperativo":"requiereMantenimiento","monto":0.75},
+      {"id":"3","carId":"A","estadoOperativo":"detenido","monto":null},
+      {"id":"4","carId":"A","estadoOperativo":"detenido","monto":null}
+    ],
+    "esperado": {"requierenAtencion":4,"presupuestoEstimado":11,"sinEstimar":2}
+  },
+  {
+    "nombre": "solo vehículos anulados o sin atención",
+    "cars": [{"id":"A","anulado":false}],
+    "vehiculos": [
+      {"id":"1","carId":"A","estadoOperativo":"detenido","monto":500,"anulado":true},
+      {"id":"2","carId":"A","estadoOperativo":"requiereMantenimiento","monto":null,"anulado":true},
+      {"id":"3","carId":"A","estadoOperativo":"operativo","monto":200},
+      {"id":"4","carId":"A","estadoOperativo":null,"monto":null}
+    ],
+    "esperado": {"requierenAtencion":0,"presupuestoEstimado":0,"sinEstimar":0}
+  },
+  {
+    "nombre": "todos sin estimación en centros vigentes",
+    "cars": [{"id":"A","anulado":false},{"id":"B","anulado":false},{"id":"C","anulado":true}],
+    "vehiculos": [
+      {"id":"1","carId":"A","estadoOperativo":"detenido","monto":null},
+      {"id":"2","carId":"B","estadoOperativo":"requiereMantenimiento","monto":null},
+      {"id":"3","carId":"C","estadoOperativo":"detenido","monto":null}
+    ],
+    "esperado": {"requierenAtencion":2,"presupuestoEstimado":0,"sinEstimar":2}
+  }
+]

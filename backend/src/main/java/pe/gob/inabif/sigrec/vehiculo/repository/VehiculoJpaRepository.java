@@ -2,6 +2,7 @@ package pe.gob.inabif.sigrec.vehiculo.repository;
 
 import java.util.*;
 import pe.gob.inabif.sigrec.vehiculo.model.Vehiculo;
+import pe.gob.inabif.sigrec.vehiculo.dtos.VehiculoAtencion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.Lock;
@@ -12,6 +13,10 @@ public interface VehiculoJpaRepository extends JpaRepository<Vehiculo, Long> {
     List<Vehiculo> findAllByOrderById();
     @Query("select v from Vehiculo v where v.centro.codigo in :centros or v.codigo in :codigos order by v.id")
     List<Vehiculo> listarAmbito(Collection<String> centros, Collection<String> codigos);
+    @Query("select new pe.gob.inabif.sigrec.vehiculo.dtos.VehiculoAtencion(v.centro.codigo, v.montoMantenimiento) from Vehiculo v where v.anuladoEl is null and v.estadoOperativo in ('DETENIDO', 'REQUIERE_MANTENIMIENTO')")
+    List<VehiculoAtencion> atencionGlobal();
+    @Query("select new pe.gob.inabif.sigrec.vehiculo.dtos.VehiculoAtencion(v.centro.codigo, v.montoMantenimiento) from Vehiculo v where v.anuladoEl is null and v.estadoOperativo in ('DETENIDO', 'REQUIERE_MANTENIMIENTO') and (v.centro.codigo in :centros or v.codigo in :codigos)")
+    List<VehiculoAtencion> atencionAmbito(Collection<String> centros, Collection<String> codigos);
     boolean existsByCodigo(String codigo);
     boolean existsByCentroIdAndEstadoAndEliminado(Long centroId, int estado, int eliminado);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
