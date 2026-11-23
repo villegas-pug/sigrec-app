@@ -29,3 +29,9 @@ export function mesesEntre (desde, hasta) {
 
 // Fecha ISO resultante de avanzar `meses` meses (mismo criterio de día que `restarMeses`).
 export const sumarMeses = (iso, meses) => restarMeses(iso, -meses)
+
+// «Hoy» en la zona horaria del Perú, como 'AAAA-MM-DD'. No usa toISOString(): entregaría la fecha UTC y, desde las 19:00
+// en Lima, el día siguiente (el backend rechazaría la fecha por futura).
+const formatoHoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' })
+export const hoy = () => formatoHoy.format(new Date())
+export const anioActual = () => Number(hoy().slice(0, 4))

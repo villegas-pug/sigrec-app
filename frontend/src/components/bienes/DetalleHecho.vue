@@ -105,13 +105,13 @@ import { calcularNecesidades } from 'src/services/necesidades'
 import { siguientePaso } from 'src/services/bienes'
 import { esIncidencia as esHechoIncidente, TIPOS_HECHO, estadoDeBien as estadoBien, ubicacionHecho, origenIncidencia, requiereReposicion, unidadesAfectadas } from 'src/services/incidencias'
 import { CHIP_ANULADO, SITUACIONES, TIPOS_EVENTO, condicion } from 'src/config/catalogos'
-import { ANIO_REVISION } from 'src/config/demo'
+import { anioRevision } from 'src/config/reglas'
 import { fecha, plural, soles } from 'src/utils/formato'
 const props = defineProps({ evento: { type: Object, required: true } })
 const emit = defineEmits(['seleccionar'])
 const evento = computed(() => props.evento)
 const { puedeAcceder, carIdsEnAmbito } = usePerfil()
-const pendientes = computed(() => calcularNecesidades({ anio: ANIO_REVISION, carIds: carIdsEnAmbito.value }).pendientes)
+const pendientes = computed(() => calcularNecesidades({ anio: anioRevision(), carIds: carIdsEnAmbito.value }).pendientes)
 const necesidadDe = (id) => pendientes.value.find((n) => n.id === id)
 const estadoDeBien = (ev, id) => estadoBien(ev, id, pendientes.value)
 const pasoDe = (ev, id) => estadoDeBien(ev, id).clave === 'pendiente' ? siguientePaso(bienPorId(id)) : null

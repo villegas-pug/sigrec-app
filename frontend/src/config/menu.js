@@ -1,4 +1,5 @@
-// Menú lateral. Cada `key` de una entrada navegable coincide con el nombre de su ruta y con los accesos de perfiles.js.
+// Etiquetas de respaldo para el buscador y los avisos (SPEC 039). El menú lateral, su orden, iconos y permisos los
+// define SRH (`itemsMenu2`); cada `key` coincide con el nombre de su ruta.
 // «Gestión de centros» es una sola pantalla: un explorador Centro › Módulo › Ambiente › Bien › Componente con detalle y acciones por nivel.
 export const MENU = [
   { key: 'inicio', label: 'Inicio', icon: 'home' },

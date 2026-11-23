@@ -12,6 +12,5 @@ public interface CentroService {
     CambioResponse<CentroResponse> crear(CreateCentroRequest request);
     CambioResponse<CentroResponse> editar(String codigo, UpdateCentroRequest request);
     CentroResponse cambiarEstado(String codigo, String motivo);
-    void importar(CentroDatos datos, Usuario actor);
     Centro bloquear(String codigo);
 }

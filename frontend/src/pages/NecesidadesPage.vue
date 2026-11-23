@@ -19,8 +19,8 @@
 
       <div class="sg-filters">
         <q-select v-model="vista" :options="opcionesVista" emit-value map-options outlined dense label="Consulta" />
-        <q-select v-model="anio" :options="ANIOS_REVISION" outlined dense label="Año a revisar">
-          <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="ANIOS_REVISION" /></template>
+        <q-select v-model="anio" :options="aniosRevision()" outlined dense label="Año a revisar">
+          <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="aniosRevision()" /></template>
         </q-select>
         <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
           <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
@@ -248,7 +248,7 @@ import { carPorId, db, etiquetaAmbiente, textoUbicacion, vigentes } from 'src/se
 import { calcularNecesidades, consolidarPorCar, totalizar } from 'src/services/necesidades'
 import { siguientePaso } from 'src/services/bienes'
 import { SITUACIONES, TIPOS_EVENTO, TODOS, condicion } from 'src/config/catalogos'
-import { ANIO_REVISION, ANIOS_REVISION } from 'src/config/demo'
+import { anioRevision, aniosRevision } from 'src/config/reglas'
 import { exportarCsv } from 'src/utils/csv'
 import { fecha, plural, soles } from 'src/utils/formato'
 import { mostrarDetalle, parametro } from 'src/utils/navegacion'
@@ -266,7 +266,7 @@ const route = useRoute()
 const { perfil, puedeAcceder, puedeHacer } = usePerfil()
 const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(route.query.car, { todos: true })
 
-const anio = ref(ANIOS_REVISION.find((a) => String(a) === parametro(route.query.anio)) ?? ANIO_REVISION)
+const anio = ref(aniosRevision().find((a) => String(a) === parametro(route.query.anio)) ?? anioRevision())
 const opcionesVista = [{ value: 'todas', label: 'Todas las secciones' }, { value: 'sin_valorar', label: 'Necesidades sin valorar' }, { value: 'infraestructura', label: 'Infraestructura en evaluación' }, { value: 'atendidas', label: 'Atendidas por reposición' }]
 const vista = ref(opcionesVista.some((o) => o.value === parametro(route.query.vista)) ? parametro(route.query.vista) : 'todas')
 const enlaceVista = (valor) => ({ name: 'necesidades', query: { vista: valor, car: carId.value, anio: anio.value, ...(tipoId.value === TODOS ? {} : { tipo: tipoId.value }) } })

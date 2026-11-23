@@ -72,7 +72,7 @@ import MapaItinerario from 'components/movilidad/MapaItinerario.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { useGuardado } from 'src/composables/useGuardado'
 import { actualizarItinerario, informarEjecucion, numeroONulo, registrarItinerario } from 'src/services/acciones'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { llegadaPosterior, noFutura, requerido } from 'src/utils/validaciones'
 
 const TITULOS = { nuevo: 'Registrar itinerario', editar: 'Actualizar itinerario', ejecucion: 'Informar ejecución' }
@@ -89,13 +89,13 @@ const emit = defineEmits(['update:modelValue', 'hecho'])
 const $q = useQuasar()
 
 const tramoVacio = () => ({ salida: '', llegada: '', km: null })
-const form = reactive({ fecha: FECHA_CORTE, proposito: '', destinos: '', modoRuta: 'manual', ruta: null, previsto: tramoVacio(), conRealizado: false, realizado: tramoVacio(), confirmaKm: false })
+const form = reactive({ fecha: hoy(), proposito: '', destinos: '', modoRuta: 'manual', ruta: null, previsto: tramoVacio(), conRealizado: false, realizado: tramoVacio(), confirmaKm: false })
 const { modificado, fijar } = useBorrador(form)
 const mapaModificado = ref(false)
 const sugerenciaEjecucion = computed(() => props.modo === 'ejecucion' && props.itinerario?.ruta?.distanciaM != null)
 watch(() => form.ruta, (ruta) => { if (form.modoRuta === 'mapa') form.previsto.km = ruta ? Number((ruta.distanciaM / 1000).toFixed(2)) : null })
 
-// Un recorrido ya realizado no puede tener fecha posterior a la fecha de corte; uno previsto sí.
+// Un recorrido ya realizado no puede tener fecha posterior a hoy; uno previsto sí.
 const fechaCoherente = (v) => (form.conRealizado ? noFutura(v) : true)
 
 const copiarTramo = (t) => ({ salida: t?.salida ?? '', llegada: t?.llegada ?? '', km: t?.km ?? null })
@@ -111,7 +111,7 @@ watch(() => props.modelValue, (abierto) => {
     return
   }
   Object.assign(form, {
-    fecha: it?.fecha ?? FECHA_CORTE,
+    fecha: it?.fecha ?? hoy(),
     proposito: it?.proposito ?? '',
     destinos: it?.destinos?.join(', ') ?? '',
     modoRuta: it?.ruta ? 'mapa' : 'manual',

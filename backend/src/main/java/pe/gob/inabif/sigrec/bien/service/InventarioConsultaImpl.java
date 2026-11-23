@@ -39,7 +39,7 @@ public class InventarioConsultaImpl implements InventarioConsulta {
 
     @Override
     public InventarioResponse consultar() {
-        var grants = acceso.cuenta().asignaciones().stream().filter(a -> !"VEHICULO".equals(a.alcance())
+        var grants = acceso.concesiones().stream().filter(a -> !"VEHICULO".equals(a.alcance())
                 && a.rutas().stream().anyMatch(RUTAS::contains)).toList();
         if (grants.isEmpty()) throw new AccessDeniedException("Consulta de inventario no autorizada.");
         var ids = grants.stream().anyMatch(Acceso.Asignacion::global)

@@ -111,14 +111,4 @@ public class CombustibleServiceImpl implements CombustibleService {
         if (registros.findByItinerarioIdAndEstadoAndEliminado(itinerario.id(), 1, 0)
                 .filter(r -> !Objects.equals(r.id(), actual)).isPresent()) throw conflicto("El recorrido ya tiene otro consumo declarado.");
     }
-
-    public void importar(String codigo, Vehiculo vehiculo, CombustibleDatos datos, Usuario actor, String autor) {
-        if (registros.findByCodigo(codigo).isPresent()) return;
-        var registro = new Combustible();
-        registro.setCodigo(codigo);
-        copiar(registro, vehiculo, datos);
-        registro.setAutorReferencia(autor);
-        registro.registrar(actor);
-        registros.save(registro);
-    }
 }

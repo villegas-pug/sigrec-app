@@ -8,7 +8,7 @@
     </div>
     <div class="row q-col-gutter-md">
       <q-select v-model="form.tipo" class="col-12 col-sm-6" :options="opcionesTipo" emit-value map-options outlined dense label="Hecho *" :rules="[requerido]"><template #append><boton-dictado v-model="form.tipo" tipo="opcion" :opciones="opcionesTipo" emit-value /></template></q-select>
-      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha del hecho *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]"><template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template></q-input>
+      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha del hecho *" :hint="HINT_FECHA" :rules="[requerido, noFutura]"><template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template></q-input>
     </div>
     <q-input v-model="form.titulo" outlined dense label="Motivo *" :rules="[requerido]"><template #append><boton-dictado v-model="form.titulo" /></template></q-input>
     <q-input v-model="form.detalle" outlined dense type="textarea" autogrow label="Detalle"><template #append><boton-dictado v-model="form.detalle" /></template></q-input>
@@ -32,8 +32,8 @@ import { bienPorId, bienesDeAmbiente, situacionDe } from 'src/services/datos'
 import { contextoIncidencia, origenIncidencia, requiereReposicion, unidadesAfectadas } from 'src/services/incidencias'
 import { actualizarIncidente, registrarIncidente } from 'src/services/acciones'
 import { OPCIONES_INCIDENTE, OPCIONES_INCIDENCIA_INFRAESTRUCTURA } from 'src/config/catalogos'
-import { FECHA_CORTE } from 'src/config/demo'
-import { HINT_FECHA_CORTE, noFutura, requerido } from 'src/utils/validaciones'
+import { hoy } from 'src/config/reglas'
+import { HINT_FECHA, noFutura, requerido } from 'src/utils/validaciones'
 const props = defineProps({ modelValue: Boolean, evento: Object, bien: Object, ambienteInicial: String, centroInicial: String, sugerencia: Object })
 const emit = defineEmits(['update:modelValue', 'hecho'])
 const $q = useQuasar()
@@ -59,7 +59,7 @@ watch(() => props.modelValue, (abierto) => {
   if (!abierto || !origen.value) return
   const e = props.evento
   const ids = e ? [...e.bienIds] : props.bien ? [props.bien.id] : []
-  Object.assign(form, { tipo: e?.tipo ?? props.sugerencia?.tipo ?? 'dano', fecha: e?.fecha ?? FECHA_CORTE, titulo: e?.titulo ?? props.sugerencia?.titulo ?? '', detalle: e?.detalle ?? props.sugerencia?.detalle ?? '', requiereEvaluacion: e?.requiereEvaluacion ?? props.sugerencia?.requiereEvaluacion ?? false, condiciones: {}, evaluaciones: {} })
+  Object.assign(form, { tipo: e?.tipo ?? props.sugerencia?.tipo ?? 'dano', fecha: e?.fecha ?? hoy(), titulo: e?.titulo ?? props.sugerencia?.titulo ?? '', detalle: e?.detalle ?? props.sugerencia?.detalle ?? '', requiereEvaluacion: e?.requiereEvaluacion ?? props.sugerencia?.requiereEvaluacion ?? false, condiciones: {}, evaluaciones: {} })
   form.bienIds = ids
   for (const id of ids) form.evaluaciones[id] = { requiereReposicion: e ? requiereReposicion(e, id) : null, unidades: e ? unidadesAfectadas(e, bienPorId(id)) : bienPorId(id).cantidad ?? 1 }
   fijar()

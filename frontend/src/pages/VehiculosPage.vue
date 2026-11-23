@@ -173,7 +173,7 @@ import { anular } from 'src/services/acciones'
 import { requiereAtencion, resumirEstadoVehiculos } from 'src/services/vehiculos'
 import { controlDeVehiculo } from 'src/services/mantenimientos'
 import { CHIP_ANULADO, ESTADOS_CONTROL, ESTADOS_VEHICULO, OPCIONES_ESTADO_VEHICULO, TODOS, estadoVehiculo } from 'src/config/catalogos'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { fecha, plural, soles } from 'src/utils/formato'
 import { parametro } from 'src/utils/navegacion'
 import { primeraVisita } from 'src/router/retorno'
@@ -236,7 +236,7 @@ const itinerarioOrigen = !vehiculoNoDisponible && vehiculoPedido && parametro(ro
 const dialogo = reactive({ abierto: false, vehiculo: null, conRetorno: false })
 
 // El control del vehículo combina la ficha y los mantenimientos registrados; el historial completo está en la ficha del centro.
-const controlVeh = (v) => controlDeVehiculo(v, FECHA_CORTE)
+const controlVeh = (v) => controlDeVehiculo(v, hoy())
 // El registro y el historial del mantenimiento están en la pestaña de seguridad del centro (si el perfil accede a ella).
 const registroMantenimiento = (v) => {
   const ultimo = controlVeh(v).ultimo

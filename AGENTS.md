@@ -4,7 +4,7 @@ Este archivo orienta a los agentes de código (Codex, OpenCode, Claude Code) que
 
 ## Overview
 
-SIGREC (Sistema Integrado de Gestión de Recursos de Centros) es un **prototipo SPA sin backend** para la USPNNA – INABIF. Todo funciona con datos ficticios en memoria; no hay API, persistencia ni autenticación real. Interfaz, comentarios, nombres de dominio e identificadores están en español.
+SIGREC (Sistema Integrado de Gestión de Recursos de Centros) es la SPA de la USPNNA – INABIF con backend Spring Boot (`backend/`, SPEC 037). **No tiene página de inicio de sesión** (SPEC 039): se abre redirigido desde la intranet con un JWT en `?p=`, y el perfil define los menús y submenús. Parte de los datos del modelo aún son ficticios en memoria. Interfaz, comentarios, nombres de dominio e identificadores están en español.
 
 Stack: Vue 3.5 + Quasar 2.35 (`@quasar/app-vite` 2.4.1, Vite 7), Vue Router 5 en modo `hash`. Node `^22.12` (no actualizar `@quasar/app-vite` a 2.5+ sin Node 22.22). JavaScript (sin TypeScript); alias de import `src/`, `pages/`, `layouts/`, `components/` provistos por Quasar.
 
@@ -27,17 +27,20 @@ Los cambios relevantes se especifican antes en `frontend/docs/spec/NNN-*.md` (nu
 ## Architecture
 
 ### Datos y reglas de negocio
-- `src/data/*.json`: datos ficticios. `src/services/datos.js` los carga en un único almacén `reactive` (`db`) con helpers de consulta (`carPorId`, `modulosDeCar`, `ambientesDeModulo`…). Los cambios se pierden al recargar.
+- `src/services/datos.js`: almacén `reactive` (`db`) con helpers de consulta (`carPorId`, `modulosDeCar`, `ambientesDeModulo`…). Empieza vacío y se hidrata **solo por REST** (SPEC 037, 041); `frontend/src/data/*.json` ya no se lee (solo es referencia del modelo ER y del manual).
 - Jerarquía: **Centro › Módulo › Ambiente › Bien › Componente** (componente = bien asociado a otro). El inmueble es parte de la ficha del centro (`car.inmueble`); no existe nivel «Local». `ambiente.carId` se mantiene igual al de su módulo.
 - Baja lógica: un registro anulado lleva `anulacion` y deja de contar (`vigente` / `vigentes`). No se borran registros.
-- `src/services/acciones.js`: todas las mutaciones del almacén (registrar, actualizar, anular, reactivar). Sellan con `FECHA_CORTE` y el autor del perfil activo (`services/autor.js`). El resto de `src/services/` son reglas de negocio puras (situación, atención, necesidades, inventario, servicios, combustible, búsqueda…).
-- `src/config/demo.js`: fecha de corte fija `2026-10-30`, año de revisión y umbrales provisionales. Los cálculos usan `FECHA_CORTE`, nunca el reloj del sistema.
+- `src/services/acciones.js`: todas las mutaciones, siempre por la API REST (registrar, actualizar, anular, reactivar). El backend sella con la fecha real y con el usuario de la intranet (cabeceras `X-Usuario-*`). El resto de `src/services/` son reglas de negocio puras (situación, atención, necesidades, inventario, servicios, combustible, búsqueda…).
+- `src/config/reglas.js`: `hoy()` (fecha real, `America/Lima`), año de revisión (año actual + 1) y umbrales provisionales (SPEC 040). Los cálculos usan `hoy()`; el backend usa `shared/model/Hoy`. Nunca `toISOString()` para obtener «hoy».
 - `src/config/catalogos.js`: catálogos (estados, tipos de evento, tipos de servicio, condiciones).
 
-### Perfiles y permisos (solo en cliente)
-- `src/config/perfiles.js`: cuatro perfiles de demo con `accesos` (nombres de ruta; el primero es la ruta inicial), `acciones` (`entidad.registrar|actualizar|anular|…`) y ámbito (`carIds` / `vehiculoIds`, `null` = sin restricción). Toda acción nueva debe añadirse a `ACCIONES_MANTENIMIENTO` o `TODAS_LAS_ACCIONES`.
-- `src/composables/usePerfil.js`: estado de módulo compartido; el perfil se recuerda en `localStorage` (`sigrec.perfil`).
-- **Invariante**: cada `key` de `src/config/menu.js` = nombre de ruta en `src/router/routes.js` = entrada en `accesos` de `perfiles.js`. Al añadir una pantalla, actualizar los tres.
+### Acceso desde la intranet y menú (SPEC 039, 041)
+- Sin login ni sesión propia, **igual que `educalle-app`**: `layouts/MainLayout.vue` ejecuta el ingreso con `composables/useSesionIntranet.js` (sin guardas de router). Lee `?p=` (JWT, **sin verificar firma**), valida con `SRH/SPermiso?action=login…`, guarda en `localStorage` las claves `sgr-*` (`sgr-idUsuario`, `sgr-nombreCompleto`, `sgr-token`, `sgr-payload`, `sgr-session-token`…) y consulta `SPermiso?action=itemsMenu2&u=…&s=345`. El token local HS256 (crypto-js, 240 min) se revisa cada 5 s con diálogo «¿Desea continuar trabajando?». Sin identidad: aviso «Ingrese desde la intranet».
+- El **menú** lo define SRH (módulo › menú › submenú, `icono` Material, `flgDeshabilitado`). El `enlace` de SRH es la **ruta (path)**, p. ej. `necesidades/inventario`; `puedeAcceder(nombreDeRuta)` resuelve path → nombre con `router/routes.js`. Una ruta fuera del menú muestra `SinAcceso`. `puedeHacer` devuelve siempre `true` (sin acciones ni ámbito, como educalle).
+- `services/api.js` envía `X-Usuario-Id` y `X-Usuario-Nombre`; un 401 limpia la sesión y vuelve a la intranet.
+- **Carga por pantalla (SPEC 041)**: el layout solo pide `/catalogos`. Cada ruta declara `meta.datos` (grupos de `services/cargaDatos.js`) y el layout los carga **antes** de montar la pantalla, con caché por sesión. Inicio usa el grupo `inicio` (`GET /api/v1/inicio/datos`, una sola llamada que además cubre los demás grupos). Al añadir una pantalla: ruta con `meta.datos`, entrada en `menu.js` y menú en SRH.
+- **Riesgo aceptado**: el backend no autoriza (`sigrec.security.autorizacion=false`) y confía en el `X-Usuario-Id` recibido; debe ser accesible solo desde la red de la intranet.
+- Catálogos (SPEC 040): `GET /api/v1/catalogos` rellena `config/catalogos.js` (códigos, nombres, orden); tono e iconos siguen en el cliente.
 
 ### Navegación con contexto (SPEC 005, 011, 025)
 - Las pantallas reciben contexto por query (`?ambiente=`, `?hecho=`, `?registrar=1`, `?periodo=`…). Las rutas antiguas (`locales`, `ambientes`, `bienes`, `tablero`, `precios`…) son redirecciones que conservan la query; no eliminarlas.

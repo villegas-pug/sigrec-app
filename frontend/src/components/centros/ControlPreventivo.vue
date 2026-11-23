@@ -125,7 +125,7 @@ import { ambientesDeCar, etiquetaAmbiente, ordenarPorModulo, vigente } from 'src
 import { anular } from 'src/services/acciones'
 import { extintoresDeCentro, fumigacionDeCentro, mantenimientosDe, objetivoDe } from 'src/services/mantenimientos'
 import { CHIP_ANULADO, ESTADOS_CONTROL, TIPOS_MANTENIMIENTO } from 'src/config/catalogos'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { fecha, plural, soles } from 'src/utils/formato'
 
 const props = defineProps({
@@ -142,8 +142,8 @@ const { puedeHacer } = usePerfil()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
 const activo = computed(() => vigente(props.centro))
-const extintores = computed(() => extintoresDeCentro(props.centro.id, FECHA_CORTE))
-const fumigacion = computed(() => fumigacionDeCentro(props.centro.id, FECHA_CORTE))
+const extintores = computed(() => extintoresDeCentro(props.centro.id, hoy()))
+const fumigacion = computed(() => fumigacionDeCentro(props.centro.id, hoy()))
 const historial = computed(() => mantenimientosDe({ carId: props.centro.id }, { inactivos: props.inactivos }))
 
 const plazo = (dias) => (dias >= 0 ? `en ${plural(dias, 'día', 'días')}` : `hace ${plural(-dias, 'día', 'días')}`)

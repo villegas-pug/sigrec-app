@@ -98,16 +98,4 @@ public class IntervencionServiceImpl implements IntervencionService {
             a.actualizar(actor);
         }
     }
-
-    public void importar(String codigo, String ambiente, IntervencionDatos datos, String autor, int orden, Usuario actor) {
-        if (intervenciones.findByCodigo(codigo).isPresent()) return;
-        var registro = new Intervencion();
-        registro.setCodigo(codigo);
-        registro.setAmbiente(bienes.ambiente(ambiente));
-        copiar(registro, new UpdateIntervencionRequest(datos));
-        registro.setAutorReferencia(autor);
-        registro.setOrdenImportacion(orden);
-        registro.registrar(actor);
-        intervenciones.save(registro);
-    }
 }

@@ -46,7 +46,7 @@
     />
 
     <div class="row q-col-gutter-md">
-      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha realizada *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
+      <q-input v-model="form.fecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha realizada *" :hint="HINT_FECHA" :rules="[requerido, noFutura]">
         <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
       </q-input>
       <q-input
@@ -91,10 +91,10 @@ import { actualizarMantenimiento, registrarMantenimiento } from 'src/services/ac
 import { requiereAtencion } from 'src/services/vehiculos'
 import { extintoresDeCentro } from 'src/services/mantenimientos'
 import { OPCIONES_TIPO_MANTENIMIENTO, TIPOS_MANTENIMIENTO, TIPO_EXTINTOR, estadoVehiculo } from 'src/config/catalogos'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { sumarMeses } from 'src/utils/fechas'
 import { fecha } from 'src/utils/formato'
-import { HINT_FECHA_CORTE, noAnteriorA, noFutura, opcionalMayorQueCero, requerido } from 'src/utils/validaciones'
+import { HINT_FECHA, noAnteriorA, noFutura, opcionalMayorQueCero, requerido } from 'src/utils/validaciones'
 import { plural } from 'src/utils/formato'
 
 const props = defineProps({
@@ -129,7 +129,7 @@ const opcionesObjetivo = computed(() => {
   const objetivo = tipoActual.value?.objetivo
   const ambienteDe = (b) => { const a = ambientePorId(b.ambienteId); return a ? etiquetaAmbiente(a) : '' }
   const opcionBien = (b) => ({ value: b.id, label: `${rotuloBien(b)} · ${ambienteDe(b)}` })
-  if (objetivo === 'extintor') return extintoresDeCentro(props.centro.id, FECHA_CORTE).lista.map((e) => opcionBien(e.bien))
+  if (objetivo === 'extintor') return extintoresDeCentro(props.centro.id, hoy()).lista.map((e) => opcionBien(e.bien))
   if (objetivo === 'equipo') return bienesDelCentro.value.filter((b) => b.categoria === 'equipo' && b.tipoId !== TIPO_EXTINTOR).map(opcionBien)
   if (objetivo === 'vehiculo') {
     return vigentes(db.vehiculos).filter((v) => v.carId === props.centro.id).map((v) => ({ value: v.id, label: `${v.tipo} ${v.id} · placa ${v.placa}` }))
@@ -163,7 +163,7 @@ watch(() => props.modelValue, (abierto) => {
     tipo: m?.tipo ?? props.tipoInicial ?? null,
     objetivos: m ? [m.bienId ?? m.vehiculoId].filter(Boolean) : props.bienIds?.length ? [...props.bienIds] : [props.bienId ?? props.vehiculoId].filter(Boolean),
     quedaOperativo: false,
-    fecha: m?.fecha ?? FECHA_CORTE,
+    fecha: m?.fecha ?? hoy(),
     proxima: m?.proxima ?? '',
     detalle: m?.detalle ?? '',
     importe: m?.importe ?? null

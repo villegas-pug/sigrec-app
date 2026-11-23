@@ -30,7 +30,7 @@ import { useBorrador } from 'src/composables/useBorrador'
 import { useGuardado } from 'src/composables/useGuardado'
 import { actualizarHechoServicio, informarHechoServicio } from 'src/services/acciones'
 import { HECHOS_SERVICIO, TIPOS_SERVICIO } from 'src/config/catalogos'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { noFutura, requerido } from 'src/utils/validaciones'
 
 const OPCIONES_SUMINISTRO = [
@@ -49,7 +49,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 const $q = useQuasar()
 
-const form = reactive({ tipo: 'interrupcion', fecha: FECHA_CORTE, detalle: '' })
+const form = reactive({ tipo: 'interrupcion', fecha: hoy(), detalle: '' })
 const { modificado, fijar } = useBorrador(form)
 
 // Los pagos y las correcciones de período los genera la situación del período; solo se corrigen su fecha y detalle.
@@ -60,7 +60,7 @@ const subtitulo = computed(() => `${TIPOS_SERVICIO[props.servicio.tipo]}${props.
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
   const h = props.hecho
-  Object.assign(form, { tipo: h?.tipo ?? props.tipoInicial, fecha: h?.fecha ?? FECHA_CORTE, detalle: h?.detalle ?? '' })
+  Object.assign(form, { tipo: h?.tipo ?? props.tipoInicial, fecha: h?.fecha ?? hoy(), detalle: h?.detalle ?? '' })
   fijar()
 })
 

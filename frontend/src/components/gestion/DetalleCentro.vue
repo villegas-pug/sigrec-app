@@ -126,7 +126,7 @@ import { anular, dependenciasDeCentro } from 'src/services/acciones'
 import { cantidadEvaluados, elementosDe } from 'src/services/infraestructura'
 import { elementosAdicionalesDe, estadoElementosDe } from 'src/services/centros'
 import { controlesPendientes, resumirControles } from 'src/services/mantenimientos'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { CHIP_ANULADO, TIPO_EXTINTOR, condicion, condicionInmueble } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
 
@@ -171,7 +171,7 @@ const estadoElementos = computed(() => estadoElementosDe('centro', props.centro.
 const adicionales = computed(() => elementosAdicionalesDe('centro', props.centro.id))
 const evaluados = computed(() => cantidadEvaluados(estadoElementos.value, adicionales.value))
 const totalElementos = computed(() => elementosDe(adicionales.value).length)
-const resumenControles = computed(() => resumirControles(controlesPendientes([props.centro.id], FECHA_CORTE)))
+const resumenControles = computed(() => resumirControles(controlesPendientes([props.centro.id], hoy())))
 
 const tabs = computed(() => [
   { name: 'ficha', label: 'Ficha' },

@@ -52,23 +52,25 @@
 <script setup>
 // «Atención requerida» de Inicio (SPEC 011): avisos de ahora y próximos vencimientos, filtrables por tema y centro.
 // Cada aviso ofrece su acción (si el perfil puede hacerla) y el enlace al registro exacto (si el perfil puede acceder).
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { parametro } from 'src/utils/navegacion'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
-import MantenimientoDialog from 'components/centros/MantenimientoDialog.vue'
-import PeriodoDialog from 'components/servicios/PeriodoDialog.vue'
-import HechoServicioDialog from 'components/servicios/HechoServicioDialog.vue'
-import ServicioDialog from 'components/servicios/ServicioDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { carPorId, servicioPorId } from 'src/services/datos'
 import { celdasDelServicio } from 'src/services/servicios'
+import { asegurarDatos } from 'src/services/cargaDatos'
 import { CATEGORIAS_AVISO } from 'src/services/atencion'
 import { TODOS } from 'src/config/catalogos'
-import { FECHA_CORTE, PARAMETROS_ATENCION } from 'src/config/demo'
+import { hoy, PARAMETROS_ATENCION } from 'src/config/reglas'
+
+const MantenimientoDialog = defineAsyncComponent(() => import('components/centros/MantenimientoDialog.vue'))
+const PeriodoDialog = defineAsyncComponent(() => import('components/servicios/PeriodoDialog.vue'))
+const HechoServicioDialog = defineAsyncComponent(() => import('components/servicios/HechoServicioDialog.vue'))
+const ServicioDialog = defineAsyncComponent(() => import('components/servicios/ServicioDialog.vue'))
 
 const props = defineProps({
   // { ahora: [], proximos: [] } de services/atencion › avisosDeAtencion
@@ -103,9 +105,11 @@ const accionDe = (aviso) => (aviso.accion && puedeHacer(aviso.accion.permiso) ? 
 // El diálogo se monta con sus datos y se abre en el siguiente ciclo, para que inicialice su formulario al abrirse.
 const dialogo = reactive({ tipo: null, abierto: false, datos: {}, servicio: null, celda: null })
 async function abrirAccion (accion) {
+  // SPEC 041: Inicio no carga colecciones; el diálogo pide las que necesita antes de abrirse.
+  await asegurarDatos(accion.tipo === 'mantenimiento' ? ['jerarquia', 'inventario', 'tiposBien', 'vehiculos', 'mantenimientos'] : ['jerarquia', 'servicios'])
   const servicio = accion.datos.servicioId ? servicioPorId(accion.datos.servicioId) : null
   const celda = servicio && accion.tipo === 'periodo'
-    ? celdasDelServicio(servicio, accion.datos.anio, FECHA_CORTE).find((c) => c.numero === accion.datos.numero) ?? null
+    ? celdasDelServicio(servicio, accion.datos.anio, hoy()).find((c) => c.numero === accion.datos.numero) ?? null
     : null
   Object.assign(dialogo, { tipo: accion.tipo, abierto: false, datos: accion.datos, servicio, celda })
   await nextTick()

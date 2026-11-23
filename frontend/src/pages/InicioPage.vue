@@ -8,8 +8,21 @@
         Sistema Integrado de Gestión de Recursos de Centros <span class="sg-hero__accent">SIGREC</span>
       </h1>
       <div class="sg-hero__bar" aria-hidden="true" />
-      <p class="sg-hero__scope">Ámbito: {{ perfil.ambito.descripcion }} · Año de revisión {{ ANIO_REVISION }}</p>
+      <p class="sg-hero__scope">Ámbito: {{ perfil.ambito.descripcion }} · Año de revisión {{ anioRevision() }}</p>
 
+      <section v-if="cargando" aria-busy="true" aria-live="polite" class="q-gutter-md">
+        <p role="status" class="sg-muted">Cargando indicadores y situación de los centros…</p>
+        <div class="sg-kpi-panel">
+          <q-skeleton v-for="n in 8" :key="n" height="110px" />
+        </div>
+        <q-skeleton height="180px" />
+        <q-skeleton height="240px" />
+      </section>
+      <section v-else-if="errorCarga" class="sg-card q-pa-lg" role="alert">
+        <p>No se pudieron cargar los datos de Inicio. {{ errorCarga }}</p>
+        <q-btn color="primary" unelevated no-caps label="Reintentar" @click="cargarInicio" />
+      </section>
+      <template v-else>
       <div class="sg-kpi-panel">
         <kpi-card
           v-for="kpi in kpis"
@@ -71,6 +84,7 @@
           <p v-if="!filas.length" class="sg-muted q-mb-none">Sin centros en el ámbito del perfil.</p>
         </div>
       </section-card>
+      </template>
     </div>
   </q-page>
 </template>
@@ -80,7 +94,7 @@ import ManualHelp from 'components/common/ManualHelp.vue'
 // Inicio (SPEC 011): panel único. Reúne los indicadores, la atención requerida y la situación por centro que antes se
 // repartían entre Inicio y el «Tablero de control». Ninguna cifra ni aviso se calcula aquí: vienen de services/situacion.js
 // y services/atencion.js.
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import KpiCard from 'components/common/KpiCard.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
@@ -89,13 +103,31 @@ import CeldaTablero from 'components/common/CeldaTablero.vue'
 import AtencionRequerida from 'components/inicio/AtencionRequerida.vue'
 import VolverOrigen from 'components/layout/VolverOrigen.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { ANIO_SERVICIOS, useAtencion } from 'src/composables/useAtencion'
+import { useAtencion } from 'src/composables/useAtencion'
 import { ambientesDeCar, modulosDeCar } from 'src/services/datos'
 import { resumenPorCentro, totalizarSituacion } from 'src/services/situacion'
 import { evaluarItinerario, itinerariosDeVehiculo } from 'src/services/combustible'
 import { condicion, condicionInmueble } from 'src/config/catalogos'
-import { ANIO_REVISION, FECHA_CORTE } from 'src/config/demo'
+import { anioRevision, anioServicios, hoy } from 'src/config/reglas'
 import { numero, plural, porcentaje, soles } from 'src/utils/formato'
+import { asegurarDatos } from 'src/services/cargaDatos'
+
+const cargando = ref(true)
+const errorCarga = ref('')
+
+async function cargarInicio () {
+  cargando.value = true
+  errorCarga.value = ''
+  try {
+    await asegurarDatos(['catalogos', 'inicio'])
+  } catch (error) {
+    errorCarga.value = error.message || 'Intente nuevamente.'
+  } finally {
+    cargando.value = false
+  }
+}
+
+onMounted(cargarInicio)
 
 const COLUMNAS = [
   { clave: 'necesidades', titulo: 'Necesidades' },
@@ -113,7 +145,7 @@ const { avisos } = useAtencion()
 
 const compacto = computed(() => $q.screen.lt.lg)
 
-const filas = computed(() => resumenPorCentro(carsEnAmbito.value, { fechaCorte: FECHA_CORTE, anioServicios: ANIO_SERVICIOS, anio: ANIO_REVISION }))
+const filas = computed(() => resumenPorCentro(carsEnAmbito.value, { fechaCorte: hoy(), anioServicios: anioServicios(), anio: anioRevision() }))
 const total = computed(() => {
   const t = totalizarSituacion(filas.value)
   const sumar = (clave) => filas.value.reduce((suma, f) => suma + f.necesidades[clave], 0)
@@ -134,7 +166,7 @@ const kpis = computed(() => {
   const ambientes = carsEnAmbito.value.reduce((suma, c) => suma + ambientesDeCar(c.id).length, 0)
   const lista = [
     { ruta: 'centros', icono: 'home_work', tono: 'azul', valor: t.centros, etiqueta: t.centros === 1 ? 'Centro de Acogida Residencial' : 'Centros de Acogida Residencial', nota: `${plural(modulos, 'módulo', 'módulos')} · ${plural(ambientes, 'ambiente registrado', 'ambientes registrados')}` },
-    { ruta: 'necesidades', icono: 'assignment_late', tono: 'rojo', valor: t.necesidades, etiqueta: `Necesidades pendientes ${ANIO_REVISION}`, nota: `${plural(t.infraestructura, 'de infraestructura', 'de infraestructura')} en evaluación · ${plural(t.atendidas, 'atendida', 'atendidas')}` },
+    { ruta: 'necesidades', icono: 'assignment_late', tono: 'rojo', valor: t.necesidades, etiqueta: `Necesidades pendientes ${anioRevision()}`, nota: `${plural(t.infraestructura, 'de infraestructura', 'de infraestructura')} en evaluación · ${plural(t.atendidas, 'atendida', 'atendidas')}` },
     { ruta: 'necesidades', icono: 'payments', tono: 'verde', valor: soles(t.importeConocido), etiqueta: 'Importe estimado conocido', nota: t.sinValorar ? `Incompleto: ${plural(t.sinValorar, 'necesidad sin valorar', 'necesidades sin valorar')}` : 'Todas las necesidades tienen precio' },
     { destino: ATENCION, icono: 'error', tono: 'rojo', valor: t.controlesVencidos, etiqueta: 'Controles vencidos', nota: `${t.controlesPorVencer} por vencer · ${plural(t.extintoresFaltantes, 'extintor faltante', 'extintores faltantes')}` },
     { ruta: 'inventario', query: { vista: 'mal_estado' }, icono: 'build_circle', tono: 'ambar', valor: `${numero(t.bienesMalos)} / ${numero(t.bienesActivos)}`, etiqueta: 'Bienes en mal estado', nota: 'Unidades en condición mala o inservible' },
@@ -209,11 +241,11 @@ function celdas (f) {
     servicios: {
       to: enlace('servicios'),
       items: chips(
-        s.pendientes ? { tono: 'da', label: plural(s.pendientes, 'pendiente', 'pendientes'), to: enlace('servicios', { car, anio: ANIO_SERVICIOS, alerta: 'pendiente' }) } : null,
-        s.interrupciones ? { tono: 'wa', label: plural(s.interrupciones, 'interrupción abierta', 'interrupciones abiertas'), to: enlace('servicios', { car, anio: ANIO_SERVICIOS, alerta: 'interrupcion' }) } : null,
-        s.renovaciones ? { tono: 'wa', label: plural(s.renovaciones, 'renovación', 'renovaciones'), to: enlace('servicios', { car, anio: ANIO_SERVICIOS, alerta: 'renovacion' }) } : null,
-        s.recurrentes ? { tono: 'wa', label: plural(s.recurrentes, 'recurrente', 'recurrentes'), to: enlace('servicios', { car, anio: ANIO_SERVICIOS, alerta: 'recurrente' }) } : null,
-        s.sinInfo ? { tono: 'si', label: `${s.sinInfo} sin información`, to: enlace('servicios', { car, anio: ANIO_SERVICIOS, alerta: 'sin_info' }) } : null
+        s.pendientes ? { tono: 'da', label: plural(s.pendientes, 'pendiente', 'pendientes'), to: enlace('servicios', { car, anio: anioServicios(), alerta: 'pendiente' }) } : null,
+        s.interrupciones ? { tono: 'wa', label: plural(s.interrupciones, 'interrupción abierta', 'interrupciones abiertas'), to: enlace('servicios', { car, anio: anioServicios(), alerta: 'interrupcion' }) } : null,
+        s.renovaciones ? { tono: 'wa', label: plural(s.renovaciones, 'renovación', 'renovaciones'), to: enlace('servicios', { car, anio: anioServicios(), alerta: 'renovacion' }) } : null,
+        s.recurrentes ? { tono: 'wa', label: plural(s.recurrentes, 'recurrente', 'recurrentes'), to: enlace('servicios', { car, anio: anioServicios(), alerta: 'recurrente' }) } : null,
+        s.sinInfo ? { tono: 'si', label: `${s.sinInfo} sin información`, to: enlace('servicios', { car, anio: anioServicios(), alerta: 'sin_info' }) } : null
       )
     }
   }

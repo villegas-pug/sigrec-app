@@ -16,7 +16,7 @@ import pe.gob.inabif.sigrec.servicio.dtos.*;
 import pe.gob.inabif.sigrec.servicio.mappers.*;
 import pe.gob.inabif.sigrec.servicio.model.*;
 import pe.gob.inabif.sigrec.servicio.repository.*;
-import pe.gob.inabif.sigrec.shared.model.FechaCorte;
+import pe.gob.inabif.sigrec.shared.model.Hoy;
 import pe.gob.inabif.sigrec.usuario.model.Usuario;
 
 import static pe.gob.inabif.sigrec.bien.service.ReglasBien.*;
@@ -150,7 +150,7 @@ public class ServicioServiceImpl implements ServicioService {
                 || "PENDIENTE".equals(anterior) && "SIN_INFO".equals(estado))) {
             var texto = "Corrección del período " + Periodicidad.etiqueta(periodo) + ": de " + ESTADOS.get(anterior)
                     + " a " + ESTADOS.get(estado) + ".";
-            registrarHechoPeriodo(periodo, "CORRECCION", FechaCorte.DIA, texto, anterior, estado, actor);
+            registrarHechoPeriodo(periodo, "CORRECCION", Hoy.fecha(), texto, anterior, estado, actor);
         }
         return responder(servicio);
     }
@@ -263,17 +263,5 @@ public class ServicioServiceImpl implements ServicioService {
         p.setPagoFecha(pago == null ? null : pago.fecha());
         p.setPagoImporte(pago == null ? null : pago.importe());
         p.setPagoSustento(pago == null ? null : pago.sustento().strip());
-    }
-
-    public Servicio importar(CreateServicioRequest request, String codigo, Usuario actor) {
-        if (servicios.existsByCodigo(codigo)) return null;
-        var centro = centros.bloquear(request.carId());
-        var servicio = new Servicio();
-        servicio.setCodigo(codigo);
-        servicio.setCentro(centro);
-        servicio.setTipo(catalogos.obtener("TIPO_SERVICIO", request.tipo()));
-        copiar(servicio, createMapper.toModel(request), List.of());
-        servicio.registrar(actor);
-        return servicios.save(servicio);
     }
 }

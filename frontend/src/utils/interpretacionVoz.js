@@ -1,5 +1,5 @@
 // Interpretación del texto dictado (SPEC 007). Funciones puras: reciben el texto y devuelven el valor o null.
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 
 const quitarTildes = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 export const normalizar = (t) => quitarTildes(String(t ?? '').toLowerCase()).replace(/[^a-z0-9ñ\s:/.,-]/g, ' ').replace(/\s+/g, ' ').trim()
@@ -76,7 +76,7 @@ const indiceMes = (p) => {
 }
 const dos = (n) => String(n).padStart(2, '0')
 
-export function aMes (texto, referencia = FECHA_CORTE) {
+export function aMes (texto, referencia = hoy()) {
   const t = normalizar(texto)
   const mes = MESES.concat(['septiembre']).find((m) => t.includes(m))
   if (!mes) {
@@ -94,7 +94,7 @@ function sumarDias (iso, dias) {
   return `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())}`
 }
 
-export function aFecha (texto, referencia = FECHA_CORTE) {
+export function aFecha (texto, referencia = hoy()) {
   const t = normalizar(texto)
   if (/\banteayer\b/.test(t)) return sumarDias(referencia, -2)
   if (/\bayer\b/.test(t)) return sumarDias(referencia, -1)

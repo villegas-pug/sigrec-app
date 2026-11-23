@@ -12,7 +12,7 @@ import pe.gob.inabif.sigrec.centro.service.CentroService;
 import pe.gob.inabif.sigrec.incidencia.model.*;
 import pe.gob.inabif.sigrec.incidencia.repository.*;
 import pe.gob.inabif.sigrec.security.Acceso;
-import pe.gob.inabif.sigrec.shared.model.FechaCorte;
+import pe.gob.inabif.sigrec.shared.model.Hoy;
 import pe.gob.inabif.sigrec.usuario.model.Usuario;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -145,8 +145,8 @@ public class ReglasBien {
     }
 
     public static LocalDate fecha(LocalDate fecha) {
-        var date = fecha == null ? FechaCorte.DIA : fecha;
-        if (date.isAfter(FechaCorte.DIA)) throw invalido("La fecha no puede ser posterior a la fecha de corte.");
+        var date = fecha == null ? Hoy.fecha() : fecha;
+        if (date.isAfter(Hoy.fecha())) throw invalido("La fecha no puede ser posterior a hoy.");
         return date;
     }
 

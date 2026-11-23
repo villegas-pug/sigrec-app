@@ -87,15 +87,4 @@ public class VehiculoServiceImpl implements VehiculoService {
         v.setMotivoMantenimiento(m == null ? null : m.motivo());
         v.setMontoMantenimiento(m == null ? null : m.presupuestoEstimado());
     }
-
-    public void importar(String codigo, CreateVehiculoRequest datos, Usuario actor) {
-        var centro = centros.bloquear(datos.carId());
-        if (vehiculos.existsByCodigo(codigo)) return;
-        var v = new Vehiculo();
-        v.setCodigo(codigo);
-        v.setCentro(centro);
-        copiar(v, datos.datos());
-        v.registrar(actor);
-        vehiculos.save(v);
-    }
 }

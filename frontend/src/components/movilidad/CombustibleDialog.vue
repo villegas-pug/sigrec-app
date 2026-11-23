@@ -56,7 +56,7 @@ import { useGuardado } from 'src/composables/useGuardado'
 import { useRetorno } from 'src/composables/useRetorno'
 import { actualizarCombustible, registrarCombustible } from 'src/services/acciones'
 import { consumoDeclaradoL, itinerariosDeVehiculo } from 'src/services/combustible'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { fecha as formatoFecha } from 'src/utils/formato'
 import { mayorQueCero, noFutura, requerido } from 'src/utils/validaciones'
 
@@ -76,7 +76,7 @@ const emit = defineEmits(['update:modelValue'])
 const { avisarGuardado } = useRetorno()
 
 const { puedeAcceder } = usePerfil()
-const form = reactive({ tipo: 'carga', fecha: FECHA_CORTE, cantidad: null, itinerarioId: null, sustento: '' })
+const form = reactive({ tipo: 'carga', fecha: hoy(), cantidad: null, itinerarioId: null, sustento: '' })
 const { modificado, fijar } = useBorrador(form)
 
 // Recorridos realizados sin consumo declarado; al corregir un consumo se conserva su propio recorrido.
@@ -98,7 +98,7 @@ watch(() => props.modelValue, (abierto) => {
   const desdeRecorrido = !r && opcionesItinerario.value.some((o) => o.value === props.itinerarioInicial)
   Object.assign(form, {
     tipo: r?.tipo ?? (desdeRecorrido ? 'consumo' : 'carga'),
-    fecha: r?.fecha ?? FECHA_CORTE,
+    fecha: r?.fecha ?? hoy(),
     cantidad: r?.cantidad ?? null,
     itinerarioId: r?.itinerarioId ?? (desdeRecorrido ? props.itinerarioInicial : null),
     sustento: r?.sustento ?? ''

@@ -68,7 +68,7 @@ import { useRetorno } from 'src/composables/useRetorno'
 import { usePerfil } from 'src/composables/usePerfil'
 import { db } from 'src/services/datos'
 import { controlDeVehiculo } from 'src/services/mantenimientos'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { fecha } from 'src/utils/formato'
 import { actualizarVehiculo, numeroONulo, registrarVehiculo } from 'src/services/acciones'
 import { ESTADOS_VEHICULO_CON_ATENCION, OPCIONES_ESTADO_VEHICULO } from 'src/config/catalogos'
@@ -86,7 +86,7 @@ const emit = defineEmits(['update:modelValue', 'hecho'])
 const { avisarGuardado } = useRetorno()
 const { carsEnAmbito } = usePerfil()
 
-const ultimaFecha = computed(() => (props.vehiculo ? controlDeVehiculo(props.vehiculo, FECHA_CORTE).ultimaFecha : null))
+const ultimaFecha = computed(() => (props.vehiculo ? controlDeVehiculo(props.vehiculo, hoy()).ultimaFecha : null))
 
 const opcionesCar = computed(() => carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id })))
 const normalizarPlaca = (v) => String(v ?? '').trim().toUpperCase()

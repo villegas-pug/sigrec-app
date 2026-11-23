@@ -10,9 +10,12 @@ export function aplicarRegistro (coleccion, registro, { primero = false } = {}) 
   return registro
 }
 
-export async function cargarColeccion (coleccion, ruta = coleccion) {
-  const filas = await api('/' + ruta)
+export function aplicarColeccion (coleccion, filas) {
   db[coleccion].splice(0, db[coleccion].length, ...filas)
+}
+
+export async function cargarColeccion (coleccion, ruta = coleccion) {
+  aplicarColeccion(coleccion, await api('/' + ruta))
 }
 
 export async function escribirColeccion (coleccion, ruta, body, method = 'POST') {

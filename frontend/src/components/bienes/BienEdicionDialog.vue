@@ -104,7 +104,7 @@ import { useBorrador } from 'src/composables/useBorrador'
 import { ambientesDeCar, bienesDeAmbiente, opcionesAmbientes, ubicacionDeBien } from 'src/services/datos'
 import { actualizarBien, asociarBien, numeroONulo, puedeAsociar, trasladarBien } from 'src/services/acciones'
 import { asociacionesDeBien } from 'src/services/bienes'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { minimo, noFutura, requerido } from 'src/utils/validaciones'
 
 const props = defineProps({
@@ -155,7 +155,7 @@ watch(() => props.modelValue, (abierto) => {
     padreId: b.asociadoA?.bienId ?? null,
     posicion: b.asociadoA?.posicion ?? '',
     ambienteId: null,
-    fecha: FECHA_CORTE
+    fecha: hoy()
   })
   fijar()
 })

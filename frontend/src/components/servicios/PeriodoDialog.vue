@@ -57,7 +57,7 @@
 
       <template v-else-if="form.estado === 'pagado'">
         <div class="row q-col-gutter-md">
-          <q-input v-model="form.pagoFecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha de pago" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
+          <q-input v-model="form.pagoFecha" class="col-12 col-sm-6" outlined dense type="date" stack-label label="Fecha de pago" :hint="HINT_FECHA" :rules="[requerido, noFutura]">
             <template #append><boton-dictado v-model="form.pagoFecha" tipo="fecha" /></template>
           </q-input>
           <q-input v-model.number="form.pagoImporte" class="col-12 col-sm-6" outlined dense type="number" min="0" step="0.01" label="Importe (S/) *" :rules="[mayorQueCero]">
@@ -92,7 +92,7 @@ import { useGuardado } from 'src/composables/useGuardado'
 import { carPorId } from 'src/services/datos'
 import { informarPeriodo } from 'src/services/acciones'
 import { ESTADOS_PERIODO, TIPOS_SERVICIO } from 'src/config/catalogos'
-import { HINT_FECHA_CORTE, noFutura, requerido, mayorQueCero } from 'src/utils/validaciones'
+import { HINT_FECHA, noFutura, requerido, mayorQueCero } from 'src/utils/validaciones'
 import { fecha, soles } from 'src/utils/formato'
 
 const OPCIONES_ESTADO = [

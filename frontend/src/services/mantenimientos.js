@@ -1,7 +1,7 @@
 // Control preventivo y mantenimientos (SPEC 010 §7): fumigación, recarga de extintores y mantenimiento de equipos y vehículos.
 // Un solo registro (`db.mantenimientos`) cubre todos los tipos. Reglas puras: no modifican datos.
 import { db, ambientesDeCar, bienPorId, carPorId, vehiculoPorId, vigente, situacionDe } from './datos'
-import { PARAMETROS_CONTROL } from 'src/config/demo'
+import { PARAMETROS_CONTROL } from 'src/config/reglas'
 import { TIPO_EXTINTOR } from 'src/config/catalogos'
 import { diasEntre } from 'src/utils/fechas'
 

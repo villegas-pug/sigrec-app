@@ -89,12 +89,6 @@ public class CentroServiceImpl implements CentroService {
         return responseMapper.toResponse(centro);
     }
 
-    @Override
-    public void importar(CentroDatos datos, Usuario actor) {
-        var codigo = datos.id();
-        if (centros.findByCodigo(codigo).isEmpty()) guardarCentro(new Centro(), codigo, datos, actor, true);
-    }
-
     private CambioResponse<CentroResponse> guardarCentro(Centro c, String codigo, CentroDatos datos, Usuario actor, boolean alta) {
         entityMapper.fromModelToEntity(datos, c);
         c.setNombre(datos.nombre().strip());

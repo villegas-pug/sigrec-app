@@ -11,5 +11,4 @@ public interface ModuloService {
     CambioResponse<ModuloResponse> crear(CreateModuloRequest request);
     CambioResponse<ModuloResponse> editar(String codigo, UpdateModuloRequest request);
     ModuloResponse cambiarEstado(String codigo, String motivo);
-    void importar(ModuloDatos datos, String codigo, Usuario actor);
 }

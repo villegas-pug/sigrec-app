@@ -94,11 +94,6 @@ public class AmbienteServiceImpl implements AmbienteService {
         return responseMapper.toResponse(ambiente);
     }
 
-    @Override
-    public void importar(AmbienteDatos datos, String codigo, Usuario actor) {
-        if (ambientes.findByCodigo(codigo).isEmpty()) guardarAmbiente(new Ambiente(), codigo, modulo(datos.moduloId()), datos, actor, true);
-    }
-
     private CambioResponse<AmbienteResponse> guardarAmbiente(Ambiente a, String codigo, Modulo modulo, AmbienteDatos datos, Usuario actor, boolean alta) {
         entityMapper.fromModelToEntity(datos, a);
         a.setNombre(datos.nombre().strip());

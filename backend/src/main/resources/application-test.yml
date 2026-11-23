@@ -5,5 +5,5 @@ spring:
       - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
 sigrec:
   security:
-    cookie-secure: false
+    autorizacion: true
     cors-origin: http://localhost:9000

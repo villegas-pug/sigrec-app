@@ -28,7 +28,7 @@
     </note-banner>
 
     <template v-if="modo === 'verificacion'">
-      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la verificación *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
+      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la verificación *" :hint="HINT_FECHA" :rules="[requerido, noFutura]">
         <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
       </q-input>
       <q-option-group v-model="form.resultado" :options="OPCIONES_RESULTADO" />
@@ -47,7 +47,7 @@
           <status-chip v-bind="SITUACIONES[situacionDe(bienActivo)]" />
         </div>
       </div>
-      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la baja *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
+      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la baja *" :hint="HINT_FECHA" :rules="[requerido, noFutura]">
         <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
       </q-input>
       <q-input v-model="form.motivo" outlined dense label="Motivo de la baja *" :rules="[requerido]">
@@ -77,7 +77,7 @@
           <span v-if="bienActivo.asociadoA" class="sg-muted">Componente de {{ bienActivo.asociadoA.bienId }} ({{ bienActivo.asociadoA.posicion ?? 'posición no informada' }})</span>
         </div>
       </div>
-      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la reposición *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura, noAnteriorABaja]">
+      <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de la reposición *" :hint="HINT_FECHA" :rules="[requerido, noFutura, noAnteriorABaja]">
         <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
       </q-input>
       <q-input v-model="form.rotulo" outlined dense label="Rótulo SIGREC del bien nuevo *" :rules="[requerido, rotuloLibre]">
@@ -125,9 +125,9 @@ import CampoAdquisicion from 'components/common/CampoAdquisicion.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { db, bienPorId, textoUbicacion, tipoPorId, ubicacionDeBien, revisionPendienteDe, situacionDe } from 'src/services/datos'
 import { bajaDe, darDeBaja, informarVerificacion, registrarReposicion, reposicionDe, rotuloSugerido } from 'src/services/acciones'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { SITUACIONES, condicion } from 'src/config/catalogos'
-import { HINT_FECHA_CORTE, noAnteriorA, noFutura, requerido } from 'src/utils/validaciones'
+import { HINT_FECHA, noAnteriorA, noFutura, requerido } from 'src/utils/validaciones'
 import { fecha } from 'src/utils/formato'
 
 const props = defineProps({
@@ -200,13 +200,13 @@ function reiniciar () {
     bienId: props.bien?.id ?? null,
     carId: props.carInicial,
     ambienteId: null,
-    fecha: FECHA_CORTE,
+    fecha: hoy(),
     resultado: 'coincide',
     nota: '',
     motivo: '',
     detalle: '',
     codigoPatrimonial: '',
-    fechaAdquisicion: FECHA_CORTE.slice(0, 7),
+    fechaAdquisicion: hoy().slice(0, 7),
     costo: null
   })
   aplicarBien()

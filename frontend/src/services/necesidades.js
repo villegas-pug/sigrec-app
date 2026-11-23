@@ -5,7 +5,7 @@ import { esIncidencia, requiereReposicion, unidadesAfectadas, ubicacionHecho } f
 import { reposicionDe } from './bienes'
 import { plural } from 'src/utils/formato'
 import { TIPOS_EVENTO } from 'src/config/catalogos'
-import { PARAMETROS_PRIORIDAD } from 'src/config/demo'
+import { PARAMETROS_PRIORIDAD } from 'src/config/reglas'
 
 const enAmbito = (carIds, carId) => !carIds || carIds.includes(carId)
 const anioDe = (fechaIso) => Number(fechaIso.slice(0, 4))

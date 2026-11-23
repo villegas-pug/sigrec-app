@@ -168,20 +168,4 @@ public class MantenimientoServiceImpl implements MantenimientoService {
         }
         entityMapper.fromModelToEntity(datos, m);
     }
-
-    public void importar(String codigo, String carId, String bienId, String vehiculoId, String tipoCodigo,
-                         MantenimientoDatos datos, String autor, LocalDate fechaRegistro, Usuario actor) {
-        if (mantenimientos.findByCodigo(codigo).isPresent()) return;
-        var tipo = catalogos.obtener("TIPO_MANTENIMIENTO", tipoCodigo);
-        var m = new Mantenimiento();
-        m.setCodigo(codigo);
-        var centro = bienId == null && vehiculoId == null ? centrosRepo.findByCodigo(carId).orElseThrow() : null;
-        var bien = bienId == null ? null : bienes.buscar(bienId);
-        var vehiculo = vehiculoId == null ? null : vehiculos.findByCodigo(vehiculoId).orElseThrow();
-        objetivos(m, tipo, centro, bien, vehiculo);
-        copiar(m, datos);
-        m.setAutorReferencia(autor);
-        m.registrar(actor, fechaRegistro == null ? null : fechaRegistro.atStartOfDay());
-        mantenimientos.save(m);
-    }
 }

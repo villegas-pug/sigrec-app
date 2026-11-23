@@ -19,7 +19,7 @@ import pe.gob.inabif.sigrec.foto.mappers.*;
 import pe.gob.inabif.sigrec.foto.model.Foto;
 import pe.gob.inabif.sigrec.foto.repository.FotoRepository;
 import pe.gob.inabif.sigrec.security.Acceso;
-import pe.gob.inabif.sigrec.shared.model.FechaCorte;
+import pe.gob.inabif.sigrec.shared.model.Hoy;
 import pe.gob.inabif.sigrec.usuario.model.Usuario;
 
 import static pe.gob.inabif.sigrec.bien.service.ReglasBien.*;
@@ -67,7 +67,7 @@ public class FotoServiceImpl implements FotoService {
         }
         incorporar(foto, archivo);
         foto.asignarCodigo("FOT-");
-        foto.setFecha(FechaCorte.DIA);
+        foto.setFecha(Hoy.fecha());
         entityMapper.fromModelToEntity(datos, foto);
         foto.registrar(acceso.actor());
         return responseMapper.toResponse(fotos.save(foto));
@@ -156,19 +156,5 @@ public class FotoServiceImpl implements FotoService {
         if (firma.startsWith("\u0089PNG\r\n\u001a\n")) return "image/png";
         if ((bytes[0] & 255) == 255 && (bytes[1] & 255) == 216 && (bytes[2] & 255) == 255) return "image/jpeg";
         return null;
-    }
-
-    public void importar(String codigo, String centro, String ambiente, String bien, String titulo, String nota, LocalDate fecha, Usuario actor) {
-        if (fotos.findByCodigo(codigo).isPresent()) return;
-        var foto = new Foto();
-        foto.setCodigo(codigo);
-        foto.setFecha(fecha);
-        foto.setTitulo(titulo);
-        foto.setNota(nota);
-        foto.setCentro(centro == null ? null : centrosRepo.findByCodigo(centro).orElseThrow());
-        foto.setAmbiente(ambiente == null ? null : bienes.ambiente(ambiente));
-        foto.setBien(bien == null ? null : bienes.buscar(bien));
-        foto.registrar(actor);
-        fotos.save(foto);
     }
 }

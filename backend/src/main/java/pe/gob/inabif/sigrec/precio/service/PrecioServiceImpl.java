@@ -20,7 +20,7 @@ import pe.gob.inabif.sigrec.precio.mappers.PrecioResponseMapper;
 import pe.gob.inabif.sigrec.precio.mappers.PrecioUpdateMapper;
 import pe.gob.inabif.sigrec.precio.repository.PrecioRepository;
 import pe.gob.inabif.sigrec.security.Acceso;
-import pe.gob.inabif.sigrec.shared.model.FechaCorte;
+import pe.gob.inabif.sigrec.shared.model.Hoy;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +37,7 @@ public class PrecioServiceImpl implements PrecioService {
 
     @Override
     public List<PrecioResponse> listar() {
-        var asignaciones = acceso.cuenta().asignaciones();
+        var asignaciones = acceso.concesiones();
         if (asignaciones.stream().noneMatch(a -> !"VEHICULO".equals(a.alcance())
                 && a.rutas().stream().anyMatch(RUTAS_CON_VALORACION::contains))) {
             throw new AccessDeniedException("Consulta de precios no autorizada.");
@@ -52,7 +52,7 @@ public class PrecioServiceImpl implements PrecioService {
     @Override
     @Transactional
     public PrecioResponse informar(String codigo, UpdatePrecioRequest request) {
-        if (acceso.cuenta().asignaciones().stream().noneMatch(a -> catalogoGlobal(a)
+        if (acceso.concesiones().stream().noneMatch(a -> catalogoGlobal(a)
                 && a.acciones().contains("precio.informar"))) {
             throw new AccessDeniedException("No tiene permiso para informar precios.");
         }
@@ -60,8 +60,8 @@ public class PrecioServiceImpl implements PrecioService {
         if (valor.fechaPrecio() != null && valor.fechaPrecio().getYear() < 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Indique un mes de cotización válido.");
         }
-        if (valor.fechaPrecio() != null && valor.fechaPrecio().isAfter(FechaCorte.DIA)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha no puede ser posterior a la fecha de corte.");
+        if (valor.fechaPrecio() != null && valor.fechaPrecio().isAfter(Hoy.fecha())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha no puede ser posterior a hoy.");
         }
         var tipo = catalogos.bloquear("TIPO_BIEN", codigo.toUpperCase(Locale.ROOT))
                 .filter(Catalogo::vigente)
@@ -70,7 +70,7 @@ public class PrecioServiceImpl implements PrecioService {
         if (anterior == null || !anterior.coincideCon(valor)) {
             var actor = acceso.actor();
             if (anterior != null) {
-                anterior.reemplazar(actor, FechaCorte.DIA);
+                anterior.reemplazar(actor, Hoy.fecha());
                 precios.flush();
             }
             var actual = entityMapper.toEntity(valor);

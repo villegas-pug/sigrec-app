@@ -21,8 +21,8 @@
         <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
           <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
         </q-select>
-        <q-select v-model="anio" :options="ANIOS_SERVICIOS" outlined dense label="Año">
-          <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="ANIOS_SERVICIOS" /></template>
+        <q-select v-model="anio" :options="aniosServicios()" outlined dense label="Año">
+          <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="aniosServicios()" /></template>
         </q-select>
         <div class="row items-center"><filtro-inactivos v-model="mostrarInactivos" /></div>
       </div>
@@ -236,7 +236,7 @@ import { servicioPorId, vigente } from 'src/services/datos'
 import { antiguedadServicio, avisosDeServicios, celdasDelServicio, estadoRenovacion, interrupcionAbierta, problemasRecurrentes, serviciosDeCar, tiposNoRegistrados } from 'src/services/servicios'
 import { anular } from 'src/services/acciones'
 import { CHIP_ANULADO, ESTADOS_PERIODO, HECHOS_SERVICIO, MESES_CORTOS, PERIODICIDADES, TIPOS_SERVICIO } from 'src/config/catalogos'
-import { ANIOS_SERVICIOS, FECHA_CORTE } from 'src/config/demo'
+import { aniosServicios, hoy } from 'src/config/reglas'
 import { fecha, plural } from 'src/utils/formato'
 import { mostrarDetalle, parametro } from 'src/utils/navegacion'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
@@ -260,7 +260,7 @@ const servicioPedido = parametro(route.query.servicio)
 const servicioSolicitado = servicioPedido ? servicioPorId(servicioPedido) : null
 const { carId, car, opcionesCar } = useCentroSeleccionado(parametro(route.query.car) ?? servicioSolicitado?.carId)
 
-const anio = ref(ANIOS_SERVICIOS.find((a) => String(a) === parametro(route.query.anio)) ?? ANIOS_SERVICIOS.at(-1))
+const anio = ref(aniosServicios().find((a) => String(a) === parametro(route.query.anio)) ?? aniosServicios().at(-1))
 const mostrarInactivos = ref(!!servicioSolicitado?.anulacion)
 const fichaRef = ref(null)
 
@@ -272,12 +272,12 @@ const noRegistrados = computed(() => tiposNoRegistrados(servicios.value))
 const filas = computed(() =>
   servicios.value.map((servicio) => ({
     servicio,
-    celdas: celdasDelServicio(servicio, anio.value, FECHA_CORTE),
+    celdas: celdasDelServicio(servicio, anio.value, hoy()),
     interrupcion: interrupcionAbierta(servicio)
   }))
 )
 
-const avisos = computed(() => avisosDeServicios(serviciosVigentes.value, anio.value, FECHA_CORTE))
+const avisos = computed(() => avisosDeServicios(serviciosVigentes.value, anio.value, hoy()))
 
 // Un período pagado posterior a huecos sin información no prueba continuidad (regla provisional 12).
 const avisosContinuidad = computed(() =>
@@ -316,9 +316,9 @@ watch(servicios, (lista) => {
   }
 }, { immediate: true })
 const servicio = computed(() => (servicioId.value ? servicioPorId(servicioId.value) : null))
-const antiguedad = computed(() => (servicio.value ? antiguedadServicio(servicio.value, FECHA_CORTE) : null))
-const renovacion = computed(() => (servicio.value ? estadoRenovacion(servicio.value, FECHA_CORTE) : null))
-const recurrencia = computed(() => problemasRecurrentes(servicio.value, FECHA_CORTE))
+const antiguedad = computed(() => (servicio.value ? antiguedadServicio(servicio.value, hoy()) : null))
+const renovacion = computed(() => (servicio.value ? estadoRenovacion(servicio.value, hoy()) : null))
+const recurrencia = computed(() => problemasRecurrentes(servicio.value, hoy()))
 const hechosOrdenados = computed(() =>
   [...(servicio.value?.hechos ?? [])].filter((h) => mostrarInactivos.value || vigente(h)).sort((a, b) => b.fecha.localeCompare(a.fecha))
 )
@@ -340,7 +340,7 @@ const abrirHecho = (hecho, tipo = 'interrupcion') => Object.assign(dialogoHecho,
 // Con ?periodo= se abre el detalle de ese período al entrar, una sola vez: al volver a esta entrada no se reabre (SPEC 011, Ola 5).
 const periodoPedido = Number(parametro(route.query.periodo))
 if (servicio.value && periodoPedido && primeraVisita()) {
-  const celda = celdasDelServicio(servicio.value, anio.value, FECHA_CORTE).find((c) => c.numero === periodoPedido)
+  const celda = celdasDelServicio(servicio.value, anio.value, hoy()).find((c) => c.numero === periodoPedido)
   if (celda) abrirPeriodo(servicio.value, celda)
 }
 

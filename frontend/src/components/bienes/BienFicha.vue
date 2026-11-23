@@ -84,7 +84,7 @@
         Antecedentes insuficientes: falta {{ faltantes.join(' y ') }}. No se calcula una renovación por vida útil.
       </note-banner>
       <note-banner v-if="necesidad" tono="wa" icono="event_repeat">
-        <strong>Necesidad para revisión en {{ ANIO_REVISION }}:</strong> {{ necesidad.motivos.map((m) => m.texto).join(' · ') }}.
+        <strong>Necesidad para revisión en {{ anioRevision() }}:</strong> {{ necesidad.motivos.map((m) => m.texto).join(' · ') }}.
         No constituye autorización de baja ni de compra.
         <router-link v-if="puedeAcceder('necesidades')" :to="{ name: 'necesidades', query: { car: ubicacion.car.id, ...(bien.tipoId ? { tipo: bien.tipoId } : {}) } }" class="text-weight-bold">Ver necesidades</router-link>
       </note-banner>
@@ -188,7 +188,7 @@ import { antecedentesFaltantes, calcularNecesidades, finVidaUtil } from 'src/ser
 import { reposicionDe } from 'src/services/acciones'
 import { controlDeBien } from 'src/services/mantenimientos'
 import { CATEGORIAS, ESTADOS_CONTROL, SITUACIONES, TIPO_EXTINTOR, condicion } from 'src/config/catalogos'
-import { ANIO_REVISION, FECHA_CORTE } from 'src/config/demo'
+import { anioRevision, hoy } from 'src/config/reglas'
 import { fecha, plural, soles } from 'src/utils/formato'
 
 const props = defineProps({
@@ -221,7 +221,7 @@ const reposicion = computed(() => reposicionDe(props.bien.id))
 const dialogoMantenimiento = ref(false)
 const esExtintor = computed(() => props.bien.tipoId === TIPO_EXTINTOR)
 // Control único del bien (SPEC 011): recarga si es extintor; mantenimiento de equipo en lo demás.
-const control = computed(() => controlDeBien(props.bien, FECHA_CORTE))
+const control = computed(() => controlDeBien(props.bien, hoy()))
 const muestraMantenimiento = computed(() => !anulado.value && (props.bien.categoria === 'equipo' || esExtintor.value || !!control.value.ultimo))
 const reemplazaA = computed(() => eventosRegistrados().find((e) => !e.anulacion && e.tipo === 'reposicion' && e.bienNuevoId === props.bien.id) ?? null)
 
@@ -242,7 +242,7 @@ const cadenaAsociacion = computed(() => {
 
 const necesidad = computed(() =>
   activo.value
-    ? calcularNecesidades({ anio: ANIO_REVISION, carIds: [ubicacion.value.car.id] }).pendientes.find((n) => n.id === props.bien.id) ?? null
+    ? calcularNecesidades({ anio: anioRevision(), carIds: [ubicacion.value.car.id] }).pendientes.find((n) => n.id === props.bien.id) ?? null
     : null
 )
 

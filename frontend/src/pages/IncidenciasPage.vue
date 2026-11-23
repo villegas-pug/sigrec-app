@@ -81,7 +81,7 @@ import { calcularNecesidades } from 'src/services/necesidades'
 import DetalleHecho from 'components/bienes/DetalleHecho.vue'
 import { TIPOS_HECHO, ESTADOS, estadoNecesidad as estadoHecho, hechosRegistrados, ubicacionHecho } from 'src/services/incidencias'
 import { CHIP_ANULADO, TIPOS_EVENTO, TODOS } from 'src/config/catalogos'
-import { ANIO_REVISION } from 'src/config/demo'
+import { anioRevision } from 'src/config/reglas'
 import { fecha, plural } from 'src/utils/formato'
 import { mostrarDetalle, parametro } from 'src/utils/navegacion'
 
@@ -114,7 +114,7 @@ const opcionesAnio = computed(() => [
   ...[...new Set(eventosRegistrados().map((ev) => ev.fecha.slice(0, 4)))].sort().reverse().map((a) => ({ label: a, value: a }))
 ])
 
-const pendientes = computed(() => calcularNecesidades({ anio: ANIO_REVISION, carIds: carIdsEnAmbito.value }).pendientes)
+const pendientes = computed(() => calcularNecesidades({ anio: anioRevision(), carIds: carIdsEnAmbito.value }).pendientes)
 const estadoNecesidad = (ev) => estadoHecho(ev, pendientes.value)
 
 const filtros = reactive({ ambienteId: TODOS, texto: '', tipo: TODOS, necesidad: TODOS, anio: TODOS })

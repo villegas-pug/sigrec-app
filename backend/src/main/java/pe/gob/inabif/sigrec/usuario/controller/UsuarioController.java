@@ -6,7 +6,6 @@ import pe.gob.inabif.sigrec.usuario.service.UsuarioService;
 
 import jakarta.validation.Valid;
 import java.util.List;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -22,9 +21,6 @@ class UsuarioController {
 
     @GetMapping("/{codigo}")
     ApiResponse<UsuarioResponse> consultar(@PathVariable String codigo) { return ApiResponse.ok(usuarios.consultar(codigo)); }
-
-    @PostMapping
-    ResponseEntity<ApiResponse<UsuarioResponse>> crear(@Valid @RequestBody CreateUsuarioRequest datos) { return ApiResponse.created(usuarios.crear(datos)); }
 
     @PutMapping("/{codigo}")
     ApiResponse<UsuarioResponse> editar(@PathVariable String codigo, @Valid @RequestBody UpdateUsuarioRequest datos) {

@@ -3,7 +3,11 @@ import { api } from './api'
 import { db } from './datos'
 
 export async function cargarInventario () {
-  const inventario = await api('/bienes/datos')
+  aplicarInventario(await api('/bienes/datos'))
+}
+
+// Conserva la identidad de los objetos que ya tienen las pantallas y actualiza sus campos.
+export function aplicarInventario (inventario) {
   for (const [coleccion, datos] of Object.entries(inventario)) {
     const anteriores = new Map(db[coleccion].map((item) => [item.id, item]))
     const registros = datos.map((registro) => {

@@ -10,7 +10,7 @@ import { controlesPendientes, proximosControles } from './mantenimientos'
 import { requiereAtencion } from './vehiculos'
 import { evaluarItinerario, itinerariosDeVehiculo } from './combustible'
 import { TIPOS_EVENTO, TIPOS_MANTENIMIENTO, estadoVehiculo } from 'src/config/catalogos'
-import { PARAMETROS_ATENCION } from 'src/config/demo'
+import { PARAMETROS_ATENCION } from 'src/config/reglas'
 import { diasEntre } from 'src/utils/fechas'
 import { fecha, plural, soles } from 'src/utils/formato'
 

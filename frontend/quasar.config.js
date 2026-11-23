@@ -17,6 +17,16 @@ export default defineConfig(() => {
         node: 'node22'
       },
       vueRouterMode: 'hash',
+      // SPEC 039: integración con la intranet. Valores por defecto de SIGREC; el entorno puede sobreescribirlos al compilar.
+      env: {
+        SIGREC_SRH_URL: process.env.SIGREC_SRH_URL ?? 'https://srvapp01.inabif.gob.pe:8443/SRH',
+        SIGREC_SISTEMA_ID: process.env.SIGREC_SISTEMA_ID ?? '345',
+        SIGREC_INTRANET_URL: process.env.SIGREC_INTRANET_URL ?? 'https://srvapp01.inabif.gob.pe:8443/intranet/#/',
+        SIGREC_SALIR_URL: process.env.SIGREC_SALIR_URL ?? 'https://srvapp01.inabif.gob.pe:8443/seguridad/SPrincipal',
+        SIGREC_TOKEN_EXPIRATION_MINUTES: process.env.SIGREC_TOKEN_EXPIRATION_MINUTES ?? '240',
+        // Como en educalle-app, la clave viaja en el bundle: controla la caducidad de la sesión, no la seguridad.
+        SIGREC_TOKEN_SECRET: process.env.SIGREC_TOKEN_SECRET ?? 'sigrec-desarrollo-token-sesion'
+      },
       // Path base de la SPA: se sirve en /sigrec/ (dev y build).
       publicPath: '/sigrec/'
     },
@@ -35,7 +45,7 @@ export default defineConfig(() => {
       config: {},
       lang: 'es',
       iconSet: 'material-icons',
-      plugins: ['Notify', 'Dialog']
+      plugins: ['Notify', 'Dialog', 'LocalStorage']
     },
 
     animations: []

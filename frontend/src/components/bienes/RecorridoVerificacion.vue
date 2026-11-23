@@ -12,7 +12,7 @@
     @enviar="guardar"
   >
     <div class="row items-center q-col-gutter-md">
-      <q-input v-model="form.fecha" class="col-12 col-sm-5" outlined dense type="date" stack-label label="Fecha del recorrido *" :hint="HINT_FECHA_CORTE" :rules="[requerido, noFutura]">
+      <q-input v-model="form.fecha" class="col-12 col-sm-5" outlined dense type="date" stack-label label="Fecha del recorrido *" :hint="HINT_FECHA" :rules="[requerido, noFutura]">
         <template #append><boton-dictado v-model="form.fecha" tipo="fecha" /></template>
       </q-input>
       <div class="col-12 col-sm-7 column q-gutter-y-xs">
@@ -82,9 +82,9 @@ import { useBorrador } from 'src/composables/useBorrador'
 import { bienPorId, bienesDeAmbiente, textoUbicacion, ubicacionDeAmbiente, situacionDe, verificacionDe } from 'src/services/datos'
 import { informarVerificaciones } from 'src/services/acciones'
 import { condicion } from 'src/config/catalogos'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { fecha, plural } from 'src/utils/formato'
-import { HINT_FECHA_CORTE, noFutura, requerido } from 'src/utils/validaciones'
+import { HINT_FECHA, noFutura, requerido } from 'src/utils/validaciones'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -100,7 +100,7 @@ const OPCIONES = [
   { value: 'no_encontrado', label: 'No está', icon: 'search_off' }
 ]
 
-const form = reactive({ fecha: FECHA_CORTE, marcas: {} })
+const form = reactive({ fecha: hoy(), marcas: {} })
 const { modificado, fijar } = useBorrador(form)
 
 // Primero los que nunca se verificaron; luego por rótulo.
@@ -114,7 +114,7 @@ const pendientes = computed(() => bienes.value.filter((b) => !form.marcas[b.id])
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
-  Object.assign(form, { fecha: FECHA_CORTE, marcas: {} })
+  Object.assign(form, { fecha: hoy(), marcas: {} })
   fijar()
 })
 

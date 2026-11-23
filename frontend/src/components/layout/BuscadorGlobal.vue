@@ -61,9 +61,9 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import EscanerRotulo from 'components/common/EscanerRotulo.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { buscar, indiceDeBusqueda } from 'src/services/busqueda'
+import { asegurarDatos } from 'src/services/cargaDatos'
 import { MENU } from 'src/config/menu'
-import { FECHA_CORTE } from 'src/config/demo'
-import { ANIO_SERVICIOS } from 'src/composables/useAtencion'
+import { anioServicios, hoy } from 'src/config/reglas'
 import { normalizar } from 'src/utils/interpretacionVoz'
 
 defineProps({ modelValue: { type: Boolean, default: false } })
@@ -88,10 +88,16 @@ const pantallas = computed(() =>
     .map((e) => ({ clave: `ir-${e.key}`, tipo: 'pantalla', id: e.key, titulo: `Ir a ${e.label}`, detalle: '', icono: e.icon, destino: { name: e.key }, texto: normalizar(e.label) }))
 )
 
-function alMostrar () {
-  indice.value = indiceDeBusqueda({ cars: carsEnAmbito.value, vehiculos: vehiculosEnAmbito.value, fechaCorte: FECHA_CORTE, anioServicios: ANIO_SERVICIOS }).filter((e) => puedeAcceder(e.destino.name))
+// SPEC 041: el buscador pide sus colecciones al abrirse; con la caché por sesión solo la primera vez cuesta una llamada.
+async function alMostrar () {
   consulta.value = ''
   activo.value = 0
+  try {
+    await asegurarDatos(['jerarquia', 'inventario', 'tiposBien', 'vehiculos', 'servicios'])
+  } catch (error) {
+    $q.notify({ type: 'negative', message: error.message || 'No se pudo preparar la búsqueda.' })
+  }
+  indice.value = indiceDeBusqueda({ cars: carsEnAmbito.value, vehiculos: vehiculosEnAmbito.value, fechaCorte: hoy(), anioServicios: anioServicios() }).filter((e) => puedeAcceder(e.destino.name))
 }
 
 const resultados = computed(() => {

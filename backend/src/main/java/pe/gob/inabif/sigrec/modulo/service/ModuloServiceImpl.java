@@ -90,14 +90,6 @@ public class ModuloServiceImpl implements ModuloService {
         return responseMapper.toResponse(modulo);
     }
 
-    @Override
-    public void importar(ModuloDatos datos, String codigo, Usuario actor) {
-        if (modulos.findByCodigo(codigo).isPresent()) return;
-        var modulo = new Modulo();
-        modulo.setCentro(centroService.bloquear(datos.carId()));
-        guardarModulo(modulo, codigo, datos, actor, true);
-    }
-
     private CambioResponse<ModuloResponse> guardarModulo(Modulo m, String codigo, ModuloDatos datos, Usuario actor, boolean alta) {
         entityMapper.fromModelToEntity(datos, m);
         m.setNombre(datos.nombre().strip());

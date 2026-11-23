@@ -4,7 +4,7 @@
       <section class="sg-card q-pa-lg" style="max-width: 640px; margin: 48px auto 0">
         <q-icon name="lock" size="40px" color="grey-7" aria-hidden="true" />
         <h1 class="text-h6 text-weight-bold q-mt-sm q-mb-sm">
-          Este módulo no está disponible para el perfil {{ perfil.nombre }}
+          Este módulo no está disponible para su usuario
         </h1>
         <p class="sg-muted">
           El menú muestra los módulos autorizados para este perfil.
@@ -26,7 +26,7 @@ import { usePerfil } from 'src/composables/usePerfil'
 import { useRetorno } from 'src/composables/useRetorno'
 import VolverOrigen from 'components/layout/VolverOrigen.vue'
 
-const { perfil, rutaInicial } = usePerfil()
+const { rutaInicial } = usePerfil()
 const { destino } = useRetorno()
 
 const nombreRutaInicial = computed(() => {

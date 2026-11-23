@@ -10,77 +10,61 @@
   >
     <nav id="menu-principal" class="sg-nav" aria-label="Menú principal">
       <q-list dense>
-        <template v-for="entrada in menuVisible" :key="entrada.key">
-          <q-item
-            v-if="!entrada.items"
-            clickable
-            :to="{ name: entrada.key }"
-            :active="rutaActiva === entrada.key"
-            active-class="sg-nav__item--active"
-            class="sg-nav__item"
-            :class="{ 'sg-nav__item--root': entrada.key === 'inicio' }"
-            @click="marcarNavegacionPrincipal"
-          >
-            <q-item-section avatar>
-              <q-icon :name="entrada.icon" size="24px" aria-hidden="true" />
-            </q-item-section>
-            <q-item-section>{{ entrada.label }}</q-item-section>
-          </q-item>
+        <!-- Árbol de SRH (SPEC 039), como educalle-app: módulo › menú › submenú. -->
+        <div v-for="modulo in menuOrdenado" :key="modulo.descripcion">
+          <q-item-label v-if="!ocultarTituloModulo(modulo)" header class="text-bold">{{ modulo.descripcion }}</q-item-label>
 
-          <q-expansion-item
-            v-else
-            dense
-            :model-value="estaAbierto(entrada)"
-            :icon="entrada.icon"
-            :label="entrada.label"
-            :header-class="['sg-nav__group-header', { 'sg-nav__group-header--open': estaAbierto(entrada) }]"
-            @update:model-value="(valor) => (abiertos[entrada.key] = valor)"
-          >
-            <q-item
-              v-for="hoja in entrada.items"
-              :key="hoja.key"
-              clickable
-              :to="{ name: hoja.key }"
-              :active="rutaActiva === hoja.key"
-              active-class="sg-nav__item--active"
-              class="sg-nav__item sg-nav__item--leaf"
-              @click="marcarNavegacionPrincipal"
+          <template v-for="menu in modulo.subitems" :key="menu.descripcion">
+            <q-expansion-item
+              v-if="menu.subitems.length"
+              dense
+              :label="menu.descripcion"
+              :icon="menu.icono"
+              :disable="menu.flgDeshabilitado === 1"
+              :default-opened="menu.modFlgMenuAbiertoDefecto === 1 || menu.subitems.some((s) => rutaActual === s.enlace)"
+              :header-class="['sg-nav__group-header', { 'sg-nav__group-header--open': menu.subitems.some((s) => rutaActual === s.enlace) }]"
             >
-              <q-item-section avatar>
-                <q-icon :name="hoja.icon" size="20px" aria-hidden="true" />
-              </q-item-section>
-              <q-item-section>{{ hoja.label }}</q-item-section>
+              <q-item
+                v-for="item in menu.subitems"
+                :key="item.descripcion"
+                clickable
+                dense
+                :disable="item.flgDeshabilitado === 1"
+                :active="rutaActual === item.enlace"
+                active-class="sg-nav__item--active"
+                class="sg-nav__item sg-nav__item--leaf"
+                @click="irA(item.enlace)"
+              >
+                <q-item-section avatar><q-icon :name="item.icono || 'chevron_right'" size="20px" aria-hidden="true" /></q-item-section>
+                <q-item-section>{{ obtenerDescripcionVisible(item.descripcion) }}</q-item-section>
+              </q-item>
+            </q-expansion-item>
+
+            <q-item
+              v-else
+              clickable
+              dense
+              :disable="menu.flgDeshabilitado === 1"
+              :active="rutaActual === menu.enlace"
+              active-class="sg-nav__item--active"
+              class="sg-nav__item"
+              :class="{ 'sg-nav__item--root': menu.enlace === 'inicio' }"
+              @click="irA(menu.enlace)"
+            >
+              <q-item-section avatar><q-icon :name="menu.icono || 'chevron_right'" size="24px" aria-hidden="true" /></q-item-section>
+              <q-item-section>{{ obtenerDescripcionVisible(menu.descripcion) }}</q-item-section>
             </q-item>
-          </q-expansion-item>
-        </template>
+          </template>
+        </div>
       </q-list>
     </nav>
-
-    <div class="sg-perfil">
-      <q-select
-        v-model="perfilId"
-        :options="opcionesPerfil"
-        emit-value
-        map-options
-        dense
-        outlined
-        bg-color="white"
-        label="Perfil">
-        <template #append><boton-dictado v-model="perfilId" tipo="opcion" :opciones="opcionesPerfil" emit-value /></template>
-      </q-select>
-      <p class="sg-perfil__texto">Ámbito: {{ perfil.ambito.descripcion }}</p>
-      <q-btn flat color="secondary" icon="logout" label="Cerrar sesión" no-caps :loading="cerrando" @click="salir" />
-    </div>
   </q-drawer>
 </template>
 
 <script setup>
-import BotonDictado from 'components/common/BotonDictado.vue'
-import { computed, reactive, ref } from 'vue'
-import { useQuasar } from 'quasar'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { MENU } from 'src/config/menu'
-import { usePerfil } from 'src/composables/usePerfil'
+import { useSesionIntranet } from 'src/composables/useSesionIntranet'
 // El menú es navegación principal: la pantalla a la que lleva no ofrece «Volver».
 import { marcarNavegacionPrincipal } from 'src/router/retorno'
 
@@ -91,35 +75,15 @@ defineProps({
 defineEmits(['update:modelValue'])
 
 const route = useRoute()
-const { perfiles, perfilId, perfil, puedeAcceder, cerrarSesion } = usePerfil()
-
-const opcionesPerfil = computed(() => perfiles.value.map((p) => ({ label: p.nombre, value: p.id })))
-const $q = useQuasar()
 const router = useRouter()
-const cerrando = ref(false)
+const { menuOrdenado, ocultarTituloModulo, obtenerDescripcionVisible } = useSesionIntranet()
 
-async function salir () {
-  if (cerrando.value) return
-  cerrando.value = true
-  try {
-    await cerrarSesion()
-    await router.replace({ name: 'login' })
-  } catch (error) {
-    $q.notify({ type: 'negative', message: error.message })
-  } finally {
-    cerrando.value = false
-  }
+// Igual que educalle-app: el `enlace` de SRH es la ruta sin la barra inicial.
+const rutaActual = computed(() => route.path.replace(/^\/+/, ''))
+
+function irA (enlace) {
+  if (!enlace || enlace === '#') return
+  marcarNavegacionPrincipal()
+  router.push('/' + enlace.replace(/^\/+/, ''))
 }
-const rutaActiva = computed(() => route.name)
-
-// Solo se muestran las entradas a las que el perfil tiene acceso; un grupo sin hojas visibles desaparece.
-const menuVisible = computed(() =>
-  MENU.map((entrada) =>
-    entrada.items ? { ...entrada, items: entrada.items.filter((h) => puedeAcceder(h.key)) } : entrada
-  ).filter((entrada) => (entrada.items ? entrada.items.length > 0 : puedeAcceder(entrada.key)))
-)
-
-// Un grupo se abre por defecto si contiene la ruta activa; luego respeta lo que elija la persona.
-const abiertos = reactive({})
-const estaAbierto = (entrada) => abiertos[entrada.key] ?? entrada.items.some((h) => h.key === rutaActiva.value)
 </script>

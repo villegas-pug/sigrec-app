@@ -1,16 +1,15 @@
 // Avisos de «Atención requerida» del perfil activo (SPEC 011). Los comparten Inicio y el contador de la cabecera.
 import { computed } from 'vue'
+import { inicioListo } from 'src/services/cargaDatos'
 import { usePerfil } from './usePerfil'
 import { avisosDeAtencion } from 'src/services/atencion'
-import { ANIO_REVISION, FECHA_CORTE } from 'src/config/demo'
-
-// Año de los períodos de pago que se revisan: el de la fecha de corte.
-export const ANIO_SERVICIOS = Number(FECHA_CORTE.slice(0, 4))
+import { anioRevision, anioServicios, hoy } from 'src/config/reglas'
 
 export function useAtencion () {
   const { carsEnAmbito, vehiculosEnAmbito } = usePerfil()
-  const avisos = computed(() =>
-    avisosDeAtencion({ cars: carsEnAmbito.value, vehiculos: vehiculosEnAmbito.value, fechaCorte: FECHA_CORTE, anio: ANIO_REVISION, anioServicios: ANIO_SERVICIOS })
+  // SPEC 042: los avisos solo son fiables con todas las colecciones de Inicio cargadas.
+  const avisos = computed(() => !inicioListo.value ? { ahora: [], proximos: [] } :
+    avisosDeAtencion({ cars: carsEnAmbito.value, vehiculos: vehiculosEnAmbito.value, fechaCorte: hoy(), anio: anioRevision(), anioServicios: anioServicios() })
   )
   return { avisos }
 }

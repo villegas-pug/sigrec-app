@@ -6,6 +6,10 @@ const ruta = '/catalogos/tipos-bien'
 
 export async function cargarTiposBien ({ incluirPrecios }) {
   const [tipos, precios] = await Promise.all([api(ruta), incluirPrecios ? listarPrecios() : []])
+  aplicarTiposBien(tipos, precios)
+}
+
+export function aplicarTiposBien (tipos, precios = []) {
   const porTipo = new Map(precios.map((precio) => [precio.tipoId, precio]))
   const valores = new Map(db.tiposBien.map((tipo) => [tipo.id, tipo]))
   const registros = tipos.map((tipo) => Object.assign(valores.get(tipo.id) ?? {}, tipo, camposPrecio(porTipo.get(tipo.id))))

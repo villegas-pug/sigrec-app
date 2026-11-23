@@ -94,7 +94,7 @@ import { db, tipoPorId, vigente } from 'src/services/datos'
 import { calcularNecesidades } from 'src/services/necesidades'
 import { anular, dependenciasDeTipoBien } from 'src/services/acciones'
 import { CATEGORIAS, CHIP_ANULADO } from 'src/config/catalogos'
-import { ANIO_REVISION } from 'src/config/demo'
+import { anioRevision } from 'src/config/reglas'
 import { fecha, soles } from 'src/utils/formato'
 
 const OPCIONES_FILTRO = [
@@ -104,7 +104,7 @@ const OPCIONES_FILTRO = [
 ]
 
 const props = defineProps({
-  anio: { type: Number, default: ANIO_REVISION },
+  anio: { type: Number, default: anioRevision() },
   carIds: { type: Array, default: null },
   contexto: { type: String, default: '' },
   tipoPedido: { type: String, default: '' },

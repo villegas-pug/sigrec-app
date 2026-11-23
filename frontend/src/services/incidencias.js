@@ -2,9 +2,9 @@
 import { db, bienPorId, ambientePorId, carPorId, etiquetaAmbiente, moduloPorId, textoUbicacion, ubicacionDeAmbiente, ubicacionDeBien, vigente, estaAtendida, situacionDe } from './datos'
 import { eventosRegistrados } from './centros'
 import { reposicionDe } from './bienes'
-import { INCIDENTES, TIPOS_NOVEDAD } from 'src/config/catalogos'
+import { INCIDENTES, TIPOS_HECHO, TIPOS_NOVEDAD } from 'src/config/catalogos'
 import { plural } from 'src/utils/formato'
-export const TIPOS_HECHO = [...new Set([...INCIDENTES, ...Object.keys(TIPOS_NOVEDAD), 'baja', 'reposicion'])]
+export { TIPOS_HECHO }
 export const esIncidencia = (e) => !!e && (INCIDENTES.includes(e.tipo) || (['centro', 'ambiente'].includes(e.origen?.tipo) && Object.hasOwn(TIPOS_NOVEDAD, e.tipo)))
 // Los incidentes anteriores solo guardaban el ambiente; no se inventa un origen más preciso.
 export function origenIncidencia (e) {

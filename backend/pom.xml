@@ -22,7 +22,6 @@
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-jpa</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-validation</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-security</artifactId></dependency>
-    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-oauth2-resource-server</artifactId></dependency>
     <dependency><groupId>com.oracle.database.jdbc</groupId><artifactId>ojdbc11</artifactId><version>21.9.0.0</version><scope>runtime</scope></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
     <dependency><groupId>org.springframework.security</groupId><artifactId>spring-security-test</artifactId><scope>test</scope></dependency>
@@ -30,27 +29,6 @@
   <build>
     <resources>
       <resource><directory>src/main/resources</directory></resource>
-      <resource>
-        <directory>${project.basedir}/../frontend/src/data</directory>
-        <targetPath>demo</targetPath>
-        <includes>
-          <include>cars.json</include>
-          <include>modulos.json</include>
-          <include>ambientes.json</include>
-          <include>elementos.json</include>
-          <include>vehiculos.json</include>
-          <include>bienes.json</include>
-          <include>inventario-previo.json</include>
-          <include>eventos.json</include>
-          <include>tipos-bien.json</include>
-          <include>servicios.json</include>
-          <include>itinerarios.json</include>
-          <include>combustible.json</include>
-          <include>fotos.json</include>
-          <include>intervenciones.json</include>
-          <include>mantenimientos.json</include>
-        </includes>
-      </resource>
     </resources>
     <plugins>
     <plugin>

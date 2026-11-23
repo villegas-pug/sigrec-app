@@ -24,8 +24,7 @@ spring:
       max-request-size: 6MB
 sigrec:
   security:
-    jwt:
-      secret: ${SIGREC_JWT_SECRET}
-      issuer: sigrec
-      audience: sigrec-api
-      ttl: 30m
+    # SPEC 039. false: el API no restringe por perfil ni ámbito (como educalle); la UI sí. Activar exige identidad verificada.
+    autorizacion: ${SIGREC_AUTORIZACION:false}
+server:
+  address: 127.0.0.1

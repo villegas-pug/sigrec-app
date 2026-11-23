@@ -40,7 +40,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarNovedad, registrarNovedad } from 'src/services/acciones'
 import { OPCIONES_NOVEDAD } from 'src/config/catalogos'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { noFutura, requerido } from 'src/utils/validaciones'
 import { etiquetaAmbiente } from 'src/services/datos'
 
@@ -65,7 +65,7 @@ watch(() => props.modelValue, (abierto) => {
   const s = n ? {} : props.sugerencia ?? {}
   Object.assign(form, {
     tipo: n?.tipo ?? s.tipo ?? 'dano',
-    fecha: n?.fecha ?? FECHA_CORTE,
+    fecha: n?.fecha ?? hoy(),
     titulo: n?.titulo ?? s.titulo ?? '',
     detalle: n?.detalle ?? s.detalle ?? '',
     ubicacion: n && n.ubicacion !== 'No informada' ? n.ubicacion : '',

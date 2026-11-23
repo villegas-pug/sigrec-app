@@ -36,8 +36,8 @@
         <q-select v-if="vista === 'resumen'" v-model="categoria" :options="OPCIONES_FILTRO_CATEGORIA" emit-value map-options outlined dense label="Categoría">
           <template #append><boton-dictado v-model="categoria" tipo="opcion" :opciones="OPCIONES_FILTRO_CATEGORIA" emit-value /></template>
         </q-select>
-        <q-select v-if="vista === 'resumen'" v-model="anio" :options="ANIOS_REVISION" outlined dense label="Año a revisar">
-          <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="ANIOS_REVISION" /></template>
+        <q-select v-if="vista === 'resumen'" v-model="anio" :options="aniosRevision()" outlined dense label="Año a revisar">
+          <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="aniosRevision()" /></template>
         </q-select>
       </div>
 
@@ -234,7 +234,7 @@ import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { bienesActivosDeCentros, carPorId, db, etiquetaAmbiente, tipoPorId, vigentes, verificacionDe } from 'src/services/datos'
 import { detalleInventario, consultaPorTipo, estadoValoracion, requiereAtencionEquipo, resumenInventario, totalizarInventario } from 'src/services/inventario'
 import { CATEGORIAS, CONDICIONES, CONDICION_DESCONOCIDA, ESTADOS_CONTROL, OPCIONES_CATEGORIA, TIPO_EXTINTOR, TODOS, condicion } from 'src/config/catalogos'
-import { ANIO_REVISION, ANIOS_REVISION, FECHA_CORTE } from 'src/config/demo'
+import { anioRevision, aniosRevision, hoy } from 'src/config/reglas'
 import { exportarCsv } from 'src/utils/csv'
 import { fecha, numero, plural, soles } from 'src/utils/formato'
 import { mostrarDetalle, parametro } from 'src/utils/navegacion'
@@ -254,7 +254,7 @@ const route = useRoute()
 const { perfil, puedeAcceder } = usePerfil()
 const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(route.query.car, { todos: true })
 
-const anio = ref(ANIO_REVISION)
+const anio = ref(anioRevision())
 const agruparPor = ref('tipo')
 const categoria = ref(TODOS)
 
@@ -276,7 +276,7 @@ const verificacion = ref(opcionesVerificacion.some((o) => o.value === parametro(
 const controlFiltro = ref(parametro(route.query.control) === 'vencido' ? 'vencido' : TODOS)
 if (['detalle', 'mal_estado'].includes(vista.value) && !tipoPedido) tipoId.value = TODOS
 
-const equipo = computed(() => (tipoId.value ? consultaPorTipo(tipoId.value, carIdsVisibles.value.map(carPorId), { anio: ANIO_REVISION, fechaCorte: FECHA_CORTE }) : []))
+const equipo = computed(() => (tipoId.value ? consultaPorTipo(tipoId.value, carIdsVisibles.value.map(carPorId), { anio: anioRevision(), fechaCorte: hoy() }) : []))
 const centrosConEquipo = computed(() => equipo.value.filter((e) => e.cantidad > 0).length)
 const centrosConAtencion = computed(() => equipo.value.filter(requiereAtencionEquipo).length)
 const unidadesEquipo = computed(() => equipo.value.reduce((suma, e) => suma + e.cantidad, 0))
@@ -306,7 +306,7 @@ watch(vista, (valor, previo) => {
 })
 
 const bienesMalos = computed(() => detalleInventario({ carIds: carIdsVisibles.value, tipoId: tipoId.value === TODOS ? null : tipoId.value, malEstado: true }))
-const bienesDetalle = computed(() => detalleInventario({ carIds: carIdsVisibles.value, tipoId: tipoId.value === TODOS ? null : tipoId.value, verificacion: verificacion.value === TODOS ? null : verificacion.value, control: controlFiltro.value, fechaCorte: FECHA_CORTE }))
+const bienesDetalle = computed(() => detalleInventario({ carIds: carIdsVisibles.value, tipoId: tipoId.value === TODOS ? null : tipoId.value, verificacion: verificacion.value === TODOS ? null : verificacion.value, control: controlFiltro.value, fechaCorte: hoy() }))
 const unidadesDetalle = computed(() => bienesDetalle.value.reduce((suma, f) => suma + (f.bien.cantidad ?? 1), 0))
 const unidadesMalas = computed(() => bienesMalos.value.reduce((suma, f) => suma + (f.bien.cantidad ?? 1), 0))
 // El denominador usa el mismo ámbito que Inicio, independientemente de los filtros del resumen.

@@ -1,8 +1,10 @@
 package pe.gob.inabif.sigrec.security;
 
 import pe.gob.inabif.sigrec.centro.model.Centro;
-import pe.gob.inabif.sigrec.usuario.model.Usuario;
+import pe.gob.inabif.sigrec.perfil.model.Perfil;
 import pe.gob.inabif.sigrec.permiso.model.Permiso;
+import pe.gob.inabif.sigrec.permiso.repository.PermisoRepository;
+import pe.gob.inabif.sigrec.usuario.model.Usuario;
 import pe.gob.inabif.sigrec.usuario.model.UsuarioPerfil;
 import pe.gob.inabif.sigrec.usuario.repository.UsuarioRepository;
 import pe.gob.inabif.sigrec.usuario.repository.UsuarioPerfilRepository;
@@ -10,46 +12,67 @@ import pe.gob.inabif.sigrec.perfil.repository.PerfilPermisoRepository;
 import pe.gob.inabif.sigrec.centro.repository.CentroRepository;
 
 import java.util.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Único punto de control de acceso. SPEC 039: la identidad llega de la intranet (cabecera). Con
+ * {@code sigrec.security.autorizacion=false} (valor por defecto, como educalle) el API no restringe por perfil ni
+ * ámbito: el menú lo define SRH y la UI lo aplica.
+ */
 @Service
 @Transactional(readOnly = true)
 public class Acceso {
     private final UsuarioRepository usuarios;
     private final UsuarioPerfilRepository asignaciones;
     private final PerfilPermisoRepository permisos;
+    private final PermisoRepository catalogoPermisos;
     private final CentroRepository centros;
     private final VehiculosRegistrados vehiculos;
+    private final IdentidadIntranet intranet;
+    private final UsuarioIntranet aprovisionamiento;
+    private final boolean autorizacion;
 
     Acceso(UsuarioRepository usuarios, UsuarioPerfilRepository asignaciones, PerfilPermisoRepository permisos,
-           CentroRepository centros, VehiculosRegistrados vehiculos) {
+           PermisoRepository catalogoPermisos, CentroRepository centros,
+           VehiculosRegistrados vehiculos, IdentidadIntranet intranet, UsuarioIntranet aprovisionamiento,
+           @Value("${sigrec.security.autorizacion:false}") boolean autorizacion) {
         this.usuarios = usuarios;
         this.asignaciones = asignaciones;
         this.permisos = permisos;
+        this.catalogoPermisos = catalogoPermisos;
         this.centros = centros;
         this.vehiculos = vehiculos;
+        this.intranet = intranet;
+        this.aprovisionamiento = aprovisionamiento;
+        this.autorizacion = autorizacion;
     }
 
+    /** Usuario de la intranet que realiza la llamada; se crea en su primer ingreso. */
     public Usuario actor() {
-        if (!(SecurityContextHolder.getContext().getAuthentication() instanceof JwtAuthenticationToken auth)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Inicie sesión para continuar.");
+        var identidad = intranet.actual().orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Ingrese desde la intranet para continuar."));
+        var existente = usuarios.findByProveedorAndSujeto(Identidad.INTRANET, identidad.sujeto());
+        if (existente.isEmpty()) {
+            try {
+                aprovisionamiento.crear(identidad);
+            } catch (DataIntegrityViolationException otraPeticionLoCreo) {
+                // Dos primeras llamadas simultáneas del mismo usuario: se vuelve a leer.
+            }
+            existente = usuarios.findByProveedorAndSujeto(Identidad.INTRANET, identidad.sujeto());
         }
-        return usuario(Long.valueOf(auth.getName()));
+        return existente.filter(u -> u.humano() && u.vigente())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "La cuenta no está vigente."));
     }
 
-    public Cuenta cuenta() { return cuenta(actor()); }
-
-    public Cuenta cuenta(Long id) { return cuenta(usuario(id)); }
-
-    private Usuario usuario(Long id) {
-        return usuarios.findById(id).filter(u -> u.humano() && u.vigente())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "La cuenta no está vigente."));
+    /** Concesiones que evalúan los servicios: las reales, o una global total si el API no autoriza. */
+    public List<Asignacion> concesiones() {
+        return autorizacion ? cuenta(actor()).asignaciones() : List.of(totalSinRestriccion());
     }
 
     private Cuenta cuenta(Usuario usuario) {
@@ -66,19 +89,35 @@ public class Acceso {
         };
         if (a.getAlcance() != UsuarioPerfil.Alcance.GLOBAL && cent.isEmpty()) return Optional.empty();
 
-        var permissions = permisos.findByPerfilIdOrderByOrdenAscIdAsc(a.getPerfil().id()).stream()
-                .filter(p -> p.vigente() && p.getPermiso().vigente()).map(p -> p.getPermiso()).toList();
-
-        var rutas = permissions.stream().filter(p -> "RUTA".equals(p.getTipo())).map(p -> p.getCodigo()).toList();
-        var acciones = permissions.stream().filter(p -> "ACCION".equals(p.getTipo())).map(p -> p.getCodigo()).toList();
         var centro = cent.map(c -> new ContextoCentro(c.codigo(), c.nombre())).orElse(null);
-        var alcance = a.getAlcance().name();
-        var perfil = a.getPerfil();
-        return Optional.of(new Asignacion(a.id(), perfil.getCodigo(), perfil.getNombre(), alcance, centro, a.getVehiculo(), rutas, acciones));
+        return Optional.of(asignacion(a.id(), a.getPerfil(), a.getAlcance().name(), centro, a.getVehiculo(),
+                permisosDe(a.getPerfil())));
+    }
+
+    private Asignacion totalSinRestriccion() {
+        var todos = catalogoPermisos.findAll().stream().filter(Permiso::vigente).toList();
+        return new Asignacion(0L, "INTRANET", "Sin restricción en el API", "GLOBAL", null, null,
+                codigos(todos, "RUTA"), codigos(todos, "ACCION"));
+    }
+
+    private List<Permiso> permisosDe(Perfil perfil) {
+        return permisos.findByPerfilIdOrderByOrdenAscIdAsc(perfil.id()).stream()
+                .filter(p -> p.vigente() && p.getPermiso().vigente()).map(p -> p.getPermiso()).toList();
+    }
+
+    private static Asignacion asignacion(Long id, Perfil perfil, String alcance, ContextoCentro centro, String vehiculo,
+                                         List<Permiso> permissions) {
+        return new Asignacion(id, perfil.getCodigo(), perfil.getNombre(), alcance, centro, vehiculo,
+                codigos(permissions, "RUTA"), codigos(permissions, "ACCION"));
+    }
+
+    private static List<String> codigos(List<Permiso> permissions, String tipo) {
+        return permissions.stream().filter(p -> tipo.equals(p.getTipo())).map(Permiso::getCodigo).toList();
     }
 
     public void global(String permiso) {
-        if (cuenta().asignaciones().stream().noneMatch(a -> a.global() && a.acciones().contains(permiso))) {
+        if (!autorizacion) return;
+        if (concesiones().stream().noneMatch(a -> a.global() && a.acciones().contains(permiso))) {
             throw new AccessDeniedException("Permiso global requerido.");
         }
     }
@@ -88,7 +127,8 @@ public class Acceso {
     }
 
     public void accionCentro(String ruta, String permiso, String codigo) {
-        var grants = cuenta().asignaciones().stream()
+        if (!autorizacion) return;
+        var grants = concesiones().stream()
                 .filter(a -> !"VEHICULO".equals(a.alcance()) && a.rutas().contains(ruta) && a.acciones().contains(permiso)).toList();
         if (grants.isEmpty()) throw new AccessDeniedException("Acción de centros no autorizada.");
         if (grants.stream().noneMatch(a -> a.cubreCentro(codigo))) {
@@ -101,7 +141,7 @@ public class Acceso {
     }
 
     public List<Asignacion> consultaCentros(String ruta) {
-        var grants = cuenta().asignaciones().stream()
+        var grants = concesiones().stream()
                 .filter(a -> a.rutas().contains(ruta) && !a.alcance().equals("VEHICULO")).toList();
         if (grants.isEmpty()) throw new AccessDeniedException("Consulta de centros no autorizada.");
         return grants;

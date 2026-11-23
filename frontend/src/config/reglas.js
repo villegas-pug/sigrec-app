@@ -1,8 +1,14 @@
-// Parámetros fijos de la demostración: hacen reproducibles los cálculos con independencia del reloj.
-export const FECHA_CORTE = '2026-10-30'
-export const ANIO_REVISION = 2027
-export const ANIOS_REVISION = [2026, 2027, 2028]
-export const ANIOS_SERVICIOS = [2026]
+// Reglas de negocio de la SPA. SPEC 040: el «hoy» es la fecha real del sistema (America/Lima), ya no una fecha de corte fija.
+import { anioActual, hoy } from 'src/utils/fechas'
+
+export { hoy }
+// Año para el que se calculan las necesidades de renovación o reposición: el siguiente al actual.
+export const anioRevision = () => anioActual() + 1
+// Opciones del selector «Año a revisar»: el actual y los dos siguientes.
+export const aniosRevision = () => [anioActual(), anioActual() + 1, anioActual() + 2]
+// Año de los períodos de pago que se revisan.
+export const anioServicios = () => anioActual()
+export const aniosServicios = () => [anioActual()]
 
 // Umbral provisional de los controles preventivos: se avisa «por vencer» cuando faltan, como máximo, estos días.
 export const PARAMETROS_CONTROL = { diasPorVencer: 30 }

@@ -1,7 +1,7 @@
 // Reglas de servicios básicos y pagos (RF-13, RF-14, RF-15).
 import { db, vigente, vigentes } from './datos'
 import { MESES_CORTOS, ORDINALES_TRIMESTRE, TIPOS_SERVICIO } from 'src/config/catalogos'
-import { PARAMETROS_SERVICIOS } from 'src/config/demo'
+import { PARAMETROS_SERVICIOS } from 'src/config/reglas'
 import { diasEntre, mesesEntre, restarMeses } from 'src/utils/fechas'
 import { plural } from 'src/utils/formato'
 

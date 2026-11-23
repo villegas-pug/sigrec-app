@@ -23,9 +23,9 @@ export function detalleInventario ({ carIds, tipoId = null, verificacion = null,
       a.bien.nombre.localeCompare(b.bien.nombre, 'es') || a.bien.id.localeCompare(b.bien.id, 'es'))
 }
 
-const CLAVES_CONDICION = [...Object.keys(CONDICIONES), 'sin_dato']
+const clavesCondicion = () => [...Object.keys(CONDICIONES), 'sin_dato']
 
-const conteoVacio = () => Object.fromEntries(CLAVES_CONDICION.map((c) => [c, 0]))
+const conteoVacio = () => Object.fromEntries(clavesCondicion().map((c) => [c, 0]))
 
 const claveCondicion = (bien) => (CONDICIONES[bien.condicion] ? bien.condicion : 'sin_dato')
 
@@ -103,7 +103,7 @@ export function totalizarInventario (filasInventario) {
     total.cantidad += f.cantidad
     total.valorConocido += f.valorConocido
     total.unidadesSinValorar += f.unidadesSinValorar
-    for (const c of CLAVES_CONDICION) total.porCondicion[c] += f.porCondicion[c]
+    for (const c of clavesCondicion()) total.porCondicion[c] += f.porCondicion[c]
     for (const k of Object.keys(total.necesidad)) total.necesidad[k] += f.necesidad[k]
   }
   return total

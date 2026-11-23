@@ -32,7 +32,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { atenderNovedad } from 'src/services/acciones'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { noFutura, requerido } from 'src/utils/validaciones'
 
 const props = defineProps({
@@ -43,13 +43,13 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 const $q = useQuasar()
 
-const form = reactive({ fecha: FECHA_CORTE, detalle: '' })
+const form = reactive({ fecha: hoy(), detalle: '' })
 const { modificado, fijar } = useBorrador(form)
 
 // `immediate`: la página monta este diálogo al elegir la primera novedad, ya abierto.
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
-  Object.assign(form, { fecha: FECHA_CORTE, detalle: '' })
+  Object.assign(form, { fecha: hoy(), detalle: '' })
   fijar()
 }, { immediate: true })
 

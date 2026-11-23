@@ -23,6 +23,11 @@
         <span class="sg-header__unit">USPNNA – INABIF</span>
       </div>
       <q-space />
+      <!-- Identidad que entregó la intranet (SPEC 039), igual que educalle-app. -->
+      <div v-if="usuario" class="sg-header__user gt-xs">
+        <strong class="sg-header__user-name">{{ usuario.nombre }}</strong>
+        <span class="sg-header__user-unit">{{ usuario.unidad }}</span>
+      </div>
       <!-- Buscador global (SPEC 011, Ola 3): botón y atajo Ctrl + K. -->
       <q-btn flat round dense icon="search" aria-label="Buscar (Ctrl + K)" @click="buscador = true">
         <q-tooltip>Buscar (Ctrl + K)</q-tooltip>
@@ -35,10 +40,13 @@
         dense
         icon="notifications"
         :to="{ name: 'inicio', hash: '#atencion' }"
-        :aria-label="`Atención requerida: ${plural(pendientes, 'aviso', 'avisos')}`"
+        :aria-label="inicioListo ? `Atención requerida: ${plural(pendientes, 'aviso', 'avisos')}` : 'Atención requerida: avisos no cargados'"
       >
         <q-badge v-if="pendientes" color="negative" floating rounded>{{ pendientes > 99 ? '99+' : pendientes }}</q-badge>
-        <q-tooltip>{{ pendientes ? `Atención requerida: ${plural(pendientes, 'aviso', 'avisos')}` : 'Sin avisos pendientes' }}</q-tooltip>
+        <q-tooltip>{{ !inicioListo ? 'Avisos no cargados; abra Inicio para consultarlos' : pendientes ? `Atención requerida: ${plural(pendientes, 'aviso', 'avisos')}` : 'Sin avisos pendientes' }}</q-tooltip>
+      </q-btn>
+      <q-btn flat round dense icon="exit_to_app" aria-label="Regresar a la intranet" @click="salir">
+        <q-tooltip>REGRESAR</q-tooltip>
       </q-btn>
     </q-toolbar>
     <buscador-global v-model="buscador" />
@@ -49,7 +57,9 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import BuscadorGlobal from 'components/layout/BuscadorGlobal.vue'
 import { usePerfil } from 'src/composables/usePerfil'
+import { useSesionIntranet } from 'src/composables/useSesionIntranet'
 import { useAtencion } from 'src/composables/useAtencion'
+import { inicioListo } from 'src/services/cargaDatos'
 import { plural } from 'src/utils/formato'
 // El logo es navegación principal; la lupa y la campana sí permiten volver a la pantalla en la que se estaba.
 import { marcarNavegacionPrincipal } from 'src/router/retorno'
@@ -61,6 +71,7 @@ defineProps({
 defineEmits(['alternar-menu'])
 
 const { rutaInicial, puedeAcceder } = usePerfil()
+const { usuario, salir } = useSesionIntranet()
 const { avisos } = useAtencion()
 // Solo cuenta lo que requiere atención ahora; los próximos vencimientos se ven en Inicio.
 const pendientes = computed(() => (puedeAcceder('inicio') ? avisos.value.ahora.length : 0))

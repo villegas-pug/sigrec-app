@@ -1,9 +1,9 @@
 // Reglas de validación reutilizables para los campos de QInput/QSelect (devuelven true o el mensaje de error).
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { fecha } from './formato'
 
-// Texto de ayuda de los campos de fecha: la demostración trabaja con una fecha de corte fija (SPEC 001 §3).
-export const HINT_FECHA_CORTE = `Fecha de corte de la demostración: ${fecha(FECHA_CORTE)}`
+// Texto de ayuda de los campos de fecha (SPEC 040): los hechos no pueden ser posteriores a hoy.
+export const HINT_FECHA = 'No puede ser posterior a hoy'
 
 export const requerido = (v) => (v !== null && v !== undefined && v !== '') || 'Campo obligatorio'
 
@@ -14,8 +14,8 @@ export const opcionalMayorQueCero = (v) => v === null || v === undefined || v ==
 
 export const minimo =(min) => (v) => (Number.isFinite(v) && v >= min) || `Mínimo ${min}`
 
-// Acepta 'AAAA-MM-DD' o 'AAAA-MM': los hechos no pueden ser posteriores a la fecha de corte.
-export const noFutura = (v) => !v || v <= FECHA_CORTE.slice(0, v.length) || `No puede ser posterior a la fecha de corte (${fecha(FECHA_CORTE)})`
+// Acepta 'AAAA-MM-DD' o 'AAAA-MM': los hechos no pueden ser posteriores a hoy.
+export const noFutura = (v) => !v || v <= hoy().slice(0, v.length) || `No puede ser posterior a hoy (${fecha(hoy())})`
 
 // El valor no puede ser anterior a otro del formulario (`referencia` es una función para leer el valor actual).
 export const noAnteriorA = (referencia, mensaje) => (v) => !v || !referencia() || v >= referencia() || mensaje

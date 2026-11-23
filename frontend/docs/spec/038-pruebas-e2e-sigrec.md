@@ -71,3 +71,5 @@ Tras agotarse el límite de uso del agente de pruebas, se repitió la ejecución
 - Los eventos históricos y los períodos o precios históricos no tienen anulación individual pública; quedan desactivados al anular a su propietario.
 - El selector de trazado en mapa se comprueba solo hasta que aparece; no se validan las teselas externas ni el trazo.
 - Falta una matriz exhaustiva de negativos 404, 409 y validación por cada endpoint y ámbito; se cubren casos representativos por módulo.
+
+> SPEC 039: los casos de login, logout, revocación y CSRF quedaron sin efecto. La identidad llega de la intranet (`?p=`) y el API no usa cookies; las pruebas de perfiles requieren un SRH de prueba.

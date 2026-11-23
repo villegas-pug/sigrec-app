@@ -11,5 +11,4 @@ public interface AmbienteService {
     CambioResponse<AmbienteResponse> crear(CreateAmbienteRequest request);
     CambioResponse<AmbienteResponse> editar(String codigo, UpdateAmbienteRequest request);
     AmbienteResponse cambiarEstado(String codigo, String motivo);
-    void importar(AmbienteDatos datos, String codigo, Usuario actor);
 }

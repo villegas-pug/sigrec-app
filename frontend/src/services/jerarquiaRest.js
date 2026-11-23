@@ -7,11 +7,14 @@ const recursos = {
   ambiente: { ruta: 'ambientes', lista: 'ambientes', campo: 'ambienteId' }
 }
 
-export async function cargarJerarquia () {
-  const datos = await api('/centros/jerarquia')
+export function aplicarJerarquia (datos) {
   for (const [coleccion, registros] of Object.entries(datos)) {
     db[coleccion].splice(0, db[coleccion].length, ...registros)
   }
+}
+
+export async function cargarJerarquia () {
+  aplicarJerarquia(await api('/centros/jerarquia'))
 }
 
 export async function guardarJerarquia (tipo, datos, codigo) {

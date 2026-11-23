@@ -39,7 +39,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { useGuardado } from 'src/composables/useGuardado'
 import { informarPrecio } from 'src/services/acciones'
-import { FECHA_CORTE } from 'src/config/demo'
+import { hoy } from 'src/config/reglas'
 import { fecha, soles } from 'src/utils/formato'
 import { mayorQueCero, noFutura } from 'src/utils/validaciones'
 
@@ -59,7 +59,7 @@ watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
   Object.assign(form, {
     precio: props.tipo.precio,
-    fechaPrecio: props.tipo.fechaPrecio ?? FECHA_CORTE.slice(0, 7),
+    fechaPrecio: props.tipo.fechaPrecio ?? hoy().slice(0, 7),
     procedencia: props.tipo.procedencia ?? ''
   })
   fijar()

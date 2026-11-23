@@ -7,5 +7,4 @@ spring:
       mode: never
 sigrec:
   security:
-    cookie-secure: true
     cors-origin: ${SIGREC_CORS_ORIGIN}

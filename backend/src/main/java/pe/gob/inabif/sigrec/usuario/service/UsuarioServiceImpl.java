@@ -7,7 +7,6 @@ import pe.gob.inabif.sigrec.usuario.model.UsuarioPerfil;
 import pe.gob.inabif.sigrec.security.VehiculosRegistrados;
 import pe.gob.inabif.sigrec.security.Acceso;
 import pe.gob.inabif.sigrec.security.Identidad;
-import pe.gob.inabif.sigrec.auth.repository.SesionRepository;
 import pe.gob.inabif.sigrec.usuario.repository.UsuarioRepository;
 import pe.gob.inabif.sigrec.usuario.repository.UsuarioPerfilRepository;
 import pe.gob.inabif.sigrec.perfil.repository.PerfilRepository;
@@ -17,11 +16,8 @@ import pe.gob.inabif.sigrec.usuario.mappers.*;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import java.time.Instant;
 import java.util.*;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -32,29 +28,23 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final UsuarioRepository usuarios;
     private final PerfilRepository perfiles;
     private final UsuarioPerfilRepository asignaciones;
-    private final SesionRepository sesiones;
     private final CentroRepository centros;
     private final VehiculosRegistrados vehiculos;
     private final Acceso acceso;
-    private final PasswordEncoder bcrypt;
     private final UsuarioEntityMapper entityMapper;
-    private final UsuarioCreateMapper createMapper;
     private final UsuarioUpdateMapper updateMapper;
     private final UsuarioResponseMapper responseMapper;
 
     public UsuarioServiceImpl(UsuarioRepository usuarios, PerfilRepository perfiles, UsuarioPerfilRepository asignaciones,
-                    SesionRepository sesiones, CentroRepository centros, VehiculosRegistrados vehiculos, Acceso acceso, PasswordEncoder bcrypt,
-                    UsuarioEntityMapper entityMapper, UsuarioCreateMapper createMapper, UsuarioUpdateMapper updateMapper, UsuarioResponseMapper responseMapper) {
+                    CentroRepository centros, VehiculosRegistrados vehiculos, Acceso acceso,
+                    UsuarioEntityMapper entityMapper, UsuarioUpdateMapper updateMapper, UsuarioResponseMapper responseMapper) {
         this.usuarios = usuarios;
         this.perfiles = perfiles;
         this.asignaciones = asignaciones;
-        this.sesiones = sesiones;
         this.centros = centros;
         this.vehiculos = vehiculos;
         this.acceso = acceso;
-        this.bcrypt = bcrypt;
         this.entityMapper = entityMapper;
-        this.createMapper = createMapper;
         this.updateMapper = updateMapper;
         this.responseMapper = responseMapper;
     }
@@ -74,39 +64,12 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
-    public UsuarioResponse crear(CreateUsuarioRequest request) {
-        var alta = createMapper.toModel(request);
-        acceso.global("usuario.registrar");
-        var login = Identidad.login(alta.usuario());
-        if (usuarios.findByCodigo(login).isPresent()) throw new DataIntegrityViolationException("Código repetido.");
-        Identidad.validarPassword(alta.password());
-        var usuario = new Usuario();
-        usuario.setCodigo(login);
-        entityMapper.fromModelToEntity(alta, usuario);
-        usuario.setTipo("HUMANO");
-        usuario.setProveedor(Identidad.LOCAL);
-        usuario.setSujeto(login);
-        usuario.setPasswordHash(bcrypt.encode(alta.password()));
-        usuario.registrar(acceso.actor());
-        usuarios.save(usuario);
-        return vista(usuario);
-    }
-
-    @Override
     public UsuarioResponse actualizar(String codigo, UpdateUsuarioRequest request) {
         var datos = updateMapper.toModel(request);
         acceso.global("usuario.actualizar");
         var usuario = bloquear(codigo);
-        if (!Identidad.LOCAL.equals(usuario.getProveedor()) && datos.password() != null) {
-            throw error(HttpStatus.BAD_REQUEST, "Cambie la contraseña en el proveedor de identidad.");
-        }
         entityMapper.fromModelToEntity(datos, usuario);
         usuario.actualizar(acceso.actor());
-        if (datos.password() != null) {
-            Identidad.validarPassword(datos.password());
-            usuario.setPasswordHash(bcrypt.encode(datos.password()));
-            sesiones.revocarTodas(usuario.id(), Instant.now());
-        }
         return vista(usuario);
     }
 
@@ -118,7 +81,6 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (actor.id().equals(usuario.id())) throw error(HttpStatus.CONFLICT, "La cuenta en uso no puede desactivarse.");
         if (usuario.vigente()) {
             usuario.anular(actor, motivo.motivo().strip());
-            sesiones.revocarTodas(usuario.id(), Instant.now());
         }
         return vista(usuario);
     }

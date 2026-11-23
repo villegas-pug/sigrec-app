@@ -167,13 +167,13 @@
         <q-btn unelevated color="primary" icon="playlist_add" :label="`Guardar y registrar otro en ${ambiente.nombre}`" @click="formulario?.submit()" />
       </q-card-actions>
     </q-card>
-    <catalogo-precios-dialog v-if="puedeValorar" v-model="catalogoAbierto" :anio="ANIO_REVISION" :car-ids="[ambiente.carId]" :contexto="textoUbicacion(ubicacionDeAmbiente(ambiente.id))" :tipo-pedido="tipoCatalogo" @hide="restaurarFocoCatalogo" />
+    <catalogo-precios-dialog v-if="puedeValorar" v-model="catalogoAbierto" :anio="anioRevision()" :car-ids="[ambiente.carId]" :contexto="textoUbicacion(ubicacionDeAmbiente(ambiente.id))" :tipo-pedido="tipoCatalogo" @hide="restaurarFocoCatalogo" />
   </q-dialog>
 </template>
 
 <script setup>
 import CatalogoPreciosDialog from 'components/precios/CatalogoPreciosDialog.vue'
-import { ANIO_REVISION } from 'src/config/demo'
+import { anioRevision } from 'src/config/reglas'
 // Modo registro del explorador de «Gestión de centros»: alta breve de un bien (o de un componente) en el ambiente seleccionado.
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'

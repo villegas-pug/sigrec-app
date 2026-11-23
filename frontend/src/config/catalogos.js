@@ -18,7 +18,7 @@ export function condicion (clave) {
   return CONDICIONES[clave] ?? CONDICION_DESCONOCIDA
 }
 
-export const OPCIONES_CONDICION = reactive(Object.entries(CONDICIONES).map(([value, c]) => ({ value, label: c.label })))
+export const OPCIONES_CONDICION = reactive([])
 
 // Condición del inmueble donde funciona el centro (dato de la ficha del centro).
 export const CONDICIONES_INMUEBLE = {
@@ -39,27 +39,27 @@ export const SITUACIONES = {
 // Marca de un registro anulado (baja lógica) en listados con «Mostrar inactivos».
 export const CHIP_ANULADO = { label: 'Anulado', tono: 'ne', icono: 'block' }
 
-export const CATEGORIAS = {
+export const CATEGORIAS = reactive({
   mobiliario: 'Mobiliario',
   equipo: 'Equipo',
   fungible: 'Fungible'
-}
+})
 
-export const OPCIONES_CATEGORIA = Object.entries(CATEGORIAS).map(([value, label]) => ({ value, label }))
+export const OPCIONES_CATEGORIA = reactive([])
 
 // Tipos de novedad de un ambiente (infraestructura).
-export const TIPOS_NOVEDAD = {
+export const TIPOS_NOVEDAD = reactive({
   dano: 'Daño',
   incendio: 'Incendio',
   humedad: 'Humedad o filtración',
   instalaciones: 'Instalaciones eléctricas o sanitarias',
   estructura: 'Estructura',
   otro: 'Otro'
-}
+})
 
-export const OPCIONES_NOVEDAD = Object.entries(TIPOS_NOVEDAD).map(([value, label]) => ({ value, label }))
+export const OPCIONES_NOVEDAD = reactive([])
 
-export const TIPOS_EVENTO = {
+export const TIPOS_EVENTO = reactive({
   ...Object.fromEntries(Object.entries(TIPOS_NOVEDAD).filter(([key]) => !['dano', 'incendio'].includes(key)).map(([key, label]) => [key, { label, tono: 'wa', icono: 'construction' }])),
   dano: { label: 'Daño', tono: 'da', icono: 'build' },
   robo: { label: 'Robo', tono: 'da', icono: 'report' },
@@ -72,14 +72,17 @@ export const TIPOS_EVENTO = {
   traslado: { label: 'Traslado', tono: 'in', icono: 'moving' },
   alta: { label: 'Alta', tono: 'in', icono: 'add_circle' },
   mantenimiento: { label: 'Mantenimiento', tono: 'in', icono: 'build' }
-}
+})
 
 // Hechos que pueden originar una necesidad antes del fin de la vida útil (RF-19).
 export const INCIDENTES = ['dano', 'robo', 'incendio']
 
-export const OPCIONES_INCIDENTE = INCIDENTES.map((value) => ({ value, label: TIPOS_EVENTO[value].label }))
+export const OPCIONES_INCIDENTE = reactive([])
 
-export const OPCIONES_INCIDENCIA_INFRAESTRUCTURA = [...new Set([...INCIDENTES, ...Object.keys(TIPOS_NOVEDAD)])].map((value) => ({ value, label: TIPOS_EVENTO[value].label }))
+// Tipos de hecho del historial (incidentes, novedades, baja y reposición); se rearma con los catálogos del backend.
+export const TIPOS_HECHO = reactive([])
+
+export const OPCIONES_INCIDENCIA_INFRAESTRUCTURA = reactive([])
 
 // Tipos de módulo del centro (SPEC 020): una casa alberga a un grupo; uno de uso común lo comparten todas las casas.
 export const TIPOS_MODULO = {
@@ -92,7 +95,7 @@ export const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Ju
 export const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic']
 export const ORDINALES_TRIMESTRE = ['1.er', '2.º', '3.er', '4.º']
 
-export const TIPOS_SERVICIO = {
+export const TIPOS_SERVICIO = reactive({
   luz: 'Luz',
   agua: 'Agua',
   internet: 'Internet',
@@ -102,7 +105,7 @@ export const TIPOS_SERVICIO = {
   extintores: 'Extintores',
   fumigacion: 'Fumigación',
   arbitrios: 'Arbitrios'
-}
+})
 
 // Toda periodicidad divide el año en meses enteros (ver PERIODOS_POR_ANIO en services/servicios.js).
 export const PERIODICIDADES = {
@@ -144,19 +147,6 @@ export const ELEMENTOS_INFRAESTRUCTURA = reactive([
   { key: 'sanitarias', label: 'Instalaciones sanitarias', icono: 'plumbing' }
 ])
 
-export function aplicarCatalogos (catalogos) {
-  for (const { dominio, codigo, nombre } of catalogos) {
-    if (dominio === 'CONDICION' && Object.hasOwn(CONDICIONES, codigo)) {
-      CONDICIONES[codigo].label = nombre
-      OPCIONES_CONDICION.find((opcion) => opcion.value === codigo).label = nombre
-    }
-    if (dominio === 'ELEMENTO_BASE') {
-      const elemento = ELEMENTOS_INFRAESTRUCTURA.find((opcion) => opcion.key === codigo)
-      if (elemento) elemento.label = nombre
-    }
-  }
-}
-
 // Sugerencias al agregar un elemento propio de un centro o módulo (SPEC 022); también se acepta texto libre.
 export const SUGERENCIAS_ELEMENTOS = [
   'Cerco perimétrico', 'Portón de ingreso', 'Patios y veredas', 'Áreas verdes', 'Cisterna', 'Tanque elevado',
@@ -184,14 +174,14 @@ export const ESTADOS_VEHICULO_CON_ATENCION = ['requiereMantenimiento', 'detenido
 
 // Control preventivo y mantenimientos (SPEC 010 §7). Un único registro cubre todos los tipos; `objetivo` indica a qué se aplica.
 // `meses` es la periodicidad sugerida (provisional, por validar con las direcciones de los centros): solo propone la próxima fecha.
-export const TIPOS_MANTENIMIENTO = {
+export const TIPOS_MANTENIMIENTO = reactive({
   fumigacion: { label: 'Fumigación', icono: 'pest_control', objetivo: 'centro', meses: 6 },
   recarga_extintor: { label: 'Recarga de extintor', icono: 'fire_extinguisher', objetivo: 'extintor', meses: 12 },
   mantenimiento_equipo: { label: 'Mantenimiento de equipo', icono: 'handyman', objetivo: 'equipo', meses: 12 },
   mantenimiento_vehiculo: { label: 'Mantenimiento de vehículo', icono: 'car_repair', objetivo: 'vehiculo', meses: 6 }
-}
+})
 
-export const OPCIONES_TIPO_MANTENIMIENTO = Object.entries(TIPOS_MANTENIMIENTO).map(([value, t]) => ({ value, label: t.label }))
+export const OPCIONES_TIPO_MANTENIMIENTO = reactive([])
 
 // Los extintores son bienes de este tipo: su cantidad sale del inventario, no de un contador aparte.
 export const TIPO_EXTINTOR = 'extintor'
@@ -208,4 +198,84 @@ export const EVALUACIONES_COMBUSTIBLE = {
   comparable: { label: 'Comparable', tono: 'ok' },
   solo_previsto: { label: 'Solo previsto', tono: 'ne' },
   no_comparable: { label: 'No comparable', tono: 'in' }
+}
+
+// ---------- Catálogos del backend (SPEC 040) ----------
+// GET /api/v1/catalogos define códigos, nombres y orden de los dominios CONDICION, ELEMENTO_BASE, CATEGORIA_BIEN,
+// TIPO_SERVICIO, TIPO_INCIDENCIA y TIPO_MANTENIMIENTO. El tono y el icono son presentación y se quedan aquí, por código.
+const TONO_CONDICION = { bueno: 'ok', regular: 'wa', malo: 'da', inservible: 'da' }
+const ICONO_ELEMENTO = {
+  puertas: 'door_front', ventanas: 'window', pintura: 'format_paint', pisos: 'grid_on', techo: 'roofing',
+  estructura: 'foundation', electricas: 'electrical_services', sanitarias: 'plumbing'
+}
+const ICONO_TIPO_MANTENIMIENTO = {
+  fumigacion: 'pest_control', recarga_extintor: 'fire_extinguisher', mantenimiento_equipo: 'handyman', mantenimiento_vehiculo: 'car_repair'
+}
+
+const porDominio = (catalogos, dominio) => catalogos.filter((c) => c.dominio === dominio)
+
+/**
+ * Reemplaza el contenido de un objeto reactivo: primero los códigos del backend (en su orden) y después los que solo
+ * conoce el cliente, que se conservan porque los datos existentes pueden referirse a ellos.
+ */
+function sincronizarMapa (mapa, entradas, valorDe) {
+  if (!entradas.length) return
+  const anterior = { ...mapa }
+  const nuevo = {}
+  for (const entrada of entradas) nuevo[entrada.codigo] = valorDe(entrada, anterior[entrada.codigo])
+  for (const [codigo, valor] of Object.entries(anterior)) if (!Object.hasOwn(nuevo, codigo)) nuevo[codigo] = valor
+  for (const codigo of Object.keys(mapa)) delete mapa[codigo]
+  Object.assign(mapa, nuevo)
+}
+
+const llenar = (lista, filas) => lista.splice(0, lista.length, ...filas)
+
+// Las listas de opciones se derivan de los mapas anteriores; se vuelven a armar tras cada sincronización.
+function reconstruirOpciones () {
+  llenar(OPCIONES_CONDICION, Object.entries(CONDICIONES).map(([value, c]) => ({ value, label: c.label })))
+  llenar(OPCIONES_CATEGORIA, Object.entries(CATEGORIAS).map(([value, label]) => ({ value, label })))
+  llenar(OPCIONES_NOVEDAD, Object.entries(TIPOS_NOVEDAD).map(([value, label]) => ({ value, label })))
+  llenar(OPCIONES_INCIDENTE, INCIDENTES.map((value) => ({ value, label: TIPOS_EVENTO[value]?.label ?? value })))
+  llenar(OPCIONES_INCIDENCIA_INFRAESTRUCTURA,
+    [...new Set([...INCIDENTES, ...Object.keys(TIPOS_NOVEDAD)])].map((value) => ({ value, label: TIPOS_EVENTO[value]?.label ?? value })))
+  llenar(OPCIONES_TIPO_MANTENIMIENTO, Object.entries(TIPOS_MANTENIMIENTO).map(([value, t]) => ({ value, label: t.label })))
+  llenar(TIPOS_HECHO, [...new Set([...INCIDENTES, ...Object.keys(TIPOS_NOVEDAD), 'baja', 'reposicion'])])
+}
+reconstruirOpciones()
+
+export function aplicarCatalogos (catalogos = []) {
+  sincronizarMapa(CONDICIONES, porDominio(catalogos, 'CONDICION'),
+    ({ codigo, nombre }, previo) => ({ tono: TONO_CONDICION[codigo] ?? 'ne', ...previo, label: nombre }))
+
+  const elementos = porDominio(catalogos, 'ELEMENTO_BASE')
+  if (elementos.length) {
+    const previos = new Map(ELEMENTOS_INFRAESTRUCTURA.map((e) => [e.key, e]))
+    const nuevos = elementos.map(({ codigo, nombre }) => ({ key: codigo, label: nombre, icono: previos.get(codigo)?.icono ?? ICONO_ELEMENTO[codigo] ?? 'build' }))
+    for (const previo of ELEMENTOS_INFRAESTRUCTURA) if (!nuevos.some((e) => e.key === previo.key)) nuevos.push(previo)
+    llenar(ELEMENTOS_INFRAESTRUCTURA, nuevos)
+  }
+
+  sincronizarMapa(CATEGORIAS, porDominio(catalogos, 'CATEGORIA_BIEN'), ({ nombre }) => nombre)
+  sincronizarMapa(TIPOS_SERVICIO, porDominio(catalogos, 'TIPO_SERVICIO'), ({ nombre }) => nombre)
+
+  // Una novedad es una incidencia que no es un robo (el robo es solo un incidente patrimonial).
+  const incidencias = porDominio(catalogos, 'TIPO_INCIDENCIA')
+  sincronizarMapa(TIPOS_NOVEDAD, incidencias.filter((c) => c.codigo !== 'robo'), ({ nombre }) => nombre)
+  for (const { codigo, nombre } of incidencias) {
+    const previo = TIPOS_EVENTO[codigo]
+    if (previo) previo.label = nombre
+    else TIPOS_EVENTO[codigo] = { label: nombre, tono: 'wa', icono: 'construction' }
+  }
+
+  sincronizarMapa(TIPOS_MANTENIMIENTO, porDominio(catalogos, 'TIPO_MANTENIMIENTO'), ({ codigo, nombre, mesesSugeridos }, previo) => ({
+    icono: ICONO_TIPO_MANTENIMIENTO[codigo] ?? 'build',
+    // El backend solo distingue BIEN; la diferencia extintor/equipo es una regla del cliente.
+    objetivo: 'equipo',
+    meses: 12,
+    ...previo,
+    label: nombre,
+    ...(mesesSugeridos != null ? { meses: mesesSugeridos } : {})
+  }))
+
+  reconstruirOpciones()
 }

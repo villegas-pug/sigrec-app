@@ -160,14 +160,4 @@ public class ItinerarioServiceImpl implements ItinerarioService {
         movilidad.exigirVigente(it.getVehiculo());
         if (!it.vigente()) throw conflicto("El itinerario está anulado.");
     }
-
-    public void importar(String codigo, Vehiculo vehiculo, ItinerarioDatos datos, Usuario actor) {
-        if (itinerarios.findByCodigo(codigo).isPresent()) return;
-        var it = new Itinerario();
-        it.setCodigo(codigo);
-        it.setVehiculo(vehiculo);
-        copiar(it, datos);
-        it.registrar(actor);
-        itinerarios.save(it);
-    }
 }

@@ -27,7 +27,7 @@ import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { hechosRegistrados, origenIncidencia, ubicacionHecho, estadoNecesidad } from 'src/services/incidencias'
 import { usePerfil } from 'src/composables/usePerfil'
 import { calcularNecesidades } from 'src/services/necesidades'
-import { ANIO_REVISION } from 'src/config/demo'
+import { anioRevision } from 'src/config/reglas'
 import { TIPOS_EVENTO } from 'src/config/catalogos'
 import { fecha } from 'src/utils/formato'
 import { mostrarDetalle } from 'src/utils/navegacion'
@@ -40,7 +40,7 @@ const detalle = ref(null)
 useEstadoNavegacion(`hechos-${props.bienId ?? props.ambienteId ?? props.centroId}`, { mostrarInactivos, eventoId })
 const eventos = computed(() => hechosRegistrados({ bienId: props.bienId, ambienteId: props.ambienteId, centroId: props.centroId, inactivos: mostrarInactivos.value }).filter((e) => enAmbitoCar(ubicacionHecho(e).car?.id)))
 const esPropio = (e) => { const o = origenIncidencia(e); return props.bienId ? ['bien', 'componente'].includes(o.tipo) && o.id === props.bienId : props.ambienteId ? o.tipo === 'ambiente' && o.id === props.ambienteId : o.tipo === 'centro' && o.id === props.centroId }
-const pendientes = computed(() => calcularNecesidades({ anio: ANIO_REVISION, carIds: carIdsEnAmbito.value }).pendientes)
+const pendientes = computed(() => calcularNecesidades({ anio: anioRevision(), carIds: carIdsEnAmbito.value }).pendientes)
 const estado = (e) => estadoNecesidad(e, pendientes.value)
 const evento = computed(() => eventos.value.find((e) => e.id === eventoId.value) ?? null)
 function seleccionar (id) {

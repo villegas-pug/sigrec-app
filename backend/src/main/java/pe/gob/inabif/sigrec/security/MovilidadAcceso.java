@@ -24,7 +24,7 @@ public class MovilidadAcceso {
     }
 
     public List<Acceso.Asignacion> porRuta(String... rutas) {
-        var grants = acceso.cuenta().asignaciones().stream().filter(a -> Arrays.stream(rutas).anyMatch(a.rutas()::contains)).toList();
+        var grants = acceso.concesiones().stream().filter(a -> Arrays.stream(rutas).anyMatch(a.rutas()::contains)).toList();
         if (grants.isEmpty()) throw new AccessDeniedException("Consulta de movilidad no autorizada.");
         return grants;
     }
