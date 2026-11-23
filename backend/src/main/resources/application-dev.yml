@@ -16,4 +16,4 @@ sigrec:
     importar: ${SIGREC_IMPORTAR_DEMO:false}
   security:
     cookie-secure: false
-    cors-origin: http://localhost:9000
+    cors-origin: ${SIGREC_CORS_ORIGIN:http://10.101.0.36:9000}

@@ -16,7 +16,7 @@ npm run dev     # quasar dev
 npm run build   # quasar build → dist/spa
 ```
 
-La instalación prepara la configuración local de Quasar. El servidor de desarrollo usa `http://localhost:9000` y el build se genera en `frontend/dist/spa/`.
+La instalación prepara la configuración local de Quasar. El servidor de desarrollo usa `http://10.101.0.36:9000/sigrec/` y el build se genera en `frontend/dist/spa/`.
 
 ## Estructura
 

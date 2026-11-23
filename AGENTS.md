@@ -14,7 +14,7 @@ La raíz Git contiene `frontend/`, `backend/` y `database/`. Las excepciones en 
 ```bash
 cd frontend
 npm install      # ejecuta `quasar prepare` en postinstall (genera .quasar/)
-npm run dev      # quasar dev → http://localhost:9000
+npm run dev      # quasar dev → http://10.101.0.36:9000/sigrec/
 npm run build    # quasar build → dist/spa
 ```
 

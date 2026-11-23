@@ -16,11 +16,17 @@ export default defineConfig(() => {
         browser: 'baseline-widely-available',
         node: 'node22'
       },
-      vueRouterMode: 'hash'
+      vueRouterMode: 'hash',
+      // Path base de la SPA: se sirve en /sigrec/ (dev y build).
+      publicPath: '/sigrec/'
     },
 
     devServer: {
-      host: '127.0.0.1',
+      // Acceso desde la IP local de red; solo esa interfaz escucha.
+      host: '10.101.0.36',
+      port: 9000,
+      // Falla si el 9000 está ocupado, en lugar de saltar a otro puerto.
+      strictPort: true,
       open: false,
       proxy: { '/api': { target: 'http://127.0.0.1:8080', changeOrigin: true } }
     },
