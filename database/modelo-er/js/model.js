@@ -1,5 +1,5 @@
 const IDENTIFIER = /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/
-const ORACLE_TYPE = /^(NUMBER(?:\((?:[1-9]|[1-2]\d|3[0-8])(?:,\d{1,2})?\))?|(?:VARCHAR2|CHAR)\([1-9]\d{0,3} CHAR\)|DATE|BLOB|CLOB)$/ // SPEC 031: CLOB para documentos JSON del itinerario.
+const ORACLE_TYPE = /^(NUMBER(?:\((?:[1-9]|[1-2]\d|3[0-8])(?:,\d{1,2})?\))?|(?:VARCHAR2|CHAR)\([1-9]\d{0,3} CHAR\)|DATE|TIMESTAMP\(6\) WITH TIME ZONE|BLOB|CLOB)$/ // SPEC 031: CLOB para documentos JSON del itinerario.
 
 export const statuses = {
   OBSERVADO: 'Observado en el frontend',
@@ -41,6 +41,7 @@ function instantiate(template, table) {
 export function expandModel(data) {
   const common = data.common
   const tables = data.tables.map(table => {
+    if (table.technical) return { ...table }
     const [identity, ...audit] = common.columns
     return {
       ...table,
@@ -130,11 +131,12 @@ export function validateModel(model) {
       report(typeof column.nullable === 'boolean' && (!column.nullable || column.nullableReason?.trim()),
         owner + ' carece de definición o justificación de nulabilidad.')
       report(!column.name.startsWith('MONTO_') || column.type === 'NUMBER(14,2)', owner + ' debe usar NUMBER(14,2).')
-      report(!column.name.startsWith('FEC_') || column.type === 'DATE', owner + ' debe usar DATE.')
+      report(!column.name.startsWith('FEC_') || column.type === 'DATE' || (table.technical && column.type === 'TIMESTAMP(6) WITH TIME ZONE'), owner + ' debe usar DATE.')
     }
 
-    report(table.primaryKey.columns.length === 1 && table.primaryKey.columns[0] === 'ID' && !columns.get('ID')?.nullable,
-      table.name + ' debe usar ID como única columna de la PK.')
+    const primaryColumn = table.technical ? table.primaryKey.columns[0] : 'ID'
+    report(table.primaryKey.columns.length === 1 && table.primaryKey.columns[0] === primaryColumn && columns.get(primaryColumn)?.nullable === false,
+      table.name + ' debe usar una PK individual obligatoria.')
     for (const [objects, prefix] of [
       [[table.primaryKey], 'PK_'], [table.foreignKeys, 'FK_'], [table.uniqueKeys, 'UK_'], [table.checks, 'CK_'], [table.indexes, 'IX_']
     ]) {
@@ -146,10 +148,10 @@ export function validateModel(model) {
         else constraintNames.push(object.name)
       }
     }
-    for (const flag of ['ESTADO', 'ELIMINADO']) {
+    for (const flag of table.technical ? [] : ['ESTADO', 'ELIMINADO']) {
       report(table.checks.some(check => check.expression === flag + ' IN (0, 1)'), table.name + ' requiere CHECK binario para ' + flag + '.')
     }
-    for (const column of ['USU_REGISTRA', 'USU_ACTUALIZA', 'USU_ELIMINA']) {
+    for (const column of table.technical ? [] : ['USU_REGISTRA', 'USU_ACTUALIZA', 'USU_ELIMINA']) {
       report(table.foreignKeys.some(key => key.kind === 'audit' && key.columns[0] === column && key.references.table === 'SGR_USUARIO'),
         table.name + ' carece de referencia al actor para ' + column + '.')
     }

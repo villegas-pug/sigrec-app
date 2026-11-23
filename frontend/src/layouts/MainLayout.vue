@@ -7,7 +7,7 @@
     <q-footer class="sg-footer">
       <p class="sg-footer__text">
         © 2026 INABIF | Todos los derechos reservados
-        <span class="sg-footer__version">(Prototipo con datos ficticios v0.1.0)</span>
+        <span class="sg-footer__version">(Integración de centros · etapa 1)</span>
       </p>
     </q-footer>
 

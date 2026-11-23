@@ -6,6 +6,7 @@
     :ancho="480"
     etiqueta-enviar="Guardar precio"
     :modificado="modificado"
+    :deshabilitar-enviar="guardando"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -36,6 +37,7 @@ import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useGuardado } from 'src/composables/useGuardado'
 import { informarPrecio } from 'src/services/acciones'
 import { FECHA_CORTE } from 'src/config/demo'
 import { fecha, soles } from 'src/utils/formato'
@@ -63,9 +65,10 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 }, { immediate: true })
 
-function guardar () {
-  informarPrecio(props.tipo, form)
+const { guardando, guardar } = useGuardado(async () => {
+  await informarPrecio(props.tipo, form)
   $q.notify({ type: 'positive', message: `Precio de «${props.tipo.nombre}» actualizado. Las necesidades se recalculan.` })
+  fijar()
   emit('update:modelValue', false)
-}
+})
 </script>

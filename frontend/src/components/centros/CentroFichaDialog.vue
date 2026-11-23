@@ -7,6 +7,7 @@
     etiqueta-enviar="Guardar cambios"
     :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
+    :deshabilitar-enviar="guardando"
     @enviar="guardar"
   >
     <q-input v-model="form.nombre" outlined dense label="Nombre del centro *" :rules="[requerido]">
@@ -74,6 +75,7 @@
 </template>
 
 <script setup>
+import { useGuardado } from 'src/composables/useGuardado'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
@@ -125,9 +127,9 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   const alquilado = form.condicion === 'alquilado'
-  actualizarCentro(props.centro, {
+  await actualizarCentro(props.centro, {
     nombre: form.nombre,
     inmueble: {
       direccion: form.direccion || null,
@@ -153,5 +155,5 @@ function guardar () {
   })
   $q.notify({ type: 'positive', message: 'Ficha del centro actualizada.' })
   emit('update:modelValue', false)
-}
+})
 </script>

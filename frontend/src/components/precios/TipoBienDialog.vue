@@ -8,6 +8,7 @@
     :etiqueta-enviar="tipo ? 'Guardar cambios' : 'Registrar tipo'"
     :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
+    :deshabilitar-enviar="guardando"
     @enviar="guardar"
   >
     <q-input v-model="form.nombre" outlined dense label="Nombre *" hint="Ej.: Cocina industrial, Silla de estudio" :rules="[requerido, nombreLibre]">
@@ -30,6 +31,7 @@
 </template>
 
 <script setup>
+import { useGuardado } from 'src/composables/useGuardado'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
@@ -66,10 +68,10 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
-  if (props.tipo) actualizarTipoBien(props.tipo, form)
-  else registrarTipoBien(form)
+const { guardando, guardar } = useGuardado(async () => {
+  if (props.tipo) await actualizarTipoBien(props.tipo, form)
+  else await registrarTipoBien(form)
   $q.notify({ type: 'positive', message: props.tipo ? 'Tipo de bien actualizado.' : 'Tipo de bien registrado.' })
   emit('update:modelValue', false)
-}
+})
 </script>

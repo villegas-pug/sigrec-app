@@ -7,6 +7,7 @@
     :ancho="480"
     :etiqueta-enviar="intervencion ? 'Guardar cambios' : 'Registrar'"
     :modificado="modificado"
+    :deshabilitar-enviar="guardando"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -26,6 +27,7 @@ import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useGuardado } from 'src/composables/useGuardado'
 import { actualizarIntervencion, registrarIntervencion } from 'src/services/acciones'
 import { noFutura, requerido } from 'src/utils/validaciones'
 import { etiquetaAmbiente } from 'src/services/datos'
@@ -50,10 +52,10 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
-  if (props.intervencion) actualizarIntervencion(props.ambiente, props.intervencion, form)
-  else registrarIntervencion(props.ambiente, form)
+const { guardando, guardar } = useGuardado(async () => {
+  if (props.intervencion) await actualizarIntervencion(props.intervencion, form)
+  else await registrarIntervencion(props.ambiente, form)
   $q.notify({ type: 'positive', message: props.intervencion ? 'Intervención actualizada.' : 'Intervención registrada.' })
   emit('update:modelValue', false)
-}
+})
 </script>

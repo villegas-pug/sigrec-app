@@ -7,6 +7,7 @@
     :ancho="580"
     :etiqueta-enviar="mantenimiento ? 'Guardar cambios' : 'Registrar'"
     :modificado="modificado"
+    :deshabilitar-enviar="guardando"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -83,9 +84,10 @@ import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useGuardado } from 'src/composables/useGuardado'
 import { usePerfil } from 'src/composables/usePerfil'
 import { ambientePorId, db, etiquetaAmbiente, vehiculoPorId, vigentes, situacionDe } from 'src/services/datos'
-import { actualizarMantenimiento, actualizarVehiculo, registrarMantenimiento } from 'src/services/acciones'
+import { actualizarMantenimiento, registrarMantenimiento } from 'src/services/acciones'
 import { requiereAtencion } from 'src/services/vehiculos'
 import { extintoresDeCentro } from 'src/services/mantenimientos'
 import { OPCIONES_TIPO_MANTENIMIENTO, TIPOS_MANTENIMIENTO, TIPO_EXTINTOR, estadoVehiculo } from 'src/config/catalogos'
@@ -169,31 +171,27 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 }, { immediate: true })
 
-function guardar () {
-  const datos = { fecha: form.fecha, proxima: form.proxima || null, detalle: form.detalle?.trim() || null, importe: form.importe }
+const { guardando, guardar } = useGuardado(async () => {
+  const datos = { fecha: form.fecha, proxima: form.proxima || null, detalle: form.detalle?.trim() || null, importe: form.importe === '' ? null : form.importe }
   if (props.mantenimiento) {
-    actualizarMantenimiento(props.mantenimiento, datos)
+    await actualizarMantenimiento(props.mantenimiento, datos)
     $q.notify({ type: 'positive', message: 'Mantenimiento actualizado.' })
     emit('update:modelValue', false)
     emit('hecho', props.mantenimiento.id)
     return
   }
-  const objetivo = tipoActual.value.objetivo
-  const registrar = (objetivoId) => registrarMantenimiento({
+  const quedaOperativo = !!(vehiculoConAtencion.value && form.quedaOperativo && puedeHacer('vehiculo.actualizar'))
+  const registros = await registrarMantenimiento({
     tipo: form.tipo,
     carId: props.centro.id,
-    bienId: objetivo === 'extintor' || objetivo === 'equipo' ? objetivoId : null,
-    vehiculoId: objetivo === 'vehiculo' ? objetivoId : null,
-    ...datos
-  }).id
-  const ids = objetivo === 'centro' ? [registrar(null)] : form.objetivos.map(registrar)
-  let mensaje = ids.length > 1 ? `${plural(ids.length, 'mantenimiento registrado', 'mantenimientos registrados')}: ${tipoActual.value.label}.` : `Mantenimiento registrado: ${tipoActual.value.label}.`
-  if (vehiculoConAtencion.value && form.quedaOperativo && puedeHacer('vehiculo.actualizar')) {
-    actualizarVehiculo(vehiculoConAtencion.value, { estadoOperativo: 'operativo', mantenimiento: null })
-    mensaje += ' El vehículo queda operativo.'
-  }
+    objetivos: tipoActual.value.objetivo === 'centro' ? [] : form.objetivos,
+    quedaOperativo,
+    datos
+  })
+  let mensaje = registros.length > 1 ? `${plural(registros.length, 'mantenimiento registrado', 'mantenimientos registrados')}: ${tipoActual.value.label}.` : `Mantenimiento registrado: ${tipoActual.value.label}.`
+  if (quedaOperativo) mensaje += ' El vehículo queda operativo.'
   $q.notify({ type: 'positive', message: mensaje })
   emit('update:modelValue', false)
-  emit('hecho', ids[0])
-}
+  emit('hecho', registros[0].id)
+})
 </script>

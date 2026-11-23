@@ -6,6 +6,7 @@
     :subtitulo="`${vehiculo.id} · ${vehiculo.chofer ?? 'chofer no asignado'}`"
     :ancho="900"
     :modificado="modificado || mapaModificado"
+    :deshabilitar-enviar="guardando"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -69,6 +70,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import MapaItinerario from 'components/movilidad/MapaItinerario.vue'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useGuardado } from 'src/composables/useGuardado'
 import { actualizarItinerario, informarEjecucion, numeroONulo, registrarItinerario } from 'src/services/acciones'
 import { FECHA_CORTE } from 'src/config/demo'
 import { llegadaPosterior, noFutura, requerido } from 'src/utils/validaciones'
@@ -124,13 +126,13 @@ watch(() => props.modelValue, (abierto) => {
 
 const tramo = (t) => ({ salida: t.salida || null, llegada: t.llegada || null, km: numeroONulo(t.km) })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   if (props.modo !== 'ejecucion' && form.modoRuta === 'mapa' && !form.ruta) { $q.notify({ type: 'warning', message: 'Complete y calcule la ruta antes de guardar.' }); return }
   if (sugerenciaEjecucion.value && (!form.confirmaKm || form.realizado.km === null || form.realizado.km === '')) { $q.notify({ type: 'warning', message: 'Confirme o corrija la distancia realizada.' }); return }
   let id = props.itinerario?.id
   let mensaje
   if (props.modo === 'ejecucion') {
-    informarEjecucion(props.itinerario, form.realizado)
+    await informarEjecucion(props.itinerario, form.realizado)
     mensaje = 'Ejecución del recorrido registrada.'
   } else {
     const tienePrevisto = form.previsto.salida || form.previsto.llegada || Number.isFinite(form.previsto.km)
@@ -143,15 +145,15 @@ function guardar () {
       realizado: form.conRealizado ? tramo(form.realizado) : null
     }
     if (props.modo === 'editar') {
-      actualizarItinerario(props.itinerario, datos)
+      await actualizarItinerario(props.itinerario, datos)
       mensaje = `Itinerario ${id} actualizado.`
     } else {
-      id = registrarItinerario({ vehiculoId: props.vehiculo.id, ...datos }).id
+      id = (await registrarItinerario({ vehiculoId: props.vehiculo.id, ...datos })).id
       mensaje = `Itinerario ${id} registrado.`
     }
   }
   $q.notify({ type: 'positive', message: mensaje })
   emit('update:modelValue', false)
   emit('hecho', id)
-}
+})
 </script>

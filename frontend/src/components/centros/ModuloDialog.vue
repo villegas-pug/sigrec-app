@@ -7,6 +7,7 @@
     :etiqueta-enviar="modulo ? 'Guardar cambios' : 'Registrar módulo'"
     :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
+    :deshabilitar-enviar="guardando"
     @enviar="guardar"
   >
     <q-input v-model="form.nombre" outlined dense label="Nombre *" hint="Ej.: Módulo 3. Se sugiere el siguiente número del centro; puede cambiarlo" :rules="[requerido]">
@@ -56,6 +57,7 @@
 </template>
 
 <script setup>
+import { useGuardado } from 'src/composables/useGuardado'
 // Alta y actualización de un módulo del centro (SPEC 020): casa o módulo de uso común.
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
@@ -108,7 +110,7 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   const datos = {
     nombre: form.nombre.trim(),
     tipo: form.tipo,
@@ -123,13 +125,13 @@ function guardar () {
   }
   let id
   if (props.modulo) {
-    actualizarModulo(props.modulo, datos)
+    await actualizarModulo(props.modulo, datos)
     id = props.modulo.id
   } else {
-    id = registrarModulo(props.centro, datos).id
+    id = (await registrarModulo(props.centro, datos)).id
   }
   $q.notify({ type: 'positive', message: props.modulo ? 'Módulo actualizado.' : `Módulo «${datos.nombre}» registrado.` })
   emit('update:modelValue', false)
   emit('hecho', id)
-}
+})
 </script>

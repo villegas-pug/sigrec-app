@@ -6,7 +6,7 @@
     :subtitulo="`${textoUbicacion(ubicacionDeAmbiente(ambiente.id))} · un toque por bien`"
     :ancho="780"
     :etiqueta-enviar="marcados ? `Guardar ${plural(marcados, 'verificación', 'verificaciones')}` : 'Guardar'"
-    :deshabilitar-enviar="!marcados"
+    :deshabilitar-enviar="guardando || (!marcados)"
     :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
@@ -70,6 +70,7 @@
 </template>
 
 <script setup>
+import { useGuardado } from 'src/composables/useGuardado'
 // Recorrido de verificación de un ambiente (SPEC 011, Ola 2): todos los bienes activos en una lista, un toque por bien
 // y un solo guardado. Cada bien marcado genera la misma verificación que «Informar verificación» (informarVerificacion).
 import BotonDictado from 'components/common/BotonDictado.vue'
@@ -79,7 +80,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import EscanerRotulo from 'components/common/EscanerRotulo.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { bienPorId, bienesDeAmbiente, textoUbicacion, ubicacionDeAmbiente, situacionDe, verificacionDe } from 'src/services/datos'
-import { informarVerificacion } from 'src/services/acciones'
+import { informarVerificaciones } from 'src/services/acciones'
 import { condicion } from 'src/config/catalogos'
 import { FECHA_CORTE } from 'src/config/demo'
 import { fecha, plural } from 'src/utils/formato'
@@ -139,18 +140,20 @@ function alEscanear (rotulo) {
   $q.notify({ type: 'positive', message: `${bien.nombre} · ${bien.id}: ${form.marcas[bien.id].resultado === 'coincide' ? 'coincide' : 'ya estaba marcado'}. ${marcados.value} de ${bienes.value.length}.`, timeout: 1500 })
 }
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   const noEncontrados = []
+  const registros = {}
   for (const [bienId, { resultado, nota }] of Object.entries(form.marcas)) {
     const bien = bienPorId(bienId)
     if (!bien) continue
     if (resultado === 'no_encontrado') {
       noEncontrados.push(bien)
-      informarVerificacion(bien, { resultado: 'diferencias', nota: ['No encontrado en el recorrido de verificación.', nota?.trim()].filter(Boolean).join(' '), fecha: form.fecha })
+      registros[bienId] = { resultado: 'diferencias', nota: ['No encontrado en el recorrido de verificación.', nota?.trim()].filter(Boolean).join(' '), fecha: form.fecha }
     } else {
-      informarVerificacion(bien, { resultado, nota: nota?.trim() || '', fecha: form.fecha })
+      registros[bienId] = { resultado, nota: nota?.trim() || '', fecha: form.fecha }
     }
   }
+  await informarVerificaciones(props.ambiente, registros)
   $q.notify({
     type: noEncontrados.length ? 'warning' : 'positive',
     message: `${plural(marcados.value, 'verificación registrada', 'verificaciones registradas')}${noEncontrados.length ? `. ${plural(noEncontrados.length, 'bien no encontrado', 'bienes no encontrados')}: revise si corresponde un incidente.` : '.'}`,
@@ -159,5 +162,5 @@ function guardar () {
   })
   fijar()
   emit('update:modelValue', false)
-}
+})
 </script>

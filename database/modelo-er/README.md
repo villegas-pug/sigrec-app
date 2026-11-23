@@ -46,7 +46,7 @@ Para una publicación estática, la fuente es `database/modelo-er/` y la entrada
 
 Para un índice `uniqueFunctional`, aplica `transforms` de izquierda a derecha sobre cada columna indicada. Con el mismo `predicate` en todas las posiciones, la expresión entrega el valor transformado únicamente si se cumple la condición. `whenNotNull` agrega condiciones de presencia al predicado completo. Fuera de la condición, todas las expresiones devuelven `NULL`, lo que permite conservar varias filas históricas. Los fragmentos de `checks` e índices describen restricciones para una generación futura a partir del JSON. [Oracle 19c · CREATE INDEX](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/CREATE-INDEX.html)
 
-La ficha del inmueble vive en el centro. Las cifras de Inicio, necesidades, avisos, inventario consolidado y simulación se derivan de sus registros de origen. Los datos históricos con fecha parcial conservan su granularidad. La identidad se propone mediante un proveedor externo y un actor de auditoría local. Las fotografías admiten metadatos históricos sin imagen y el modelo propone un BLOB para contenido nuevo. Las reglas de pólizas, expedientes de NNA, ejecución de pagos y aprobación de compras quedan fuera del dominio documentado por el prototipo. [Alcance del prototipo](../../frontend/docs/spec/001-prototipo-sigrec.md) · [Ficha y estado operativo](../../frontend/docs/spec/010-fichas-planificacion-y-estado-operativo.md)
+La ficha del inmueble vive en el centro. Las cifras de Inicio, necesidades, avisos, inventario consolidado y simulación se derivan de sus registros de origen. Los datos históricos con fecha parcial conservan su granularidad. La identidad se resuelve mediante proveedor y sujeto. La etapa 1 implementa el proveedor local con BCrypt y JWT revocable. Las fotografías admiten metadatos históricos sin imagen y el modelo propone un BLOB para contenido nuevo. Las reglas de pólizas, expedientes de NNA, ejecución de pagos y aprobación de compras quedan fuera del dominio documentado por el prototipo. [Alcance del prototipo](../../frontend/docs/spec/001-prototipo-sigrec.md) · [Ficha y estado operativo](../../frontend/docs/spec/010-fichas-planificacion-y-estado-operativo.md)
 
 Desde la versión `2.0.0`, los nombres Oracle usan `SGR_ENTIDAD` o `SGR_PADRE_HIJO` para asociaciones. Ejemplos: `SGR_CENTRO`, `SGR_VEHICULO` y `SGR_PERFIL_PERMISO`. Las restricciones e índices conservan su alias técnico.
 
@@ -135,3 +135,27 @@ Los siguientes escenarios quedan definidos para una validación funcional autori
 | Revertir una reposición y registrar otra para la misma baja | La primera queda consultable como anulada con su reemplazo y sus componentes. Solo la segunda es vigente. La baja puede revertirse cuando ya no tenga reposición vigente. |
 | Usar el visor a 360 px y a ancho de escritorio | Panel, controles y diálogo legibles. La lista permite navegar sin manipular el diagrama. |
 | Exportar después de acercar y desplazar el lienzo | SVG con toda la selección y vista de impresión completa, con páginas por módulo en la vista técnica general. |
+
+## Seguridad e integración en 7.4.0
+
+La etapa 1 añade la credencial BCrypt para el proveedor `LOCAL`, el orden de las rutas por perfil y `SGR_SESION` para revocar JWT por su identificador hasheado. `SGR_SESION` es una tabla técnica con PK `JTI_HASH` y fechas con zona horaria. Las tablas de negocio conservan la auditoría común. El ámbito de movilidad usa temporalmente `CODIGO_VEHICULO` para vincular el vehículo ficticio. La FK a `SGR_VEHICULO` se materializará al integrar movilidad. [SPEC 037](../../frontend/docs/spec/037-backend-sigrec-integracion-vue.md)
+
+## Inventario e incidencias en 7.5.0
+
+Los ocho objetos de inventario e incidencias forman el esquema de la etapa 2. Los hechos incorporan un código público estable para los enlaces y el mínimo de datos históricos para reproducir la vista de la SPEC 034. La columna de orden y la referencia de autor solo se usan para los ejemplos importados. Las verificaciones de carga inicial alimentan la ficha y se omiten del visor de hechos. [SPEC 037](../../frontend/docs/spec/037-backend-sigrec-integracion-vue.md)
+
+## Planificación y precios en 7.5.0
+
+La etapa 3 implementa `SGR_PRECIO` sin cambios en el modelo lógico. Hibernate materializa el predicado de `IX_PLA_PRE_TIPO_VIG` mediante una columna virtual y garantiza un único importe vigente por tipo. El reemplazo conserva monto, mes, procedencia y actor. Las necesidades anuales, el inventario para planificación y la simulación se derivan de los precios vigentes y de los hechos patrimoniales y de infraestructura. [SPEC 037](../../frontend/docs/spec/037-backend-sigrec-integracion-vue.md)
+
+## Servicios y pagos en 7.6.0
+
+Se materializan `SGR_SERVICIO`, `SGR_PERIODO` y `SGR_HECHO`. La ficha conserva la precisión mensual o anual, y los hechos tienen código público y referencia de autor de demostración. Los períodos retienen su periodicidad histórica. Los pagos y correcciones preservan su origen en el período y se registran en la misma transacción. [SPEC 037](../../frontend/docs/spec/037-backend-sigrec-integracion-vue.md)
+
+## Movilidad en 7.7.0
+
+Se materializan `SGR_VEHICULO`, `SGR_ITINERARIO` y `SGR_COMBUSTIBLE`. Los CLOB guardan destinos y geometría ordenados. La ejecución conserva fecha, horarios y distancia independientes de la previsión. El ámbito Chofer consulta vehículos persistidos y comprueba el autor del registro cuando corrige registros propios. Se preserva el autor de referencia de la demostración en combustible. [SPEC 037](../../frontend/docs/spec/037-backend-sigrec-integracion-vue.md)
+
+## Integración operativa en 7.8.0
+
+Se materializan `SGR_FOTO`, `SGR_INTERVENCION` y `SGR_MANTENIMIENTO` con códigos públicos y campos de compatibilidad histórica. Las fotografías tienen un único objetivo y su BLOB se sirve solo en el ámbito autorizado. La intervención actualiza el último pintado cuando corresponde. Los mantenimientos conservan un único objetivo por fila y el alta múltiple con cambio operativo usa una transacción. [SPEC 037](../../frontend/docs/spec/037-backend-sigrec-integracion-vue.md)

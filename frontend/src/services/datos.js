@@ -1,42 +1,28 @@
-// Almacén en memoria con los datos ficticios de la demostración.
-// Los cambios realizados desde la interfaz se pierden al recargar: el prototipo no tiene persistencia.
-// Jerarquía: Centro › Módulo › Ambiente › Bien › Componente (SPEC 020). El inmueble del centro es parte de su ficha (`car.inmueble`).
+// SPEC 037: estado de lectura hidratado por REST. Los datos de demostración se importan en el backend.
+// Jerarquía: Centro › Módulo › Ambiente › Bien › Componente (SPEC 020).
 import { reactive } from 'vue'
-import cars from 'src/data/cars.json'
-import modulos from 'src/data/modulos.json'
-import ambientes from 'src/data/ambientes.json'
-import bienes from 'src/data/bienes.json'
-import tiposBien from 'src/data/tipos-bien.json'
-import eventos from 'src/data/eventos.json'
-import servicios from 'src/data/servicios.json'
-import vehiculos from 'src/data/vehiculos.json'
-import itinerarios from 'src/data/itinerarios.json'
-import combustible from 'src/data/combustible.json'
-import inventarioPrevio from 'src/data/inventario-previo.json'
-import mantenimientos from 'src/data/mantenimientos.json'
-// SPEC 033: fotos, elementos evaluados e intervenciones tienen colección propia (SGR_FOTO, SGR_ELEMENTO, SGR_INTERVENCION);
-// las novedades viven en `eventos` con `clase: 'novedad'` (SGR_INCIDENTE). Los accesos están en services/centros.js.
-import fotos from 'src/data/fotos.json'
-import elementos from 'src/data/elementos.json'
-import intervenciones from 'src/data/intervenciones.json'
 
 export const db = reactive({
-  fotos,
-  elementos,
-  intervenciones,
-  cars,
-  modulos,
-  ambientes,
-  bienes,
-  tiposBien,
-  eventos,
-  servicios,
-  vehiculos,
-  itinerarios,
-  combustible,
-  inventarioPrevio,
-  mantenimientos
+  cars: [],
+  modulos: [],
+  ambientes: [],
+  elementos: [],
+  bienes: [],
+  eventos: [],
+  inventarioPrevio: [],
+  tiposBien: [],
+  servicios: [],
+  vehiculos: [],
+  itinerarios: [],
+  combustible: [],
+  mantenimientos: [],
+  fotos: [],
+  intervenciones: []
 })
+
+export function restablecerDatos () {
+  for (const lista of Object.values(db)) lista.splice(0)
+}
 
 const porId = (lista, id) => lista.find((item) => item.id === id) ?? null
 
@@ -104,8 +90,8 @@ export function bienesActivosDeCentros (carIds = null) {
 
 export function ubicacionDeAmbiente (ambienteId) {
   const ambiente = ambientePorId(ambienteId)
-  const car = carPorId(ambiente.carId)
-  const modulo = moduloPorId(ambiente.moduloId)
+  const car = carPorId(ambiente?.carId)
+  const modulo = moduloPorId(ambiente?.moduloId)
   return { car, modulo, ambiente }
 }
 
@@ -133,11 +119,3 @@ export function ordenarPorModulo (ambientes) {
 
 // Opciones { value, label } de ambientes para un selector, con el módulo en la etiqueta.
 export const opcionesAmbientes = (ambientes) => ordenarPorModulo(ambientes).map((a) => ({ value: a.id, label: etiquetaAmbiente(a) }))
-
-let contador = 0
-
-// Identificador para registros creados en la sesión; no colisiona con los ids de los JSON.
-export function nuevoId (prefijo) {
-  contador += 1
-  return `${prefijo}-N${String(contador).padStart(3, '0')}`
-}

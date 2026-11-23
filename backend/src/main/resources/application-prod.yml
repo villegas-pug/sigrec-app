@@ -1,0 +1,11 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: never
+sigrec:
+  security:
+    cookie-secure: true
+    cors-origin: ${SIGREC_CORS_ORIGIN}

@@ -28,3 +28,8 @@ yarn-error.log*
 
 # Intermedios del manual. Los medios finales viven en frontend/public/manual/.
 /frontend/artifacts/manual-usuario/
+
+# Backend local
+/backend/.env.local
+!/backend/.env.example
+/backend/target/

@@ -6,6 +6,7 @@
     :ancho="640"
     :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
+    :deshabilitar-enviar="guardando"
     @enviar="guardar"
   >
     <template v-if="modo === 'datos'">
@@ -91,6 +92,7 @@
 </template>
 
 <script setup>
+import { useGuardado } from 'src/composables/useGuardado'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
@@ -158,10 +160,10 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   let mensaje
   if (props.modo === 'datos') {
-    actualizarBien(props.bien, {
+    await actualizarBien(props.bien, {
       nombre: form.nombre,
       codigoPatrimonial: form.codigoPatrimonial || null,
       marcaModelo: form.marcaModelo || null,
@@ -174,14 +176,14 @@ function guardar () {
     })
     mensaje = 'Información del bien actualizada.'
   } else if (props.modo === 'componente') {
-    asociarBien(props.bien, form.padreId, form.posicion)
+    await asociarBien(props.bien, form.padreId, form.posicion)
     mensaje = 'Componente asociado.'
   } else {
-    trasladarBien(props.bien, form.ambienteId, { fecha: form.fecha })
+    await trasladarBien(props.bien, form.ambienteId, { fecha: form.fecha })
     mensaje = 'Bien trasladado. El traslado queda en sus antecedentes.'
   }
   $q.notify({ type: 'positive', message: mensaje })
   emit('update:modelValue', false)
   emit('hecho', props.bien.id)
-}
+})
 </script>

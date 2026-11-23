@@ -5,6 +5,7 @@
     :subtitulo="`${centro.nombre} · ${TIPOS_SERVICIO[servicio.tipo]} · ${celda?.etiqueta ?? ''} ${anio}`"
     :ancho="520"
     :modificado="modificado"
+    :deshabilitar-enviar="guardando"
     :solo-lectura="consulta"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
@@ -87,6 +88,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useGuardado } from 'src/composables/useGuardado'
 import { carPorId } from 'src/services/datos'
 import { informarPeriodo } from 'src/services/acciones'
 import { ESTADOS_PERIODO, TIPOS_SERVICIO } from 'src/config/catalogos'
@@ -140,8 +142,8 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 }, { immediate: true })
 
-function guardar () {
-  informarPeriodo(props.servicio, props.anio, props.celda.numero, {
+const { guardando, guardar } = useGuardado(async () => {
+  await informarPeriodo(props.servicio, props.anio, props.celda.numero, {
     estado: form.estado,
     vence: form.vence,
     motivo: form.motivo,
@@ -150,5 +152,5 @@ function guardar () {
   })
   $q.notify({ type: 'positive', message: 'Situación del período registrada.' })
   emit('update:modelValue', false)
-}
+})
 </script>

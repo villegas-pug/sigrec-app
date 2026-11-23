@@ -1,14 +1,16 @@
+import { reactive } from 'vue'
+
 // Catálogos de presentación. Los tonos corresponden a las clases .sg-chip--* de app.scss.
 
 // Valor de filtro «sin restricción»: QSelect no muestra la etiqueta de una opción con valor null.
 export const TODOS = 'todos'
 
-export const CONDICIONES = {
+export const CONDICIONES = reactive({
   bueno: { label: 'Bueno', tono: 'ok' },
   regular: { label: 'Regular', tono: 'wa' },
   malo: { label: 'Malo', tono: 'da' },
   inservible: { label: 'Inservible', tono: 'da' }
-}
+})
 
 export const CONDICION_DESCONOCIDA = { label: 'No constatable', tono: 'si' }
 
@@ -16,7 +18,7 @@ export function condicion (clave) {
   return CONDICIONES[clave] ?? CONDICION_DESCONOCIDA
 }
 
-export const OPCIONES_CONDICION = Object.entries(CONDICIONES).map(([value, c]) => ({ value, label: c.label }))
+export const OPCIONES_CONDICION = reactive(Object.entries(CONDICIONES).map(([value, c]) => ({ value, label: c.label })))
 
 // Condición del inmueble donde funciona el centro (dato de la ficha del centro).
 export const CONDICIONES_INMUEBLE = {
@@ -131,7 +133,7 @@ export const HECHOS_SERVICIO = {
 
 // Elementos cuya condición se evalúa en un ambiente, un módulo y la construcción de un centro (SPEC 010 §3, SPEC 022; lista por validar).
 // El mobiliario y los equipos no se evalúan aquí: su estado se obtiene de los bienes registrados en el ambiente.
-export const ELEMENTOS_INFRAESTRUCTURA = [
+export const ELEMENTOS_INFRAESTRUCTURA = reactive([
   { key: 'puertas', label: 'Puertas', icono: 'door_front' },
   { key: 'ventanas', label: 'Ventanas', icono: 'window' },
   { key: 'pintura', label: 'Pintura', icono: 'format_paint' },
@@ -140,7 +142,20 @@ export const ELEMENTOS_INFRAESTRUCTURA = [
   { key: 'estructura', label: 'Estructura', icono: 'foundation' },
   { key: 'electricas', label: 'Instalaciones eléctricas', icono: 'electrical_services' },
   { key: 'sanitarias', label: 'Instalaciones sanitarias', icono: 'plumbing' }
-]
+])
+
+export function aplicarCatalogos (catalogos) {
+  for (const { dominio, codigo, nombre } of catalogos) {
+    if (dominio === 'CONDICION' && Object.hasOwn(CONDICIONES, codigo)) {
+      CONDICIONES[codigo].label = nombre
+      OPCIONES_CONDICION.find((opcion) => opcion.value === codigo).label = nombre
+    }
+    if (dominio === 'ELEMENTO_BASE') {
+      const elemento = ELEMENTOS_INFRAESTRUCTURA.find((opcion) => opcion.key === codigo)
+      if (elemento) elemento.label = nombre
+    }
+  }
+}
 
 // Sugerencias al agregar un elemento propio de un centro o módulo (SPEC 022); también se acepta texto libre.
 export const SUGERENCIAS_ELEMENTOS = [

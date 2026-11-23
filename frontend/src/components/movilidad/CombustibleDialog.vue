@@ -7,6 +7,7 @@
     :ancho="520"
     :etiqueta-enviar="registro ? 'Guardar cambios' : 'Registrar'"
     :modificado="modificado"
+    :deshabilitar-enviar="guardando"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -51,6 +52,7 @@ import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useGuardado } from 'src/composables/useGuardado'
 import { useRetorno } from 'src/composables/useRetorno'
 import { actualizarCombustible, registrarCombustible } from 'src/services/acciones'
 import { consumoDeclaradoL, itinerariosDeVehiculo } from 'src/services/combustible'
@@ -104,7 +106,7 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   const datos = {
     fecha: form.fecha,
     tipo: form.tipo,
@@ -112,12 +114,12 @@ function guardar () {
     itinerarioId: form.tipo === 'consumo' ? form.itinerarioId : null,
     sustento: form.sustento || null
   }
-  if (props.registro) actualizarCombustible(props.registro, datos)
-  else registrarCombustible({ vehiculoId: props.vehiculo.id, ...datos })
+  if (props.registro) await actualizarCombustible(props.registro, datos)
+  else await registrarCombustible({ vehiculoId: props.vehiculo.id, ...datos })
   avisarGuardado(
     props.registro ? 'Registro de combustible actualizado.' : form.tipo === 'carga' ? 'Carga registrada.' : 'Consumo declarado registrado.',
     { conRetorno: props.conRetorno }
   )
   emit('update:modelValue', false)
-}
+})
 </script>

@@ -205,9 +205,9 @@ onMounted(() => {
 // La referencia de rendimiento se completa en los datos del vehículo.
 const completarRendimiento = (ev) => ev.faltantes?.includes('rendimiento de referencia') && puedeAcceder('vehiculos') && puedeHacer('vehiculo.actualizar')
 
-// Actualiza cualquier registro vigente quien tiene `combustible.actualizar`; con `actualizarPropio`, solo los que informó el perfil activo.
+// El backend identifica los registros propios a partir de la identidad autenticada.
 const puedeActualizar = (r) =>
-  vigente(r) && (puedeHacer('combustible.actualizar') || (puedeHacer('combustible.actualizarPropio') && r.informadoPor === perfil.value.nombre))
+  vigente(r) && (puedeHacer('combustible.actualizar') || (puedeHacer('combustible.actualizarPropio') && r.propio))
 
 const accionesRegistro = (r) => [
   { label: 'Actualizar registro', icono: 'edit', visible: puedeActualizar(r), accion: () => abrir(r) },

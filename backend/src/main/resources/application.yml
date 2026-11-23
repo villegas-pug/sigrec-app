@@ -1,0 +1,31 @@
+spring:
+  profiles:
+    active: ${PROFILE:dev}
+  datasource:
+    url: ${SIGREC_DB_URL}
+    username: ${SIGREC_DB_USERNAME}
+    password: ${SIGREC_DB_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: ${SIGREC_DB_SCHEMA}
+        hbm2ddl.halt_on_error: true
+  sql:
+    init:
+      mode: never
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      # El límite por imagen conserva 5 MB. El sobre aporta la ficha y sus encabezados.
+      max-request-size: 6MB
+sigrec:
+  security:
+    jwt:
+      secret: ${SIGREC_JWT_SECRET}
+      issuer: sigrec
+      audience: sigrec-api
+      ttl: 30m

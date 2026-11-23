@@ -1,6 +1,6 @@
 <template>
   <div>
-    <section-card :titulo="`${titulo} (${items.length})`" subtitulo="Sin imágenes de personas. En el prototipo las imágenes se conservan solo durante la sesión.">
+    <section-card :titulo="`${titulo} (${items.length})`" subtitulo="Sin imágenes de personas.">
       <template #acciones>
         <filtro-inactivos v-model="mostrarInactivas" />
         <q-btn v-if="puedeHacer(bien ? 'bien.actualizar' : 'centro.foto')" outline color="secondary" icon="add_a_photo" label="Incorporar fotografía" :disable="!activo" @click="abrir(null)" />

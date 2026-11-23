@@ -7,6 +7,7 @@
     :ancho="460"
     :etiqueta-enviar="hecho ? 'Guardar cambios' : 'Registrar'"
     :modificado="modificado"
+    :deshabilitar-enviar="guardando"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -26,6 +27,7 @@ import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useGuardado } from 'src/composables/useGuardado'
 import { actualizarHechoServicio, informarHechoServicio } from 'src/services/acciones'
 import { HECHOS_SERVICIO, TIPOS_SERVICIO } from 'src/config/catalogos'
 import { FECHA_CORTE } from 'src/config/demo'
@@ -62,11 +64,11 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   const datos = { tipo: form.tipo, fecha: form.fecha, detalle: form.detalle || 'Sin detalle informado.' }
-  if (props.hecho) actualizarHechoServicio(props.hecho, datos)
-  else informarHechoServicio(props.servicio, datos)
+  if (props.hecho) await actualizarHechoServicio(props.servicio, props.hecho, datos)
+  else await informarHechoServicio(props.servicio, datos)
   $q.notify({ type: 'positive', message: props.hecho ? 'Hecho del servicio actualizado.' : 'Hecho del servicio registrado.' })
   emit('update:modelValue', false)
-}
+})
 </script>

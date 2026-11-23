@@ -396,9 +396,11 @@ function abrirAccion (tipo) {
       persistent: true,
       cancel: { flat: true, icon: 'close', label: 'Cancelar', color: 'secondary' },
       ok: { unelevated: true, icon: 'link_off', label: 'Quitar asociación', color: 'primary' }
-    }).onOk(() => {
-      desasociarBien(actual)
-      $q.notify({ type: 'positive', message: 'El bien deja de ser componente. La relación queda en sus antecedentes.' })
+    }).onOk(async () => {
+      try {
+        await desasociarBien(actual)
+        $q.notify({ type: 'positive', message: 'El bien deja de ser componente. La relación queda en sus antecedentes.' })
+      } catch (error) { $q.notify({ type: 'negative', message: error.message }) }
     })
     return
   }
@@ -431,9 +433,11 @@ function abrirAccion (tipo) {
   accion.abierta = true
 }
 
-function mantener () {
-  cerrarRevision(bien.value)
-  $q.notify({ type: 'positive', message: 'Situación revisada: el bien se mantiene activo.' })
+async function mantener () {
+  try {
+    await cerrarRevision(bien.value)
+    $q.notify({ type: 'positive', message: 'Situación revisada: el bien se mantiene activo.' })
+  } catch (error) { $q.notify({ type: 'negative', message: error.message }) }
 }
 
 const dialogoCentro = ref(false)

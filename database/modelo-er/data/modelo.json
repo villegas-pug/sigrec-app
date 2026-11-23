@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "7.3.0",
+  "schemaVersion": "7.8.0",
   "title": "Modelo de datos SIGREC",
   "description": "Modelo relacional de los recursos y la operación de los Centros de Acogida Residencial de la USPNNA.",
   "platform": {
@@ -841,6 +841,11 @@
       "id": "spec034",
       "path": "frontend/docs/spec/034-mocks-inventario-derivado.md",
       "label": "SPEC 034 · Estado del bien derivado de sus hechos"
+    },
+    {
+      "id": "spec037",
+      "label": "SPEC 037",
+      "path": "frontend/docs/spec/037-backend-sigrec-integracion-vue.md"
     }
   ],
   "tables": [
@@ -2228,6 +2233,26 @@
           "description": "Foto del bien o componente.",
           "nullable": true,
           "nullableReason": "Foto de centro o ambiente."
+        },
+        {
+          "name": "CODIGO",
+          "type": "VARCHAR2(40 CHAR)",
+          "description": "Código público estable utilizado por la SPA.",
+          "nullable": false
+        },
+        {
+          "name": "AUTOR_REFERENCIA",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Autor textual del registro de demostración.",
+          "nullable": true,
+          "nullableReason": "El dato puede faltar en registros previos o durante la operación."
+        },
+        {
+          "name": "ORDEN_IMPORTACION",
+          "type": "NUMBER(10,0)",
+          "description": "Posición opcional de un antecedente importado.",
+          "nullable": true,
+          "nullableReason": "El dato puede faltar en registros previos o durante la operación."
         }
       ],
       "foreignKeys": [
@@ -2301,7 +2326,15 @@
           }
         }
       ],
-      "uniqueKeys": [],
+      "uniqueKeys": [
+        {
+          "name": "UK_CTR_FOT_CODIGO",
+          "columns": [
+            "CODIGO"
+          ],
+          "description": "Identificador estable."
+        }
+      ],
       "checks": [
         {
           "name": "CK_CTR_FOT_OBJETIVO",
@@ -2392,6 +2425,26 @@
           "type": "NUMBER(38,0)",
           "description": "Ambiente intervenido.",
           "nullable": false
+        },
+        {
+          "name": "CODIGO",
+          "type": "VARCHAR2(40 CHAR)",
+          "description": "Código público estable utilizado por la SPA.",
+          "nullable": false
+        },
+        {
+          "name": "AUTOR_REFERENCIA",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Autor textual del registro de demostración.",
+          "nullable": true,
+          "nullableReason": "El dato puede faltar en registros previos o durante la operación."
+        },
+        {
+          "name": "ORDEN_IMPORTACION",
+          "type": "NUMBER(10,0)",
+          "description": "Posición opcional de un antecedente importado.",
+          "nullable": true,
+          "nullableReason": "El dato puede faltar en registros previos o durante la operación."
         }
       ],
       "foreignKeys": [
@@ -2419,7 +2472,15 @@
           }
         }
       ],
-      "uniqueKeys": [],
+      "uniqueKeys": [
+        {
+          "name": "UK_CTR_INT_CODIGO",
+          "columns": [
+            "CODIGO"
+          ],
+          "description": "Identificador estable."
+        }
+      ],
       "checks": [
         {
           "name": "CK_CTR_INT_FEC_INTERVENCION",
@@ -2465,7 +2526,8 @@
         "spec023",
         "spec032",
         "datos",
-        "spec034"
+        "spec034",
+        "spec037"
       ],
       "columns": [
         {
@@ -2835,7 +2897,8 @@
         "previo",
         "registroBien",
         "inventario",
-        "spec010"
+        "spec010",
+        "spec037"
       ],
       "columns": [
         {
@@ -3093,7 +3156,8 @@
         "spec002",
         "bienEdit",
         "datos",
-        "spec034"
+        "spec034",
+        "spec037"
       ],
       "columns": [
         {
@@ -3198,6 +3262,39 @@
           "description": "Traslado principal al que acompaña este componente.",
           "nullable": true,
           "nullableReason": "Antecedente que no corresponde a un componente acompañante."
+        },
+        {
+          "name": "CODIGO",
+          "type": "VARCHAR2(40 CHAR)",
+          "description": "Código público estable de antecedente y navegación.",
+          "nullable": false
+        },
+        {
+          "name": "ORDEN_IMPORTACION",
+          "type": "NUMBER(10,0)",
+          "description": "Posición del hecho en la fuente de demostración.",
+          "nullable": true,
+          "nullableReason": "Hecho registrado normalmente por REST."
+        },
+        {
+          "name": "AUTOR_REFERENCIA",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Etiqueta de autor literaria de la fuente de demostración.",
+          "nullable": true,
+          "nullableReason": "Para altas reales se obtiene desde el actor de auditoría."
+        },
+        {
+          "name": "TITULO_HIST",
+          "type": "VARCHAR2(1000 CHAR)",
+          "description": "Título del antecedente tal como fue registrado para la ficha.",
+          "nullable": true,
+          "nullableReason": "Un antecedente anterior puede carecer de título."
+        },
+        {
+          "name": "CARGA_INICIAL",
+          "type": "NUMBER(1,0)",
+          "description": "Marca de la verificación de inventario que no aparece como un hecho visible.",
+          "nullable": false
         }
       ],
       "foreignKeys": [
@@ -3409,7 +3506,15 @@
           }
         }
       ],
-      "uniqueKeys": [],
+      "uniqueKeys": [
+        {
+          "name": "UK_BIE_HIS_CODIGO",
+          "columns": [
+            "CODIGO"
+          ],
+          "description": "El enlace histórico conserva su código público."
+        }
+      ],
       "checks": [
         {
           "name": "CK_BIE_HIS_TIPO",
@@ -3632,7 +3737,8 @@
         "novedadForm",
         "spec028",
         "centrosServicio",
-        "spec033"
+        "spec033",
+        "spec037"
       ],
       "columns": [
         {
@@ -3734,6 +3840,26 @@
           "description": "Principal del componente al informar.",
           "nullable": true,
           "nullableReason": "Origen distinto de componente."
+        },
+        {
+          "name": "CODIGO",
+          "type": "VARCHAR2(40 CHAR)",
+          "description": "Código público estable de antecedente y navegación.",
+          "nullable": false
+        },
+        {
+          "name": "ORDEN_IMPORTACION",
+          "type": "NUMBER(10,0)",
+          "description": "Posición del hecho en la fuente de demostración.",
+          "nullable": true,
+          "nullableReason": "Hecho registrado normalmente por REST."
+        },
+        {
+          "name": "AUTOR_REFERENCIA",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Etiqueta de autor literaria de la fuente de demostración.",
+          "nullable": true,
+          "nullableReason": "Para altas reales se obtiene desde el actor de auditoría."
         }
       ],
       "foreignKeys": [
@@ -3879,7 +4005,15 @@
           }
         }
       ],
-      "uniqueKeys": [],
+      "uniqueKeys": [
+        {
+          "name": "UK_INC_INC_CODIGO",
+          "columns": [
+            "CODIGO"
+          ],
+          "description": "El enlace histórico conserva su código público."
+        }
+      ],
       "checks": [
         {
           "name": "CK_INC_INC_ORIGEN",
@@ -4009,7 +4143,8 @@
         "gestionHecho",
         "acciones",
         "spec016",
-        "spec028"
+        "spec028",
+        "spec037"
       ],
       "columns": [
         {
@@ -4031,6 +4166,13 @@
           "type": "NUMBER(38,0)",
           "description": "Incidencia o novedad objeto de la atención.",
           "nullable": false
+        },
+        {
+          "name": "AUTOR_REFERENCIA",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Etiqueta de autor literaria de la fuente de demostración.",
+          "nullable": true,
+          "nullableReason": "Para altas reales se obtiene desde el actor de auditoría."
         }
       ],
       "foreignKeys": [
@@ -4094,7 +4236,8 @@
         "acciones",
         "spec016",
         "datos",
-        "spec034"
+        "spec034",
+        "spec037"
       ],
       "columns": [
         {
@@ -4129,6 +4272,33 @@
           "description": "Ambiente del bien al darlo de baja.",
           "nullable": true,
           "nullableReason": "Antecedente sin ubicación histórica identificable."
+        },
+        {
+          "name": "CODIGO",
+          "type": "VARCHAR2(40 CHAR)",
+          "description": "Código público estable de antecedente y navegación.",
+          "nullable": false
+        },
+        {
+          "name": "ORDEN_IMPORTACION",
+          "type": "NUMBER(10,0)",
+          "description": "Posición del hecho en la fuente de demostración.",
+          "nullable": true,
+          "nullableReason": "Hecho registrado normalmente por REST."
+        },
+        {
+          "name": "AUTOR_REFERENCIA",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Etiqueta de autor literaria de la fuente de demostración.",
+          "nullable": true,
+          "nullableReason": "Para altas reales se obtiene desde el actor de auditoría."
+        },
+        {
+          "name": "TITULO_HIST",
+          "type": "VARCHAR2(1000 CHAR)",
+          "description": "Título del antecedente tal como fue registrado para la ficha.",
+          "nullable": true,
+          "nullableReason": "Un antecedente anterior puede carecer de título."
         }
       ],
       "foreignKeys": [
@@ -4181,7 +4351,15 @@
           }
         }
       ],
-      "uniqueKeys": [],
+      "uniqueKeys": [
+        {
+          "name": "UK_INC_BAJ_CODIGO",
+          "columns": [
+            "CODIGO"
+          ],
+          "description": "El enlace histórico conserva su código público."
+        }
+      ],
       "checks": [],
       "indexes": [
         {
@@ -4224,7 +4402,8 @@
         "acciones",
         "spec016",
         "incidenciasPage",
-        "spec028"
+        "spec028",
+        "spec037"
       ],
       "columns": [
         {
@@ -4252,6 +4431,33 @@
           "type": "NUMBER(38,0)",
           "description": "Bien de reemplazo creado en el mismo acto.",
           "nullable": false
+        },
+        {
+          "name": "CODIGO",
+          "type": "VARCHAR2(40 CHAR)",
+          "description": "Código público estable de antecedente y navegación.",
+          "nullable": false
+        },
+        {
+          "name": "ORDEN_IMPORTACION",
+          "type": "NUMBER(10,0)",
+          "description": "Posición del hecho en la fuente de demostración.",
+          "nullable": true,
+          "nullableReason": "Hecho registrado normalmente por REST."
+        },
+        {
+          "name": "AUTOR_REFERENCIA",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Etiqueta de autor literaria de la fuente de demostración.",
+          "nullable": true,
+          "nullableReason": "Para altas reales se obtiene desde el actor de auditoría."
+        },
+        {
+          "name": "TITULO_HIST",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Título del antecedente tal como fue registrado para la ficha.",
+          "nullable": true,
+          "nullableReason": "Un antecedente anterior puede carecer de título."
         }
       ],
       "foreignKeys": [
@@ -4312,6 +4518,13 @@
             "ID_NUEVO_BIEN"
           ],
           "description": "Un bien de reemplazo nace de una sola reposición."
+        },
+        {
+          "name": "UK_INC_REP_CODIGO",
+          "columns": [
+            "CODIGO"
+          ],
+          "description": "El enlace histórico conserva su código público."
         }
       ],
       "checks": [],
@@ -4352,7 +4565,8 @@
         "acciones",
         "bienes",
         "bienAccion",
-        "spec028"
+        "spec028",
+        "spec037"
       ],
       "columns": [
         {
@@ -4966,6 +5180,26 @@
           "description": "Vehículo intervenido.",
           "nullable": true,
           "nullableReason": "Trabajo sobre un centro o bien."
+        },
+        {
+          "name": "CODIGO",
+          "type": "VARCHAR2(40 CHAR)",
+          "description": "Código público estable utilizado por la SPA.",
+          "nullable": false
+        },
+        {
+          "name": "AUTOR_REFERENCIA",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Autor textual del registro de demostración.",
+          "nullable": true,
+          "nullableReason": "El dato puede faltar en registros previos o durante la operación."
+        },
+        {
+          "name": "ORDEN_IMPORTACION",
+          "type": "NUMBER(10,0)",
+          "description": "Posición opcional de un antecedente importado.",
+          "nullable": true,
+          "nullableReason": "El dato puede faltar en registros previos o durante la operación."
         }
       ],
       "foreignKeys": [
@@ -5065,7 +5299,15 @@
           "executive": true
         }
       ],
-      "uniqueKeys": [],
+      "uniqueKeys": [
+        {
+          "name": "UK_CTR_MAN_CODIGO",
+          "columns": [
+            "CODIGO"
+          ],
+          "description": "Identificador estable."
+        }
+      ],
       "checks": [
         {
           "name": "CK_CTR_MAN_OBJETIVO",
@@ -5235,6 +5477,13 @@
           "type": "NUMBER(2,0)",
           "description": "Cantidad de meses de la periodicidad configurada para el servicio.",
           "nullable": false
+        },
+        {
+          "name": "PRECISION_INICIO",
+          "type": "VARCHAR2(4 CHAR)",
+          "description": "Granularidad ANIO o MES del inicio informado.",
+          "nullable": true,
+          "nullableReason": "El dato puede faltar en registros previos o durante la operación."
         }
       ],
       "foreignKeys": [
@@ -5603,6 +5852,26 @@
           "description": "Período relacionado con pago o corrección.",
           "nullable": true,
           "nullableReason": "Los hechos de suministro pertenecen directamente al servicio."
+        },
+        {
+          "name": "CODIGO",
+          "type": "VARCHAR2(40 CHAR)",
+          "description": "Código público estable utilizado por la SPA.",
+          "nullable": false
+        },
+        {
+          "name": "AUTOR_REFERENCIA",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Autor textual del hecho de demostración.",
+          "nullable": true,
+          "nullableReason": "El dato puede faltar en registros previos o durante la operación."
+        },
+        {
+          "name": "ORDEN_IMPORTACION",
+          "type": "NUMBER(10,0)",
+          "description": "Posición opcional en una importación.",
+          "nullable": true,
+          "nullableReason": "El dato puede faltar en registros previos o durante la operación."
         }
       ],
       "foreignKeys": [
@@ -5655,7 +5924,15 @@
           "executive": true
         }
       ],
-      "uniqueKeys": [],
+      "uniqueKeys": [
+        {
+          "name": "UK_SRV_HEC_CODIGO",
+          "columns": [
+            "CODIGO"
+          ],
+          "description": "Identificador estable."
+        }
+      ],
       "checks": [
         {
           "name": "CK_SRV_HEC_TIPO",
@@ -6301,6 +6578,13 @@
           "description": "Itinerario ejecutado al que corresponde el consumo.",
           "nullable": true,
           "nullableReason": "Una carga se relaciona directamente con el vehículo."
+        },
+        {
+          "name": "AUTOR_REFERENCIA",
+          "type": "VARCHAR2(180 CHAR)",
+          "description": "Autor textual del registro de demostración.",
+          "nullable": true,
+          "nullableReason": "El dato puede faltar en registros previos o durante la operación."
         }
       ],
       "foreignKeys": [
@@ -6417,13 +6701,14 @@
       "alias": "SEG_USU",
       "module": "seguridad",
       "label": "Usuario o actor técnico",
-      "description": "Actor de auditoría de SIGREC. El usuario humano se asocia a una identidad autenticada por un proveedor externo.",
+      "description": "Actor de auditoría de SIGREC. Una persona se identifica por proveedor y sujeto. El proveedor LOCAL usa una credencial BCrypt.",
       "executive": true,
       "sources": [
         "perfiles",
         "perfilActual",
         "autor",
-        "readme"
+        "readme",
+        "spec037"
       ],
       "columns": [
         {
@@ -6457,6 +6742,13 @@
           "description": "Identificador opaco del usuario en el proveedor.",
           "nullable": true,
           "nullableReason": "Actor técnico sin inicio de sesión."
+        },
+        {
+          "name": "PASSWORD_HASH",
+          "type": "VARCHAR2(60 CHAR)",
+          "description": "Hash BCrypt de la credencial local.",
+          "nullable": true,
+          "nullableReason": "Identidad externa o actor técnico."
         }
       ],
       "foreignKeys": [],
@@ -6491,10 +6783,11 @@
           "columns": [
             "TIPO",
             "PROVEEDOR_IDENTIDAD",
-            "SUJETO_IDENTIDAD"
+            "SUJETO_IDENTIDAD",
+            "PASSWORD_HASH"
           ],
-          "expression": "(TIPO = 'HUMANO' AND PROVEEDOR_IDENTIDAD IS NOT NULL AND SUJETO_IDENTIDAD IS NOT NULL) OR (TIPO = 'TECNICO' AND PROVEEDOR_IDENTIDAD IS NULL AND SUJETO_IDENTIDAD IS NULL)",
-          "description": "Los actores humanos se identifican de forma única mediante el proveedor externo."
+          "expression": "(TIPO = 'TECNICO' AND PROVEEDOR_IDENTIDAD IS NULL AND SUJETO_IDENTIDAD IS NULL AND PASSWORD_HASH IS NULL) OR (TIPO = 'HUMANO' AND PROVEEDOR_IDENTIDAD IS NOT NULL AND SUJETO_IDENTIDAD IS NOT NULL AND ((PROVEEDOR_IDENTIDAD = 'LOCAL' AND PASSWORD_HASH IS NOT NULL) OR (PROVEEDOR_IDENTIDAD <> 'LOCAL' AND PASSWORD_HASH IS NULL)))",
+          "description": "Solo las personas de proveedor local tienen una credencial BCrypt."
         }
       ],
       "indexes": []
@@ -6991,7 +7284,8 @@
       "sources": [
         "perfiles",
         "perfilActual",
-        "spec003"
+        "spec003",
+        "spec037"
       ],
       "columns": [
         {
@@ -7005,6 +7299,13 @@
           "type": "NUMBER(38,0)",
           "description": "Permiso otorgado.",
           "nullable": false
+        },
+        {
+          "name": "ORDEN",
+          "type": "NUMBER(3,0)",
+          "description": "Orden del permiso de ruta para resolver la pantalla inicial del perfil.",
+          "nullable": true,
+          "nullableReason": "Los permisos de acción no tienen orden de navegación."
         }
       ],
       "foreignKeys": [
@@ -7101,7 +7402,8 @@
         "perfiles",
         "perfilActual",
         "readme",
-        "spec003"
+        "spec003",
+        "spec037"
       ],
       "columns": [
         {
@@ -7135,6 +7437,13 @@
           "description": "Vehículo autorizado.",
           "nullable": true,
           "nullableReason": "Alcance global o específico de centro."
+        },
+        {
+          "name": "CODIGO_VEHICULO",
+          "type": "VARCHAR2(40 CHAR)",
+          "description": "Código de vehículo de demostración durante la etapa 1.",
+          "nullable": true,
+          "nullableReason": "El ámbito es global o de centro, o ya usa la FK de movilidad."
         }
       ],
       "foreignKeys": [
@@ -7250,10 +7559,11 @@
           "columns": [
             "ALCANCE",
             "ID_CENTRO",
-            "ID_VEHICULO"
+            "ID_VEHICULO",
+            "CODIGO_VEHICULO"
           ],
-          "expression": "(ALCANCE = 'GLOBAL' AND ID_CENTRO IS NULL AND ID_VEHICULO IS NULL) OR (ALCANCE = 'CENTRO' AND ID_CENTRO IS NOT NULL AND ID_VEHICULO IS NULL) OR (ALCANCE = 'VEHICULO' AND ID_CENTRO IS NULL AND ID_VEHICULO IS NOT NULL)",
-          "description": "El alcance identifica exactamente su objetivo. En alcance global se omiten las referencias."
+          "expression": "(ALCANCE = 'GLOBAL' AND ID_CENTRO IS NULL AND ID_VEHICULO IS NULL AND CODIGO_VEHICULO IS NULL) OR (ALCANCE = 'CENTRO' AND ID_CENTRO IS NOT NULL AND ID_VEHICULO IS NULL AND CODIGO_VEHICULO IS NULL) OR (ALCANCE = 'VEHICULO' AND ID_CENTRO IS NULL AND ((ID_VEHICULO IS NOT NULL AND CODIGO_VEHICULO IS NULL) OR (ID_VEHICULO IS NULL AND CODIGO_VEHICULO IS NOT NULL)))",
+          "description": "El alcance vehicular usa una única referencia, mediante código en la etapa 1 o FK al implementar movilidad."
         }
       ],
       "indexes": [
@@ -7319,6 +7629,103 @@
             "ID_VEHICULO"
           ],
           "description": "Cobertura de FK_SEG_UPF_MOV_VEH.",
+          "kind": "btree"
+        },
+        {
+          "name": "IX_SEG_UPF_VEH_COD",
+          "columns": [
+            "ID_USUARIO",
+            "ID_PERFIL",
+            "CODIGO_VEHICULO"
+          ],
+          "description": "Una asignación vigente por vehículo de demostración.",
+          "kind": "uniqueFunctional",
+          "predicate": "ESTADO = 1 AND ELIMINADO = 0 AND ALCANCE = 'VEHICULO'",
+          "whenNotNull": [
+            "CODIGO_VEHICULO"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SGR_SESION",
+      "alias": "SEG_SES",
+      "module": "seguridad",
+      "label": "Sesión JWT",
+      "description": "Registro técnico revocable de un JWT. Guarda únicamente el hash de su identificador.",
+      "executive": false,
+      "sources": [
+        "spec037"
+      ],
+      "technical": true,
+      "columns": [
+        {
+          "name": "JTI_HASH",
+          "type": "VARCHAR2(64 CHAR)",
+          "description": "Identificador del JWT hasheado con SHA-256.",
+          "nullable": false
+        },
+        {
+          "name": "ID_USUARIO",
+          "type": "NUMBER(38,0)",
+          "description": "Usuario autenticado.",
+          "nullable": false
+        },
+        {
+          "name": "FEC_EXPIRA",
+          "type": "TIMESTAMP(6) WITH TIME ZONE",
+          "description": "Instante de vencimiento.",
+          "nullable": false
+        },
+        {
+          "name": "FEC_REVOCA",
+          "type": "TIMESTAMP(6) WITH TIME ZONE",
+          "description": "Instante de revocación.",
+          "nullable": true,
+          "nullableReason": "La sesión todavía no se ha revocado."
+        }
+      ],
+      "primaryKey": {
+        "name": "PK_SEG_SES",
+        "columns": [
+          "JTI_HASH"
+        ],
+        "description": "Identificador de sesión irrepetible y de longitud fija."
+      },
+      "foreignKeys": [
+        {
+          "name": "FK_SEG_SES_USU",
+          "columns": [
+            "ID_USUARIO"
+          ],
+          "references": {
+            "table": "SGR_USUARIO",
+            "columns": [
+              "ID"
+            ]
+          },
+          "role": "Cuenta autenticada",
+          "cardinality": {
+            "from": {
+              "min": 1,
+              "max": 1
+            },
+            "to": {
+              "min": 0,
+              "max": "N"
+            }
+          }
+        }
+      ],
+      "uniqueKeys": [],
+      "checks": [],
+      "indexes": [
+        {
+          "name": "IX_SEG_SES_USU",
+          "columns": [
+            "ID_USUARIO"
+          ],
+          "description": "Cobertura de la FK de sesión.",
           "kind": "btree"
         }
       ]
@@ -8081,20 +8488,22 @@
       "module": "seguridad",
       "status": "SUPUESTO_DISENO",
       "enforcement": "TRANSACCION_FUTURA",
-      "title": "Identidad y ámbito en una implementación futura",
-      "description": "Resolver una identidad humana por proveedor y sujeto externo, sin almacenar contraseñas. Autorizar por la unión de asignaciones vigentes aplicables al recurso de cada operación. El ámbito vehicular limita operaciones al vehículo elegido y no otorga acceso general al centro. El nombre de chofer en la ficha es informativo. Separar permisos de consulta y modificación.",
+      "title": "Identidad, sesión y ámbito",
+      "description": "Una persona se identifica por proveedor y sujeto. LOCAL verifica BCrypt y firma un JWT con sesión revocable. Autorizar por la unión de asignaciones vigentes aplicables al recurso. El ámbito de vehículo no concede acceso general al centro. Separar permisos de consulta y modificación.",
       "sources": [
         "perfiles",
         "perfilActual",
         "autor",
-        "readme"
+        "readme",
+        "spec037"
       ],
       "tables": [
         "SGR_USUARIO",
         "SGR_PERFIL",
         "SGR_PERMISO",
         "SGR_USUARIO_PERFIL",
-        "SGR_VEHICULO"
+        "SGR_VEHICULO",
+        "SGR_SESION"
       ]
     },
     {
@@ -8505,14 +8914,16 @@
         "autor",
         "menu",
         "rutas",
-        "spec003"
+        "spec003",
+        "spec037"
       ],
       "tables": [
         "SGR_USUARIO",
         "SGR_PERFIL",
         "SGR_PERMISO",
         "SGR_PERFIL_PERMISO",
-        "SGR_USUARIO_PERFIL"
+        "SGR_USUARIO_PERFIL",
+        "SGR_SESION"
       ],
       "description": "Correspondencia entre los perfiles demostrados y el modelo de autorización propuesto.",
       "mode": "PERSISTE_Y_DERIVA"

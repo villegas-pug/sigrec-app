@@ -8,6 +8,7 @@
     etiqueta-enviar="Registrar centro"
     :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
+    :deshabilitar-enviar="guardando"
     @enviar="guardar"
   >
     <div class="row q-col-gutter-md">
@@ -44,6 +45,7 @@
 </template>
 
 <script setup>
+import { useGuardado } from 'src/composables/useGuardado'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
@@ -73,9 +75,9 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   const alquilado = form.condicion === 'alquilado'
-  const car = registrarCentro(
+  const car = await registrarCentro(
     { id: form.id, nombre: form.nombre },
     {
       direccion: form.direccion,
@@ -87,5 +89,5 @@ function guardar () {
   $q.notify({ type: 'positive', message: `${car.nombre} registrado. Continúe con sus módulos y ambientes.` })
   emit('update:modelValue', false)
   emit('hecho', car.id)
-}
+})
 </script>

@@ -6,6 +6,7 @@
     :subtitulo="centro.nombre"
     :etiqueta-enviar="servicio ? 'Guardar cambios' : 'Registrar servicio'"
     :modificado="modificado"
+    :deshabilitar-enviar="guardando"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -69,6 +70,7 @@ import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
 import CampoAdquisicion from 'components/common/CampoAdquisicion.vue'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useGuardado } from 'src/composables/useGuardado'
 import { actualizarServicio, registrarServicio } from 'src/services/acciones'
 import { tienePeriodosInformados } from 'src/services/servicios'
 import { OPCIONES_PERIODICIDAD, TIPOS_SERVICIO } from 'src/config/catalogos'
@@ -113,7 +115,7 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   const datos = {
     proveedor: form.proveedor,
     contacto: form.telefono?.trim() || form.contactoNombre?.trim() ? { telefono: form.telefono?.trim() || null, nombre: form.contactoNombre?.trim() || null } : null,
@@ -125,13 +127,13 @@ function guardar () {
   }
   let id
   if (props.servicio) {
-    actualizarServicio(props.servicio, periodicidadBloqueada.value ? datos : { ...datos, periodicidad: form.periodicidad })
+    await actualizarServicio(props.servicio, periodicidadBloqueada.value ? datos : { ...datos, periodicidad: form.periodicidad })
     id = props.servicio.id
   } else {
-    id = registrarServicio(props.centro, { tipo: form.tipo, periodicidad: form.periodicidad, ...datos }).id
+    id = (await registrarServicio(props.centro, { tipo: form.tipo, periodicidad: form.periodicidad, ...datos })).id
   }
   $q.notify({ type: 'positive', message: props.servicio ? 'Ficha del servicio actualizada.' : `Servicio de ${TIPOS_SERVICIO[form.tipo]} registrado.` })
   emit('update:modelValue', false)
   emit('hecho', id)
-}
+})
 </script>

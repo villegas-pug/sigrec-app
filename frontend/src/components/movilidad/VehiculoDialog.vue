@@ -6,6 +6,7 @@
     :subtitulo="vehiculo ? vehiculo.id : 'Los campos con * son obligatorios'"
     :etiqueta-enviar="vehiculo ? 'Guardar cambios' : 'Registrar vehículo'"
     :modificado="modificado"
+    :deshabilitar-enviar="guardando"
     @update:model-value="$emit('update:modelValue', $event)"
     @enviar="guardar"
   >
@@ -62,13 +63,14 @@ import { computed, reactive, watch } from 'vue'
 import FormDialog from 'components/common/FormDialog.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import { useBorrador } from 'src/composables/useBorrador'
+import { useGuardado } from 'src/composables/useGuardado'
 import { useRetorno } from 'src/composables/useRetorno'
 import { usePerfil } from 'src/composables/usePerfil'
 import { db } from 'src/services/datos'
 import { controlDeVehiculo } from 'src/services/mantenimientos'
 import { FECHA_CORTE } from 'src/config/demo'
 import { fecha } from 'src/utils/formato'
-import { actualizarVehiculo, numeroONulo, registrarVehiculo, vehiculoSugerido } from 'src/services/acciones'
+import { actualizarVehiculo, numeroONulo, registrarVehiculo } from 'src/services/acciones'
 import { ESTADOS_VEHICULO_CON_ATENCION, OPCIONES_ESTADO_VEHICULO } from 'src/config/catalogos'
 import { opcionalMayorQueCero, requerido } from 'src/utils/validaciones'
 
@@ -114,7 +116,7 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   const conAtencion = requiereAtencion.value
   const mantenimiento = {
     motivo: conAtencion ? form.motivoMantenimiento?.trim() || null : null,
@@ -132,13 +134,13 @@ function guardar () {
   }
   let id
   if (props.vehiculo) {
-    actualizarVehiculo(props.vehiculo, datos)
+    await actualizarVehiculo(props.vehiculo, datos)
     id = props.vehiculo.id
   } else {
-    id = registrarVehiculo({ id: vehiculoSugerido(form.carId), ...datos }).id
+    id = (await registrarVehiculo(datos)).id
   }
   avisarGuardado(props.vehiculo ? `Vehículo ${id} actualizado.` : `Vehículo ${id} registrado.`, { conRetorno: props.conRetorno })
   emit('update:modelValue', false)
   emit('hecho', id)
-}
+})
 </script>

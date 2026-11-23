@@ -65,19 +65,20 @@
         dense
         outlined
         bg-color="white"
-        label="Perfil de demostración">
+        label="Perfil">
         <template #append><boton-dictado v-model="perfilId" tipo="opcion" :opciones="opcionesPerfil" emit-value /></template>
       </q-select>
       <p class="sg-perfil__texto">Ámbito: {{ perfil.ambito.descripcion }}</p>
-      <p class="sg-perfil__texto">Accesos por perfil provisionales, por validar.</p>
+      <q-btn flat color="secondary" icon="logout" label="Cerrar sesión" no-caps :loading="cerrando" @click="salir" />
     </div>
   </q-drawer>
 </template>
 
 <script setup>
 import BotonDictado from 'components/common/BotonDictado.vue'
-import { computed, reactive } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, reactive, ref } from 'vue'
+import { useQuasar } from 'quasar'
+import { useRoute, useRouter } from 'vue-router'
 import { MENU } from 'src/config/menu'
 import { usePerfil } from 'src/composables/usePerfil'
 // El menú es navegación principal: la pantalla a la que lleva no ofrece «Volver».
@@ -90,9 +91,25 @@ defineProps({
 defineEmits(['update:modelValue'])
 
 const route = useRoute()
-const { perfiles, perfilId, perfil, puedeAcceder } = usePerfil()
+const { perfiles, perfilId, perfil, puedeAcceder, cerrarSesion } = usePerfil()
 
-const opcionesPerfil = perfiles.map((p) => ({ label: p.nombre, value: p.id }))
+const opcionesPerfil = computed(() => perfiles.value.map((p) => ({ label: p.nombre, value: p.id })))
+const $q = useQuasar()
+const router = useRouter()
+const cerrando = ref(false)
+
+async function salir () {
+  if (cerrando.value) return
+  cerrando.value = true
+  try {
+    await cerrarSesion()
+    await router.replace({ name: 'login' })
+  } catch (error) {
+    $q.notify({ type: 'negative', message: error.message })
+  } finally {
+    cerrando.value = false
+  }
+}
 const rutaActiva = computed(() => route.name)
 
 // Solo se muestran las entradas a las que el perfil tiene acceso; un grupo sin hojas visibles desaparece.

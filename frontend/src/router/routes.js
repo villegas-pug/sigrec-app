@@ -1,14 +1,14 @@
-import { usePerfil } from 'src/composables/usePerfil'
-
 // Cada nombre de ruta coincide con una entrada de menu.js y con los accesos de perfiles.js.
 // `meta.grupo` y `meta.titulo` alimentan las migas y el título de página.
 const routes = [
+  { path: '/login', name: 'login', component: () => import('pages/LoginPage.vue') },
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [
       // La raíz lleva a la primera pantalla a la que el perfil activo tiene acceso.
-      { path: '', name: 'raiz', redirect: () => ({ name: usePerfil().rutaInicial.value }) },
+      { path: '', name: 'raiz', component: () => import('pages/InicioPage.vue') },
+      { path: 'sin-perfiles', name: 'sin-perfiles', component: () => import('components/layout/SinAcceso.vue') },
       { path: 'inicio', name: 'inicio', component: () => import('pages/InicioPage.vue'), meta: { titulo: 'Inicio' } },
       { path: 'manual', name: 'manual', component: () => import('pages/ManualPage.vue'), meta: { titulo: 'Manual de usuario' } },
       { path: 'centros', name: 'centros', component: () => import('pages/GestionCentrosPage.vue'), meta: { titulo: 'Gestión de centros' } },

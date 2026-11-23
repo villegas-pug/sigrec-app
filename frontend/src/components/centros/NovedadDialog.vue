@@ -7,6 +7,7 @@
     :etiqueta-enviar="novedad ? 'Guardar cambios' : 'Registrar'"
     :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
+    :deshabilitar-enviar="guardando"
     @enviar="guardar"
   >
     <div class="row q-col-gutter-md">
@@ -31,6 +32,7 @@
 </template>
 
 <script setup>
+import { useGuardado } from 'src/composables/useGuardado'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
@@ -72,7 +74,7 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   const datos = {
     tipo: form.tipo,
     fecha: form.fecha,
@@ -81,9 +83,9 @@ function guardar () {
     ubicacion: form.ubicacion || 'No informada',
     requiereEvaluacion: form.requiereEvaluacion
   }
-  if (props.novedad) actualizarNovedad(props.novedad, datos)
-  else registrarNovedad(props.ambiente, datos)
+  if (props.novedad) await actualizarNovedad(props.novedad, datos)
+  else await registrarNovedad(props.ambiente, datos)
   $q.notify({ type: 'positive', message: props.novedad ? 'Novedad actualizada.' : 'Novedad registrada.' })
   emit('update:modelValue', false)
-}
+})
 </script>

@@ -7,6 +7,7 @@
     :etiqueta-enviar="ambiente ? 'Guardar cambios' : 'Registrar ambiente'"
     :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
+    :deshabilitar-enviar="guardando"
     @enviar="guardar"
   >
     <q-select
@@ -66,6 +67,7 @@
 </template>
 
 <script setup>
+import { useGuardado } from 'src/composables/useGuardado'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
@@ -121,7 +123,7 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   const datos = {
     moduloId: form.moduloId,
     nombre: form.nombre,
@@ -137,13 +139,13 @@ function guardar () {
   }
   let id
   if (props.ambiente) {
-    actualizarAmbiente(props.ambiente, datos)
+    await actualizarAmbiente(props.ambiente, datos)
     id = props.ambiente.id
   } else {
-    id = registrarAmbiente(props.centro, datos).id
+    id = (await registrarAmbiente(props.centro, datos)).id
   }
   $q.notify({ type: 'positive', message: props.ambiente ? 'Ambiente actualizado.' : `Ambiente «${datos.nombre}» registrado.` })
   emit('update:modelValue', false)
   emit('hecho', id)
-}
+})
 </script>

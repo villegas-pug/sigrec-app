@@ -20,7 +20,9 @@ export default defineConfig(() => {
     },
 
     devServer: {
-      open: true
+      host: '127.0.0.1',
+      open: false,
+      proxy: { '/api': { target: 'http://127.0.0.1:8080', changeOrigin: true } }
     },
 
     framework: {

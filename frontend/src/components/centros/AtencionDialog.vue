@@ -8,6 +8,7 @@
     etiqueta-enviar="Marcar como atendida"
     :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
+    :deshabilitar-enviar="guardando"
     @enviar="guardar"
   >
     <q-input v-model="form.fecha" outlined dense type="date" stack-label label="Fecha de atención *" :rules="[requerido, noFutura]">
@@ -23,6 +24,7 @@
 </template>
 
 <script setup>
+import { useGuardado } from 'src/composables/useGuardado'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
@@ -51,9 +53,9 @@ watch(() => props.modelValue, (abierto) => {
   fijar()
 }, { immediate: true })
 
-function guardar () {
-  atenderNovedad(props.novedad, form)
+const { guardando, guardar } = useGuardado(async () => {
+  await atenderNovedad(props.novedad, form)
   $q.notify({ type: 'positive', message: 'Novedad marcada como atendida.' })
   emit('update:modelValue', false)
-}
+})
 </script>

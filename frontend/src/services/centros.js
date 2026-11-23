@@ -1,6 +1,6 @@
 // SPEC 033: accesos a los datos de centros que tienen colección propia en el modelo ER.
 // Devuelven la misma forma y el mismo orden que cuando estaban anidados en su registro padre, para que la interfaz no cambie.
-import { db, ambientePorId, nuevoId } from './datos'
+import { db, ambientePorId } from './datos'
 
 // ---------- Hechos y novedades (SGR_INCIDENTE) ----------
 
@@ -41,21 +41,3 @@ export function estadoElementosDe (tipo, id) {
 // Elementos agregados al registro, en el orden en que se agregaron: `[{ key, label }]`.
 export const elementosAdicionalesDe = (tipo, id) =>
   filasDe(tipo, id).filter((e) => e.nombre).map((e) => ({ key: e.clave, label: e.nombre }))
-
-/**
- * Reemplaza los elementos de un centro, módulo o ambiente a partir de la forma que usan los formularios.
- * `estadoElementos` = { clave: condición } (null = ninguno evaluado); `adicionales` = [{ key, label }] (null = ninguno).
- * Un elemento base solo se guarda si está evaluado; un elemento agregado se guarda aunque no tenga condición.
- */
-export function guardarElementos (tipo, id, estadoElementos, adicionales) {
-  const objetivo = { carId: null, moduloId: null, ambienteId: null, [CLAVE_OBJETIVO[tipo]]: id }
-  const lista = adicionales ?? []
-  const filas = [
-    ...lista.map((a) => ({ id: nuevoId('ELE'), ...objetivo, clave: a.key, nombre: a.label, condicion: estadoElementos?.[a.key] ?? null })),
-    ...Object.entries(estadoElementos ?? {})
-      .filter(([clave, condicion]) => condicion && !lista.some((a) => a.key === clave))
-      .map(([clave, condicion]) => ({ id: nuevoId('ELE'), ...objetivo, clave, nombre: null, condicion }))
-  ]
-  const restantes = db.elementos.filter((e) => e[CLAVE_OBJETIVO[tipo]] !== id)
-  db.elementos.splice(0, db.elementos.length, ...restantes, ...filas)
-}

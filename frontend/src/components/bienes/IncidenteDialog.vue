@@ -1,5 +1,6 @@
 <template>
-  <form-dialog :model-value="modelValue" :titulo="evento ? 'Actualizar incidente' : 'Registrar incidente'" :subtitulo="ubicacion" :ancho="1000" :modificado="modificado" :etiqueta-enviar="evento ? 'Guardar cambios' : 'Registrar incidente'" @update:model-value="$emit('update:modelValue', $event)" @enviar="guardar">
+  <form-dialog :model-value="modelValue" :titulo="evento ? 'Actualizar incidente' : 'Registrar incidente'" :subtitulo="ubicacion" :ancho="1000" :modificado="modificado" :etiqueta-enviar="evento ? 'Guardar cambios' : 'Registrar incidente'" @update:model-value="$emit('update:modelValue', $event)" :deshabilitar-enviar="guardando"
+    @enviar="guardar">
     <div v-if="contexto" class="sg-box" aria-label="Contexto fijo de la incidencia">
       <span v-if="contexto.padre">{{ ETIQUETAS_PADRE[contexto.padre.tipo] ?? 'Bien principal' }}: {{ contexto.padre.nombre }} · {{ contexto.padre.id }}</span>
       <strong>{{ etiquetas[origen.tipo] }}: {{ contexto.nombre }} · {{ origen.id }}</strong>
@@ -19,6 +20,7 @@
   </form-dialog>
 </template>
 <script setup>
+import { useGuardado } from 'src/composables/useGuardado'
 import { computed, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
@@ -62,15 +64,15 @@ watch(() => props.modelValue, (abierto) => {
   for (const id of ids) form.evaluaciones[id] = { requiereReposicion: e ? requiereReposicion(e, id) : null, unidades: e ? unidadesAfectadas(e, bienPorId(id)) : bienPorId(id).cantidad ?? 1 }
   fijar()
 })
-async function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   if (selector.value && !(await selector.value.validar())) return
   const permiso = ['centro', 'ambiente'].includes(origen.value?.tipo) ? `${origen.value.tipo}.incidente` : 'bien.incidente'
   if (!contexto.value || !enAmbitoCar(contexto.value.carId) || !puedeHacer(permiso) || (props.evento && !puedeHacer('incidente.actualizar'))) return
   try {
     const datos = { ...form, origen: origen.value }
-    const e = props.evento ? (actualizarIncidente(props.evento, datos), props.evento) : registrarIncidente(datos)
+    const e = props.evento ? await actualizarIncidente(props.evento, datos) : await registrarIncidente(datos)
     $q.notify({ type: 'positive', message: `${props.evento ? 'Incidente actualizado' : 'Incidente registrado'}: ${e.titulo} · ${e.id}.` })
     emit('update:modelValue', false); emit('hecho', e.id)
   } catch (error) { $q.notify({ type: 'negative', message: error.message }) }
-}
+})
 </script>

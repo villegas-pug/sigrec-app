@@ -163,7 +163,7 @@
       </q-card-section>
       <q-card-actions align="right" class="sg-dialog__footer q-pa-md q-gutter-sm">
         <q-btn flat color="secondary" icon="close" label="Cancelar" @click="cerrar" />
-        <q-btn outline color="secondary" icon="save" label="Guardar" @click="guardarYTerminar" />
+        <q-btn outline color="secondary" icon="save" label="Guardar" :loading="guardando" @click="guardarYTerminar" />
         <q-btn unelevated color="primary" icon="playlist_add" :label="`Guardar y registrar otro en ${ambiente.nombre}`" @click="formulario?.submit()" />
       </q-card-actions>
     </q-card>
@@ -187,7 +187,7 @@ import { usePerfil } from 'src/composables/usePerfil'
 import { useBorrador } from 'src/composables/useBorrador'
 import { useRetorno } from 'src/composables/useRetorno'
 import { db, bienPorId, bienesDeAmbiente, textoUbicacion, tipoPorId, ubicacionDeAmbiente, vigentes, situacionDe } from 'src/services/datos'
-import { informarVerificacion, numeroONulo, registrarBien, rotuloSugerido } from 'src/services/acciones'
+import { numeroONulo, registrarBien, rotuloSugerido } from 'src/services/acciones'
 import { OPCIONES_CATEGORIA, condicion } from 'src/config/catalogos'
 import { interpretarRegistro } from 'src/utils/interpretacionVoz'
 import { minimo, requerido } from 'src/utils/validaciones'
@@ -369,13 +369,16 @@ const conteo = computed(() => ({
 }))
 
 // `terminar`: «Guardar» cierra el modo registro; solo entonces se ofrece volver a la pantalla de origen.
-function guardar (_evento, { terminar = false } = {}) {
+const guardando = ref(false)
+
+async function guardar (_evento, { terminar = false } = {}) {
+  if (guardando.value) return null
   if (!form.condicion) {
     $q.notify({ type: 'warning', message: 'Indique la condición constatada del bien.' })
     return null
   }
   const p = previo.value
-  const bien = registrarBien({
+  const datos = {
     id: form.rotulo,
     ambienteId: props.ambiente.id,
     tipoId: form.tipoId,
@@ -392,13 +395,20 @@ function guardar (_evento, { terminar = false } = {}) {
     vidaUtilAnios: numeroONulo(form.vidaUtilAnios),
     cantidad: numeroONulo(form.cantidad) ?? 1,
     asociadoA: form.asociadoA ? { bienId: form.asociadoA, posicion: form.posicion || 'No informada' } : null
-  })
-  if (p) {
-    p.bienId = bien.id
-    informarVerificacion(bien, {
-      resultado: conteo.value.diferencia ? 'diferencias' : 'coincide',
-      nota: `Contraste con ${p.id}: ${plural(conteo.value.coincide, 'coincide', 'coinciden')}, ${plural(conteo.value.diferencia, 'diferencia', 'diferencias')}, ${plural(conteo.value.pendiente, 'pendiente', 'pendientes')}.`
-    })
+  }
+  const contraste = p ? {
+    resultado: conteo.value.diferencia ? 'diferencias' : 'coincide',
+    nota: `Contraste con ${p.id}: ${plural(conteo.value.coincide, 'coincide', 'coinciden')}, ${plural(conteo.value.diferencia, 'diferencia', 'diferencias')}, ${plural(conteo.value.pendiente, 'pendiente', 'pendientes')}.`
+  } : undefined
+  let bien
+  guardando.value = true
+  try {
+    bien = await registrarBien(datos, { inventarioPrevioId: p?.id, verificacion: contraste })
+  } catch (error) {
+    $q.notify({ type: 'negative', message: error.message })
+    return null
+  } finally {
+    guardando.value = false
   }
   previo.value = null
   Object.assign(form, vacio())
@@ -412,7 +422,7 @@ function guardar (_evento, { terminar = false } = {}) {
 async function guardarYTerminar () {
   const valido = await formulario.value.validate()
   if (!valido) return
-  const bien = guardar(null, { terminar: true })
+  const bien = await guardar(null, { terminar: true })
   if (bien) emit('terminar', bien)
 }
 

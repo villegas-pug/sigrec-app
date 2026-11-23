@@ -23,7 +23,7 @@ export function evaluarItinerario (itinerario, vehiculo) {
 
   if (!realizado) faltantes.push('ejecución del recorrido')
   else if (kmRealizados == null) faltantes.push('distancia realizada')
-  if (rendimiento == null) faltantes.push('rendimiento de referencia')
+  if (!(rendimiento > 0)) faltantes.push('rendimiento de referencia')
   if (realizado && consumo == null) faltantes.push('consumo declarado')
 
   const estimadoL = kmRealizados != null && rendimiento ? kmRealizados / rendimiento : null

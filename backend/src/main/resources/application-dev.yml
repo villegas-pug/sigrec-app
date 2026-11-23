@@ -1,0 +1,19 @@
+server:
+  address: 127.0.0.1
+spring:
+  jpa:
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: ${SIGREC_DDL_AUTO:validate}
+  sql:
+    init:
+      mode: ${SIGREC_SEED:never}
+      data-locations: classpath:db/seed/*.sql
+      separator: "@@"
+      encoding: UTF-8
+sigrec:
+  demo:
+    importar: ${SIGREC_IMPORTAR_DEMO:false}
+  security:
+    cookie-secure: false
+    cors-origin: http://localhost:9000

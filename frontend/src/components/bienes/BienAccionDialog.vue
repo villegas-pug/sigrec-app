@@ -9,6 +9,7 @@
     :color-enviar="modo === 'baja' ? 'negative' : 'primary'"
     :modificado="modificado"
     @update:model-value="$emit('update:modelValue', $event)"
+    :deshabilitar-enviar="guardando"
     @enviar="guardar"
   >
     <selector-ubicacion-bien
@@ -112,6 +113,7 @@
 </template>
 
 <script setup>
+import { useGuardado } from 'src/composables/useGuardado'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
@@ -215,22 +217,22 @@ watch(() => props.modelValue, (abierto) => {
   if (abierto) reiniciar()
 })
 
-function guardar () {
+const { guardando, guardar } = useGuardado(async () => {
   const bien = bienActivo.value
   let mensaje = ''
   let nuevoId = null
   if (props.modo === 'verificacion') {
-    informarVerificacion(bien, form)
+    await informarVerificacion(bien, form)
     mensaje = 'Verificación registrada.'
   } else if (props.modo === 'baja') {
-    darDeBaja(bien, form)
+    await darDeBaja(bien, form)
     mensaje = hijosActivos.value.length ? 'Baja registrada. Revise los bienes asociados.' : 'Baja registrada.'
   } else if (props.modo === 'reposicion') {
-    nuevoId = registrarReposicion(bien, form).id
+    nuevoId = (await registrarReposicion(bien, form)).id
     mensaje = `Reposición registrada: ${nuevoId}.`
   }
   $q.notify({ type: 'positive', message: mensaje })
   emit('update:modelValue', false)
   emit('hecho', nuevoId)
-}
+})
 </script>

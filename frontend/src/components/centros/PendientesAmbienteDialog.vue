@@ -31,7 +31,7 @@
             <div class="row items-center q-gutter-sm">
               <q-btn v-if="situacionDe(b) === 'activo' && puedeHacer('bien.trasladar')" dense outline no-caps color="secondary" icon="swap_horiz" label="Reubicar" :disable="!hayDestino" @click="abrirTraslado(b)" />
               <q-btn v-if="situacionDe(b) === 'activo' && puedeHacer('bien.baja')" dense outline no-caps color="negative" icon="remove_circle" label="Dar de baja" @click="abrirBaja(b)" />
-              <q-btn v-if="situacionDe(b) !== 'activo' && revisionPendienteDe(b) && puedeHacer('bien.baja')" dense outline no-caps color="secondary" icon="task_alt" label="Cerrar revisión" @click="cerrarRevision(b)" />
+              <q-btn v-if="situacionDe(b) !== 'activo' && revisionPendienteDe(b) && puedeHacer('bien.baja')" dense outline no-caps color="secondary" icon="task_alt" label="Cerrar revisión" @click="resolverRevision(b)" />
               <q-btn v-if="puedeAcceder('centros')" flat dense no-caps color="secondary" icon="visibility" label="Ver ficha" :to="{ name: 'centros', query: { bien: b.id } }" />
             </div>
           </div>
@@ -51,6 +51,7 @@
 </template>
 
 <script setup>
+import { useQuasar } from 'quasar'
 // Antes de anular un ambiente hay que resolver sus bienes uno por uno: reubicarlos (con sus componentes) o darlos de baja.
 // La lista se recalcula sola; con la lista vacía se puede continuar con la anulación.
 import { computed, nextTick, reactive } from 'vue'
@@ -92,5 +93,11 @@ function abrirBaja (bien) {
 function continuar () {
   emit('update:modelValue', false)
   emit('continuar')
+}
+const $q = useQuasar()
+async function resolverRevision (bien) {
+  try {
+    await cerrarRevision(bien)
+  } catch (error) { $q.notify({ type: 'negative', message: error.message }) }
 }
 </script>
