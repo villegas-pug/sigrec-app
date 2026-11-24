@@ -1,0 +1,14 @@
+{
+   "configurations": [
+      {
+         "type": "java",
+         "name": "Spring Boot-SigrecApplication<sigrec>",
+         "request": "launch",
+         "cwd": "${workspaceFolder}",
+         "mainClass": "pe.gob.inabif.sigrec.SigrecApplication",
+         "projectName": "sigrec",
+         "args": "",
+         "envFile": "${workspaceFolder}/.env"
+      }
+   ]
+}

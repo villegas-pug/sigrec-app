@@ -11,9 +11,37 @@
     @enviar="guardar"
   >
     <q-input v-model="form.nombre" outlined dense label="Nombre del centro *" :rules="[requerido]">
-      <template #append><boton-dictado v-model="form.nombre" /></template>
+      <template #append>
+        <boton-dictado v-model="form.nombre" />
+        <unidad-organica-selector
+          v-model="form.unidadOrganica"
+          :centro="centro.id"
+          :busqueda-inicial="form.nombre"
+          :deshabilitado="guardando"
+          @seleccionar="completarDesdeUnidad"
+        >
+          <template #activador="{ abrir, deshabilitado, seleccionada }">
+            <q-btn
+              type="button"
+              flat
+              round
+              dense
+              color="primary"
+              icon="search"
+              :disable="deshabilitado"
+              :aria-label="seleccionada ? 'Cambiar unidad orgánica' : 'Buscar unidad orgánica'"
+              @click="abrir"
+            >
+              <q-tooltip>{{ seleccionada ? 'Cambiar unidad orgánica' : 'Buscar unidad orgánica' }}</q-tooltip>
+            </q-btn>
+          </template>
+        </unidad-organica-selector>
+      </template>
     </q-input>
-    <unidad-organica-selector v-model="form.unidadOrganica" :centro="centro.id" :deshabilitado="guardando" />
+    <p v-if="form.unidadOrganica?.elegible === false" class="q-mt-sm q-mb-none" role="status">
+      <q-icon name="warning_amber" />
+      La unidad vinculada ya no está activa o fue eliminada. Puede conservarla o elegir otra.
+    </p>
 
     <div class="sg-kv__label">Inmueble donde funciona</div>
     <q-input v-model="form.direccion" outlined dense label="Dirección">
@@ -100,6 +128,12 @@ const $q = useQuasar()
 
 const form = reactive({})
 const { modificado, fijar } = useBorrador(form)
+
+// SPEC 050: la búsqueda completa los datos disponibles sin modificar el código del centro.
+function completarDesdeUnidad (unidad) {
+  form.nombre = unidad.nombre ?? ''
+  if (unidad.direccion) form.direccion = unidad.direccion
+}
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
