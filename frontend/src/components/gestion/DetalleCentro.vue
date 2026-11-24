@@ -7,8 +7,8 @@
       <status-chip v-if="resumenControles.extintoresFaltantes" tono="wa" :label="plural(resumenControles.extintoresFaltantes, 'extintor faltante', 'extintores faltantes')" />
     </template>
     <template #acciones>
-      <q-btn v-if="puedeHacer('modulo.registrar')" unelevated color="primary" icon="add_home_work" label="Registrar módulo" :disable="!activo" @click="dialogos.modulo = true" />
       <q-btn v-if="puedeHacer('centro.actualizar')" outline color="secondary" icon="edit" label="Actualizar ficha" :disable="!activo" @click="dialogos.ficha = true" />
+      <q-btn v-if="puedeHacer('modulo.registrar')" unelevated color="primary" icon="add_home_work" label="Registrar módulo" :disable="!activo" @click="dialogos.modulo = true" />
       <q-btn v-if="puedeHacer('centro.incidente')" outline color="secondary" icon="report" label="Registrar incidente" :disable="!activo" @click="incidenteAbierto = true" />
     </template>
 

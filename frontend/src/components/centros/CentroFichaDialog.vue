@@ -10,43 +10,14 @@
     :deshabilitar-enviar="guardando"
     @enviar="guardar"
   >
-    <q-input v-model="form.nombre" outlined dense label="Nombre del centro *" :rules="[requerido]">
-      <template #append>
-        <boton-dictado v-model="form.nombre" />
-        <unidad-organica-selector
-          v-model="form.unidadOrganica"
-          :centro="centro.id"
-          :busqueda-inicial="form.nombre"
-          :deshabilitado="guardando"
-          @seleccionar="completarDesdeUnidad"
-        >
-          <template #activador="{ abrir, deshabilitado, seleccionada }">
-            <q-btn
-              type="button"
-              flat
-              round
-              dense
-              color="primary"
-              icon="search"
-              :disable="deshabilitado"
-              :aria-label="seleccionada ? 'Cambiar unidad orgánica' : 'Buscar unidad orgánica'"
-              @click="abrir"
-            >
-              <q-tooltip>{{ seleccionada ? 'Cambiar unidad orgánica' : 'Buscar unidad orgánica' }}</q-tooltip>
-            </q-btn>
-          </template>
-        </unidad-organica-selector>
-      </template>
-    </q-input>
+    <q-input :model-value="form.nombre" outlined dense readonly label="Nombre del centro" />
     <p v-if="form.unidadOrganica?.elegible === false" class="q-mt-sm q-mb-none" role="status">
       <q-icon name="warning_amber" />
-      La unidad vinculada ya no está activa o fue eliminada. Puede conservarla o elegir otra.
+      La unidad vinculada ya no está activa o fue eliminada.
     </p>
 
     <div class="sg-kv__label">Inmueble donde funciona</div>
-    <q-input v-model="form.direccion" class="q-mb-sm" outlined dense label="Dirección">
-      <template #append><boton-dictado v-model="form.direccion" /></template>
-    </q-input>
+    <q-input :model-value="form.direccion" class="q-mb-sm" outlined dense readonly label="Dirección" />
     <div class="row q-col-gutter-md">
       <q-input v-model="form.fundacion" class="col-12 col-sm-4" outlined dense label="Referencia de fundación">
         <template #append><boton-dictado v-model="form.fundacion" /></template>
@@ -109,14 +80,12 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
-import UnidadOrganicaSelector from './UnidadOrganicaSelector.vue'
 import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarCentro, numeroONulo } from 'src/services/acciones'
 import { completarElementos, normalizarElementos } from 'src/services/infraestructura'
 import { elementosAdicionalesDe, estadoElementosDe } from 'src/services/centros'
 import { OPCIONES_CONDICION, OPCIONES_INMUEBLE } from 'src/config/catalogos'
-import { requerido } from 'src/utils/validaciones'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -128,12 +97,6 @@ const $q = useQuasar()
 
 const form = reactive({})
 const { modificado, fijar } = useBorrador(form)
-
-// SPEC 050: la búsqueda completa los datos disponibles sin modificar el código del centro.
-function completarDesdeUnidad (unidad) {
-  form.nombre = unidad.nombre ?? ''
-  if (unidad.direccion) form.direccion = unidad.direccion
-}
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
@@ -166,10 +129,8 @@ watch(() => props.modelValue, (abierto) => {
 
 const { guardando, guardar } = useGuardado(async () => {
   const alquilado = form.condicion === 'alquilado'
-  const unidadId = form.unidadOrganica?.id
   await actualizarCentro(props.centro, {
     nombre: form.nombre,
-    unidadOrganicaId: unidadId === props.centro.unidadOrganica?.id ? undefined : unidadId,
     inmueble: {
       direccion: form.direccion || null,
       fundacion: { referencia: form.fundacion || null, nota: form.fundacionNota || null },

@@ -1,11 +1,7 @@
 <template>
   <q-page class="sg-page" :class="{ 'sg-page--explorador': !esConsulta }" :style-fn="altoPagina">
     <div class="sg-page__inner">
-      <page-header>
-        <template #acciones>
-          <q-btn v-if="puedeHacer('centro.registrar') && (esConsulta || (movil && vista !== 'arbol'))" outline color="secondary" icon="add_business" label="Registrar centro" @click="dialogoCentro = true" />
-        </template>
-      </page-header>
+      <page-header />
 
       <consulta-infraestructura v-if="['ambientes_criticos', 'elementos_criticos', 'novedades'].includes(parametro(route.query.consulta))" />
       <template v-else>
@@ -15,20 +11,14 @@
         <arbol-centros
           ref="arbolRef"
           v-if="!movil || vista === 'arbol'"
-          v-model:texto="texto"
           v-model:situacion="situacion"
-          v-model:inactivos="inactivos"
           v-model:expandidos="expandidos"
           :nodos="arbol"
           :seleccionado="seleccion"
           :nuevos="nuevos"
           @expandir="actualizarExpandidos"
           @seleccionar="seleccionarDesdeArbol"
-        >
-          <template #acciones>
-            <q-btn v-if="puedeHacer('centro.registrar')" outline dense color="secondary" icon="add_business" label="Registrar centro" @click="dialogoCentro = true" />
-          </template>
-        </arbol-centros>
+        />
 
         <div v-if="!movil || vista === 'detalle'" class="sg-explorer__col">
           <!-- Tras saltar de una ficha a otra por un enlace del contenido, se ofrece volver a la ficha anterior (SPEC 011, Ola 5). -->
@@ -113,7 +103,6 @@
       @terminar="alTerminarRegistro"
       @cerrar="modo = 'detalle'"
     />
-    <centro-dialog v-model="dialogoCentro" @hecho="(id) => irA(nodoCentroId(id))" />
     <bien-accion-dialog v-if="bien" v-model="accion.abierta" :modo="accion.modo" :bien="bien" @hecho="irA" />
     <bien-edicion-dialog v-if="bien" v-model="edicion.abierta" :modo="edicion.modo" :bien="bien" @hecho="irA" />
     <incidente-dialog v-model="incidente.abierto" :bien="bien" @hecho="abrirHecho" />
@@ -138,7 +127,6 @@ import BienFicha from 'components/bienes/BienFicha.vue'
 import BienAccionDialog from 'components/bienes/BienAccionDialog.vue'
 import BienEdicionDialog from 'components/bienes/BienEdicionDialog.vue'
 import IncidenteDialog from 'components/bienes/IncidenteDialog.vue'
-import CentroDialog from 'components/centros/CentroDialog.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import { usePerfil } from 'src/composables/usePerfil'
@@ -247,7 +235,6 @@ const moduloDelNodo = nodoPedido?.tipo === 'modulo' ? nodoPedido.registro : ambi
 const novedadAnulada = !!(ambienteDeNovedad && novedadSolicitada?.anulacion)
 const anuladoPedido = !!(ambienteDelNodo?.anulacion || moduloDelNodo?.anulacion || novedadAnulada || mantenimientoSolicitado?.anulacion || (nodoPedido?.tipo === 'centro' && nodoPedido.registro.anulacion))
 
-const texto = ref('')
 const situacion = ref(situacionDeRegistro(nodoPedido?.registro) === 'anulado' ? 'anulado' : TODOS)
 const inactivos = ref(anuladoPedido)
 const vista = ref('detalle')
@@ -255,7 +242,7 @@ const nuevos = ref([])
 
 // Al volver con «Atrás» o con «Volver a…» se recuperan el nodo elegido y los filtros del árbol (SPEC 011, Ola 4).
 // Lo guardado en esta entrada del historial refleja lo que el usuario eligió después del enlace, así que prevalece.
-useEstadoNavegacion('centros', { seleccion, texto, situacion, inactivos })
+useEstadoNavegacion('centros', { seleccion, situacion })
 const seleccionRestaurada = seleccion.value !== (pedido.id ?? null)
 if (seleccionRestaurada) pedidoNoDisponible.value = null
 
@@ -266,40 +253,28 @@ const anteriorInterno = recorrido.anterior
 // ---------- Árbol ----------
 const arbol = computed(() => arbolDeCentros(
   carsDelAmbito(inactivos.value).map((c) => c.id),
-  { texto: texto.value ?? '', situacion: situacion.value, inactivos: inactivos.value }
+  { situacion: situacion.value, inactivos: inactivos.value }
 ))
 
 // SPEC 054: al entrar solo los enlaces directos y selecciones restauradas abren su ruta.
 const expandidos = ref([])
 let inicializadoArbol = false
-let buscandoArbol = false
 const raizDe = (id, nodos = arbol.value) => {
   const ruta = rutaHasta(nodos, id)
   return ruta === null ? null : (ruta[0] ?? id)
 }
 watch(arbol, (nodos) => {
-  if (texto.value) {
-    expandidos.value = idsExpandibles(nodos)
-    buscandoArbol = true
-    inicializadoArbol = true
-    return
-  }
   if (!inicializadoArbol) {
     const enlace = !!(hechoPedido || mantenimientoPedido || bienPedido || novedadPedida || ambientePedido || moduloPedido || carPedido || seleccionRestaurada)
     expandidos.value = enlace && seleccion.value ? rutaHasta(nodos, seleccion.value) ?? [] : []
-  } else if (buscandoArbol) {
-    const raiz = seleccion.value && raizDe(seleccion.value, nodos)
-    expandidos.value = raiz ? [raiz] : []
   } else {
     const disponibles = new Set(idsExpandibles(nodos))
     expandidos.value = expandidos.value.filter((id) => disponibles.has(id))
   }
-  buscandoArbol = false
   inicializadoArbol = true
 }, { immediate: true })
 
 function actualizarExpandidos (siguientes) {
-  if (texto.value) { expandidos.value = siguientes; return }
   const raices = new Set(arbol.value.map((n) => n.id))
   const abierta = siguientes.find((id) => raices.has(id) && !expandidos.value.includes(id))
     ?? siguientes.find((id) => raices.has(id))
@@ -310,7 +285,7 @@ function actualizarExpandidos (siguientes) {
 function expandirHasta (id, { incluirNodo = false } = {}) {
   const ruta = rutaHasta(arbol.value, id) ?? antecesoresDeNodo(id)
   const raiz = ruta[0] ?? id
-  const previos = texto.value ? expandidos.value : expandidos.value.filter((actual) => raizDe(actual) === raiz)
+  const previos = expandidos.value.filter((actual) => raizDe(actual) === raiz)
   expandidos.value = [...new Set([...previos, ...ruta, ...(incluirNodo ? [id] : [])])]
 }
 
@@ -326,7 +301,6 @@ const nodo = computed(() => {
 const arbolRef = ref(null)
 const fueraDelFiltro = computed(() => !!nodo.value && rutaHasta(arbol.value, seleccion.value) === null)
 async function mostrarEnArbol () {
-  texto.value = ''
   const n = nodo.value
   if (!n) return
   situacion.value = situacionDeRegistro(n.registro) === 'anulado' ? 'anulado' : TODOS
@@ -355,7 +329,7 @@ async function seleccionar (id, { apilar = false, vaciar = false } = {}) {
   pedidoNoDisponible.value = null
   modo.value = 'detalle'
   seleccion.value = id
-  if (!texto.value && resolverNodo(id)?.tipo === 'centro') expandidos.value = [id]
+  if (resolverNodo(id)?.tipo === 'centro') expandidos.value = [id]
   else expandirHasta(id, { incluirNodo: true })
   vista.value = 'detalle'
   return true
@@ -470,5 +444,4 @@ async function mantener () {
   } catch (error) { $q.notify({ type: 'negative', message: error.message }) }
 }
 
-const dialogoCentro = ref(false)
 </script>

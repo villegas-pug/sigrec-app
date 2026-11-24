@@ -19,8 +19,6 @@
           </template>
         </q-input>
         <q-select :model-value="filtros.anio" :options="anios" emit-value map-options outlined dense label="Año" @update:model-value="fijarAnio" />
-        <q-select :model-value="filtros.mes" :options="OPCIONES_MES" emit-value map-options outlined dense label="Mes"
-                  :disable="filtros.anio === TODOS" :hint="filtros.anio === TODOS ? 'Elija un año' : ''" @update:model-value="fijarMes" />
       </div>
       <q-linear-progress v-if="recargando" indeterminate color="primary" aria-label="Actualizando datos" />
     </div>
@@ -32,7 +30,6 @@
 import { computed, ref } from 'vue'
 import CentroBuscadorDialog from 'components/centros/CentroBuscadorDialog.vue'
 import { ENTIDAD, TIPO_ENTIDAD, useFiltrosCabecera } from 'src/composables/useFiltrosCabecera'
-import { TODOS } from 'src/config/catalogos'
 import { carPorId } from 'src/services/datos'
 import { useLineaIntervencion } from 'src/composables/useLineaIntervencion'
 
@@ -41,7 +38,7 @@ defineProps({ recargando: Boolean })
 const { linea, cargando: cargandoLinea, error: errorLinea } = useLineaIntervencion()
 const opcionesLinea = computed(() => (linea.value ? [linea.value] : []))
 
-const { filtros, fijarCentro, fijarAnio, fijarMes, opcionesAnio, OPCIONES_MES } = useFiltrosCabecera()
+const { filtros, fijarCentro, fijarAnio, opcionesAnio } = useFiltrosCabecera()
 const buscador = ref(false)
 const anios = opcionesAnio()
 // Un centro llegado por enlace (?car=) aún no trae nombre: se toma de los datos cargados.
@@ -57,7 +54,7 @@ const nombreCentro = computed(() => {
 .sg-filtros-cabecera > .sg-page__inner { gap: 8px; }
 .sg-filtros-cabecera__fila { display: grid; gap: 12px; }
 .sg-filtros-cabecera__entidad { grid-template-columns: minmax(140px, 1fr) minmax(0, 5fr); }
-.sg-filtros-cabecera__filtros { grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr); }
+.sg-filtros-cabecera__filtros { grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 1fr); }
 
 @media (max-width: 599.98px) {
   .sg-filtros-cabecera__entidad, .sg-filtros-cabecera__filtros { grid-template-columns: minmax(0, 1fr); }

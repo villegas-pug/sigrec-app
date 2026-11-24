@@ -9,8 +9,9 @@ Cada pantalla filtraba a su manera (Centro, Período, Año…) sobre colecciones
 ## Decisiones
 
 ### Barra de filtros
+- El filtro «Mes» de la cabecera está oculto; la SPA consulta por centro y año sin aplicar un mes invisible. La API conserva su compatibilidad con `mes`.
 - Las migas, el enlace a Inicio y el título centrado aparecen antes de los filtros. Las acciones permanecen debajo; el explorador descuenta la altura del encabezado y los filtros.
-- Tipo de Entidad y Entidad ocupan la primera fila; Línea de intervención, Centro, Año y Mes ocupan todo el ancho de la segunda, con mayor espacio para Línea y Centro (SPEC 055). En pantallas estrechas los campos se adaptan al ancho disponible.
+- Tipo de Entidad y Entidad ocupan la primera fila; Línea de intervención, Centro y Año ocupan todo el ancho de la segunda, con mayor espacio para Línea y Centro (SPEC 055). En pantallas estrechas los campos se adaptan al ancho disponible.
 - Un componente compartido, `components/layout/FiltrosCabecera.vue`, que `MainLayout` muestra sobre la pantalla cuando la ruta declara `meta.filtros`. No aparece en Inicio, Manual, Sin acceso ni la raíz.
 - Campos, en este orden:
   1. **Tipo de Entidad**: fijo, «PÚBLICA» (solo informativo, como en la referencia).
@@ -18,8 +19,7 @@ Cada pantalla filtraba a su manera (Centro, Período, Año…) sobre colecciones
   3. **Línea de intervención** (SPEC 055): select de solo lectura con la unidad orgánica 73; no filtra datos.
   4. **Centro de Acogida Residencial** (antes «Centro»; SPEC 055): campo de solo lectura con lupa (abre el buscador) y `cancel` (vuelve a todos los centros). No existe «Servicio».
   5. **Año**: «Todos» y los años de 2026 al año actual; la lista crece sola cada año.
-  6. **Mes**: «Todos» y enero–diciembre. Deshabilitado, y en «Todos», mientras Año sea «Todos».
-- Valores iniciales: todos los centros del ámbito, Año «Todos», Mes «Todos».
+- Valores iniciales: todos los centros del ámbito y Año «Todos».
 - Estado global en memoria (`composables/useFiltrosCabecera.js`): se conserva al navegar entre pantallas, se reinicia al cambiar de sesión y se pierde al recargar el navegador. No va en la URL, para no volver a montar la pantalla (`:key="route.fullPath"`).
 - Un enlace profundo con `?car=` fija el centro de la cabecera al entrar en una pantalla con filtros.
 - Los filtros se aplican al instante, sin botón «Consultar». Mientras llega la respuesta la pantalla sigue montada y muestra una barra de progreso.
@@ -33,7 +33,7 @@ Cada pantalla filtraba a su manera (Centro, Período, Año…) sobre colecciones
 ### Filtrado en el backend
 - Las colecciones aceptan `?centro=&anio=&mes=` (`shared/model/FiltroConsulta`). Año y Mes se aplican a la **fecha de registro** (`FEC_REGISTRA`) del registro principal de la pantalla, en el rango semiabierto del periodo, y siempre dentro del ámbito del usuario.
 - `mes` sin `anio`, un mes fuera de 1–12 o un centro con formato inválido devuelven 400. Un centro fuera del ámbito devuelve una colección vacía.
-- Cada ruta declara `meta.filtros: { principal: '<grupo>', registro?: '<tipo>' }`. Todos los grupos reciben `centro`; solo el principal recibe `anio`, `mes` y, si existe, `registro`.
+- Cada ruta declara `meta.filtros: { principal: '<grupo>', registro?: '<tipo>' }`. Todos los grupos reciben `centro`; solo el principal recibe `anio` y, si existe, `registro`.
 - `registro=CENTRO` (Gestión de centros) envía el periodo a **todos** los grupos: `centro/service/FiltroCentros` lo traduce en los centros registrados en el periodo, y cada colección queda acotada a esos centros. Así ninguna colección referencia un centro que la jerarquía no trae.
 
 | Pantalla | Año/Mes sobre | `meta.filtros` |
@@ -74,8 +74,8 @@ Cada pantalla filtraba a su manera (Centro, Período, Año…) sobre colecciones
 ## Criterios de aceptación
 1. La barra aparece en todas las pantallas con `meta.filtros` y no en Inicio ni en Manual.
 2. El buscador encuentra centros del ámbito con tres o más caracteres, pagina y permite elegir uno; `cancel` vuelve a todos.
-3. Mes está deshabilitado con Año «Todos»; los años van de 2026 al actual.
-4. Cada cambio de filtro hace un `GET` con `centro`, `anio` y `mes`; volver a una pantalla vuelve a pedir sus datos, salvo los catálogos.
+3. Mes no se muestra; los años van de 2026 al actual.
+4. Cada cambio de filtro hace un `GET` con `centro` y `anio` cuando corresponda; volver a una pantalla vuelve a pedir sus datos, salvo los catálogos.
 5. Incidencias muestra solo los hechos registrados en el centro y el periodo elegidos.
 6. `?car=XYZ` fija el centro de la cabecera.
 

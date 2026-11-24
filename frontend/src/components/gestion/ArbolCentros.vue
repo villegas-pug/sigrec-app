@@ -1,17 +1,10 @@
 <template>
   <div ref="contenedor" class="sg-explorer__col">
     <div class="sg-explorer__filtros">
-      <q-input v-model="texto" outlined dense clearable label="Buscar centro, módulo, ambiente o recurso">
-        <template #append><boton-dictado v-model="texto" /><q-icon name="search" /></template>
-      </q-input>
       <div class="column q-gutter-y-sm">
         <q-select v-model="situacion" class="full-width" :options="OPCIONES_SITUACION" emit-value map-options outlined dense label="Situación del bien">
           <template #append><boton-dictado v-model="situacion" tipo="opcion" :opciones="OPCIONES_SITUACION" emit-value /></template>
         </q-select>
-        <div class="row items-center justify-between" style="gap: 8px">
-          <slot name="acciones" />
-          <filtro-inactivos v-model="inactivos" class="q-ml-auto" />
-        </div>
       </div>
     </div>
 
@@ -53,7 +46,6 @@ import { nextTick, ref } from 'vue'
 import { revisionPendienteDe, situacionDe } from 'src/services/datos'
 // Árbol Centro › Módulo › Ambiente › Bien › Componente con sus filtros (SPEC 020). Todos los niveles se pueden seleccionar.
 import BotonDictado from 'components/common/BotonDictado.vue'
-import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import { CHIP_ANULADO, TODOS, condicion } from 'src/config/catalogos'
 
@@ -73,9 +65,7 @@ async function mostrar (id) {
   el?.scrollIntoView({ block: 'nearest' })
 }
 defineExpose({ mostrar })
-const texto = defineModel('texto', { type: String, default: '' })
 const situacion = defineModel('situacion', { type: String, default: TODOS })
-const inactivos = defineModel('inactivos', { type: Boolean, default: false })
 const expandidos = defineModel('expandidos', { type: Array, default: () => [] })
 
 const OPCIONES_SITUACION = [
