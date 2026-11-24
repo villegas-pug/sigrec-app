@@ -73,18 +73,20 @@ const HechoServicioDialog = defineAsyncComponent(() => import('components/servic
 const ServicioDialog = defineAsyncComponent(() => import('components/servicios/ServicioDialog.vue'))
 
 const props = defineProps({
-  // { ahora: [], proximos: [] } de services/atencion › avisosDeAtencion
-  avisos: { type: Object, required: true }
+  // { ahora: [], proximos: [] } ya redactados (composables/useAtencion, SPEC 044)
+  avisos: { type: Object, required: true },
+  // Centros del ámbito { id, nombre } tomados del resumen de Inicio; Inicio ya no carga la jerarquía completa.
+  centros: { type: Array, default: () => [] }
 })
 
-const { carsEnAmbito, puedeAcceder, puedeHacer } = usePerfil()
+const { puedeAcceder, puedeHacer } = usePerfil()
 
 const route = useRoute()
 const horizonte = ref(parametro(route.query.aviso) === 'control_por_vencer' ? 'proximo' : 'ahora')
 const avisoFiltro = ref(['control_vencido', 'control_por_vencer', 'extintores_faltantes'].includes(parametro(route.query.aviso)) ? parametro(route.query.aviso) : TODOS)
 const categoria = ref(TODOS)
 const carPedido = parametro(route.query.car)
-const carId = ref(carsEnAmbito.value.some((c) => c.id === carPedido) ? carPedido : TODOS)
+const carId = ref(props.centros.some((c) => c.id === carPedido) ? carPedido : TODOS)
 useEstadoNavegacion('atencion', { horizonte, categoria, carId, avisoFiltro })
 watch(avisoFiltro, (valor) => { if (valor !== TODOS) horizonte.value = valor === 'control_por_vencer' ? 'proximo' : 'ahora' })
 
@@ -95,7 +97,7 @@ const visibles = computed(() =>
 
 const opcionesCategoria = [{ label: 'Todos los temas', value: TODOS }, ...Object.entries(CATEGORIAS_AVISO).map(([value, label]) => ({ value, label }))]
 const opcionesCar = computed(() =>
-  carsEnAmbito.value.length > 1 ? [{ label: 'Todos los centros', value: TODOS }, ...carsEnAmbito.value.map((c) => ({ label: c.nombre, value: c.id }))] : []
+  props.centros.length > 1 ? [{ label: 'Todos los centros', value: TODOS }, ...props.centros.map((c) => ({ label: c.nombre, value: c.id }))] : []
 )
 
 // Primer destino al que el perfil tiene acceso (p. ej. el mantenimiento de un vehículo: ficha del centro o Vehículos).

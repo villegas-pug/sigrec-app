@@ -58,10 +58,10 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useSesionIntranet } from 'src/composables/useSesionIntranet'
-import { inicioListo } from 'src/services/cargaDatos'
+import { resumenInicio } from 'src/services/resumenInicio'
 import { plural } from 'src/utils/formato'
 // El logo es navegación principal; la lupa y la campana sí permiten volver a la pantalla en la que se estaba.
 import { marcarNavegacionPrincipal } from 'src/router/retorno'
@@ -76,22 +76,10 @@ defineEmits(['alternar-menu'])
 
 const { rutaInicial, puedeAcceder } = usePerfil()
 const { usuario, salir } = useSesionIntranet()
-const avisos = shallowRef(null)
-watch(inicioListo, async (listo) => {
-  if (!listo) {
-    avisos.value = null
-    return
-  }
-  try {
-    const { useAtencion } = await import('src/composables/useAtencion')
-    if (inicioListo.value) avisos.value = useAtencion().avisos
-  } catch (error) {
-    console.error(error)
-  }
-}, { immediate: true })
-const avisosDisponibles = computed(() => inicioListo.value && !!avisos.value)
+// SPEC 044: la campana cuenta los avisos «ahora» del último resumen de Inicio; sin resumen no se han cargado.
+const avisosDisponibles = computed(() => !!resumenInicio.value)
 // Solo cuenta lo que requiere atención ahora; los próximos vencimientos se ven en Inicio.
-const pendientes = computed(() => (puedeAcceder('inicio') && avisosDisponibles.value ? avisos.value.value.ahora.length : 0))
+const pendientes = computed(() => (puedeAcceder('inicio') && resumenInicio.value ? resumenInicio.value.avisos.ahora.length : 0))
 
 const buscador = ref(false)
 const atajo = (e) => {

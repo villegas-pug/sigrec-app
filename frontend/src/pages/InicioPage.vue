@@ -13,8 +13,7 @@
       <section v-if="cargando" aria-busy="true" aria-live="polite" class="q-gutter-md">
         <p role="status" class="sg-muted">Cargando indicadores y situación de los centros…</p>
         <div class="sg-kpi-panel">
-          <kpi-card v-if="kpiJerarquia" v-bind="kpiJerarquia" />
-          <q-skeleton v-for="n in kpiJerarquia ? 7 : 8" :key="n" height="110px" />
+          <q-skeleton v-for="n in 8" :key="n" height="110px" />
         </div>
         <q-skeleton height="180px" />
         <q-skeleton height="240px" />
@@ -44,7 +43,7 @@
         <router-link v-if="puedeAcceder('necesidades')" :to="{ name: 'necesidades' }" class="text-weight-bold">Revisar necesidades</router-link>
       </note-banner>
 
-      <atencion-requerida :avisos="avisos" />
+      <atencion-requerida :avisos="avisos" :centros="centros" />
 
       <section-card titulo="Situación por centro" subtitulo="Necesidades, infraestructura, bienes, controles preventivos, vehículos y servicios. Cada cifra abre el detalle que la sustenta." sin-relleno>
         <div v-if="!compacto" class="sg-table-wrap">
@@ -92,10 +91,10 @@
 
 <script setup>
 import ManualHelp from 'components/common/ManualHelp.vue'
-// Inicio (SPEC 011): panel único. Reúne los indicadores, la atención requerida y la situación por centro que antes se
-// repartían entre Inicio y el «Tablero de control». Ninguna cifra ni aviso se calcula aquí: vienen de services/situacion.js
-// y services/atencion.js.
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+// Inicio (SPEC 011): panel único con los indicadores, la atención requerida y la situación por centro. SPEC 044: ninguna
+// cifra ni aviso se calcula en el navegador; vienen de `GET /inicio/resumen`. La SPA solo suma las filas para los totales
+// (services/totalesInicio.js) y redacta los avisos (services/avisosResumen.js).
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import KpiCard from 'components/common/KpiCard.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
@@ -105,36 +104,31 @@ import AtencionRequerida from 'components/inicio/AtencionRequerida.vue'
 import VolverOrigen from 'components/layout/VolverOrigen.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAtencion } from 'src/composables/useAtencion'
-import { ambientesDeCar, modulosDeCar } from 'src/services/datos'
-import { resumenPorCentro, totalizarSituacion } from 'src/services/situacion'
-import { evaluarItinerario, itinerariosDeVehiculo } from 'src/services/combustible'
+import { totalizarSituacion } from 'src/services/totalesInicio'
 import { condicion, condicionInmueble } from 'src/config/catalogos'
-import { anioRevision, anioServicios, hoy } from 'src/config/reglas'
+import { anioRevision, anioServicios } from 'src/config/reglas'
 import { numero, plural, porcentaje, soles } from 'src/utils/formato'
-import { asegurarDatos } from 'src/services/cargaDatos'
-import { api } from 'src/services/api'
+import { asegurarDatos, faltanDatos } from 'src/services/cargaDatos'
+import { cargarResumenInicio, escrituras, resumenDesactualizado, resumenInicio } from 'src/services/resumenInicio'
 
+// Con un resumen previo (de una visita anterior) se muestra de inmediato y se actualiza en segundo plano si hace falta.
 const cargando = ref(true)
 const errorCarga = ref('')
-const resumenJerarquia = ref(null)
 let intento = 0
 
 async function cargarInicio () {
   const actual = ++intento
-  cargando.value = true
   errorCarga.value = ''
-  resumenJerarquia.value = null
-  // El resumen es opcional: un fallo no impide recuperar los datos completos.
-  api('/inicio/resumen-jerarquia').then((resumen) => {
-    if (actual === intento && cargando.value && resumen &&
-      ['centros', 'modulos', 'ambientes'].every((clave) => Number.isSafeInteger(resumen[clave]) && resumen[clave] >= 0)) {
-      resumenJerarquia.value = resumen
-    }
-  }).catch(() => {})
+  cargando.value = !resumenInicio.value || faltanDatos(['catalogos'])
   try {
-    await asegurarDatos(['catalogos', 'inicio'])
+    // Los catálogos dan las etiquetas de los chips y los avisos; el resumen, las cifras.
+    await Promise.all([
+      asegurarDatos(['catalogos']),
+      !resumenInicio.value || resumenDesactualizado() ? cargarResumenInicio() : null
+    ])
   } catch (error) {
-    if (actual === intento) errorCarga.value = error.message || 'Intente nuevamente.'
+    // Un fallo al actualizar un resumen ya visible no lo reemplaza por un error.
+    if (actual === intento && !resumenInicio.value) errorCarga.value = error.message || 'Intente nuevamente.'
   } finally {
     if (actual === intento) cargando.value = false
   }
@@ -142,6 +136,11 @@ async function cargarInicio () {
 
 onMounted(cargarInicio)
 onUnmounted(() => { intento++ })
+
+// Una escritura hecha desde Inicio (p. ej. registrar un mantenimiento desde un aviso) cambia las cifras: se piden de nuevo.
+watch(escrituras, () => {
+  if (!cargando.value && !errorCarga.value) cargarResumenInicio().catch(() => {})
+})
 
 const COLUMNAS = [
   { clave: 'necesidades', titulo: 'Necesidades' },
@@ -154,31 +153,18 @@ const COLUMNAS = [
 ]
 
 const $q = useQuasar()
-const { perfil, carsEnAmbito, vehiculosEnAmbito, puedeAcceder } = usePerfil()
+const { perfil, puedeAcceder } = usePerfil()
 const { avisos } = useAtencion()
-
-const kpiJerarquia = computed(() => {
-  const r = resumenJerarquia.value
-  if (!r) return null
-  return {
-    icono: 'home_work', tono: 'azul', valor: r.centros,
-    etiqueta: r.centros === 1 ? 'Centro de Acogida Residencial' : 'Centros de Acogida Residencial',
-    nota: `${plural(r.modulos, 'módulo', 'módulos')} · ${plural(r.ambientes, 'ambiente registrado', 'ambientes registrados')}`,
-    to: puedeAcceder('centros') ? { name: 'centros' } : null
-  }
-})
 
 const compacto = computed(() => $q.screen.lt.lg)
 
-const filas = computed(() => resumenPorCentro(carsEnAmbito.value, { fechaCorte: hoy(), anioServicios: anioServicios(), anio: anioRevision() }))
+const filas = computed(() => resumenInicio.value?.filas ?? [])
+const centros = computed(() => filas.value.map((f) => ({ id: f.car.id, nombre: f.car.nombre })))
 const total = computed(() => {
   const t = totalizarSituacion(filas.value)
   const sumar = (clave) => filas.value.reduce((suma, f) => suma + f.necesidades[clave], 0)
   return { ...t, infraestructura: sumar('infraestructura'), atendidas: sumar('atendidas') }
 })
-
-const recorridos = computed(() => vehiculosEnAmbito.value.flatMap((v) => itinerariosDeVehiculo(v.id).map((it) => evaluarItinerario(it, v))))
-const noComparables = computed(() => recorridos.value.filter((ev) => ev.estado === 'no_comparable').length)
 
 const textoInmueble = (car) => (car.inmueble ? `Inmueble ${condicionInmueble(car.inmueble.condicion).label.toLowerCase()}` : 'Sin datos del inmueble')
 
@@ -186,9 +172,8 @@ const textoInmueble = (car) => (car.inmueble ? `Inmueble ${condicionInmueble(car
 const ATENCION = { name: 'inicio', query: { aviso: 'control_vencido' }, hash: '#atencion' }
 const kpis = computed(() => {
   const t = total.value
-  // Jerarquía registrada en el ámbito: módulos y ambientes vigentes (SPEC 020).
-  const modulos = carsEnAmbito.value.reduce((suma, c) => suma + modulosDeCar(c.id).length, 0)
-  const ambientes = carsEnAmbito.value.reduce((suma, c) => suma + ambientesDeCar(c.id).length, 0)
+  const { modulos = 0, ambientes = 0 } = resumenInicio.value?.jerarquia ?? {}
+  const { total: recorridos = 0, noComparables = 0 } = resumenInicio.value?.recorridos ?? {}
   const lista = [
     { ruta: 'centros', icono: 'home_work', tono: 'azul', valor: t.centros, etiqueta: t.centros === 1 ? 'Centro de Acogida Residencial' : 'Centros de Acogida Residencial', nota: `${plural(modulos, 'módulo', 'módulos')} · ${plural(ambientes, 'ambiente registrado', 'ambientes registrados')}` },
     { ruta: 'necesidades', icono: 'assignment_late', tono: 'rojo', valor: t.necesidades, etiqueta: `Necesidades pendientes ${anioRevision()}`, nota: `${plural(t.infraestructura, 'de infraestructura', 'de infraestructura')} en evaluación · ${plural(t.atendidas, 'atendida', 'atendidas')}` },
@@ -197,7 +182,7 @@ const kpis = computed(() => {
     { ruta: 'inventario', query: { vista: 'mal_estado' }, icono: 'build_circle', tono: 'ambar', valor: `${numero(t.bienesMalos)} / ${numero(t.bienesActivos)}`, etiqueta: 'Bienes en mal estado', nota: 'Unidades en condición mala o inservible' },
     { ruta: 'inventario', query: { vista: 'detalle', verificacion: 'registrada' }, icono: 'fact_check', tono: 'verde', valor: `${t.verificados} / ${t.registrosActivos}`, etiqueta: 'Bienes verificados físicamente', nota: `${porcentaje(t.verificados, t.registrosActivos)} % de los registros activos` },
     { ruta: 'vehiculos', query: { estado: 'con_atencion' }, icono: 'directions_car', tono: 'morado', valor: t.vehiculosConAtencion, etiqueta: 'Vehículos con atención', nota: `${soles(t.presupuestoVehiculos)} estimados${t.vehiculosSinEstimar ? ` · ${t.vehiculosSinEstimar} sin estimar` : ''}` },
-    { ruta: 'itinerarios', query: { vista: 'ambito' }, icono: 'local_gas_station', tono: 'ambar', valor: recorridos.value.length, etiqueta: 'Recorridos registrados', nota: `${plural(noComparables.value, 'recorrido sin datos suficientes', 'recorridos sin datos suficientes')} para comparar combustible` }
+    { ruta: 'itinerarios', query: { vista: 'ambito' }, icono: 'local_gas_station', tono: 'ambar', valor: recorridos, etiqueta: 'Recorridos registrados', nota: `${plural(noComparables, 'recorrido sin datos suficientes', 'recorridos sin datos suficientes')} para comparar combustible` }
   ]
   return lista.map((k) => ({ ...k, to: k.destino ?? (puedeAcceder(k.ruta) ? { name: k.ruta, ...(k.query ? { query: k.query } : {}) } : null) }))
 })

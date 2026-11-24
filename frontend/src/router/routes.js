@@ -9,7 +9,7 @@ const routes = [
       // La raíz lleva a la primera pantalla a la que el perfil activo tiene acceso.
       { path: '', name: 'raiz', component: () => import('pages/InicioPage.vue') },
       { path: 'sin-perfiles', name: 'sin-perfiles', component: () => import('components/layout/SinAcceso.vue') },
-      { path: 'inicio', name: 'inicio', component: () => import('pages/InicioPage.vue'), meta: { datos: ['inicio'], titulo: 'Inicio' } },
+      { path: 'inicio', name: 'inicio', component: () => import('pages/InicioPage.vue'), meta: { datos: [], titulo: 'Inicio' } },
       { path: 'manual', name: 'manual', component: () => import('pages/ManualPage.vue'), meta: { titulo: 'Manual de usuario' } },
       { path: 'centros', name: 'centros', component: () => import('pages/GestionCentrosPage.vue'), meta: { datos: ['jerarquia', 'inventario', 'tiposBien:precios', 'mantenimientos', 'vehiculos', 'servicios', 'fotos', 'intervenciones'], titulo: 'Gestión de centros' } },
       { path: 'incidencias', name: 'incidencias', component: () => import('pages/IncidenciasPage.vue'), meta: { datos: ['jerarquia', 'inventario', 'tiposBien:precios', 'mantenimientos'], titulo: 'Incidencias, bajas y reposiciones' } },

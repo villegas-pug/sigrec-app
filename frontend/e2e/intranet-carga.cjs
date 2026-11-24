@@ -8,7 +8,8 @@ const jerarquia = { cars: [], modulos: [], ambientes: [], elementos: [] }
 const inventario = { bienes: [], eventos: [], inventarioPrevio: [] }
 const vehiculos = []
 const mantenimientos = []
-const datosInicio = { jerarquia, inventario, tiposBien: [], precios: [], servicios: [], vehiculos: [], itinerarios: [], combustible: [], mantenimientos }
+// SPEC 044: Inicio recibe sus indicadores ya calculados; no descarga colecciones.
+const resumenInicio = { filas: [], jerarquia: { centros: 0, modulos: 0, ambientes: 0 }, recorridos: { total: 0, noComparables: 0 }, avisos: { ahora: [], proximos: [] } }
 const token = ['e30', Buffer.from(JSON.stringify({ idUsuario: 123, idSistema: '345', exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url'), 'firma'].join('.')
 
 async function main () {
@@ -20,7 +21,6 @@ async function main () {
   let liberarInicio
   const esperaInicio = new Promise(resolve => { liberarInicio = resolve })
   let fallarInicio = false
-  let fallarResumen = false
   let rutasPermitidas = rutas
   let crudSimulado = false
   let centroSimulado = null
@@ -197,15 +197,12 @@ async function main () {
       }
       throw new Error(`Escritura simulada inesperada: ${request.method()} ${path}`)
     }
-    if (path === 'inicio/resumen-jerarquia') {
-      if (fallarResumen) return route.fulfill({ status: 503, json: { message: 'Resumen no disponible' } })
-      return route.fulfill({ json: { data: { centros: 2, modulos: 3, ambientes: 4 } } })
-    }
-    if (path === 'inicio/datos') {
+    if (path === 'inicio/resumen') {
       await esperaInicio
       if (fallarInicio) return route.fulfill({ status: 503, json: { message: 'Error simulado' } })
-      return route.fulfill({ json: { data: datosInicio } })
+      return route.fulfill({ json: { data: resumenInicio } })
     }
+    if (path === 'inicio/datos') throw new Error('Inicio ya no debe pedir las colecciones completas (SPEC 044).')
     const data = path === 'centros/jerarquia' ? jerarquia : path === 'bienes/datos' ? inventario
       : path === 'vehiculos' ? vehiculos : path === 'mantenimientos' ? mantenimientos
         : path === 'catalogos' ? [{ dominio: 'TIPO_SERVICIO', codigo: 'agua', nombre: 'Agua' }] : []
@@ -217,13 +214,12 @@ async function main () {
     assert.equal(await page.getByText('Sin avisos para los filtros seleccionados.').count(), 0)
     assert.equal(await page.getByText('SIGREC', { exact: true }).count() > 0, true)
     assert.equal(new URL(page.url()).hash.includes('p='), false)
-    await page.getByText('3 módulos · 4 ambientes registrados', { exact: true }).waitFor()
-    assert.equal(await page.locator('.sg-kpi-panel .q-skeleton').count(), 7)
+    assert.equal(await page.locator('.sg-kpi-panel .q-skeleton').count(), 8)
     liberarInicio()
     await page.getByText('Situación por centro', { exact: true }).waitFor()
-    assert.equal(await page.getByText('3 módulos · 4 ambientes registrados', { exact: true }).count(), 0)
     await page.getByText('0 módulos · 0 ambientes registrados', { exact: true }).waitFor()
-    assert.equal(llamadas.filter(x => x === 'GET inicio/datos').length, 1)
+    assert.equal(llamadas.filter(x => x === 'GET inicio/resumen').length, 1)
+    assert.equal(llamadas.includes('GET inicio/datos'), false)
     assert.deepEqual(errores, [])
 
     await page.getByRole('button', { name: 'Buscar (Ctrl + K)' }).click()
@@ -263,16 +259,14 @@ async function main () {
     await page.evaluate(() => localStorage.clear())
     await page.goto('about:blank')
     fallarInicio = true
-    fallarResumen = true
     await page.goto(`${base}#/inicio?p=${token}`)
     await page.getByRole('alert').getByText(/No se pudieron cargar los datos de Inicio/).waitFor()
     assert.equal(await page.getByText('Situación por centro', { exact: true }).count(), 0)
     fallarInicio = false
     await page.getByRole('button', { name: 'Reintentar' }).click()
     await page.getByText('Situación por centro', { exact: true }).waitFor()
-    fallarResumen = false
 
-    // Desde otra ruta solo se solicitan los grupos que faltan y no la respuesta compuesta completa.
+    // Desde otra ruta Inicio solo pide su resumen: no vuelve a pedir lo ya cargado ni las colecciones completas.
     await page.evaluate(() => localStorage.clear())
     await page.goto('about:blank')
     llamadas.length = 0
@@ -282,6 +276,7 @@ async function main () {
     await page.evaluate(() => { window.location.hash = '#/inicio' })
     await page.getByText('Situación por centro', { exact: true }).waitFor()
     assert.equal(llamadas.includes('GET inicio/datos'), false)
+    assert.equal(llamadas.filter(x => x === 'GET inicio/resumen').length, 1)
     assert.equal(llamadas.filter(x => x === 'GET servicios').length, 1)
 
     // Formulario de vehículo con un centro ficticio, sin permitir escrituras.

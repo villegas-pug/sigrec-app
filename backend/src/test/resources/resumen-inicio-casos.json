@@ -1,0 +1,174 @@
+[
+  {
+    "nombre": "sin datos",
+    "hoy": "2026-11-23",
+    "datos": {
+      "jerarquia": { "cars": [], "modulos": [], "ambientes": [], "elementos": [] },
+      "inventario": { "bienes": [], "inventarioPrevio": [], "eventos": [] },
+      "tiposBien": [], "precios": [], "servicios": [], "vehiculos": [], "itinerarios": [], "combustible": [], "mantenimientos": []
+    }
+  },
+  {
+    "nombre": "dos centros vigentes, uno anulado, con todas las reglas",
+    "hoy": "2026-11-23",
+    "datos": {
+      "jerarquia": {
+        "cars": [
+          { "id": "A01", "nombre": "Centro Alfa", "anulacion": null,
+            "inmueble": { "condicion": "propio", "seguridad": { "extintoresRequeridos": 4 }, "construccion": { "estado": "malo" } } },
+          { "id": "B02", "nombre": "Centro Beta", "anulacion": null,
+            "inmueble": { "condicion": "alquilado", "construccion": { "estado": "bueno" } } },
+          { "id": "C03", "nombre": "Centro Gamma", "anulacion": { "fecha": "2026-01-01", "por": "Prueba", "motivo": "Cierre" },
+            "inmueble": { "condicion": "propio", "construccion": { "estado": "regular" } } }
+        ],
+        "modulos": [
+          { "id": "A01-M01", "carId": "A01", "nombre": "Casa 1", "tipo": "casa", "condicion": "malo", "anulacion": null },
+          { "id": "A01-M02", "carId": "A01", "nombre": "Comedor", "tipo": "comun", "condicion": "bueno", "anulacion": null },
+          { "id": "B02-M01", "carId": "B02", "nombre": "Casa 1", "tipo": "casa", "condicion": "bueno", "anulacion": null },
+          { "id": "C03-M01", "carId": "C03", "nombre": "Casa 1", "tipo": "casa", "condicion": "bueno", "anulacion": null }
+        ],
+        "ambientes": [
+          { "id": "A01-A01", "carId": "A01", "moduloId": "A01-M01", "nombre": "Dormitorio", "condicion": "malo", "anulacion": null },
+          { "id": "A01-A02", "carId": "A01", "moduloId": "A01-M02", "nombre": "Cocina", "condicion": "bueno", "anulacion": null },
+          { "id": "A01-A03", "carId": "A01", "moduloId": "A01-M01", "nombre": "Depósito", "condicion": "inservible",
+            "anulacion": { "fecha": "2026-02-01", "por": "Prueba", "motivo": "Demolido" } },
+          { "id": "B02-A01", "carId": "B02", "moduloId": "B02-M01", "nombre": "Dormitorio", "condicion": "bueno", "anulacion": null },
+          { "id": "C03-A01", "carId": "C03", "moduloId": "C03-M01", "nombre": "Dormitorio", "condicion": "malo", "anulacion": null }
+        ],
+        "elementos": [
+          { "id": 1, "carId": "A01", "clave": "puertas", "condicion": "malo" },
+          { "id": 2, "carId": "A01", "clave": "extra-porton", "nombre": "Portón", "condicion": "inservible" },
+          { "id": 3, "moduloId": "A01-M01", "clave": "techo", "condicion": "malo" },
+          { "id": 4, "ambienteId": "A01-A01", "clave": "pisos", "condicion": "inservible" },
+          { "id": 5, "ambienteId": "A01-A01", "clave": "extra-ignorado", "nombre": "No cuenta en ambientes", "condicion": "malo" },
+          { "id": 6, "carId": "B02", "clave": "ventanas", "condicion": "regular" }
+        ]
+      },
+      "inventario": {
+        "bienes": [
+          { "id": "A01-B01", "ambienteId": "A01-A01", "tipoId": "extintor", "nombre": "Extintor PQS", "categoria": "equipo", "condicion": "bueno",
+            "adquisicion": { "fecha": "2020", "costo": 100 }, "vidaUtilAnios": 5, "cantidad": 2, "asociadoA": null, "anulacion": null },
+          { "id": "A01-B02", "ambienteId": "A01-A01", "tipoId": "silla", "nombre": "Silla", "categoria": "mobiliario", "condicion": "malo",
+            "adquisicion": { "fecha": "2024-03" }, "vidaUtilAnios": 3, "cantidad": 10, "asociadoA": null, "anulacion": null },
+          { "id": "A01-B03", "ambienteId": "A01-A01", "tipoId": "mesa", "nombre": "Mesa", "categoria": "mobiliario", "condicion": "regular",
+            "adquisicion": { "fecha": "2025" }, "vidaUtilAnios": 10, "cantidad": 4, "asociadoA": null, "anulacion": null },
+          { "id": "A01-B04", "ambienteId": "A01-A01", "tipoId": "cama", "nombre": "Cama", "categoria": "mobiliario", "condicion": null,
+            "cantidad": 1, "asociadoA": null, "anulacion": null },
+          { "id": "A01-B05", "ambienteId": "A01-A02", "tipoId": "extintor", "nombre": "Extintor CO2", "categoria": "equipo", "condicion": "bueno",
+            "cantidad": 1, "asociadoA": null, "anulacion": null },
+          { "id": "A01-B06", "ambienteId": "A01-A02", "tipoId": "silla", "nombre": "Silla anulada", "categoria": "mobiliario", "condicion": "malo",
+            "adquisicion": { "fecha": "2000" }, "vidaUtilAnios": 1, "cantidad": 5, "asociadoA": null,
+            "anulacion": { "fecha": "2026-03-01", "por": "Prueba", "motivo": "Error" } },
+          { "id": "B02-B01", "ambienteId": "B02-A01", "tipoId": "silla", "nombre": "Silla", "categoria": "mobiliario", "condicion": "inservible",
+            "cantidad": 3, "asociadoA": null, "anulacion": null },
+          { "id": "C03-B01", "ambienteId": "C03-A01", "tipoId": "mesa", "nombre": "Mesa del centro anulado", "categoria": "mobiliario", "condicion": "malo",
+            "adquisicion": { "fecha": "2000" }, "vidaUtilAnios": 1, "cantidad": 2, "asociadoA": null, "anulacion": null }
+        ],
+        "inventarioPrevio": [],
+        "eventos": [
+          { "id": "E01", "tipo": "baja", "fecha": "2025-05-01", "titulo": "Baja de cama", "ambienteId": "A01-A01", "bienIds": ["A01-B04"], "anulacion": null },
+          { "id": "E02", "tipo": "verificacion", "fecha": "2026-01-10", "titulo": "Verificación", "ambienteId": "A01-A01",
+            "bienIds": ["A01-B01", "A01-B02"], "resultado": "coincide" },
+          { "id": "E03", "tipo": "verificacion", "fecha": "2025-01-10", "titulo": "Carga inicial", "ambienteId": "B02-A01",
+            "bienIds": ["B02-B01"], "resultado": "coincide", "cargaInicial": true },
+          { "id": "E04", "tipo": "dano", "fecha": "2026-02-01", "titulo": "Mesas rotas", "carId": "A01", "ambienteId": "A01-A01",
+            "bienIds": ["A01-B03"], "origen": { "tipo": "bien", "id": "A01-B03" }, "requiereEvaluacion": false,
+            "evaluaciones": { "A01-B03": { "requiereReposicion": true, "unidades": 2 } } },
+          { "id": "E05", "tipo": "humedad", "clase": "novedad", "fecha": "2026-03-01", "titulo": "Filtración en techo", "carId": "A01",
+            "ambienteId": "A01-A01", "bienIds": [], "origen": { "tipo": "ambiente", "id": "A01-A01" }, "requiereEvaluacion": true, "evaluaciones": {} },
+          { "id": "E06", "tipo": "humedad", "clase": "novedad", "fecha": "2026-03-05", "titulo": "Humedad atendida", "carId": "A01",
+            "ambienteId": "A01-A01", "bienIds": [], "origen": { "tipo": "ambiente", "id": "A01-A01" }, "requiereEvaluacion": true, "evaluaciones": {},
+            "atencion": { "fecha": "2026-04-01", "detalle": "Reparada", "por": "Prueba" } },
+          { "id": "E07", "tipo": "otro", "fecha": "2026-05-01", "titulo": "Grieta en pared", "carId": "A01", "ambienteId": "A01-A02",
+            "bienIds": [], "origen": { "tipo": "ambiente", "id": "A01-A02" }, "requiereEvaluacion": true, "evaluaciones": {} },
+          { "id": "E08", "tipo": "reposicion", "fecha": "2026-06-01", "titulo": "Reposición de cama", "ambienteId": "A01-A01",
+            "bienIds": ["A01-B04", "A01-B07"], "bienAnteriorId": "A01-B04", "bienNuevoId": "A01-B07" },
+          { "id": "E09", "tipo": "dano", "fecha": "2026-02-10", "titulo": "Incidente anulado", "carId": "A01", "ambienteId": "A01-A01",
+            "bienIds": ["A01-B02"], "origen": { "tipo": "bien", "id": "A01-B02" }, "requiereEvaluacion": false,
+            "evaluaciones": { "A01-B02": { "requiereReposicion": true, "unidades": 1 } },
+            "anulacion": { "fecha": "2026-02-11", "por": "Prueba", "motivo": "Duplicado" } },
+          { "id": "E10", "tipo": "robo", "fecha": "2026-07-01", "titulo": "Robo de sillas", "carId": "B02", "ambienteId": "B02-A01",
+            "bienIds": ["B02-B01"], "origen": { "tipo": "bien", "id": "B02-B01" }, "requiereEvaluacion": false,
+            "evaluaciones": { "B02-B01": { "requiereReposicion": true, "unidades": 5 } } }
+        ]
+      },
+      "tiposBien": [
+        { "id": "extintor", "nombre": "Extintor", "categoria": "equipo", "anulacion": null },
+        { "id": "silla", "nombre": "Silla", "categoria": "mobiliario", "anulacion": null },
+        { "id": "mesa", "nombre": "Mesa", "categoria": "mobiliario", "anulacion": null },
+        { "id": "cama", "nombre": "Cama", "categoria": "mobiliario", "anulacion": null }
+      ],
+      "precios": [
+        { "tipoId": "silla", "precio": 80.5, "fechaPrecio": "2026-01", "procedencia": "Prueba", "historial": [] },
+        { "tipoId": "mesa", "precio": 50, "fechaPrecio": "2026-01", "procedencia": "Prueba", "historial": [] },
+        { "tipoId": "inexistente", "precio": 1, "fechaPrecio": "2026-01", "procedencia": "Prueba", "historial": [] }
+      ],
+      "servicios": [
+        { "id": "A01-S01", "carId": "A01", "tipo": "agua", "periodicidad": "mensual", "anulacion": null,
+          "renovacion": { "fecha": "2027-01-15", "detalle": "Contrato" },
+          "periodos": { "2026": { "pagados": [1, 2, 3, 4, 5, 6, 7, 8],
+            "pendientes": [ { "numero": 9, "vence": "2026-11-10" }, { "numero": 10, "vence": null } ], "pagos": {} } },
+          "hechos": [
+            { "id": "H1", "fecha": "2026-01-10", "tipo": "interrupcion", "anulacion": null },
+            { "id": "H2", "fecha": "2026-01-12", "tipo": "restablecimiento", "anulacion": null },
+            { "id": "H3", "fecha": "2026-06-01", "tipo": "interrupcion", "anulacion": null },
+            { "id": "H4", "fecha": "2026-06-03", "tipo": "restablecimiento", "anulacion": null },
+            { "id": "H5", "fecha": "2026-11-01", "tipo": "interrupcion", "anulacion": null },
+            { "id": "H6", "fecha": "2025-01-01", "tipo": "interrupcion", "anulacion": null },
+            { "id": "H7", "fecha": "2026-12-15", "tipo": "interrupcion", "anulacion": null } ] },
+        { "id": "A01-S02", "carId": "A01", "tipo": "luz", "periodicidad": "trimestral", "anulacion": null,
+          "renovacion": { "fecha": "2026-10-01" },
+          "periodos": { "2026": { "pagados": [1, 2], "pendientes": [ { "numero": 3, "vence": "2026-12-20" } ], "pagos": {} } },
+          "hechos": [] },
+        { "id": "A01-S03", "carId": "A01", "tipo": "telefono", "periodicidad": "anual", "anulacion": { "fecha": "2026-01-01", "por": "Prueba", "motivo": "Baja" },
+          "periodos": {}, "hechos": [] },
+        { "id": "B02-S01", "carId": "B02", "tipo": "internet", "periodicidad": "anual", "anulacion": null, "periodos": {}, "hechos": [] }
+      ],
+      "vehiculos": [
+        { "id": "A01-V01", "carId": "A01", "tipo": "Camioneta", "placa": "ABC-123", "rendimientoKmL": 10, "estadoOperativo": "detenido",
+          "mantenimiento": { "motivo": "Falla de motor", "presupuestoEstimado": 1500.5 }, "anulacion": null },
+        { "id": "A01-V02", "carId": "A01", "tipo": "Minivan", "placa": "DEF-456", "estadoOperativo": "requiereMantenimiento", "mantenimiento": null, "anulacion": null },
+        { "id": "A01-V03", "carId": "A01", "tipo": "Moto", "placa": "GHI-789", "estadoOperativo": "detenido",
+          "mantenimiento": { "motivo": "Anulado", "presupuestoEstimado": 999 },
+          "anulacion": { "fecha": "2026-01-01", "por": "Prueba", "motivo": "Baja" } },
+        { "id": "B02-V01", "carId": "B02", "tipo": "Camión", "placa": "JKL-012", "estadoOperativo": "operativo", "mantenimiento": null, "anulacion": null },
+        { "id": "B02-V02", "carId": "B02", "tipo": "Auto", "placa": "MNO-345", "estadoOperativo": null, "mantenimiento": null, "anulacion": null },
+        { "id": "C03-V01", "carId": "C03", "tipo": "Bus", "placa": "PQR-678", "estadoOperativo": "detenido",
+          "mantenimiento": { "presupuestoEstimado": 700 }, "anulacion": null },
+        { "id": "X99-V01", "carId": "X99", "tipo": "Huérfano", "placa": "STU-901", "estadoOperativo": "detenido", "mantenimiento": null, "anulacion": null }
+      ],
+      "itinerarios": [
+        { "id": "A01-I01", "vehiculoId": "A01-V01", "fecha": "2026-10-01", "realizado": { "km": 50 }, "previsto": { "km": 40 }, "anulacion": null },
+        { "id": "A01-I02", "vehiculoId": "A01-V02", "fecha": "2026-10-05", "realizado": { "km": 20 }, "anulacion": null },
+        { "id": "A01-I03", "vehiculoId": "A01-V01", "fecha": "2026-10-20", "previsto": { "km": 30 }, "anulacion": null },
+        { "id": "A01-I04", "vehiculoId": "A01-V01", "fecha": "2026-09-01", "realizado": { "km": 80 }, "anulacion": null },
+        { "id": "A01-I05", "vehiculoId": "A01-V01", "fecha": "2026-08-01", "realizado": { "km": null }, "anulacion": null },
+        { "id": "C03-I01", "vehiculoId": "C03-V01", "fecha": "2026-10-10", "realizado": { "km": 10 }, "anulacion": null },
+        { "id": "A01-I06", "vehiculoId": "A01-V01", "fecha": "2026-07-01", "realizado": { "km": 10 },
+          "anulacion": { "fecha": "2026-07-02", "por": "Prueba", "motivo": "Error" } }
+      ],
+      "combustible": [
+        { "id": "C1", "itinerarioId": "A01-I02", "fecha": "2026-10-06", "tipo": "consumo", "cantidad": 2.5, "propio": false, "anulacion": null },
+        { "id": "C2", "itinerarioId": "A01-I04", "fecha": "2026-09-02", "tipo": "consumo", "cantidad": 8, "propio": false, "anulacion": null },
+        { "id": "C3", "vehiculoId": "A01-V01", "fecha": "2026-09-03", "tipo": "carga", "cantidad": 30, "propio": false, "anulacion": null },
+        { "id": "C4", "itinerarioId": "A01-I01", "fecha": "2026-10-02", "tipo": "consumo", "cantidad": 4, "propio": false,
+          "anulacion": { "fecha": "2026-10-03", "por": "Prueba", "motivo": "Error" } }
+      ],
+      "mantenimientos": [
+        { "id": "M1", "carId": "A01", "tipo": "fumigacion", "fecha": "2026-01-01", "proxima": "2026-11-01", "anulacion": null },
+        { "id": "M2", "carId": "A01", "bienId": "A01-B01", "tipo": "recarga_extintor", "fecha": "2026-02-01", "proxima": "2026-12-05", "anulacion": null },
+        { "id": "M3", "carId": "B02", "bienId": "B02-B01", "tipo": "mantenimiento_equipo", "fecha": "2026-01-01", "proxima": "2027-01-10", "anulacion": null },
+        { "id": "M5", "carId": "A01", "vehiculoId": "A01-V01", "tipo": "mantenimiento_vehiculo", "fecha": "2025-03-01", "proxima": "2025-12-01", "anulacion": null },
+        { "id": "M4", "carId": "A01", "vehiculoId": "A01-V01", "tipo": "mantenimiento_vehiculo", "fecha": "2026-03-01", "proxima": "2026-11-30", "anulacion": null },
+        { "id": "M6", "carId": "B02", "tipo": "fumigacion", "fecha": "2025-11-01", "proxima": null, "anulacion": null },
+        { "id": "M7a", "carId": "A01", "bienId": "A01-B05", "tipo": "recarga_extintor", "fecha": "2026-05-01", "proxima": "2026-11-20", "anulacion": null },
+        { "id": "M7b", "carId": "A01", "bienId": "A01-B05", "tipo": "recarga_extintor", "fecha": "2026-05-01", "proxima": "2027-05-01", "anulacion": null },
+        { "id": "M8", "carId": "A01", "bienId": "A01-B04", "tipo": "mantenimiento_equipo", "fecha": "2026-01-01", "proxima": "2026-06-01", "anulacion": null },
+        { "id": "M9", "carId": "A01", "vehiculoId": "A01-V03", "tipo": "mantenimiento_vehiculo", "fecha": "2026-01-01", "proxima": "2026-06-01", "anulacion": null },
+        { "id": "M10", "carId": "C03", "tipo": "fumigacion", "fecha": "2026-01-01", "proxima": "2026-06-01", "anulacion": null },
+        { "id": "M11", "carId": "A01", "tipo": "fumigacion", "fecha": "2026-10-01", "proxima": "2026-11-23", "anulacion":
+          { "fecha": "2026-10-02", "por": "Prueba", "motivo": "Error" } }
+      ]
+    }
+  }
+]

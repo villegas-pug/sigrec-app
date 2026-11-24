@@ -31,7 +31,7 @@ const ACCION_MANTENIMIENTO = {
 }
 
 // Acción que abre el MantenimientoDialog con el tipo y el objetivo precargados.
-const accionMantenimiento = (tipo, carId, { bienId = null, vehiculoId = null } = {}) => ({
+export const accionMantenimiento = (tipo, carId, { bienId = null, vehiculoId = null } = {}) => ({
   tipo: 'mantenimiento',
   permiso: 'mantenimiento.registrar',
   ...ACCION_MANTENIMIENTO[tipo],
@@ -39,12 +39,12 @@ const accionMantenimiento = (tipo, carId, { bienId = null, vehiculoId = null } =
 })
 
 // Destinos del registro de un mantenimiento: la pestaña de seguridad del centro; un vehículo, además, en Vehículos.
-const destinosMantenimiento = (m) => [
+export const destinosMantenimiento = (m) => [
   { name: 'centros', query: { mantenimiento: m.id } },
   ...(m.vehiculoId ? [{ name: 'vehiculos', query: { vehiculo: m.vehiculoId } }] : [])
 ]
 
-const plazo = (dias) => (dias >= 0 ? `en ${plural(dias, 'día', 'días')}` : `hace ${plural(-dias, 'día', 'días')}`)
+export const plazo = (dias) => (dias >= 0 ? `en ${plural(dias, 'día', 'días')}` : `hace ${plural(-dias, 'día', 'días')}`)
 
 function avisosServicios (cars, { fechaCorte, anioServicios }) {
   const servicios = cars.flatMap((c) => db.servicios.filter((s) => s.carId === c.id && vigente(s)))

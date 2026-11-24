@@ -61,22 +61,5 @@ export function resumenPorCentro (cars, { fechaCorte, anioServicios, anio }) {
   })
 }
 
-export function totalizarSituacion (filas) {
-  const total = (fn) => sumar(filas.map(fn))
-  return {
-    centros: filas.length,
-    necesidades: total((f) => f.necesidades.cantidad),
-    importeConocido: total((f) => f.necesidades.importeConocido),
-    sinValorar: total((f) => f.necesidades.sinValorar),
-    bienesActivos: total((f) => f.bienesActivos),
-    bienesMalos: total((f) => f.bienesMalos),
-    registrosActivos: total((f) => f.registrosActivos),
-    verificados: total((f) => f.verificados),
-    controlesVencidos: total((f) => f.controles.vencidos),
-    controlesPorVencer: total((f) => f.controles.porVencer),
-    extintoresFaltantes: total((f) => f.controles.extintoresFaltantes),
-    vehiculosConAtencion: total((f) => f.vehiculos.requierenAtencion),
-    presupuestoVehiculos: total((f) => f.vehiculos.presupuestoEstimado),
-    vehiculosSinEstimar: total((f) => f.vehiculos.sinEstimar)
-  }
-}
+// SPEC 044: los totales viven en un módulo ligero que Inicio usa sin cargar las reglas de cada módulo.
+export { totalizarSituacion } from './totalesInicio'

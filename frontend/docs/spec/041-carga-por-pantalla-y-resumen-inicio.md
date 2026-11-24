@@ -17,10 +17,12 @@ Tras el ingreso se descargaban las 15 colecciones antes de mostrar nada. La pant
 - El layout no carga datos de negocio; solo `GET /api/v1/catalogos`.
 
 ### Una sola llamada para Inicio
+> **Reemplazada por la [SPEC 044](044-resumen-inicio-backend.md):** Inicio ya no descarga estas colecciones; el backend calcula los indicadores y avisos. Lo siguiente describe el diseño original.
+
 - `GET /api/v1/inicio/datos` devuelve, en una respuesta, `jerarquia`, `inventario`, `tiposBien`, `precios`, `servicios`, `vehiculos`, `itinerarios`, `combustible` y `mantenimientos`. Cada parte tiene exactamente la forma de su endpoint individual: el backend solo compone los servicios existentes, sin duplicar reglas ni consultas.
 - Los indicadores y avisos se siguen calculando en el navegador con las mismas reglas que usan las pantallas de detalle, de modo que sus cifras coinciden. Se descartó portar esas reglas (≈1.450 líneas y un modelo de eventos derivado) a Java por el riesgo de que las cifras difieran.
 - La respuesta solo aplica los grupos que faltaban: reemplazar uno ya cargado desconectaría los objetos que las pantallas conservan.
 - Tras el ingreso, si el menú incluye Inicio, el layout pide `inicio` en segundo plano (sin bloquear la pantalla): el contador de la campana solo es fiable con todas las colecciones. Mientras no estén, informa «sin avisos».
 
 ### Pendiente
-- Si el volumen de datos crece, calcular indicadores y avisos en el backend (un endpoint de resumen con textos entregados como datos) sigue siendo la mejora natural; requiere portar las reglas con pruebas de equivalencia.
+- Resuelto en la [SPEC 044](044-resumen-inicio-backend.md): indicadores y avisos se calculan en el backend con pruebas de equivalencia.

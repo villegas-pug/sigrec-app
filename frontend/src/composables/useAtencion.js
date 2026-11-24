@@ -1,15 +1,15 @@
-// Avisos de «Atención requerida» del perfil activo (SPEC 011). Los comparten Inicio y el contador de la cabecera.
+// Avisos de «Atención requerida» del perfil activo (SPEC 011). SPEC 044: el backend los selecciona (`GET /inicio/resumen`) y
+// aquí se redactan con los nombres de los centros del propio resumen; sin resumen no hay avisos que mostrar.
 import { computed } from 'vue'
-import { inicioListo } from 'src/services/cargaDatos'
-import { usePerfil } from './usePerfil'
-import { avisosDeAtencion } from 'src/services/atencion'
-import { anioRevision, anioServicios, hoy } from 'src/config/reglas'
+import { resumenInicio } from 'src/services/resumenInicio'
+import { avisosDesdeResumen } from 'src/services/avisosResumen'
 
 export function useAtencion () {
-  const { carsEnAmbito, vehiculosEnAmbito } = usePerfil()
-  // SPEC 042: los avisos solo son fiables con todas las colecciones de Inicio cargadas.
-  const avisos = computed(() => !inicioListo.value ? { ahora: [], proximos: [] } :
-    avisosDeAtencion({ cars: carsEnAmbito.value, vehiculos: vehiculosEnAmbito.value, fechaCorte: hoy(), anio: anioRevision(), anioServicios: anioServicios() })
-  )
+  const avisos = computed(() => {
+    const resumen = resumenInicio.value
+    if (!resumen) return { ahora: [], proximos: [] }
+    const nombres = new Map(resumen.filas.map((f) => [f.car.id, f.car.nombre]))
+    return avisosDesdeResumen(resumen.avisos, (carId) => nombres.get(carId) ?? carId)
+  })
   return { avisos }
 }

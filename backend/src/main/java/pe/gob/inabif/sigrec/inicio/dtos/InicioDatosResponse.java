@@ -12,8 +12,8 @@ import pe.gob.inabif.sigrec.servicio.dtos.ServicioResponse;
 import pe.gob.inabif.sigrec.vehiculo.dtos.VehiculoResponse;
 
 /**
- * SPEC 041. Todo lo que necesita la pantalla de Inicio en una sola respuesta. Cada parte tiene exactamente la forma de su
- * endpoint individual, de modo que la SPA reutiliza sus cargadores y las demás pantallas no vuelven a pedirla.
+ * SPEC 044. Colecciones que alimentan el cálculo de Inicio (SPEC 041 las entregaba al navegador; ya no se exponen por HTTP).
+ * Cada parte tiene la forma de su endpoint individual. Es la entrada de {@code CalculoInicio}.
  */
 public record InicioDatosResponse(
         JerarquiaResponse jerarquia,
