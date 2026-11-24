@@ -32,7 +32,7 @@
         </q-select>
       </div>
 
-      <section-card titulo="Movilidad por centro" :subtitulo="`${plural(vehiculosVisibles.length, 'vehículo', 'vehículos')} · ${perfil.ambito.descripcion}`" sin-relleno>
+      <section-card titulo="Movilidad por centro" :subtitulo="`${plural(vehiculosVisibles.length, 'vehículo', 'vehículos')} · ${car?.nombre ?? perfil.ambito.descripcion}`" sin-relleno>
         <template #acciones>
           <filtro-inactivos v-model="mostrarInactivos" />
         </template>
@@ -184,7 +184,7 @@ const { destino } = useRetorno()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
 // SPEC 052: el centro viene de los filtros de cabecera (?car= lo fija al entrar); sin él se ven todos los del ámbito.
-const { carId, carIdsVisibles } = useCentroCabecera()
+const { carId, car, carIdsVisibles } = useCentroCabecera()
 
 const mostrarInactivos = ref(false)
 const vehiculos = computed(() => vehiculosDelAmbito(mostrarInactivos.value).filter((v) => carIdsVisibles.value.includes(v.carId)))

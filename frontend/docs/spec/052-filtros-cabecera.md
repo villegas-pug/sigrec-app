@@ -37,7 +37,7 @@ Cada pantalla filtraba a su manera (Centro, Período, Año…) sobre colecciones
 |---|---|---|
 | Incidencias | hecho | `{ principal: 'inventario', registro: 'HECHO' }` |
 | Gestión de centros | centro dueño de cada registro | `{ principal: 'jerarquia', registro: 'CENTRO' }` |
-| Necesidades, Inventario | bien e inventario previo (los hechos siguen completos) | `{ principal: 'inventario', registro: 'BIEN' }` |
+| Necesidades, Inventario | bien e inventario previo; llegan solo los hechos cuyos bienes están en la respuesta (y los de ambiente, sin bienes) | `{ principal: 'inventario', registro: 'BIEN' }` |
 | Servicios | servicio | `{ principal: 'servicios' }` |
 | Vehículos | vehículo | `{ principal: 'vehiculos' }` |
 | Itinerarios | itinerario | `{ principal: 'itinerarios' }` |
@@ -48,6 +48,7 @@ Cada pantalla filtraba a su manera (Centro, Período, Año…) sobre colecciones
 
 ### Carga de datos
 - `services/cargaDatos.js` solo guarda en caché `catalogos` y `tiposBien[:precios]`. Los demás grupos se piden cada vez que se entra en la pantalla o cambian los filtros; un contador descarta las respuestas que ya no corresponden.
+- Los grupos de una pantalla se aplican **juntos** cuando han llegado todos: ninguna vista ve, por ejemplo, la jerarquía de un centro con los hechos de otro.
 - Las recargas tras guardar (`cargarInventario`) repiten la última consulta filtrada del grupo.
 - Inicio no cambia: sigue con `GET /inicio/resumen` (SPEC 044).
 
@@ -63,7 +64,8 @@ Cada pantalla filtraba a su manera (Centro, Período, Año…) sobre colecciones
 - En Incidencias, el estado de necesidad se calcula con los hechos del periodo filtrado.
 - El centro y el periodo se aplican en los servicios del backend, después de la consulta por ámbito; la respuesta ya llega filtrada. Pasarlos a SQL queda como mejora junto con la paginación.
 - En Vehículos el periodo acota los vehículos, pero sus itinerarios y mantenimientos llegan por centro.
-- El buscador global (Ctrl+K) carga los grupos completos; al cerrarse, la pantalla vuelve a pedir sus datos filtrados.
+- El buscador global (Ctrl+K) carga los grupos completos; al cerrarse (se desmonta, `onBeforeUnmount`), la pantalla vuelve a pedir sus datos filtrados.
+- En Necesidades e Inventario con periodo, un hecho que nombra también un bien registrado fuera del periodo (p. ej. una reposición) no aparece.
 - Un enlace profundo (`?hecho=`, `?servicio=`, `?vehiculo=`) a un registro fuera del centro o el periodo vigentes se muestra como «no disponible».
 
 ## Criterios de aceptación
@@ -77,3 +79,4 @@ Cada pantalla filtraba a su manera (Centro, Período, Año…) sobre colecciones
 ## Validación
 - Revisión estática y `git diff --check`.
 - No ejecutar pruebas, builds ni servidores sin autorización explícita.
+- Validado (con autorización) con `mvn test`, pruebas de API contra el backend en desarrollo y un recorrido con Playwright sobre el dev server con SRH simulado: barra presente en las 8 pantallas y ausente en Inicio y Manual; buscador; Mes deshabilitado; parámetros enviados por grupo; periodos sin datos; `?car=`; buscador global.

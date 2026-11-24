@@ -3,10 +3,10 @@
   <section ref="barra" class="sg-page sg-filtros-cabecera" aria-label="Filtros de cabecera">
     <div class="sg-page__inner">
       <div class="sg-filters sg-filtros-cabecera__campos">
-        <q-input :model-value="TIPO_ENTIDAD" label="Tipo de Entidad" outlined dense stack-label disable class="bg-grey-2" />
-        <q-input :model-value="ENTIDAD" label="Entidad" outlined dense stack-label disable class="bg-grey-2 sg-filtros-cabecera__entidad" />
+        <q-input :model-value="TIPO_ENTIDAD" label="Tipo de Entidad" outlined dense stack-label disable bg-color="grey-2" />
+        <q-input :model-value="ENTIDAD" label="Entidad" outlined dense stack-label disable bg-color="grey-2" :title="ENTIDAD" />
         <q-input :model-value="nombreCentro" label="Centro" outlined dense stack-label readonly placeholder="Todos los centros"
-                 class="cursor-pointer" @click="buscador = true" @keydown.enter.prevent="buscador = true">
+                 class="cursor-pointer" :title="nombreCentro" @click="buscador = true" @keydown.enter.prevent="buscador = true">
           <template #append>
             <q-btn v-if="filtros.centro" flat round dense icon="cancel" aria-label="Quitar centro (todos los centros)" title="Todos los centros" @click.stop="fijarCentro(null)" />
             <q-btn flat round dense icon="search" aria-label="Buscar centro" title="Buscar centro" @click.stop="buscador = true" />

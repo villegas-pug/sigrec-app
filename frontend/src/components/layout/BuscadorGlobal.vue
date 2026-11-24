@@ -1,5 +1,5 @@
 <template>
-  <q-dialog :model-value="modelValue" position="top" :maximized="$q.screen.lt.sm" @update:model-value="$emit('update:modelValue', $event)" @show="alMostrar" @hide="recargarPantalla">
+  <q-dialog :model-value="modelValue" position="top" :maximized="$q.screen.lt.sm" @update:model-value="$emit('update:modelValue', $event)" @show="alMostrar">
     <q-card class="sg-dialog sg-buscador" style="width: 640px; max-width: 100vw">
       <q-card-section class="q-pb-sm">
         <q-input
@@ -54,7 +54,7 @@
 <script setup>
 // Buscador global y paleta de navegación (SPEC 011, Ola 3). Busca en el ámbito del perfil y solo ofrece destinos a los que
 // el perfil tiene acceso. Un rótulo escaneado o escrito exactamente abre su ficha directamente.
-import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import BotonDictado from 'components/common/BotonDictado.vue'
@@ -90,7 +90,9 @@ const pantallas = computed(() =>
 )
 
 // SPEC 041: el buscador pide sus colecciones al abrirse. SPEC 052: las pide completas, sin los filtros de cabecera;
-// al cerrarse, la pantalla vuelve a pedir sus datos filtrados (`recargarPantalla`).
+// al cerrarse, la pantalla vuelve a pedir sus datos filtrados (`recargarPantalla`). AppHeader lo monta con `v-if`:
+// al cerrarlo se desmonta sin llegar a emitir `hide`, por eso la recarga va en `onBeforeUnmount`.
+onBeforeUnmount(() => { recargarPantalla() })
 async function alMostrar () {
   consulta.value = ''
   activo.value = 0

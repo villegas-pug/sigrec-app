@@ -18,13 +18,15 @@ let generacion = 0
 // Turno de la última solicitud de cada grupo: una respuesta que llega tarde no pisa a una más reciente.
 const turnos = new Map()
 
+// Pide el grupo y devuelve cómo aplicarlo, sin aplicarlo todavía: `asegurarDatos` aplica juntos los grupos de una
+// pantalla, para que ninguna vista vea, por ejemplo, la jerarquía de un centro con los hechos de otro.
 async function cargarSiVigente (grupo, solicitud, aplicar) {
   const generacionActual = generacion
   const turno = (turnos.get(grupo) ?? 0) + 1
   turnos.set(grupo, turno)
   const datos = await solicitud()
   if (generacionActual !== generacion) throw new Error('La sesión cambió durante la carga.')
-  if (turnos.get(grupo) === turno) aplicar(datos)
+  return () => { if (generacionActual === generacion && turnos.get(grupo) === turno) aplicar(datos) }
 }
 
 // Cada grupo sabe cómo cargarse con la consulta recibida. `tiposBien:precios` incluye el historial de precios.
@@ -64,7 +66,9 @@ function cargarEnCache (grupo) {
   const existente = claveCubierta(grupo)
   if (existente) return cache.get(existente)
   const generacionActual = generacion
-  const promesa = CARGADORES[grupo]().then(() => {
+  // Los grupos en caché son de referencia (catálogos, tipos de bien): se aplican al llegar.
+  const promesa = CARGADORES[grupo]().then((aplicar) => {
+    aplicar()
     if (generacionActual === generacion) completos.add(grupo)
   }).catch((error) => {
     if (generacionActual === generacion) cache.delete(grupo)
@@ -76,13 +80,14 @@ function cargarEnCache (grupo) {
 
 /**
  * Pide los grupos de una pantalla. Los de caché solo si faltan (un fallo no se guarda: se puede reintentar);
- * los demás siempre, con la consulta de `consultaDe(grupo)`.
+ * los demás siempre, con la consulta de `consultaDe(grupo)`, y se aplican juntos cuando han llegado todos.
  */
 export async function asegurarDatos (grupos = [], consultaDe = () => '') {
-  await Promise.all(grupos.map((grupo) => {
+  const aplicaciones = await Promise.all(grupos.map((grupo) => {
     if (!CARGADORES[grupo]) throw new Error(`Grupo de datos desconocido: ${grupo}`)
-    return EN_CACHE.has(grupo) ? cargarEnCache(grupo) : CARGADORES[grupo](consultaDe(grupo))
+    return EN_CACHE.has(grupo) ? cargarEnCache(grupo).then(() => null) : CARGADORES[grupo](consultaDe(grupo))
   }))
+  aplicaciones.forEach((aplicar) => aplicar?.())
 }
 
 // SPEC 052: quien carga datos fuera de la pantalla (el buscador global) pide después recargarla con sus filtros.

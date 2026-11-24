@@ -103,7 +103,7 @@
         </div>
 
         <div v-if="!filas.length" class="q-pa-md column q-gutter-y-sm" role="status">
-          <p class="sg-muted q-mb-none">No hay servicios registrados para este centro con los filtros seleccionados.</p>
+          <p class="sg-muted q-mb-none">{{ car ? 'No hay servicios registrados para este centro con los filtros seleccionados.' : 'Sin centro seleccionado.' }}</p>
           <q-btn v-if="puedeHacer('servicio.registrar') && car && noRegistrados.length" outline color="secondary" icon="add" label="Registrar servicio" class="self-start" @click="abrirServicio(null)" />
         </div>
 

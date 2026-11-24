@@ -1,6 +1,7 @@
 package pe.gob.inabif.sigrec.bien.service;
 
 import lombok.RequiredArgsConstructor;
+import pe.gob.inabif.sigrec.bien.dtos.BienResponse;
 import pe.gob.inabif.sigrec.bien.dtos.InventarioResponse;
 import pe.gob.inabif.sigrec.bien.mappers.BienResponseMapper;
 import pe.gob.inabif.sigrec.bien.model.HistorialBien;
@@ -43,7 +44,7 @@ public class InventarioConsultaImpl implements InventarioConsulta {
     @Override
     public InventarioResponse consultar(FiltroConsulta filtro, Registro registro) {
         // SPEC 052: el periodo acota los hechos (Incidencias) o los bienes con su inventario previo (Necesidades,
-        // Inventario); en ese caso los hechos siguen completos, porque son la historia de los bienes.
+        // Inventario); en ese caso llegan los hechos de esos bienes, que son su historia.
         if (filtro.porPeriodo() && registro == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Indique a qué registro se aplica el periodo.");
         }
@@ -63,7 +64,25 @@ public class InventarioConsultaImpl implements InventarioConsulta {
                 .filter(b -> periodoBienes.incluye(b.fechaRegistro())).map(bienesMapper::toResponse).toList();
         var anteriores = previos.findByCentroCodigoInOrderById(ids).stream()
                 .filter(p -> periodoBienes.incluye(p.fechaRegistro())).map(bienesMapper::toResponse).toList();
-        return new InventarioResponse(activos, anteriores, hechos(ids, periodoHechos));
+        var eventos = hechos(ids, periodoHechos);
+        if (periodoBienes.porPeriodo()) {
+            // Con el periodo sobre los bienes, solo la historia de los bienes devueltos: un hecho que nombra un bien
+            // registrado fuera del periodo referenciaría un bien que la respuesta no trae.
+            var devueltos = activos.stream().map(BienResponse::id).collect(Collectors.toSet());
+            eventos = eventos.stream().filter(e -> devueltos.containsAll(bienesDe(e))).toList();
+        }
+        return new InventarioResponse(activos, anteriores, eventos);
+    }
+
+    /** Bienes que nombra un hecho: afectados, trasladados y componentes. */
+    private static Set<Object> bienesDe(Map<String,Object> hecho) {
+        var referidos = new HashSet<Object>();
+        if (hecho.get("bienIds") instanceof Collection<?> c) referidos.addAll(c);
+        if (hecho.get("trasladados") instanceof Collection<?> c) referidos.addAll(c);
+        if (hecho.get("componentes") instanceof Collection<?> c) {
+            c.forEach(x -> { if (x instanceof Map<?,?> m && m.get("bienId") != null) referidos.add(m.get("bienId")); });
+        }
+        return referidos;
     }
 
     private List<Map<String,Object>> hechos(List<String> ids, FiltroConsulta filtro) {
