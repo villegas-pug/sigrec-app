@@ -16,7 +16,7 @@ La etapa 1 comprende seguridad, catálogos y la jerarquía centro › módulo �
 
 ## Configuración y verificación
 
-Usar `PROFILE=dev` por defecto y `SIGREC_DB_URL`, `SIGREC_DB_USERNAME`, `SIGREC_DB_PASSWORD`, `SIGREC_DB_SCHEMA` y `SIGREC_JWT_SECRET` por entorno. El arranque habitual valida el esquema. La generación inicial se habilita con `SIGREC_DDL_AUTO=update` tras inspeccionar el esquema compartido en solo lectura. Las semillas idempotentes se habilitan con `SIGREC_SEED=always`; la carga de ejemplos por JPA se habilita con `SIGREC_IMPORTAR_DEMO=true`. Las credenciales locales de prueba se configuran en un entorno de desarrollo dedicado.
+Usar `PROFILE=dev` por defecto. Con `dev`, la conexión a Oracle (`url`, `username`, `password`, `default_schema`) está en `application-dev.yml`; con `prod` se toma de `SIGREC_DB_URL`, `SIGREC_DB_USERNAME`, `SIGREC_DB_PASSWORD` y `SIGREC_DB_SCHEMA` por entorno. `SIGREC_JWT_SECRET` ya no se usa (SPEC 039). El arranque habitual valida el esquema. La generación inicial se habilita con `SIGREC_DDL_AUTO=update` tras inspeccionar el esquema compartido en solo lectura. Las semillas idempotentes se habilitan con `SIGREC_SEED=always`; la carga de ejemplos por JPA se habilita con `SIGREC_IMPORTAR_DEMO=true`. Las credenciales locales de prueba se configuran en un entorno de desarrollo dedicado.
 
 ## Convención de paquetes
 

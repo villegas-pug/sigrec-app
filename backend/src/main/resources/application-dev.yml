@@ -1,10 +1,17 @@
 server:
   address: 127.0.0.1
 spring:
+  datasource:
+    url: 'jdbc:oracle:thin:@172.19.0.56:1521:inabif02'
+    username: 'USRSEGURIDAD'
+    password: 'SIsFGi6K9YbFNOc4DjJMs3SW1qY#7a'
   jpa:
     defer-datasource-initialization: true
     hibernate:
       ddl-auto: ${SIGREC_DDL_AUTO:validate}
+    properties:
+      hibernate:
+        default_schema: 'USRSEGURIDAD'
   sql:
     init:
       mode: ${SIGREC_SEED:never}

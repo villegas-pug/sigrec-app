@@ -13,7 +13,11 @@
         @click="$emit('alternar-menu')"
       />
       <router-link :to="{ name: rutaInicial }" class="sg-header__home" aria-label="Ir al inicio" @click="marcarNavegacionPrincipal">
-        <span class="sg-logo" role="img" aria-label="Logo INABIF (archivo oficial pendiente)">Logo INABIF</span>
+        <img
+          class="sg-logo"
+          src="https://srvapp02.inabif.gob.pe/intranet/Img/LOGO_INABIF_2020.png"
+          alt="Logo institucional del INABIF"
+        />
       </router-link>
       <div class="sg-header__identity">
         <span class="sg-header__name">

@@ -82,7 +82,7 @@ CA-01 a CA-18 del brief. Valores esperados para 2027 con perfil Equipo central: 
 - **Sin persistencia:** los cambios se pierden al recargar. Aceptable para el prototipo; la siguiente fase requiere API.
 - **Accesos solo en cliente:** no son seguridad; la autorización real debe residir en el backend.
 - **Sin pruebas automatizadas:** las reglas están aisladas en `services/` para añadir pruebas unitarias.
-- **Logo oficial pendiente:** se usa el mismo marcador de posición que la referencia.
+- **Logo oficial:** integrado desde `https://srvapp02.inabif.gob.pe/intranet/Img/LOGO_INABIF_2020.png` en la cabecera.
 
 ## 10. Tareas
 
