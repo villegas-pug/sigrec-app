@@ -28,6 +28,7 @@
         <template #append><boton-dictado v-model="form.id" /></template>
       </q-input>
     </div>
+    <unidad-organica-selector v-model="form.unidadOrganica" obligatoria :deshabilitado="guardando" />
     <div class="sg-kv__label">Inmueble donde funciona</div>
     <q-input v-model="form.direccion" outlined dense label="Dirección *" :rules="[requerido]">
       <template #append><boton-dictado v-model="form.direccion" /></template>
@@ -50,6 +51,7 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
+import UnidadOrganicaSelector from './UnidadOrganicaSelector.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { carPorId } from 'src/services/datos'
 import { registrarCentro } from 'src/services/acciones'
@@ -71,14 +73,14 @@ const { modificado, fijar } = useBorrador(form)
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return
-  Object.assign(form, { nombre: '', id: '', direccion: '', condicion: 'propio', arrendador: '', contratoHasta: '' })
+  Object.assign(form, { nombre: '', id: '', unidadOrganica: null, direccion: '', condicion: 'propio', arrendador: '', contratoHasta: '' })
   fijar()
 })
 
 const { guardando, guardar } = useGuardado(async () => {
   const alquilado = form.condicion === 'alquilado'
   const car = await registrarCentro(
-    { id: form.id, nombre: form.nombre },
+    { id: form.id, nombre: form.nombre, unidadOrganicaId: form.unidadOrganica.id },
     {
       direccion: form.direccion,
       condicion: form.condicion,

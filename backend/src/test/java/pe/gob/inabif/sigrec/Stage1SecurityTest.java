@@ -28,6 +28,8 @@ import pe.gob.inabif.sigrec.catalogo.repository.CatalogoRepository;
 import pe.gob.inabif.sigrec.catalogo.model.Catalogo;
 import pe.gob.inabif.sigrec.centro.model.Centro;
 import pe.gob.inabif.sigrec.centro.repository.CentroRepository;
+import pe.gob.inabif.sigrec.centro.repository.UnidadOrganicaRepository;
+import pe.gob.inabif.sigrec.centro.dtos.UnidadOrganicaResponse;
 import pe.gob.inabif.sigrec.elemento.repository.ElementoRepository;
 import pe.gob.inabif.sigrec.modulo.repository.ModuloRepository;
 import pe.gob.inabif.sigrec.perfil.model.Perfil;
@@ -73,6 +75,7 @@ class Stage1SecurityTest {
     @MockBean PermisoRepository permisos;
     @MockBean CatalogoRepository catalogos;
     @MockBean CentroRepository centros;
+    @MockBean UnidadOrganicaRepository unidades;
     @MockBean ModuloRepository modulos;
     @MockBean AmbienteRepository ambientes;
     @MockBean ElementoRepository elementos;
@@ -311,6 +314,68 @@ class Stage1SecurityTest {
                 .andExpect(jsonPath("$.data[0].historial[0].procedencia").value("Cotización inicial"));
         verify(precios, times(1)).save(any());
         verify(precios, times(1)).flush();
+    }
+
+    @Test
+    void buscaUnidadesPaginadasConPermisoDeEdicion() throws Exception {
+        var centro = new Centro();
+        centro.setCodigo("AMA");
+        prepararPerfil("CAR", UsuarioPerfil.Alcance.CENTRO, centro, null);
+        when(permisosPorPerfil.findByPerfilIdOrderByOrdenAscIdAsc(5L)).thenReturn(List.of(
+                permiso("RUTA", "centros"), permiso("ACCION", "centro.actualizar")));
+        var ocupada = new UnidadOrganicaResponse.Coincidencia(8L, "Unidad Áncash", "AN", "Dirección oficial", true);
+        when(unidades.buscar("Ánc", 2, "AMA")).thenReturn(new UnidadOrganicaResponse.Pagina(List.of(ocupada), 6));
+        var ruta = API + "/centros/unidades-organicas";
+        mvc.perform(get(ruta).header(USUARIO, "demo").param("q", "An").param("centro", "AMA"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get(ruta).header(USUARIO, "demo").param("q", "Ánc").param("centro", "OTR"))
+                .andExpect(status().isNotFound());
+        mvc.perform(get(ruta).header(USUARIO, "demo").param("q", " Ánc ").param("centro", "AMA").param("pagina", "2"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(6))
+                .andExpect(jsonPath("$.data.items[0].ocupada").value(true));
+        verify(unidades).buscar("Ánc", 2, "AMA");
+        verifyNoMoreInteractions(unidades);
+    }
+
+    @Test
+    void exigeUnidadEnAltaYConservaHistoricoAlEditar() throws Exception {
+        prepararPerfil("CENTRAL", UsuarioPerfil.Alcance.GLOBAL, null, null);
+        when(permisosPorPerfil.findByPerfilIdOrderByOrdenAscIdAsc(5L)).thenReturn(List.of(
+                permiso("RUTA", "centros"), permiso("ACCION", "centro.actualizar"), permiso("ACCION", "centro.registrar")));
+        var centro = new Centro();
+        ReflectionTestUtils.setField(centro, "id", 3L);
+        centro.setCodigo("AMA");
+        when(centros.bloquear("AMA")).thenReturn(Optional.of(centro));
+        var inactiva = new UnidadOrganicaResponse(8L, "Unidad histórica", null, null, false);
+        var activa = new UnidadOrganicaResponse(9L, "Unidad activa", "ACT", "Dirección oficial", true);
+        when(unidades.porId(8L)).thenReturn(inactiva);
+        when(unidades.porId(9L)).thenReturn(activa);
+        when(unidades.vinculada(9L)).thenReturn(true, false);
+        var alta = """
+                {"id":"XYZ","nombre":"Centro SIGREC","inmueble":{"condicion":"propio","direccion":"Dirección SIGREC"}}
+                """;
+        mvc.perform(post(API + "/centros").header(USUARIO, "demo").contentType(MediaType.APPLICATION_JSON).content(alta))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.data.unidadOrganicaId").exists());
+
+        var edicion = """
+                {"nombre":"Centro SIGREC","inmueble":{"condicion":"propio","direccion":"Dirección SIGREC"}}
+                """.strip();
+        var ruta = API + "/centros/AMA";
+        mvc.perform(put(ruta).header(USUARIO, "demo").contentType(MediaType.APPLICATION_JSON).content(edicion))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.registro.unidadOrganica").doesNotExist());
+        var conUnidad = edicion.substring(0, edicion.length() - 1) + ",\"unidadOrganicaId\":%d}";
+        mvc.perform(put(ruta).header(USUARIO, "demo").contentType(MediaType.APPLICATION_JSON).content(conUnidad.formatted(8)))
+                .andExpect(status().isBadRequest());
+        centro.setUnidadOrganicaId(8L);
+        mvc.perform(put(ruta).header(USUARIO, "demo").contentType(MediaType.APPLICATION_JSON).content(edicion))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.registro.unidadOrganica.elegible").value(false));
+        mvc.perform(put(ruta).header(USUARIO, "demo").contentType(MediaType.APPLICATION_JSON).content(conUnidad.formatted(9)))
+                .andExpect(status().isConflict());
+        assertThat(centro.getUnidadOrganicaId()).isEqualTo(8L);
+        mvc.perform(put(ruta).header(USUARIO, "demo").contentType(MediaType.APPLICATION_JSON).content(conUnidad.formatted(9)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.registro.unidadOrganica.nombre").value("Unidad activa"))
+                .andExpect(jsonPath("$.data.registro.inmueble.direccion").value("Dirección SIGREC"));
+        assertThat(centro.getUnidadOrganicaId()).isEqualTo(9L);
     }
 
     private Catalogo tipoCamarote() {

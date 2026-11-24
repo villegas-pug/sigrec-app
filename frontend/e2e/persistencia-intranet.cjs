@@ -110,6 +110,17 @@ function guardarFase (fase, recurso, cambios = {}) {
 
 async function crear (page) {
   assert.ok(!fs.existsSync(diario), `Hay una prueba pendiente registrada en ${diario}; recuperar antes de continuar`)
+  // La baja lógica no libera una unidad: usar únicamente una reservada para esta ejecución.
+  const unidadId = Number(process.env.SIGREC_E2E_UNIDAD_ID)
+  const unidadNombre = process.env.SIGREC_E2E_UNIDAD_NOMBRE?.trim()
+  assert.ok(Number.isSafeInteger(unidadId) && unidadId > 0 && unidadNombre?.length >= 3,
+    'Configure SIGREC_E2E_UNIDAD_ID y SIGREC_E2E_UNIDAD_NOMBRE con una unidad reservada para pruebas')
+  const unidades = await api(page, 'GET', `centros/unidades-organicas?q=${encodeURIComponent(unidadNombre)}`)
+  assert.equal(unidades.status, 200)
+  const coincidencias = unidades.json.data.items.filter(u => u.nombre === unidadNombre)
+  assert.equal(coincidencias.length, 1, 'El nombre de la unidad de prueba debe identificar una fila en la primera página')
+  assert.equal(coincidencias[0].id, unidadId)
+  assert.equal(coincidencias[0].ocupada, false, 'La unidad reservada ya está vinculada')
   const preexistente = await api(page, 'GET', `usuarios/${identidad}`)
   if (preexistente.status === 200) {
     assert.equal(preexistente.json?.data?.proveedor, 'INTRANET', 'La identidad fija ya existe con otro proveedor')
@@ -142,6 +153,7 @@ async function crear (page) {
     version: 1,
     identidad,
     codigo,
+    unidadId,
     nombre: `E2E persistencia ${sufijo}`,
     nombreEditado: `E2E persistencia editado ${sufijo}`,
     modulo: {
@@ -201,13 +213,19 @@ async function crear (page) {
   await dialogo.getByLabel('Nombre del centro *').fill(registro.nombre)
   await dialogo.getByLabel('Código *').fill(registro.codigo)
   await dialogo.getByLabel('Dirección *').fill(`${registro.nombre} dirección`)
+  await dialogo.getByRole('button', { name: 'Buscar unidad orgánica' }).click()
+  const selector = page.locator('.q-dialog').filter({ has: page.getByRole('heading', { name: 'Buscar unidad orgánica' }) })
+  await selector.getByLabel('Nombre de la unidad orgánica').fill(unidadNombre)
+  await selector.getByRole('row').filter({ has: page.getByText(unidadNombre, { exact: true }) })
+    .getByRole('button', { name: 'Seleccionar' }).click()
   await dialogo.getByRole('button', { name: 'Registrar centro' }).click()
   await dialogo.waitFor({ state: 'hidden', timeout: 30000 })
 
   const trasAlta = await api(page, 'GET', 'centros/jerarquia')
   assert.equal(trasAlta.status, 200)
   assert.ok(
-    trasAlta.json?.data?.cars?.some(centro => centro.id === registro.codigo && centro.nombre === registro.nombre),
+    trasAlta.json?.data?.cars?.some(centro => centro.id === registro.codigo && centro.nombre === registro.nombre &&
+      centro.unidadOrganica?.id === unidadId),
     'El alta del formulario no aparece en la respuesta persistida'
   )
 
@@ -785,6 +803,7 @@ async function verificarYLimpiar (page) {
   )
   if (alcanzoFase(registro.fase, 'editado')) {
     assert.equal(centro.nombre, registro.nombreEditado, 'La última edición no persistió tras reiniciar el backend')
+    if (registro.unidadId != null) assert.equal(centro.unidadOrganica?.id, registro.unidadId)
   }
 
   const modulos = consulta.json?.data?.modulos || []

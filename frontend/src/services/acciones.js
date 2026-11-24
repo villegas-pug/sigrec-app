@@ -134,8 +134,8 @@ export function bloqueoDeReactivacion (entidad, registro) {
 // ---------- Centros y su ficha ----------
 
 // SPEC 037: los datos de centros y sus elementos se guardan juntos en el servidor.
-export function registrarCentro ({ id, nombre }, inmueble) {
-  return guardarJerarquia('centro', { id, nombre, inmueble })
+export function registrarCentro ({ id, nombre, unidadOrganicaId }, inmueble) {
+  return guardarJerarquia('centro', { id, nombre, inmueble, unidadOrganicaId })
 }
 
 export function actualizarCentro (car, datos) {

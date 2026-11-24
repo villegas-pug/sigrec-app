@@ -13,9 +13,14 @@ import org.hibernate.annotations.Check;
 @Getter
 @Setter
 @Entity
-@Table(name = "SGR_CENTRO", uniqueConstraints = @UniqueConstraint(name = "SGR_UK_CENTRO_COD", columnNames = "CODIGO"))
+@Table(name = "SGR_CENTRO", uniqueConstraints = {
+        @UniqueConstraint(name = "SGR_UK_CENTRO_COD", columnNames = "CODIGO"),
+        @UniqueConstraint(name = "SGR_UK_CENTRO_UNIDAD_ORG", columnNames = "ID_UNIDAD_ORGANICA")
+})
 @Check(name = "SGR_CK_CENTRO_CONDICION", constraints = "CONDICION_INMUEBLE in ('PROPIO', 'ALQUILADO') and (CONDICION_INMUEBLE = 'ALQUILADO' or (ARRENDADOR is null and FEC_FIN_CONTRATO is null))")
 public class Centro extends Auditable {
+    @Column(name = "ID_UNIDAD_ORGANICA", precision = 11)
+    private Long unidadOrganicaId;
     @Column(name = "CODIGO", length = 3, nullable = false)
     private String codigo;
     @Column(name = "NOMBRE", length = 180, nullable = false)

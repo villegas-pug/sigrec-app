@@ -7,6 +7,7 @@ import pe.gob.inabif.sigrec.modulo.model.Modulo;
 import pe.gob.inabif.sigrec.ambiente.model.Ambiente;
 import pe.gob.inabif.sigrec.elemento.model.Elemento;
 import pe.gob.inabif.sigrec.centro.repository.CentroRepository;
+import pe.gob.inabif.sigrec.centro.repository.UnidadOrganicaRepository;
 import pe.gob.inabif.sigrec.modulo.repository.ModuloRepository;
 import pe.gob.inabif.sigrec.ambiente.repository.AmbienteRepository;
 import pe.gob.inabif.sigrec.elemento.repository.ElementoRepository;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class JerarquiaQueries {
     private final CentroRepository centros;
+    private final UnidadOrganicaRepository unidades;
     private final ModuloRepository modulos;
     private final AmbienteRepository ambientes;
     private final ElementoRepository elementos;
@@ -50,7 +52,10 @@ public class JerarquiaQueries {
                         modIds.isEmpty() ? List.<Elemento>of() : elementos.findByModuloIdInOrderById(modIds),
                         ambienteIds.isEmpty() ? List.<Elemento>of() : elementos.findByAmbienteIdInOrderById(ambienteIds))
                 .flatMap(Collection::stream).filter(Elemento::vigente).map(elementosMapper::toResponse).toList();
-        return new JerarquiaResponse(cars.stream().map(centrosMapper::toResponse).toList(), mods.stream().map(modulosMapper::toResponse).toList(),
+        var resumenes = unidades.porIds(cars.stream().map(Centro::getUnidadOrganicaId).filter(Objects::nonNull).distinct().toList());
+        var respuestasCentro = cars.stream().map(c -> centrosMapper.toResponse(c,
+                c.getUnidadOrganicaId() == null ? null : resumenes.get(c.getUnidadOrganicaId()))).toList();
+        return new JerarquiaResponse(respuestasCentro, mods.stream().map(modulosMapper::toResponse).toList(),
                 spaces.stream().map(ambientesMapper::toResponse).toList(), elements);
     }
 }

@@ -8,6 +8,10 @@ const jerarquia = { cars: [], modulos: [], ambientes: [], elementos: [] }
 const inventario = { bienes: [], eventos: [], inventarioPrevio: [] }
 const vehiculos = []
 const mantenimientos = []
+const unidadesOrganicas = Array.from({ length: 6 }, (_, i) => ({
+  id: i + 1, nombre: `Unidad oficial ${i + 1}`, codigo: `U${i + 1}`,
+  direccion: `Dirección oficial ${i + 1}`, ocupada: i === 0
+}))
 // SPEC 044: Inicio recibe sus indicadores ya calculados; no descarga colecciones.
 const resumenInicio = { filas: [], jerarquia: { centros: 0, modulos: 0, ambientes: 0 }, recorridos: { total: 0, noComparables: 0 }, avisos: { ahora: [], proximos: [] } }
 const token = ['e30', Buffer.from(JSON.stringify({ idUsuario: 123, idSistema: '345', exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url'), 'firma'].join('.')
@@ -50,12 +54,19 @@ async function main () {
       if (!crudSimulado) throw new Error(`Escritura no permitida en la prueba: ${path}`)
       const body = request.postDataJSON()
       if (request.method() === 'POST' && path === 'centros' && !centroSimulado) {
-        centroSimulado = { ...body, inmueble: { ...body.inmueble, fundacion: {}, seguridad: {},
+        const { unidadOrganicaId, ...datos } = body
+        const unidad = unidadesOrganicas.find(u => u.id === unidadOrganicaId && !u.ocupada)
+        assert.ok(unidad, 'El alta debe enviar el ID de una unidad seleccionable')
+        centroSimulado = { ...datos, unidadOrganica: { ...unidad, elegible: true }, inmueble: { ...body.inmueble, fundacion: {}, seguridad: {},
           construccion: {}, actualizado: { fecha: '2026-01-01', por: 'E2E' } }, anulacion: null }
         return route.fulfill({ json: { data: { registro: centroSimulado, elementos: [] } } })
       }
       if (request.method() === 'PUT' && path === 'centros/XYZ' && centroSimulado) {
-        centroSimulado = { ...centroSimulado, ...body }
+        const { unidadOrganicaId, inmueble, ...datos } = body
+        const unidad = unidadesOrganicas.find(u => u.id === unidadOrganicaId && !u.ocupada)
+        assert.equal(unidad?.id, 2, 'La edición debe enviar la unidad que reemplaza el vínculo')
+        centroSimulado = { ...centroSimulado, ...datos, unidadOrganica: { ...unidad, elegible: true },
+          inmueble: { ...centroSimulado.inmueble, ...inmueble } }
         return route.fulfill({ json: { data: { registro: centroSimulado, elementos: [] } } })
       }
       if (request.method() === 'POST' && path === 'centros/XYZ/anular' && centroSimulado) {
@@ -203,6 +214,13 @@ async function main () {
       return route.fulfill({ json: { data: resumenInicio } })
     }
     if (path === 'inicio/datos') throw new Error('Inicio ya no debe pedir las colecciones completas (SPEC 044).')
+    if (path === 'centros/unidades-organicas') {
+      const { searchParams } = new URL(request.url())
+      const pagina = Number(searchParams.get('pagina'))
+      assert.equal(searchParams.get('q'), 'Unidad')
+      assert.equal(searchParams.get('centro'), centroSimulado?.id ?? null)
+      return route.fulfill({ json: { data: { items: unidadesOrganicas.slice((pagina - 1) * 5, pagina * 5), total: 6 } } })
+    }
     const data = path === 'centros/jerarquia' ? jerarquia : path === 'bienes/datos' ? inventario
       : path === 'vehiculos' ? vehiculos : path === 'mantenimientos' ? mantenimientos
         : path === 'catalogos' ? [{ dominio: 'TIPO_SERVICIO', codigo: 'agua', nombre: 'Agua' }] : []
@@ -348,20 +366,45 @@ async function main () {
     await alta.getByLabel('Código *').fill('XYZ')
     await alta.getByLabel('Dirección *').fill('Dirección aislada')
     await alta.getByRole('button', { name: 'Registrar centro' }).click()
+    await alta.getByText('Seleccione una unidad orgánica.').waitFor()
+    await alta.getByRole('button', { name: 'Buscar unidad orgánica' }).click()
+    const selectorUnidad = page.locator('.q-dialog').filter({ has: page.getByRole('heading', { name: 'Buscar unidad orgánica' }) })
+    await selectorUnidad.getByLabel('Nombre de la unidad orgánica').fill('Unidad')
+    await selectorUnidad.getByText('Ya vinculada a otro centro').waitFor()
+    assert.equal(await selectorUnidad.locator('tbody tr').count(), 5)
+    await selectorUnidad.getByRole('button', { name: /próxima página|next page/i }).click()
+    await selectorUnidad.getByText('Unidad oficial 6').waitFor()
+    await selectorUnidad.getByRole('button', { name: 'Seleccionar' }).click()
+    await alta.getByText('Unidad oficial 6').waitFor()
+    await alta.getByText('Dirección: Dirección oficial 6').waitFor()
+    assert.equal(await alta.getByLabel('Dirección *').inputValue(), 'Dirección aislada')
+    await alta.getByRole('button', { name: 'Registrar centro' }).click()
     await alta.waitFor({ state: 'hidden' })
     await page.getByText('Centro CRUD aislado', { exact: true }).first().waitFor()
+    await page.getByRole('button', { name: 'Acciones de Centro CRUD aislado' }).click()
+    await page.getByText('Actualizar ficha', { exact: true }).click()
+    const edicion = page.locator('.q-dialog').filter({ has: page.getByRole('heading', { name: 'Actualizar ficha del centro' }) })
+    await edicion.getByText('Unidad oficial 6').waitFor()
+    await edicion.getByLabel('Nombre del centro *').fill('Centro actualizado')
+    await edicion.getByRole('button', { name: 'Cambiar unidad' }).click()
+    await selectorUnidad.getByLabel('Nombre de la unidad orgánica').fill('Unidad')
+    await selectorUnidad.getByRole('row').filter({ hasText: 'Unidad oficial 2' })
+      .getByRole('button', { name: 'Seleccionar' }).click()
+    await edicion.getByText('Unidad oficial 2').waitFor()
+    await edicion.getByRole('button', { name: 'Guardar cambios' }).click()
+    await edicion.waitFor({ state: 'hidden' })
     const ciclo = await page.evaluate(async () => {
       const { db, carPorId } = await import('/sigrec/src/services/datos.js')
-      const { actualizarCentro, anular, reactivar } = await import('/sigrec/src/services/acciones.js')
+      const { anular, reactivar } = await import('/sigrec/src/services/acciones.js')
       const centro = carPorId('XYZ')
-      await actualizarCentro(centro, { nombre: 'Centro actualizado', inmueble: centro.inmueble })
-      const actualizado = carPorId('XYZ').nombre
+      const actualizado = centro.nombre
       await anular(centro, { motivo: 'Prueba aislada' })
       const anulado = carPorId('XYZ').anulacion?.motivo
       await reactivar(centro)
-      return { actualizado, anulado, reactivado: carPorId('XYZ').anulacion === null, cantidad: db.cars.filter(c => c.id === 'XYZ').length }
+      return { actualizado, anulado, reactivado: carPorId('XYZ').anulacion === null,
+        cantidad: db.cars.filter(c => c.id === 'XYZ').length, unidadId: carPorId('XYZ').unidadOrganica.id }
     })
-    assert.deepEqual(ciclo, { actualizado: 'Centro actualizado', anulado: 'Prueba aislada', reactivado: true, cantidad: 1 })
+    assert.deepEqual(ciclo, { actualizado: 'Centro actualizado', anulado: 'Prueba aislada', reactivado: true, cantidad: 1, unidadId: 2 })
     assert.deepEqual(llamadas.filter(x => !x.startsWith('GET ')), [
       'POST centros', 'PUT centros/XYZ', 'POST centros/XYZ/anular', 'POST centros/XYZ/reactivar'
     ])

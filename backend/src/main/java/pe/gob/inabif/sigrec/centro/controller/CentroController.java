@@ -1,6 +1,5 @@
 package pe.gob.inabif.sigrec.centro.controller;
 
-import pe.gob.inabif.sigrec.centro.dtos.CentroDatos;
 import pe.gob.inabif.sigrec.centro.dtos.CreateCentroRequest;
 import pe.gob.inabif.sigrec.centro.dtos.UpdateCentroRequest;
 import pe.gob.inabif.sigrec.centro.dtos.CentroResponse;
@@ -10,10 +9,15 @@ import pe.gob.inabif.sigrec.centro.service.CentroService;
 import pe.gob.inabif.sigrec.shared.response.ApiResponse;
 import pe.gob.inabif.sigrec.centro.service.JerarquiaQueries;
 import pe.gob.inabif.sigrec.centro.dtos.JerarquiaResponse;
+import pe.gob.inabif.sigrec.centro.dtos.UnidadOrganicaResponse.Pagina;
+import pe.gob.inabif.sigrec.centro.repository.UnidadOrganicaRepository;
+import pe.gob.inabif.sigrec.security.Acceso;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,9 +25,23 @@ import org.springframework.web.bind.annotation.*;
 public class CentroController {
     private final CentroService service;
     private final JerarquiaQueries queries;
+    private final UnidadOrganicaRepository unidades;
+    private final Acceso acceso;
 
     @GetMapping("/jerarquia")
     public ApiResponse<JerarquiaResponse> consultar() { return ApiResponse.ok(queries.consultar()); }
+
+    @GetMapping("/unidades-organicas")
+    public ApiResponse<Pagina> buscarUnidades(@RequestParam String q, @RequestParam(defaultValue = "1") int pagina,
+                                             @RequestParam(required = false) String centro) {
+        String texto = q.strip();
+        int longitud = texto.codePointCount(0, texto.length());
+        if (longitud < 3 || longitud > 240 || pagina < 1 || (centro != null && !centro.matches("[A-Z]{3}"))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Revise el texto de búsqueda, el centro y la página.");
+        }
+        acceso.accionCentro(centro == null ? "centro.registrar" : "centro.actualizar", centro);
+        return ApiResponse.ok(unidades.buscar(texto, pagina, centro));
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<CambioResponse<CentroResponse>>> crear(@Valid @RequestBody CreateCentroRequest datos) {

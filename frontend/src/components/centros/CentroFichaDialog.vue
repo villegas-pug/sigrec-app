@@ -13,6 +13,7 @@
     <q-input v-model="form.nombre" outlined dense label="Nombre del centro *" :rules="[requerido]">
       <template #append><boton-dictado v-model="form.nombre" /></template>
     </q-input>
+    <unidad-organica-selector v-model="form.unidadOrganica" :centro="centro.id" :deshabilitado="guardando" />
 
     <div class="sg-kv__label">Inmueble donde funciona</div>
     <q-input v-model="form.direccion" outlined dense label="Dirección">
@@ -80,6 +81,7 @@ import BotonDictado from 'components/common/BotonDictado.vue'
 import { reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import FormDialog from 'components/common/FormDialog.vue'
+import UnidadOrganicaSelector from './UnidadOrganicaSelector.vue'
 import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarCentro, numeroONulo } from 'src/services/acciones'
@@ -106,6 +108,7 @@ watch(() => props.modelValue, (abierto) => {
   const c = i.construccion
   Object.assign(form, {
     nombre: centro.nombre,
+    unidadOrganica: centro.unidadOrganica ?? null,
     direccion: i.direccion ?? '',
     fundacion: i.fundacion?.referencia ?? '',
     fundacionNota: i.fundacion?.nota ?? '',
@@ -129,8 +132,10 @@ watch(() => props.modelValue, (abierto) => {
 
 const { guardando, guardar } = useGuardado(async () => {
   const alquilado = form.condicion === 'alquilado'
+  const unidadId = form.unidadOrganica?.id
   await actualizarCentro(props.centro, {
     nombre: form.nombre,
+    unidadOrganicaId: unidadId === props.centro.unidadOrganica?.id ? undefined : unidadId,
     inmueble: {
       direccion: form.direccion || null,
       fundacion: { referencia: form.fundacion || null, nota: form.fundacionNota || null },
