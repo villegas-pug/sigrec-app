@@ -3,7 +3,7 @@
     <div class="sg-page__inner">
       <page-header>
         <template #acciones>
-          <q-btn v-if="puedeHacer('centro.registrar')" outline color="secondary" icon="add_business" label="Registrar centro" @click="dialogoCentro = true" />
+          <q-btn v-if="puedeHacer('centro.registrar') && (esConsulta || (movil && vista !== 'arbol'))" outline color="secondary" icon="add_business" label="Registrar centro" @click="dialogoCentro = true" />
         </template>
       </page-header>
 
@@ -24,7 +24,11 @@
           :nuevos="nuevos"
           @expandir="actualizarExpandidos"
           @seleccionar="seleccionarDesdeArbol"
-        />
+        >
+          <template #acciones>
+            <q-btn v-if="puedeHacer('centro.registrar')" outline dense color="secondary" icon="add_business" label="Registrar centro" @click="dialogoCentro = true" />
+          </template>
+        </arbol-centros>
 
         <div v-if="!movil || vista === 'detalle'" class="sg-explorer__col">
           <!-- Tras saltar de una ficha a otra por un enlace del contenido, se ofrece volver a la ficha anterior (SPEC 011, Ola 5). -->

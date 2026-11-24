@@ -4,12 +4,13 @@
       <q-input v-model="texto" outlined dense clearable label="Buscar centro, módulo, ambiente o recurso">
         <template #append><boton-dictado v-model="texto" /><q-icon name="search" /></template>
       </q-input>
-      <div class="column q-gutter-y-xs">
+      <div class="column q-gutter-y-sm">
         <q-select v-model="situacion" class="full-width" :options="OPCIONES_SITUACION" emit-value map-options outlined dense label="Situación del bien">
           <template #append><boton-dictado v-model="situacion" tipo="opcion" :opciones="OPCIONES_SITUACION" emit-value /></template>
         </q-select>
-        <div class="row justify-end">
-          <filtro-inactivos v-model="inactivos" />
+        <div class="row items-center justify-between" style="gap: 8px">
+          <slot name="acciones" />
+          <filtro-inactivos v-model="inactivos" class="q-ml-auto" />
         </div>
       </div>
     </div>
