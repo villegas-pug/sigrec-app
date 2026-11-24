@@ -21,12 +21,13 @@ import org.hibernate.annotations.Check;
     ((case when ID_CENTRO is null then 0 else 1 end)
     + (case when ID_MODULO is null then 0 else 1 end)
     + (case when ID_AMBIENTE is null then 0 else 1 end)) = 1
-    and ((ID_ELEMENTO_BASE is not null and NOMBRE is null and ID_CONDICION is not null)
-    or (ID_ELEMENTO_BASE is null and NOMBRE is not null and ID_AMBIENTE is null))
+    and ID_ELEMENTO_BASE is null and NOMBRE is not null
     """)
 public class Elemento extends Auditable {
     @Column(name = "NOMBRE", length = 40)
     private String nombre;
+    @Column(name = "ICONO", length = 60)
+    private String icono;
     @Column(name = "CLAVE_NORMALIZADA", length = 80, nullable = false)
     private String clave;
     @ManyToOne(fetch = FetchType.LAZY)

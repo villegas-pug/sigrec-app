@@ -43,7 +43,7 @@ export function resumenPorCentro (cars, { fechaCorte, anioServicios, anio }) {
       elementosCriticosInmueble: criticosInmueble,
       elementosCriticos: criticosInmueble +
         sumar(modulos.map((m) => elementosCriticos(estadoElementosDe('modulo', m.id), elementosAdicionalesDe('modulo', m.id)).length)) +
-        sumar(ambientes.map((a) => elementosCriticos(estadoElementosDe('ambiente', a.id)).length)),
+        sumar(ambientes.map((a) => elementosCriticos(estadoElementosDe('ambiente', a.id), elementosAdicionalesDe('ambiente', a.id)).length)),
       novedadesAbiertas: sumar(ambientes.map((a) => novedadesAbiertas(a).length)),
       bienesActivos: sumar(Object.values(condiciones)),
       bienesMalos: condiciones.malo + condiciones.inservible,

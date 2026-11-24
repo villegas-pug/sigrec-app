@@ -43,7 +43,7 @@ const filas = computed(() => carIdsVisibles.value.flatMap((id) => {
   return [
     { id: car.id, estados: estadoElementosDe('centro', car.id), adicionales: elementosAdicionalesDe('centro', car.id), contexto: `${car.nombre} › Inmueble`, to: to(null) },
     ...modulos.map((m) => ({ id: m.id, estados: estadoElementosDe('modulo', m.id), adicionales: elementosAdicionalesDe('modulo', m.id), contexto: textoUbicacion({ car, modulo: m }), to: { name: 'centros', query: { modulo: m.id } } })),
-    ...ambientes.map((a) => ({ id: a.id, estados: estadoElementosDe('ambiente', a.id), adicionales: [], contexto: ruta(a), to: to(a) }))
+    ...ambientes.map((a) => ({ id: a.id, estados: estadoElementosDe('ambiente', a.id), adicionales: elementosAdicionalesDe('ambiente', a.id), contexto: ruta(a), to: to(a) }))
   ].flatMap((lugar) => elementosCriticos(lugar.estados, lugar.adicionales).map((e) => ({ id: `${lugar.id}-${e.key}`, titulo: e.label, contexto: lugar.contexto, detalle: condicion(lugar.estados[e.key]).label, to: lugar.to })))
 }))
 </script>

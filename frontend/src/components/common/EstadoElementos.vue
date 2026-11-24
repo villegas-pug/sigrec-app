@@ -3,6 +3,7 @@
     <!-- Consulta: cada elemento evaluado con su condición; los no evaluados se señalan, no se asumen. -->
     <div v-if="soloLectura" class="sg-kv-grid">
       <key-value v-for="el in elementos" :key="el.key" :etiqueta="el.label">
+        <q-icon :name="el.icono" size="20px" class="q-mr-sm" aria-hidden="true" />
         <status-chip v-if="modelValue?.[el.key]" v-bind="condicion(modelValue[el.key])" />
         <status-chip v-else tono="si" label="No evaluado" />
       </key-value>
@@ -27,7 +28,8 @@
         <span class="row items-center no-wrap" style="min-width: 0">
           <q-icon :name="el.icono" size="20px" class="q-mr-sm" aria-hidden="true" />
           <span class="ellipsis">{{ el.label }}</span>
-          <q-btn v-if="el.adicional" flat round dense size="sm" color="grey-7" icon="close" class="q-ml-xs" :aria-label="`Quitar ${el.label}`" @click="quitar(el)">
+          <q-btn v-if="permitirAgregar" flat round dense size="sm" color="secondary" icon="edit" class="q-ml-xs" :aria-label="`Editar ${el.label}`" @click="abrirEditor(el)" />
+          <q-btn v-if="permitirAgregar" flat round dense size="sm" color="grey-7" icon="close" class="q-ml-xs" :aria-label="`Quitar ${el.label}`" @click="quitar(el)">
             <q-tooltip>Quitar {{ el.label }}</q-tooltip>
           </q-btn>
         </span>
@@ -46,33 +48,21 @@
         />
       </div>
 
-      <!-- Alta de un elemento propio del centro o del módulo (SPEC 022): sugerencias comunes o texto libre con Enter. -->
-      <q-select
-        v-if="permitirAgregar"
-        ref="agregarRef"
-        :model-value="null"
-        :options="sugerenciasFiltradas"
-        use-input
-        hide-selected
-        fill-input
-        input-debounce="0"
-        outlined
-        dense
-        label="Agregar elemento"
-        hint="Elija una sugerencia o escriba otro elemento y presione Enter"
-        :maxlength="LARGO_MAXIMO_ELEMENTO"
-        :error="!!error"
-        :error-message="error"
-        @filter="filtrar"
-        @input-value="error = ''"
-        @new-value="(valor) => agregar(valor)"
-        @update:model-value="agregar"
-      >
-        <template #prepend><q-icon name="add" aria-hidden="true" /></template>
-        <template #no-option>
-          <q-item><q-item-section class="sg-muted">Presione Enter para agregar el elemento escrito.</q-item-section></q-item>
-        </template>
-      </q-select>
+      <!-- Alta y edición de elementos propios de la ficha (SPEC 051). -->
+      <q-btn v-if="permitirAgregar" outline color="secondary" icon="add" label="Agregar elemento" no-caps @click="abrirEditor()" />
+      <q-dialog v-model="editorAbierto">
+        <q-card class="sg-dialog" style="width: 480px; max-width: 95vw">
+          <q-card-section class="sg-dialog__header"><h2 class="text-h6 q-my-none">{{ claveEditada ? 'Editar elemento' : 'Agregar elemento' }}</h2></q-card-section>
+          <q-card-section>
+            <q-input v-model="nombreEditado" outlined dense autofocus label="Nombre del elemento *" :maxlength="LARGO_MAXIMO_ELEMENTO" :error="!!error" :error-message="error" @update:model-value="error = ''" @keydown.enter.prevent="guardarElemento" />
+            <div class="q-mt-md q-mb-sm">Icono</div>
+            <div class="row q-gutter-xs">
+              <q-btn v-for="icono in ICONOS" :key="icono" round dense :outline="iconoEditado !== icono" :unelevated="iconoEditado === icono" color="secondary" :icon="icono" :aria-label="`Seleccionar icono ${icono}`" :aria-pressed="iconoEditado === icono" @click="iconoEditado = icono" />
+            </div>
+          </q-card-section>
+          <q-card-actions align="right"><q-btn flat label="Cancelar" v-close-popup /><q-btn color="primary" label="Guardar" @click="guardarElemento" /></q-card-actions>
+        </q-card>
+      </q-dialog>
     </div>
 
     <note-banner v-if="criticos.length" tono="wa" icono="warning" class="q-mt-md">
@@ -89,14 +79,13 @@
 <script setup>
 // Condición por elemento de la infraestructura (SPEC 010; captura rápida en SPEC 011, Ola 2). Con `soloLectura` solo muestra;
 // si no, edita con v-model. El valor es { [elemento]: condicion }; un elemento ausente o null es «No evaluado».
-// Centros y módulos suman elementos propios con `v-model:adicionales` y `permitir-agregar` (SPEC 022).
+// Cada ficha administra elementos propios con `v-model:adicionales` (SPEC 051).
 import KeyValue from 'components/common/KeyValue.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import { computed, ref } from 'vue'
-import { OPCIONES_CONDICION, SUGERENCIAS_ELEMENTOS, condicion } from 'src/config/catalogos'
+import { OPCIONES_CONDICION, condicion } from 'src/config/catalogos'
 import { LARGO_MAXIMO_ELEMENTO, cantidadEvaluados, claveElemento, elementosCriticos, elementosDe, motivoElementoInvalido } from 'src/services/infraestructura'
-import { normalizar } from 'src/utils/interpretacionVoz'
 
 const props = defineProps({
   modelValue: { type: Object, default: null },
@@ -132,35 +121,31 @@ function marcarRestantes (valor) {
 }
 
 // ---------- Elementos agregados ----------
-const agregarRef = ref(null)
+const ICONOS = ['category', 'door_front', 'window', 'format_paint', 'grid_on', 'roofing', 'foundation', 'electrical_services', 'plumbing', 'water_drop', 'fence', 'garage', 'lightbulb', 'stairs', 'build', 'security']
+const editorAbierto = ref(false)
+const claveEditada = ref(null)
+const nombreEditado = ref('')
+const iconoEditado = ref('category')
 const error = ref('')
-const textoFiltro = ref('')
-
-// Sugerencias que aún no están en la lista, filtradas por lo escrito.
-const sugerenciasFiltradas = computed(() => {
-  const presentes = new Set(elementos.value.map((e) => normalizar(e.label)))
-  const t = normalizar(textoFiltro.value)
-  return SUGERENCIAS_ELEMENTOS.filter((s) => !presentes.has(normalizar(s)) && (!t || normalizar(s).includes(t)))
-})
-
-function filtrar (valor, actualizar) {
-  actualizar(() => { textoFiltro.value = valor })
+function abrirEditor (elemento = null) {
+  claveEditada.value = elemento?.key ?? null
+  nombreEditado.value = elemento?.label ?? ''
+  iconoEditado.value = elemento?.icono ?? 'category'
+  error.value = ''
+  editorAbierto.value = true
 }
 
-function agregar (nombre) {
-  if (nombre == null) return
-  const motivo = motivoElementoInvalido(nombre, props.adicionales)
+function guardarElemento () {
+  const motivo = motivoElementoInvalido(nombreEditado.value, props.adicionales, claveEditada.value)
   if (motivo) {
     error.value = motivo
     return
   }
-  const label = String(nombre).trim()
-  const key = claveElemento(label)
-  emit('update:adicionales', [...(props.adicionales ?? []), { key, label }])
-  emit('update:modelValue', { ...(props.modelValue ?? {}), [key]: null })
-  error.value = ''
-  textoFiltro.value = ''
-  agregarRef.value?.updateInputValue('', true)
+  const key = claveEditada.value ?? claveElemento()
+  const elemento = { key, label: nombreEditado.value.trim(), icono: iconoEditado.value }
+  emit('update:adicionales', claveEditada.value ? props.adicionales.map((a) => a.key === key ? elemento : a) : [...props.adicionales, elemento])
+  if (!claveEditada.value) emit('update:modelValue', { ...(props.modelValue ?? {}), [key]: null })
+  editorAbierto.value = false
 }
 
 // Quitar un elemento agregado elimina también su condición.

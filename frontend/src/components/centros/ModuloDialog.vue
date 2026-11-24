@@ -120,7 +120,7 @@ const { guardando, guardar } = useGuardado(async () => {
     areaM2: numeroONulo(form.areaM2),
     condicion: form.condicion,
     ubicacion: form.ubicacion?.trim() || null,
-    elementosAdicionales: form.elementosAdicionales.length ? form.elementosAdicionales.map(({ key, label }) => ({ key, label })) : null,
+    elementosAdicionales: form.elementosAdicionales.length ? form.elementosAdicionales.map(({ key, label, icono }) => ({ key, label, icono })) : null,
     estadoElementos: normalizarElementos(form.estadoElementos, form.elementosAdicionales)
   }
   let id

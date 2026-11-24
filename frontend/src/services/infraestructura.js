@@ -1,28 +1,31 @@
 // Estado de la infraestructura por elemento (ambiente, módulo y construcción del centro) y resumen del mobiliario a partir de los bienes.
-// Centros y módulos pueden sumar elementos propios a la lista base (SPEC 022): `adicionales` = [{ key, label }].
-// Sin `adicionales`, cada función se comporta como la lista base (el ambiente no tiene elementos agregados).
-import { CONDICIONES, CONDICIONES_CRITICAS, ELEMENTOS_INFRAESTRUCTURA } from 'src/config/catalogos'
-import { identificador } from 'src/utils/formato'
+// Cada ficha tiene sus propios elementos: `adicionales` = [{ key, label, icono }] (SPEC 051).
+import { CONDICIONES, CONDICIONES_CRITICAS } from 'src/config/catalogos'
 import { normalizar } from 'src/utils/interpretacionVoz'
 import { situacionDe } from './datos'
 
 export const LARGO_MAXIMO_ELEMENTO = 40
 
-// Lista base seguida de los elementos agregados del registro.
+// Lista de elementos de la ficha.
 export const elementosDe = (adicionales = []) => [
-  ...ELEMENTOS_INFRAESTRUCTURA,
-  ...(adicionales ?? []).map((a) => ({ ...a, icono: 'add_box', adicional: true }))
+  ...(adicionales ?? []).map((a) => ({ ...a, icono: a.icono || 'category', adicional: true }))
 ]
 
-// Clave de un elemento agregado: no colisiona con las claves de la lista base.
-export const claveElemento = (nombre) => `extra-${identificador(nombre)}`
+// Clave independiente del nombre para conservarla al editar.
+export const claveElemento = () => {
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  bytes[6] = (bytes[6] & 15) | 64
+  bytes[8] = (bytes[8] & 63) | 128
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+  return `extra-${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
 
 // Motivo por el que un nombre no puede agregarse (null = válido): vacío, largo o repetido (sin distinguir tildes ni mayúsculas).
-export function motivoElementoInvalido (nombre, adicionales = []) {
+export function motivoElementoInvalido (nombre, adicionales = [], claveActual = null) {
   const texto = String(nombre ?? '').trim()
   if (!texto) return 'Escriba el nombre del elemento'
   if (texto.length > LARGO_MAXIMO_ELEMENTO) return `Use ${LARGO_MAXIMO_ELEMENTO} caracteres como máximo`
-  const repetido = elementosDe(adicionales).some((e) => normalizar(e.label) === normalizar(texto) || e.key === claveElemento(texto))
+  const repetido = elementosDe(adicionales).some((e) => e.key !== claveActual && normalizar(e.label) === normalizar(texto))
   return repetido ? 'Ese elemento ya está en la lista' : null
 }
 

@@ -9,5 +9,6 @@ import org.mapstruct.*;
 public interface ElementoEntityMapper {
     @BeanMapping(ignoreByDefault = true, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL)
     @Mapping(target = "nombre", expression = "java(source.label().strip())")
+    @Mapping(target = "icono", source = "icono")
     void fromModelToEntity(Adicional source, @MappingTarget Elemento elemento);
 }

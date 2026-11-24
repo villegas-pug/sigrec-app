@@ -107,7 +107,7 @@ public class AmbienteServiceImpl implements AmbienteService {
         if (alta) a.registrar(actor);
         else a.actualizar(actor);
         ambientes.save(a);
-        var filas = evaluaciones.reemplazar(null, null, a, datos.estadoElementos(), null, actor);
+        var filas = evaluaciones.reemplazar(null, null, a, datos.estadoElementos(), datos.elementosAdicionales(), actor);
         return new CambioResponse<>(responseMapper.toResponse(a), filas.stream().map(elementoMapper::toResponse).toList());
     }
 

@@ -59,10 +59,10 @@ final class SituacionCentros {
             if (ReglasInicio.CONDICIONES_CRITICAS.contains(b.condicion())) malos += cantidad;
         }
 
-        int criticosInmueble = elementosCriticos(filasDeElementos(car.id(), null, null), true);
+        int criticosInmueble = elementosCriticos(filasDeElementos(car.id(), null, null));
         int criticos = criticosInmueble
-                + modulos.stream().mapToInt(m -> elementosCriticos(filasDeElementos(null, m.id(), null), true)).sum()
-                + ambientes.stream().mapToInt(a -> elementosCriticos(filasDeElementos(null, null, a.id()), false)).sum();
+                + modulos.stream().mapToInt(m -> elementosCriticos(filasDeElementos(null, m.id(), null))).sum()
+                + ambientes.stream().mapToInt(a -> elementosCriticos(filasDeElementos(null, null, a.id()))).sum();
         long novedades = ambientes.stream()
                 .mapToLong(a -> ctx.novedadesDe(a.id()).stream().filter(n -> n.vigente() && !n.atendida()).count()).sum();
 
@@ -99,19 +99,8 @@ final class SituacionCentros {
                         : moduloId != null ? Objects.equals(e.moduloId(), moduloId) : Objects.equals(e.ambienteId(), ambienteId)).toList();
     }
 
-    /**
-     * Elementos evaluados en condición mala o inservible. Se consideran los elementos base y, si {@code conAdicionales},
-     * los que el centro o el módulo agregó (los de un ambiente no admiten adicionales).
-     */
-    private int elementosCriticos(List<ElementoResponse> filas, boolean conAdicionales) {
-        var estado = new HashMap<String, String>();
-        for (var f : filas) {
-            if (f.condicion() != null && !f.condicion().isEmpty()) estado.put(f.clave(), f.condicion());
-        }
-        var claves = new ArrayList<String>(ctx.elementosBase);
-        if (conAdicionales) {
-            for (var f : filas) if (f.nombre() != null && !f.nombre().isEmpty()) claves.add(f.clave());
-        }
-        return (int) claves.stream().filter(k -> ReglasInicio.CONDICIONES_CRITICAS.contains(estado.get(k))).count();
+    /** Cuenta los elementos propios evaluados en condición mala o inservible. */
+    private int elementosCriticos(List<ElementoResponse> filas) {
+        return (int) filas.stream().filter(f -> f.condicion() != null && ReglasInicio.CONDICIONES_CRITICAS.contains(f.condicion())).count();
     }
 }

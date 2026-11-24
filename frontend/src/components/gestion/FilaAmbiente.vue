@@ -8,7 +8,7 @@
       <status-chip v-bind="condicion(ambiente.condicion)" />
       <status-chip v-if="ambiente.anulacion" v-bind="CHIP_ANULADO" />
       <status-chip v-if="novedadesAbiertas(ambiente).length" tono="da" :label="plural(novedadesAbiertas(ambiente).length, 'novedad abierta', 'novedades abiertas')" />
-      <status-chip v-if="elementosCriticos(estadoElementosDe('ambiente', ambiente.id)).length" tono="wa" :label="plural(elementosCriticos(estadoElementosDe('ambiente', ambiente.id)).length, 'elemento crítico', 'elementos críticos')" />
+      <status-chip v-if="elementosCriticos(estadoElementosDe('ambiente', ambiente.id), elementosAdicionalesDe('ambiente', ambiente.id)).length" tono="wa" :label="plural(elementosCriticos(estadoElementosDe('ambiente', ambiente.id), elementosAdicionalesDe('ambiente', ambiente.id)).length, 'elemento crítico', 'elementos críticos')" />
       <status-chip tono="ne" :label="`${textoConteoRecursos(contarRecursos(bienesDeAmbiente(ambiente.id).filter((b) => situacionDe(b) === 'activo')))} activos`" />
     </div>
   </div>
@@ -22,7 +22,7 @@ import { bienesDeAmbiente, situacionDe } from 'src/services/datos'
 import { nodoAmbienteId } from 'src/services/bienes'
 import { elementosCriticos } from 'src/services/infraestructura'
 import { novedadesAbiertas } from 'src/services/situacion'
-import { estadoElementosDe } from 'src/services/centros'
+import { elementosAdicionalesDe, estadoElementosDe } from 'src/services/centros'
 import { CHIP_ANULADO, condicion } from 'src/config/catalogos'
 import { plural } from 'src/utils/formato'
 

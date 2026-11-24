@@ -40,4 +40,4 @@ export function estadoElementosDe (tipo, id) {
 
 // Elementos agregados al registro, en el orden en que se agregaron: `[{ key, label }]`.
 export const elementosAdicionalesDe = (tipo, id) =>
-  filasDe(tipo, id).filter((e) => e.nombre).map((e) => ({ key: e.clave, label: e.nombre }))
+  filasDe(tipo, id).filter((e) => e.nombre).map((e) => ({ key: e.clave, label: e.nombre, icono: e.icono || 'category' }))

@@ -14,4 +14,5 @@ public record CreateAmbienteRequest(@NotBlank String moduloId, @NotBlank @Size(m
                          @DecimalMin("0") @Digits(integer = 10, fraction = 2) BigDecimal areaM2,
                          @Min(0) @Max(999999) Integer puertas, @Min(0) @Max(999999) Integer ventanas,
                          @NotBlank String condicion, YearMonth ultimoPintado,
-                         @Size(max = 100) Map<String, String> estadoElementos) {}
+                         @Size(max = 100) Map<String, String> estadoElementos,
+                         @Size(max = 100) List<@NotNull @Valid Adicional> elementosAdicionales) {}

@@ -1853,7 +1853,7 @@
       "alias": "CTR_ELE",
       "module": "centros",
       "label": "Evaluación por elemento",
-      "description": "Elemento base evaluado o elemento adicional de alcance local y su condición física.",
+      "description": "Elemento propio de una ficha, su icono y condición física opcional (SPEC 051).",
       "executive": false,
       "sources": [
         "catalogos",
@@ -1870,15 +1870,22 @@
         {
           "name": "NOMBRE",
           "type": "VARCHAR2(40 CHAR)",
-          "description": "Nombre del elemento adicional.",
+          "description": "Nombre del elemento de la ficha.",
           "nullable": true,
-          "nullableReason": "Los elementos base toman su nombre del catálogo."
+          "nullableReason": "La restricción exige un nombre para cada elemento."
         },
         {
           "name": "CLAVE_NORMALIZADA",
           "type": "VARCHAR2(80 CHAR)",
-          "description": "Clave de comparación dentro del objetivo obtenida del nombre normalizado, del catálogo base o del nombre adicional.",
+          "description": "Clave estable dentro de la ficha; no cambia al editar el nombre.",
           "nullable": false
+        },
+        {
+          "name": "ICONO",
+          "type": "VARCHAR2(60 CHAR)",
+          "description": "Nombre del icono Material elegido para el elemento.",
+          "nullable": true,
+          "nullableReason": "Compatibilidad con registros anteriores."
         },
         {
           "name": "ID_CENTRO",
@@ -1904,16 +1911,16 @@
         {
           "name": "ID_ELEMENTO_BASE",
           "type": "NUMBER(38,0)",
-          "description": "Elemento base del catálogo.",
+          "description": "Referencia histórica al catálogo; debe quedar vacía tras la migración SPEC 051.",
           "nullable": true,
-          "nullableReason": "Elemento adicional de centro o módulo."
+          "nullableReason": "Los elementos pertenecen a la ficha."
         },
         {
           "name": "ID_CONDICION",
           "type": "NUMBER(38,0)",
           "description": "Condición física registrada.",
           "nullable": true,
-          "nullableReason": "El elemento adicional puede existir aun sin evaluación."
+          "nullableReason": "El elemento puede existir aun sin evaluación."
         }
       ],
       "foreignKeys": [
@@ -2051,26 +2058,8 @@
             "NOMBRE",
             "ID_ELEMENTO_BASE"
           ],
-          "expression": "CASE WHEN NOMBRE IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN ID_ELEMENTO_BASE IS NOT NULL THEN 1 ELSE 0 END = 1",
-          "description": "Se informa exactamente una de las referencias alternativas."
-        },
-        {
-          "name": "CK_CTR_ELE_BASE_AMB",
-          "columns": [
-            "ID_AMBIENTE",
-            "ID_ELEMENTO_BASE"
-          ],
-          "expression": "ID_AMBIENTE IS NULL OR ID_ELEMENTO_BASE IS NOT NULL",
-          "description": "La evaluación en ambientes usa solo elementos base."
-        },
-        {
-          "name": "CK_CTR_ELE_BASE_COND",
-          "columns": [
-            "ID_ELEMENTO_BASE",
-            "ID_CONDICION"
-          ],
-          "expression": "ID_ELEMENTO_BASE IS NULL OR ID_CONDICION IS NOT NULL",
-          "description": "Para un elemento base sin evaluación se utiliza la ausencia de fila vigente."
+          "expression": "NOMBRE IS NOT NULL AND ID_ELEMENTO_BASE IS NULL",
+          "description": "Cada elemento tiene nombre propio."
         }
       ],
       "indexes": [

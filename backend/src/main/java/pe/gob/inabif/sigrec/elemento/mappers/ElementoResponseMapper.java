@@ -13,6 +13,6 @@ public interface ElementoResponseMapper {
         var ambiente = e.getAmbiente();
         var condicion = e.getCondicion();
         return new ElementoResponse(e.id(), centro == null ? null : centro.codigo(), modulo == null ? null : modulo.codigo(),
-                ambiente == null ? null : ambiente.codigo(), e.getClave(), e.getNombre(), condicion == null ? null : condicion.codigo());
+                ambiente == null ? null : ambiente.codigo(), e.getClave(), e.getNombre(), e.getIcono(), condicion == null ? null : condicion.codigo());
     }
 }

@@ -46,9 +46,9 @@
       <section-card
         titulo="Estado de la infraestructura"
         icono="fact_check"
-        :subtitulo="evaluados ? `${evaluados} de ${ELEMENTOS_INFRAESTRUCTURA.length} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
+        :subtitulo="evaluados ? `${evaluados} de ${adicionales.length} elementos evaluados` : 'Aún no se evaluó ningún elemento'"
       >
-        <estado-elementos :model-value="estadoElementos" solo-lectura sugerir-novedad etiqueta-accion="Registrar incidente" :accion-novedad="activo && puedeHacer('ambiente.incidente')" @registrar-novedad="novedadDesdeElementos" />
+        <estado-elementos :model-value="estadoElementos" :adicionales="adicionales" solo-lectura sugerir-novedad etiqueta-accion="Registrar incidente" :accion-novedad="activo && puedeHacer('ambiente.incidente')" @registrar-novedad="novedadDesdeElementos" />
       </section-card>
       <section-card titulo="Mobiliario y equipos" icono="chair" subtitulo="Se calcula con los bienes activos del ambiente; no se captura aparte">
         <div v-if="totalActivos" class="sg-chips">
@@ -159,11 +159,11 @@ import RecorridoVerificacion from 'components/bienes/RecorridoVerificacion.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { bienesDeAmbiente, carPorId, etiquetaAmbiente, textoUbicacion, ubicacionDeAmbiente, vigente, estaAtendida, situacionDe, verificacionDe } from 'src/services/datos'
-import { estadoElementosDe, intervencionesDe, novedadesDe } from 'src/services/centros'
+import { elementosAdicionalesDe, estadoElementosDe, intervencionesDe, novedadesDe } from 'src/services/centros'
 import { nodoAmbienteId } from 'src/services/bienes'
 import { anular, anularAmbiente, dependenciasDeAmbiente, pendientesDeAmbiente } from 'src/services/acciones'
 import { cantidadEvaluados, conteoPorCondicion } from 'src/services/infraestructura'
-import { CHIP_ANULADO, ELEMENTOS_INFRAESTRUCTURA, SITUACIONES, TIPOS_NOVEDAD, condicion } from 'src/config/catalogos'
+import { CHIP_ANULADO, SITUACIONES, TIPOS_NOVEDAD, condicion } from 'src/config/catalogos'
 import { fecha, plural } from 'src/utils/formato'
 
 const props = defineProps({
@@ -190,10 +190,11 @@ const grupos = computed(() => gruposBienes(props.ambiente.id, { situacion: props
 const resumenRecursos = computed(() => textoConteoRecursos(contarRecursos(bienes.value)))
 // SPEC 033: novedades, intervenciones y elementos se leen de sus colecciones.
 const estadoElementos = computed(() => estadoElementosDe('ambiente', props.ambiente.id))
+const adicionales = computed(() => elementosAdicionalesDe('ambiente', props.ambiente.id))
 const novedades = computed(() => novedadesDe(props.ambiente.id).filter((n) => props.inactivos || vigente(n)))
 const intervenciones = computed(() => intervencionesDe(props.ambiente.id).filter((i) => props.inactivos || vigente(i)))
 const abiertas = computed(() => novedadesDe(props.ambiente.id).filter((n) => vigente(n) && !estaAtendida(n)))
-const evaluados = computed(() => cantidadEvaluados(estadoElementos.value))
+const evaluados = computed(() => cantidadEvaluados(estadoElementos.value, adicionales.value))
 // Unidades activas por condición, ponderadas por cantidad (los componentes cuentan como bienes del ambiente).
 const conteoBienes = computed(() => conteoPorCondicion(bienesDeAmbiente(props.ambiente.id)))
 const totalActivos = computed(() => Object.values(conteoBienes.value).reduce((suma, n) => suma + n, 0))

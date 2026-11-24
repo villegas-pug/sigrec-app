@@ -62,7 +62,7 @@
       <template #append><boton-dictado v-model="form.ultimoPintado" tipo="mes" /></template>
     </q-input>
     <div class="sg-kv__label">Estado de la infraestructura</div>
-    <estado-elementos v-model="form.estadoElementos" sugerir-novedad />
+    <estado-elementos v-model="form.estadoElementos" v-model:adicionales="form.elementosAdicionales" permitir-agregar sugerir-novedad />
   </form-dialog>
 </template>
 
@@ -77,7 +77,7 @@ import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { useBorrador } from 'src/composables/useBorrador'
 import { actualizarAmbiente, numeroONulo, registrarAmbiente } from 'src/services/acciones'
 import { completarElementos, normalizarElementos } from 'src/services/infraestructura'
-import { estadoElementosDe } from 'src/services/centros'
+import { elementosAdicionalesDe, estadoElementosDe } from 'src/services/centros'
 import { modulosDeCar } from 'src/services/datos'
 import { iconoModulo } from 'src/services/bienes'
 import { TIPOS_MODULO } from 'src/config/catalogos'
@@ -118,7 +118,8 @@ watch(() => props.modelValue, (abierto) => {
     ventanas: a?.ventanas ?? null,
     condicion: a?.condicion ?? 'bueno',
     ultimoPintado: a?.ultimoPintado ?? '',
-    estadoElementos: completarElementos(a ? estadoElementosDe('ambiente', a.id) : null)
+    elementosAdicionales: a ? [...elementosAdicionalesDe('ambiente', a.id)] : [],
+    estadoElementos: completarElementos(a ? estadoElementosDe('ambiente', a.id) : null, a ? elementosAdicionalesDe('ambiente', a.id) : [])
   })
   fijar()
 })
@@ -135,7 +136,8 @@ const { guardando, guardar } = useGuardado(async () => {
     ventanas: numeroONulo(form.ventanas),
     condicion: form.condicion,
     ultimoPintado: form.ultimoPintado || null,
-    estadoElementos: normalizarElementos(form.estadoElementos)
+    elementosAdicionales: form.elementosAdicionales.map(({ key, label, icono }) => ({ key, label, icono })),
+    estadoElementos: normalizarElementos(form.estadoElementos, form.elementosAdicionales)
   }
   let id
   if (props.ambiente) {

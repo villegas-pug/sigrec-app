@@ -31,25 +31,23 @@ public class ElementoServiceImpl implements ElementoService {
     @Override
     public List<Elemento> reemplazar(Centro centro, Modulo modulo, Ambiente ambiente, Map<String, String> estados,
                               List<Adicional> adicionales, Usuario actor) {
-        var previos = obtener(centro, modulo, ambiente).stream().collect(Collectors.toMap(Elemento::getClave, Function.identity()));
+        var previos = obtener(centro, modulo, ambiente).stream().collect(Collectors.toMap(
+                Elemento::getClave, Function.identity(), (anterior, siguiente) -> siguiente.vigente() ? siguiente : anterior));
         var deseados = new LinkedHashMap<String, Adicional>();
-        var bases = catalogos.elementosBase();
-        var nombresBase = bases.stream().map(c -> normalizar(c.nombre())).collect(Collectors.toSet());
-        var clavesBase = bases.stream().map(c -> c.codigo()).collect(Collectors.toSet());
+        var nombres = new HashSet<String>();
         var evaluados = estados == null ? Map.<String, String>of() : estados;
         for (var adicional : adicionales == null ? List.<Adicional>of() : adicionales) {
-            var clave = "extra-" + normalizar(adicional.label());
-            if (ambiente != null || !clave.equals(adicional.key()) || clave.equals("extra-")
-                    || nombresBase.contains(normalizar(adicional.label())) || clavesBase.contains(normalizar(adicional.label()))
+            var clave = adicional.key();
+            if ((!previos.containsKey(clave) && !clave.matches("extra-[a-f0-9-]{36}"))
+                    || normalizar(adicional.label()).isEmpty() || !nombres.add(normalizar(adicional.label()))
                     || deseados.putIfAbsent(clave, adicional) != null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El elemento adicional no es válido o ya existe.");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El elemento no es válido o ya existe.");
             }
         }
         for (var estado : evaluados.entrySet()) {
-            if (!deseados.containsKey(estado.getKey()) && !clavesBase.contains(estado.getKey())) {
+            if (!deseados.containsKey(estado.getKey())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El elemento evaluado no existe.");
             }
-            if (estado.getValue() != null) deseados.putIfAbsent(estado.getKey(), null);
         }
 
         var guardados = new ArrayList<Elemento>();
@@ -69,9 +67,8 @@ public class ElementoServiceImpl implements ElementoService {
             } else {
                 elemento.actualizar(actor);
             }
-            if (adicional == null) elemento.setNombre(null);
-            else mapper.fromModelToEntity(adicional, elemento);
-            elemento.setBase(adicional == null ? catalogos.obtener("ELEMENTO_BASE", clave) : null);
+            mapper.fromModelToEntity(adicional, elemento);
+            elemento.setBase(null);
             elemento.setCondicion(catalogos.obtener("CONDICION", evaluados.get(clave)));
             guardados.add(elementos.save(elemento));
         }
