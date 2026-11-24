@@ -9,6 +9,7 @@ Cada pantalla filtraba a su manera (Centro, Período, Año…) sobre colecciones
 ## Decisiones
 
 ### Barra de filtros
+- Tipo de Entidad y Entidad ocupan la primera fila; Centro, Año y Mes ocupan todo el ancho de la segunda, con mayor espacio para Centro. En pantallas estrechas los campos se adaptan al ancho disponible.
 - Un componente compartido, `components/layout/FiltrosCabecera.vue`, que `MainLayout` muestra sobre la pantalla cuando la ruta declara `meta.filtros`. No aparece en Inicio, Manual, Sin acceso ni la raíz.
 - Campos, en este orden:
   1. **Tipo de Entidad**: fijo, «PÚBLICA» (solo informativo, como en la referencia).

@@ -2,9 +2,11 @@
   <!-- SPEC 052: filtros de cabecera, con la referencia visual de sigeif-app. Se aplican al instante. -->
   <section ref="barra" class="sg-page sg-filtros-cabecera" aria-label="Filtros de cabecera">
     <div class="sg-page__inner">
-      <div class="sg-filters sg-filtros-cabecera__campos">
-        <q-input :model-value="TIPO_ENTIDAD" label="Tipo de Entidad" outlined dense stack-label disable bg-color="grey-2" />
-        <q-input :model-value="ENTIDAD" label="Entidad" outlined dense stack-label disable bg-color="grey-2" :title="ENTIDAD" />
+      <div class="sg-filtros-cabecera__fila sg-filtros-cabecera__entidad">
+        <q-input :model-value="TIPO_ENTIDAD" label="Tipo de Entidad" outlined dense stack-label hide-bottom-space disable bg-color="grey-2" />
+        <q-input :model-value="ENTIDAD" label="Entidad" outlined dense stack-label hide-bottom-space disable bg-color="grey-2" :title="ENTIDAD" />
+      </div>
+      <div class="sg-filtros-cabecera__fila sg-filtros-cabecera__filtros">
         <q-input :model-value="nombreCentro" label="Centro" outlined dense stack-label readonly placeholder="Todos los centros"
                  class="cursor-pointer" :title="nombreCentro" @click="buscador = true" @keydown.enter.prevent="buscador = true">
           <template #append>
@@ -57,9 +59,12 @@ const nombreCentro = computed(() => {
 
 <style scoped>
 .sg-filtros-cabecera { padding-bottom: 0; }
-.sg-filtros-cabecera__campos { grid-template-columns: minmax(140px, 1fr) minmax(260px, 2.4fr) minmax(240px, 2fr) minmax(120px, 0.8fr) minmax(140px, 1fr); }
+.sg-filtros-cabecera > .sg-page__inner { gap: 8px; }
+.sg-filtros-cabecera__fila { display: grid; gap: 12px; }
+.sg-filtros-cabecera__entidad { grid-template-columns: minmax(140px, 1fr) minmax(0, 5fr); }
+.sg-filtros-cabecera__filtros { grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr); }
 
-@media (max-width: 1199.98px) {
-  .sg-filtros-cabecera__campos { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+@media (max-width: 599.98px) {
+  .sg-filtros-cabecera__entidad, .sg-filtros-cabecera__filtros { grid-template-columns: minmax(0, 1fr); }
 }
 </style>
