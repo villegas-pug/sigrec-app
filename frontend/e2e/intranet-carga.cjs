@@ -262,7 +262,7 @@ async function main () {
     await formulario.getByLabel('Código *').fill('12')
     await formulario.getByLabel('Dirección *').fill('Dirección de prueba')
     await formulario.getByRole('button', { name: 'Registrar centro' }).click()
-    await formulario.getByText('Use 3 letras').waitFor()
+    await formulario.getByText('Use 3 letras o números').waitFor()
     await formulario.getByRole('button', { name: 'Cancelar' }).click()
     await page.getByText('Cambios sin guardar').waitFor()
     await page.getByRole('button', { name: 'Seguir editando' }).click()

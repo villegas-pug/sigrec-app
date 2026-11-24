@@ -61,7 +61,7 @@ public class CentroController {
                                              @RequestParam(required = false) String centro) {
         String texto = q.strip();
         int longitud = texto.codePointCount(0, texto.length());
-        if (longitud < 3 || longitud > 240 || pagina < 1 || (centro != null && !centro.matches("[A-Z]{3}"))) {
+        if (longitud < 3 || longitud > 240 || pagina < 1 || (centro != null && !centro.matches("[A-Z0-9]{3}"))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Revise el texto de búsqueda, el centro y la página.");
         }
         acceso.accionCentro(centro == null ? "centro.registrar" : "centro.actualizar", centro);

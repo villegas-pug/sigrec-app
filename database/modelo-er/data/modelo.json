@@ -1227,7 +1227,7 @@
         {
           "name": "CODIGO",
           "type": "CHAR(3 CHAR)",
-          "description": "Código del centro de tres letras mayúsculas.",
+          "description": "Código del centro de tres letras mayúsculas o números.",
           "nullable": false
         },
         {
@@ -1385,12 +1385,12 @@
       ],
       "checks": [
         {
-          "name": "CK_CTR_CEN_CODIGO",
+          "name": "CK_CTR_CEN_CODIGO_ALFANUM",
           "columns": [
             "CODIGO"
           ],
-          "expression": "REGEXP_LIKE(CODIGO, '^[A-Z]{3}$', 'c')",
-          "description": "Código de tres letras mayúsculas."
+          "expression": "REGEXP_LIKE(CODIGO, '^[A-Z0-9]{3}$', 'c')",
+          "description": "Código de tres letras mayúsculas o números."
         },
         {
           "name": "CK_CTR_CEN_CONDICION_INMUEBLE",

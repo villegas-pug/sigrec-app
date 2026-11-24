@@ -16,7 +16,7 @@ public record FiltroConsulta(String centro, Integer anio, Integer mes, Set<Strin
 
     public FiltroConsulta {
         centro = centro == null || centro.isBlank() ? null : centro.strip();
-        if ((centro != null && !centro.matches("[A-Z]{3}"))
+        if ((centro != null && !centro.matches("[A-Z0-9]{3}"))
                 || (mes != null && (anio == null || mes < 1 || mes > 12))
                 || (anio != null && (anio < 1900 || anio > 9999))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Revise el centro, el año y el mes de los filtros.");

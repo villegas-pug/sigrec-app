@@ -101,7 +101,7 @@ const gruposDeRuta = () => ['catalogos', ...(route.meta?.datos ?? [])]
 function aplicarCentroDeEnlace () {
   const car = parametro(route.query.car)
   // `?car=todos` (enlaces que conservan «todos los centros») no cambia el filtro; solo se aceptan códigos de centro.
-  if (route.meta?.filtros && /^[A-Z]{3}$/.test(car ?? '')) fijarCentro(car)
+  if (route.meta?.filtros && /^[A-Z0-9]{3}$/.test(car ?? '')) fijarCentro(car)
 }
 
 // `progreso` es la marca que se enciende mientras dura la carga: `cargandoDatos` oculta la pantalla, `recargando` no.

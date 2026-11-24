@@ -46,7 +46,7 @@
         outlined
         dense
         label="Código *"
-        hint="3 letras, único; no se modifica después"
+        hint="3 letras o números, único; no se modifica después"
         maxlength="3"
         :rules="[requerido, codigoValido, codigoLibre]"
         @update:model-value="(v) => (form.id = String(v ?? '').toUpperCase())">
@@ -89,7 +89,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'hecho'])
 const $q = useQuasar()
 
-const codigoValido = (v) => /^[A-Z]{3}$/.test(v) || 'Use 3 letras'
+const codigoValido = (v) => /^[A-Z0-9]{3}$/.test(v) || 'Use 3 letras o números'
 const codigoLibre = (v) => !carPorId(v) || 'Ya existe un centro con ese código'
 const unidadOrganicaSeleccionada = () => form.unidadOrganica?.id != null || 'Seleccione una unidad orgánica.'
 
