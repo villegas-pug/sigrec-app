@@ -325,17 +325,21 @@ class Stage1SecurityTest {
         prepararPerfil("CAR", UsuarioPerfil.Alcance.CENTRO, centro, null);
         when(permisosPorPerfil.findByPerfilIdOrderByOrdenAscIdAsc(5L)).thenReturn(List.of(
                 permiso("RUTA", "centros"), permiso("ACCION", "centro.actualizar")));
-        var ocupada = new UnidadOrganicaResponse.Coincidencia(8L, "Unidad Áncash", "AN", "Dirección oficial", true);
-        when(unidades.buscar("Ánc", 2, "AMA")).thenReturn(new UnidadOrganicaResponse.Pagina(List.of(ocupada), 6));
+        var ocupada = new UnidadOrganicaResponse.Coincidencia(8L, "Unidad Áncash", "AN", "Dirección oficial", 3L, true);
+        when(unidades.buscar("Ánc", 2, "AMA", 3L)).thenReturn(new UnidadOrganicaResponse.Pagina(List.of(ocupada), 6));
         var ruta = API + "/centros/unidades-organicas";
         mvc.perform(get(ruta).header(USUARIO, "demo").param("q", "An").param("centro", "AMA"))
                 .andExpect(status().isBadRequest());
         mvc.perform(get(ruta).header(USUARIO, "demo").param("q", "Ánc").param("centro", "OTR"))
                 .andExpect(status().isNotFound());
-        mvc.perform(get(ruta).header(USUARIO, "demo").param("q", " Ánc ").param("centro", "AMA").param("pagina", "2"))
+        mvc.perform(get(ruta).header(USUARIO, "demo").param("q", "Ánc").param("centro", "AMA").param("padre", "0"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get(ruta).header(USUARIO, "demo").param("q", " Ánc ").param("centro", "AMA").param("pagina", "2")
+                        .param("padre", "3"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(6))
-                .andExpect(jsonPath("$.data.items[0].ocupada").value(true));
-        verify(unidades).buscar("Ánc", 2, "AMA");
+                .andExpect(jsonPath("$.data.items[0].ocupada").value(true))
+                .andExpect(jsonPath("$.data.items[0].padre").value(3));
+        verify(unidades).buscar("Ánc", 2, "AMA", 3L);
         verifyNoMoreInteractions(unidades);
     }
 

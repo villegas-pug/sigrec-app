@@ -22,8 +22,8 @@ public class UnidadOrganicaRepository {
     private static final String ELEGIBLE = "u.UORESTADO = 1 AND u.UORELIMINADO = 0";
     // INSTR trata %, _ y los demás caracteres como texto literal.
     private static final String NOMBRE = TextoOracle.sinTildes("u.UORNOMBRE");
-    private static final String COINCIDENCIAS = " WHERE " + ELEGIBLE + " AND INSTR(" + NOMBRE
-            + ", " + TextoOracle.sinTildes("TO_NCHAR(:q)") + ") > 0";
+    // SPEC 054: filtro opcional por unidad padre; nulo no filtra.
+    private static final String PADRE = "(:padre IS NULL OR u.UOR_UNIDAD_PADRE = :padre)";
 
     private static final RowMapper<UnidadOrganicaResponse> UNIDAD = (fila, indice) -> new UnidadOrganicaResponse(
             fila.getLong("IDUNIDADORGANICA"), fila.getNString("UORNOMBRE"), fila.getString("UOR_CODIGO_CENTRO"),
@@ -42,25 +42,45 @@ public class UnidadOrganicaRepository {
                 + " THEN 1 ELSE 0 END AS ELEGIBLE FROM " + tablaUnidades + " u";
     }
 
-    public Pagina buscar(String texto, int pagina, String codigoCentro) {
+    /**
+     * SPEC 054: busca por palabras (todas deben aparecer, en cualquier orden), sin distinguir mayúsculas ni tildes
+     * y sin depender de comas o espacios internos. `padre` es opcional y filtra por UOR_UNIDAD_PADRE.
+     */
+    public Pagina buscar(String texto, int pagina, String codigoCentro, Long padre) {
+        var palabras = TextoOracle.palabras(texto);
+        if (palabras.isEmpty()) return new Pagina(List.of(), 0);
         long desde = (pagina - 1L) * TAMANO_PAGINA;
         var parametros = new MapSqlParameterSource()
-                .addValue("q", texto, Types.NVARCHAR)
                 .addValue("centro", codigoCentro, Types.VARCHAR)
+                .addValue("padre", padre, Types.NUMERIC)
                 .addValue("desde", desde);
-        long total = jdbc.queryForObject("SELECT COUNT(*) FROM " + tablaUnidades + " u" + COINCIDENCIAS, parametros, Long.class);
+        String coincidencias = coincidencias(palabras, parametros);
+        long total = jdbc.queryForObject("SELECT COUNT(*) FROM " + tablaUnidades + " u" + coincidencias, parametros, Long.class);
         if (desde >= total) return new Pagina(List.of(), total);
 
-        var items = jdbc.query("SELECT " + COLUMNAS + """
+        var items = jdbc.query("SELECT " + COLUMNAS + ", u.UOR_UNIDAD_PADRE" + """
                 , CASE WHEN c.CODIGO IS NOT NULL AND (:centro IS NULL OR c.CODIGO <> :centro)
                      THEN 1 ELSE 0 END AS OCUPADA
                 """ + " FROM " + tablaUnidades + " u LEFT JOIN " + tablaCentros
                 + " c ON c.ID_UNIDAD_ORGANICA = u.IDUNIDADORGANICA"
-                + COINCIDENCIAS + " ORDER BY " + NOMBRE + ", u.IDUNIDADORGANICA"
+                + coincidencias + " ORDER BY " + NOMBRE + ", u.IDUNIDADORGANICA"
                 + " OFFSET :desde ROWS FETCH NEXT " + TAMANO_PAGINA + " ROWS ONLY", parametros,
                 (fila, indice) -> new Coincidencia(fila.getLong("IDUNIDADORGANICA"), fila.getNString("UORNOMBRE"),
-                        fila.getString("UOR_CODIGO_CENTRO"), fila.getString("UORDIRECCION"), fila.getInt("OCUPADA") == 1));
+                        fila.getString("UOR_CODIGO_CENTRO"), fila.getString("UORDIRECCION"),
+                        fila.getObject("UOR_UNIDAD_PADRE", Long.class), fila.getInt("OCUPADA") == 1));
         return new Pagina(items, total);
+    }
+
+    /** Cláusula WHERE compartida por el conteo y la página; enlaza cada palabra como `:palabraN`. */
+    private static String coincidencias(List<String> palabras, MapSqlParameterSource parametros) {
+        var filtro = new StringBuilder(" WHERE " + ELEGIBLE + " AND " + PADRE);
+        for (int i = 0; i < palabras.size(); i++) {
+            String nombre = "palabra" + i;
+            parametros.addValue(nombre, palabras.get(i), Types.NVARCHAR);
+            filtro.append(" AND INSTR(").append(NOMBRE).append(", ")
+                    .append(TextoOracle.sinTildes("TO_NCHAR(:" + nombre + ")")).append(") > 0");
+        }
+        return filtro.toString();
     }
 
     public UnidadOrganicaResponse porId(Long id) {

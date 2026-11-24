@@ -90,6 +90,8 @@ import { useBusquedaPaginada } from 'src/composables/useBusquedaPaginada'
 const props = defineProps({
   modelValue: { type: Object, default: null },
   centro: { type: String, default: null },
+  // SPEC 054: id de la unidad padre (UOR_UNIDAD_PADRE); si se indica, solo se buscan sus unidades dependientes.
+  padre: { type: Number, default: null },
   busquedaInicial: { type: String, default: '' },
   obligatoria: Boolean,
   deshabilitado: Boolean
@@ -99,6 +101,7 @@ const abierto = ref(false)
 const { consulta, textoValido, filas: unidades, buscando, error, paginacion, buscar } = useBusquedaPaginada(abierto, (q, pagina) => {
   const params = new URLSearchParams({ q, pagina })
   if (props.centro) params.set('centro', props.centro)
+  if (props.padre != null) params.set('padre', props.padre)
   return api(`/centros/unidades-organicas?${params}`)
 })
 const columnas = [
