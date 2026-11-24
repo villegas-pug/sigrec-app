@@ -30,7 +30,7 @@ export async function api (path, { method = 'GET', body, notificarSesion = true 
 
   let respuesta
   try {
-    respuesta = await fetch(`/api/v1${path}`, {
+    respuesta = await fetch(`${process.env.SIGREC_API_URL ?? ''}/api/v1${path}`, {
       method,
       headers,
       body: formulario ? body : JSON.stringify(body),

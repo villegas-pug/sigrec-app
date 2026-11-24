@@ -1,5 +1,6 @@
 server:
   address: 127.0.0.1
+  port: 4006
 spring:
   datasource:
     url: 'jdbc:oracle:thin:@172.19.0.56:1521:inabif02'
