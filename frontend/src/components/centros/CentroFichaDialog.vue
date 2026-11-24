@@ -44,7 +44,7 @@
     </p>
 
     <div class="sg-kv__label">Inmueble donde funciona</div>
-    <q-input v-model="form.direccion" outlined dense label="Dirección">
+    <q-input v-model="form.direccion" class="q-mb-sm" outlined dense label="Dirección">
       <template #append><boton-dictado v-model="form.direccion" /></template>
     </q-input>
     <div class="row q-col-gutter-md">
