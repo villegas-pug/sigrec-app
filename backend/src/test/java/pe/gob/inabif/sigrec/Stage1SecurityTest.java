@@ -29,6 +29,7 @@ import pe.gob.inabif.sigrec.catalogo.model.Catalogo;
 import pe.gob.inabif.sigrec.centro.model.Centro;
 import pe.gob.inabif.sigrec.centro.repository.CentroRepository;
 import pe.gob.inabif.sigrec.centro.repository.UnidadOrganicaRepository;
+import pe.gob.inabif.sigrec.centro.repository.CentroBusquedaRepository;
 import pe.gob.inabif.sigrec.centro.dtos.UnidadOrganicaResponse;
 import pe.gob.inabif.sigrec.elemento.repository.ElementoRepository;
 import pe.gob.inabif.sigrec.modulo.repository.ModuloRepository;
@@ -76,6 +77,7 @@ class Stage1SecurityTest {
     @MockBean CatalogoRepository catalogos;
     @MockBean CentroRepository centros;
     @MockBean UnidadOrganicaRepository unidades;
+    @MockBean CentroBusquedaRepository busquedaCentros;
     @MockBean ModuloRepository modulos;
     @MockBean AmbienteRepository ambientes;
     @MockBean ElementoRepository elementos;

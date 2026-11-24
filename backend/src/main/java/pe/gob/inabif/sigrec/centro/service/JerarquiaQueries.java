@@ -15,6 +15,7 @@ import pe.gob.inabif.sigrec.centro.mappers.CentroResponseMapper;
 import pe.gob.inabif.sigrec.modulo.mappers.ModuloResponseMapper;
 import pe.gob.inabif.sigrec.ambiente.mappers.AmbienteResponseMapper;
 import pe.gob.inabif.sigrec.elemento.mappers.ElementoResponseMapper;
+import pe.gob.inabif.sigrec.shared.model.FiltroConsulta;
 import java.util.*;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -36,11 +37,16 @@ public class JerarquiaQueries {
     private final ElementoResponseMapper elementosMapper;
 
     @Transactional(readOnly = true)
-    public JerarquiaResponse consultar() {
+    public JerarquiaResponse consultar() { return consultar(FiltroConsulta.TODO); }
+
+    /** SPEC 052: el centro y el periodo de registro acotan los centros; módulos y ambientes siguen a sus centros. */
+    @Transactional(readOnly = true)
+    public JerarquiaResponse consultar(FiltroConsulta filtro) {
         var asignaciones = acceso.consultaCentros();
         var acotados = asignaciones.stream().filter(a -> a.centro() != null).map(a -> a.centro().codigo()).distinct().toList();
-        var cars = asignaciones.stream().anyMatch(Acceso.Asignacion::global)
-                ? centros.findAllByOrderById() : centros.findByCodigoInOrderById(acotados);
+        var cars = (asignaciones.stream().anyMatch(Acceso.Asignacion::global)
+                ? centros.findAllByOrderById() : centros.findByCodigoInOrderById(acotados)).stream()
+                .filter(c -> filtro.admite(c.codigo(), c.fechaRegistro())).toList();
         if (cars.isEmpty()) return new JerarquiaResponse(List.of(), List.of(), List.of(), List.of());
         var carIds = cars.stream().map(Centro::id).toList();
         var mods = modulos.findByCentroIdInOrderById(carIds);

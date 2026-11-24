@@ -1,5 +1,7 @@
 package pe.gob.inabif.sigrec.itinerario.service;
 
+import pe.gob.inabif.sigrec.shared.model.FiltroConsulta;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.RoundingMode;
@@ -35,10 +37,12 @@ public class ItinerarioServiceImpl implements ItinerarioService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ItinerarioResponse> listar() {
-        var ids = movilidad.listar(RUTA).stream().map(Vehiculo::id).toList();
+    public List<ItinerarioResponse> listar(FiltroConsulta filtro) {
+        var ids = movilidad.listar(RUTA).stream().filter(v -> filtro.deCentro(v.getCentro().codigo()))
+                .map(Vehiculo::id).toList();
         if (ids.isEmpty()) return List.of();
-        return itinerarios.findByVehiculoIdInOrderById(ids).stream().map(responseMapper::toResponse).toList();
+        return itinerarios.findByVehiculoIdInOrderById(ids).stream().filter(it -> filtro.incluye(it.fechaRegistro()))
+                .map(responseMapper::toResponse).toList();
     }
 
     @Override

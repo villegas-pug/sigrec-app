@@ -6,12 +6,10 @@
 
       <registro-no-disponible v-if="hechoNoDisponible" entidad="El hecho" :id="hechoPedido" :volver="{ name: 'incidencias' }" etiqueta-volver="Ver todos los hechos" />
 
+      <!-- SPEC 052: el centro y el periodo de registro vienen de los filtros de cabecera. -->
       <div class="sg-filters">
-        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
-          <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
-        </q-select>
-        <q-select v-model="filtros.ambienteId" :options="opcionesAmbiente" emit-value map-options outlined dense label="Ambiente" :disable="carId === TODOS" :hint="carId === TODOS ? 'Elija un centro' : ''">
-          <template #append><boton-dictado v-model="filtros.ambienteId" tipo="opcion" :opciones="opcionesAmbiente" emit-value :disable="carId === TODOS" /></template>
+        <q-select v-model="filtros.ambienteId" :options="opcionesAmbiente" emit-value map-options outlined dense label="Ambiente" :disable="!carContexto" :hint="carContexto ? '' : 'Elija un centro en los filtros'">
+          <template #append><boton-dictado v-model="filtros.ambienteId" tipo="opcion" :opciones="opcionesAmbiente" emit-value :disable="!carContexto" /></template>
         </q-select>
         <q-input v-model="filtros.texto" outlined dense clearable label="Recurso (bien, rótulo o ambiente)">
           <template #append><boton-dictado v-model="filtros.texto" /></template>
@@ -21,9 +19,6 @@
         </q-select>
         <q-select v-model="filtros.necesidad" :options="OPCIONES_NECESIDAD" emit-value map-options outlined dense label="Necesidad">
           <template #append><boton-dictado v-model="filtros.necesidad" tipo="opcion" :opciones="OPCIONES_NECESIDAD" emit-value /></template>
-        </q-select>
-        <q-select v-model="filtros.anio" :options="opcionesAnio" emit-value map-options outlined dense label="Período">
-          <template #append><boton-dictado v-model="filtros.anio" tipo="opcion" :opciones="opcionesAnio" emit-value /></template>
         </q-select>
         <div class="row items-center q-gutter-x-sm">
           <filtro-inactivos v-model="mostrarInactivos" />
@@ -64,7 +59,7 @@
 
 <script setup>
 import BotonDictado from 'components/common/BotonDictado.vue'
-import { computed, nextTick, reactive, ref, toRef, watch } from 'vue'
+import { computed, reactive, ref, toRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import PageHeader from 'components/common/PageHeader.vue'
 import SectionCard from 'components/common/SectionCard.vue'
@@ -72,7 +67,7 @@ import StatusChip from 'components/common/StatusChip.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import FiltroInactivos from 'components/common/FiltroInactivos.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useFiltrosCabecera } from 'src/composables/useFiltrosCabecera'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { useRecorridoInterno } from 'src/composables/useRecorridoInterno'
 import { db, ambientesDeCar, bienPorId, opcionesAmbientes } from 'src/services/datos'
@@ -98,34 +93,29 @@ const OPCIONES_NECESIDAD = [
 
 const route = useRoute()
 const { enAmbitoCar, carIdsEnAmbito } = usePerfil()
-const { carId, opcionesCar } = useCentroSeleccionado(route.query.car, { todos: true })
+// SPEC 052: el backend ya entrega solo los hechos del centro y del periodo de registro elegidos en la cabecera.
+const { filtros: cabecera } = useFiltrosCabecera()
 
 // Centro utilizado por el filtro de ambientes del visor.
-const carContexto = computed(() => (carId.value === TODOS ? null : carId.value))
+const carContexto = computed(() => cabecera.centro)
 
 const opcionesAmbiente = computed(() => [
   { label: 'Todos los ambientes', value: TODOS },
   ...(carContexto.value ? opcionesAmbientes(ambientesDeCar(carContexto.value)) : [])
 ])
 const opcionesTipo = [{ label: 'Todos', value: TODOS }, ...TIPOS_HISTORIAL.map((t) => ({ label: TIPOS_EVENTO[t].label, value: t }))]
-// Los años del filtro salen de los hechos registrados, del más reciente al más antiguo.
-const opcionesAnio = computed(() => [
-  { label: 'Todos los períodos', value: TODOS },
-  ...[...new Set(eventosRegistrados().map((ev) => ev.fecha.slice(0, 4)))].sort().reverse().map((a) => ({ label: a, value: a }))
-])
 
 const pendientes = computed(() => calcularNecesidades({ anio: anioRevision(), carIds: carIdsEnAmbito.value }).pendientes)
 const estadoNecesidad = (ev) => estadoHecho(ev, pendientes.value)
 
-const filtros = reactive({ ambienteId: TODOS, texto: '', tipo: TODOS, necesidad: TODOS, anio: TODOS })
+const filtros = reactive({ ambienteId: TODOS, texto: '', tipo: TODOS, necesidad: TODOS })
 // Un hecho anulado pedido por enlace solo se ve con los inactivos.
 const mostrarInactivos = ref(!!eventosRegistrados().find((e) => e.id === parametro(route.query.hecho))?.anulacion)
 const detalleRef = ref(null)
 
 function limpiarFiltros () {
   hechoNoDisponible.value = false
-  carId.value = opcionesCar.value[0]?.value ?? TODOS
-  Object.assign(filtros, { ambienteId: TODOS, texto: '', tipo: TODOS, necesidad: TODOS, anio: TODOS })
+  Object.assign(filtros, { ambienteId: TODOS, texto: '', tipo: TODOS, necesidad: TODOS })
   mostrarInactivos.value = false
 }
 
@@ -137,11 +127,9 @@ const eventos = computed(() => {
     .filter((ev) => {
       const u = ubicacion(ev)
       if (!enAmbitoCar(u.car.id)) return false
-      if (carId.value !== TODOS && u.car.id !== carId.value) return false
       if (filtros.ambienteId !== TODOS && ev.ambienteId !== filtros.ambienteId) return false
       if (filtros.tipo !== TODOS && ev.tipo !== filtros.tipo) return false
       if (filtros.necesidad !== TODOS && estadoNecesidad(ev).clave !== filtros.necesidad) return false
-      if (filtros.anio !== TODOS && !ev.fecha.startsWith(filtros.anio)) return false
       if (!t) return true
       const nombres = ev.bienIds.map((id) => bienPorId(id)?.nombre ?? '').join(' ')
       return [ev.titulo, u.nombre, nombres, ...ev.bienIds].some((v) => v.toLowerCase().includes(t))
@@ -154,14 +142,12 @@ const hechoPedido = parametro(route.query.hecho)
 const hechoNoDisponible = ref(!!hechoPedido && !eventos.value.some((e) => e.id === hechoPedido))
 const eventoId = ref(hechoNoDisponible.value ? null : hechoPedido)
 
-// Al volver con «Atrás» se recuperan los filtros y el hecho elegido. Va antes del watch de `carId` para no reiniciar el ambiente restaurado.
+// Al volver con «Atrás» se recuperan los filtros propios y el hecho elegido (los de cabecera son globales).
 useEstadoNavegacion('incidencias', {
-  carId,
   ambienteId: toRef(filtros, 'ambienteId'),
   texto: toRef(filtros, 'texto'),
   tipo: toRef(filtros, 'tipo'),
   necesidad: toRef(filtros, 'necesidad'),
-  anio: toRef(filtros, 'anio'),
   mostrarInactivos,
   eventoId
 })
@@ -170,8 +156,8 @@ useEstadoNavegacion('incidencias', {
 const recorrido = useRecorridoInterno('incidencias')
 const anteriorInterno = recorrido.anterior
 
-// El ambiente pertenece a un centro: al cambiar de centro deja de aplicar.
-watch(carId, () => { filtros.ambienteId = TODOS })
+// El ambiente pertenece a un centro: al cambiar el centro de la cabecera deja de aplicar.
+watch(carContexto, () => { filtros.ambienteId = TODOS })
 
 watch(eventos, (lista) => {
   if (hechoNoDisponible.value) return
@@ -191,7 +177,7 @@ const evento = computed(() => eventos.value.find((e) => e.id === eventoId.value)
 function irAHecho (id) {
   if (evento.value && id !== eventoId.value) {
     recorrido.apilar(
-      { eventoId: eventoId.value, carId: carId.value, filtros: { ...filtros }, mostrarInactivos: mostrarInactivos.value },
+      { eventoId: eventoId.value, filtros: { ...filtros }, mostrarInactivos: mostrarInactivos.value },
       `«${evento.value.titulo}»`
     )
   }
@@ -205,13 +191,11 @@ function elegirDeLista (id) {
   seleccionar(id)
 }
 
-// Restaura el hecho y los filtros previos al salto. El cambio de centro reinicia el ambiente, por eso los filtros van después.
-async function regresarAnterior () {
+// Restaura el hecho y los filtros propios previos al salto (el centro de la cabecera no cambia con los saltos).
+function regresarAnterior () {
   const previo = recorrido.regresar()
   if (!previo) return
-  carId.value = previo.carId
   mostrarInactivos.value = previo.mostrarInactivos
-  await nextTick()
   Object.assign(filtros, previo.filtros)
   seleccionar(previo.eventoId)
 }

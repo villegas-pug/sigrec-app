@@ -163,7 +163,8 @@ const movil = computed(() => $q.screen.lt.md)
 
 // En escritorio la página ocupa el alto visible y cada columna se desplaza por separado; en móvil se desplaza la página.
 const esConsulta = ['ambientes_criticos', 'elementos_criticos', 'novedades'].includes(parametro(route.query.consulta))
-const altoPagina = (offset) => (movil.value || esConsulta ? {} : { height: `calc(100vh - ${offset}px)`, overflow: 'hidden' })
+// SPEC 052: también se descuenta la barra de filtros de cabecera, que queda encima de la pantalla.
+const altoPagina = (offset) => (movil.value || esConsulta ? {} : { height: `calc(100vh - ${offset}px - var(--sg-filtros-alto, 0px))`, overflow: 'hidden' })
 
 // ---------- Enlaces profundos ----------
 // ?bien= | ?ambiente= | ?novedad= | ?modulo= | ?car= | ?mantenimiento= seleccionan el nodo (con ?tab= para la pestaña); ?registrar=1 (con ?ambiente=,

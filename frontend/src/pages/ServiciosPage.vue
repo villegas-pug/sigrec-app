@@ -17,10 +17,10 @@
       <template v-else>
       <registro-no-disponible v-if="servicioNoDisponible" entidad="El servicio" :id="servicioPedido" :volver="{ name: 'servicios' }" etiqueta-volver="Ver los servicios del centro" />
 
+      <!-- SPEC 052: el calendario es de un centro; se elige en los filtros de cabecera. -->
+      <p v-if="!car" class="sg-muted q-mb-none" role="status">Seleccione un centro en los filtros de cabecera para ver sus servicios y su calendario de pagos.</p>
+
       <div class="sg-filters">
-        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
-          <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
-        </q-select>
         <q-select v-model="anio" :options="aniosServicios()" outlined dense label="Año">
           <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="aniosServicios()" /></template>
         </q-select>
@@ -230,7 +230,7 @@ import PeriodoDialog from 'components/servicios/PeriodoDialog.vue'
 import HechoServicioDialog from 'components/servicios/HechoServicioDialog.vue'
 import CeldaPeriodo from 'components/servicios/CeldaPeriodo.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useCentroCabecera } from 'src/composables/useCentroCabecera'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { servicioPorId, vigente } from 'src/services/datos'
 import { antiguedadServicio, avisosDeServicios, celdasDelServicio, estadoRenovacion, interrupcionAbierta, problemasRecurrentes, serviciosDeCar, tiposNoRegistrados } from 'src/services/servicios'
@@ -258,14 +258,16 @@ const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = use
 // Enlaces profundos (?servicio=&anio=&periodo=): el centro se deduce del servicio si no se indicó.
 const servicioPedido = parametro(route.query.servicio)
 const servicioSolicitado = servicioPedido ? servicioPorId(servicioPedido) : null
-const { carId, car, opcionesCar } = useCentroSeleccionado(parametro(route.query.car) ?? servicioSolicitado?.carId)
+// SPEC 052: el centro viene de los filtros de cabecera; un servicio pedido sin centro fija el suyo.
+const { carId, car } = useCentroCabecera()
+if (!car.value && servicioSolicitado) carId.value = servicioSolicitado.carId
 
 const anio = ref(aniosServicios().find((a) => String(a) === parametro(route.query.anio)) ?? aniosServicios().at(-1))
 const mostrarInactivos = ref(!!servicioSolicitado?.anulacion)
 const fichaRef = ref(null)
 
 // Los servicios anulados solo se listan con «Mostrar inactivos»; los avisos y cálculos usan los vigentes.
-const servicios = computed(() => (carId.value ? serviciosDeCar(carId.value, { inactivos: mostrarInactivos.value }) : []))
+const servicios = computed(() => (car.value ? serviciosDeCar(carId.value, { inactivos: mostrarInactivos.value }) : []))
 const serviciosVigentes = computed(() => servicios.value.filter(vigente))
 const noRegistrados = computed(() => tiposNoRegistrados(servicios.value))
 
@@ -304,9 +306,9 @@ const servicioNoDisponible = ref(!!servicioPedido && !servicios.value.some((s) =
 const servicioId = ref(servicioNoDisponible.value ? null : servicioPedido)
 watch([carId, anio], () => { servicioNoDisponible.value = false }, { flush: 'sync' })
 
-// Al volver con «Atrás» o con «Volver a…» se recuperan el centro, el año y el servicio elegido (SPEC 011, Ola 4).
+// Al volver con «Atrás» o con «Volver a…» se recuperan el año y el servicio elegido (SPEC 011, Ola 4); el centro es de la cabecera.
 const servicioInicial = servicioId.value
-useEstadoNavegacion('servicios', { carId, anio, mostrarInactivos, servicioId })
+useEstadoNavegacion('servicios', { anio, mostrarInactivos, servicioId })
 if (servicioId.value !== servicioInicial) servicioNoDisponible.value = false
 
 watch(servicios, (lista) => {

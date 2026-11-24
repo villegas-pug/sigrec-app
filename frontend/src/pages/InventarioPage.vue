@@ -24,9 +24,6 @@
       </q-tabs>
 
       <div class="sg-filters">
-        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
-          <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
-        </q-select>
         <q-select v-if="vista === 'equipo' || vista === 'detalle' || vista === 'mal_estado'" v-model="tipoId" :options="vista !== 'equipo' ? [{ label: 'Todos los tipos', value: TODOS }, ...opcionesTipo] : opcionesTipo" emit-value map-options outlined dense label="Tipo de bien" style="min-width: min(280px, 100%)">
           <template #append><boton-dictado v-model="tipoId" tipo="opcion" :opciones="opcionesTipo" emit-value /></template>
         </q-select>
@@ -229,7 +226,7 @@ import AtencionEquipo from 'components/common/AtencionEquipo.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import BienesMalEstado from 'components/bienes/BienesMalEstado.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useCentroCabecera } from 'src/composables/useCentroCabecera'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { bienesActivosDeCentros, carPorId, db, etiquetaAmbiente, tipoPorId, vigentes, verificacionDe } from 'src/services/datos'
 import { detalleInventario, consultaPorTipo, estadoValoracion, requiereAtencionEquipo, resumenInventario, totalizarInventario } from 'src/services/inventario'
@@ -252,7 +249,8 @@ const COLUMNAS_CONDICION = [
 const $q = useQuasar()
 const route = useRoute()
 const { perfil, puedeAcceder } = usePerfil()
-const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(route.query.car, { todos: true })
+// SPEC 052: el centro viene de los filtros de cabecera.
+const { carId, carIdsVisibles } = useCentroCabecera()
 
 const anio = ref(anioRevision())
 const agruparPor = ref('tipo')
@@ -298,7 +296,7 @@ async function volverAlResumen () {
 }
 
 // Al volver con «Atrás» se conservan los filtros, la vista, el equipo consultado y la fila de origen.
-useEstadoNavegacion('inventario', { anio, carId, agruparPor, categoria, vista, tipoId, tipoDesdeResumen, bienConsultado, verificacion, controlFiltro })
+useEstadoNavegacion('inventario', { anio, agruparPor, categoria, vista, tipoId, tipoDesdeResumen, bienConsultado, verificacion, controlFiltro })
 
 watch(vista, (valor, previo) => {
   if (valor === 'equipo' && tipoId.value === TODOS) tipoId.value = tipoPorDefecto

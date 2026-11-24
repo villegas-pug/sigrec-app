@@ -27,9 +27,6 @@
       </div>
 
       <div class="sg-filters">
-        <q-select v-if="opcionesCar.length > 1" v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
-          <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
-        </q-select>
         <q-select v-model="estadoFiltro" :options="OPCIONES_FILTRO_ESTADO" emit-value map-options outlined dense label="Estado operativo">
           <template #append><boton-dictado v-model="estadoFiltro" tipo="opcion" :opciones="OPCIONES_FILTRO_ESTADO" emit-value /></template>
         </q-select>
@@ -164,7 +161,7 @@ import AnularDialog from 'components/common/AnularDialog.vue'
 import VehiculoDialog from 'components/movilidad/VehiculoDialog.vue'
 import MantenimientoDialog from 'components/centros/MantenimientoDialog.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useCentroCabecera } from 'src/composables/useCentroCabecera'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { carPorId, itinerarioPorId, vigente } from 'src/services/datos'
@@ -186,8 +183,8 @@ const { perfil, carsEnAmbito, vehiculosDelAmbito, puedeAcceder, puedeHacer } = u
 const { destino } = useRetorno()
 const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
-// ?car= filtra por centro (p. ej. desde la situación por centro de Inicio); sin él se ven todos los del ámbito.
-const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(parametro(route.query.car), { todos: true })
+// SPEC 052: el centro viene de los filtros de cabecera (?car= lo fija al entrar); sin él se ven todos los del ámbito.
+const { carId, carIdsVisibles } = useCentroCabecera()
 
 const mostrarInactivos = ref(false)
 const vehiculos = computed(() => vehiculosDelAmbito(mostrarInactivos.value).filter((v) => carIdsVisibles.value.includes(v.carId)))
@@ -228,8 +225,8 @@ if (vehiculoSolicitado.value?.anulacion) mostrarInactivos.value = true
 const vehiculoNoDisponible = !!vehiculoPedido && !vehiculoSolicitado.value
 const vehiculoDestacado = vehiculoSolicitado.value?.id ?? null
 
-// Al volver con «Atrás» o con «Volver a…» se recuperan los filtros (SPEC 011, Ola 4).
-useEstadoNavegacion('vehiculos', { carId, estadoFiltro, mostrarInactivos })
+// Al volver con «Atrás» o con «Volver a…» se recuperan los filtros propios (SPEC 011, Ola 4).
+useEstadoNavegacion('vehiculos', { estadoFiltro, mostrarInactivos })
 const itinerarioOrigen = !vehiculoNoDisponible && vehiculoPedido && parametro(route.query.itinerario) ? itinerarioPorId(parametro(route.query.itinerario)) : null
 
 // `conRetorno`: la ficha la abrió un enlace desde un recorrido; al guardar se ofrece volver (SPEC 011, Ola 5).

@@ -1,5 +1,7 @@
 package pe.gob.inabif.sigrec.intervencion.service;
 
+import pe.gob.inabif.sigrec.shared.model.FiltroConsulta;
+
 import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +32,11 @@ public class IntervencionServiceImpl implements IntervencionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<IntervencionResponse> listar() {
+    public List<IntervencionResponse> listar(FiltroConsulta filtro) {
         var grants = acceso.consultaCentros();
         var filas = grants.stream().anyMatch(Acceso.Asignacion::global) ? intervenciones.findAllByOrderById()
                 : intervenciones.findByAmbienteModuloCentroCodigoInOrderById(grants.stream().map(a -> a.centro().codigo()).distinct().toList());
-        return filas.stream().sorted(Comparator.comparing(Intervencion::getOrdenImportacion,
+        return filas.stream().filter(i -> filtro.admite(i.getAmbiente().modulo().centro().codigo(), i.fechaRegistro())).sorted(Comparator.comparing(Intervencion::getOrdenImportacion,
                 Comparator.nullsFirst(Comparator.naturalOrder())).thenComparing(Intervencion::id, Comparator.reverseOrder()))
                 .map(responseMapper::toResponse).toList();
     }

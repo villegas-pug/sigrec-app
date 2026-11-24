@@ -1,6 +1,5 @@
 <template>
   <div class="sg-filters">
-    <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
     <q-select v-model="anio" :options="aniosServicios()" outlined dense label="Año" />
     <q-select v-model="alerta" :options="opciones" emit-value map-options outlined dense label="Alerta" />
   </div>
@@ -10,7 +9,7 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ListaTrazable from 'components/common/ListaTrazable.vue'
-import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useCentroCabecera } from 'src/composables/useCentroCabecera'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { carPorId } from 'src/services/datos'
 import { serviciosDeCar, avisosDeServicios, problemasRecurrentes } from 'src/services/servicios'
@@ -21,9 +20,10 @@ const route = useRoute()
 const opciones = [{ value: 'pendiente', label: 'Períodos pendientes' }, { value: 'sin_info', label: 'Períodos sin información' }, { value: 'interrupcion', label: 'Interrupciones abiertas' }, { value: 'renovacion', label: 'Renovaciones por atender' }, { value: 'recurrente', label: 'Servicios con problemas recurrentes' }]
 const alerta = ref(opciones.some((o) => o.value === parametro(route.query.alerta)) ? parametro(route.query.alerta) : 'pendiente')
 const anio = ref(aniosServicios().find((a) => String(a) === parametro(route.query.anio)) ?? aniosServicios().at(-1))
-const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(parametro(route.query.car), { todos: true })
-useEstadoNavegacion('alertas-servicios', { carId, anio, alerta })
-const contexto = computed(() => opcionesCar.value.find((o) => o.value === carId.value)?.label ?? '')
+// SPEC 052: el centro viene de los filtros de cabecera.
+const { car, carIdsVisibles } = useCentroCabecera()
+useEstadoNavegacion('alertas-servicios', { anio, alerta })
+const contexto = computed(() => car.value?.nombre ?? 'Todos los centros del ámbito')
 const filas = computed(() => {
   const servicios = carIdsVisibles.value.flatMap((id) => serviciosDeCar(id))
   const fila = (s, id, detalle, numero) => ({ id, titulo: TIPOS_SERVICIO[s.tipo], contexto: `${carPorId(s.carId).nombre} · ${s.id}`, detalle,

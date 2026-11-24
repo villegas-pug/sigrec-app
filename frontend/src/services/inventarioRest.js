@@ -2,8 +2,15 @@ import { Notify } from 'quasar'
 import { api } from './api'
 import { db } from './datos'
 
+// SPEC 052: última consulta filtrada de la pantalla; las recargas tras guardar la repiten.
+let consultaVigente = ''
+
+export function recordarConsultaInventario (consulta) {
+  consultaVigente = consulta
+}
+
 export async function cargarInventario () {
-  aplicarInventario(await api('/bienes/datos'))
+  aplicarInventario(await api('/bienes/datos' + consultaVigente))
 }
 
 // Conserva la identidad de los objetos que ya tienen las pantallas y actualiza sus campos.

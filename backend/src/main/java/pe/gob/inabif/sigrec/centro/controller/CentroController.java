@@ -11,7 +11,10 @@ import pe.gob.inabif.sigrec.centro.service.JerarquiaQueries;
 import pe.gob.inabif.sigrec.centro.dtos.JerarquiaResponse;
 import pe.gob.inabif.sigrec.centro.dtos.UnidadOrganicaResponse.Pagina;
 import pe.gob.inabif.sigrec.centro.repository.UnidadOrganicaRepository;
+import pe.gob.inabif.sigrec.centro.dtos.CentroBusquedaResponse;
+import pe.gob.inabif.sigrec.centro.repository.CentroBusquedaRepository;
 import pe.gob.inabif.sigrec.security.Acceso;
+import pe.gob.inabif.sigrec.centro.service.FiltroCentros;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,10 +29,32 @@ public class CentroController {
     private final CentroService service;
     private final JerarquiaQueries queries;
     private final UnidadOrganicaRepository unidades;
+    private final CentroBusquedaRepository busqueda;
+    private final FiltroCentros filtros;
     private final Acceso acceso;
 
+    /** SPEC 052: filtros de cabecera opcionales (centro y periodo de registro del centro). */
     @GetMapping("/jerarquia")
-    public ApiResponse<JerarquiaResponse> consultar() { return ApiResponse.ok(queries.consultar()); }
+    public ApiResponse<JerarquiaResponse> consultar(@RequestParam(required = false) String centro,
+                                                    @RequestParam(required = false) Integer anio,
+                                                    @RequestParam(required = false) Integer mes,
+                                                    @RequestParam(required = false) String registro) {
+        return ApiResponse.ok(queries.consultar(filtros.filtro(centro, anio, mes, registro)));
+    }
+
+    /** SPEC 052: buscador de centros de los filtros de cabecera; solo los del ámbito del usuario. */
+    @GetMapping("/buscar")
+    public ApiResponse<CentroBusquedaResponse> buscar(@RequestParam String q, @RequestParam(defaultValue = "1") int pagina) {
+        String texto = q.strip();
+        int longitud = texto.codePointCount(0, texto.length());
+        if (longitud < 3 || longitud > 240 || pagina < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Revise el texto de búsqueda y la página.");
+        }
+        var grants = acceso.concesiones();
+        var codigos = grants.stream().anyMatch(Acceso.Asignacion::global) ? null
+                : grants.stream().filter(a -> a.centro() != null).map(a -> a.centro().codigo()).distinct().toList();
+        return ApiResponse.ok(busqueda.buscar(texto, pagina, codigos));
+    }
 
     @GetMapping("/unidades-organicas")
     public ApiResponse<Pagina> buscarUnidades(@RequestParam String q, @RequestParam(defaultValue = "1") int pagina,

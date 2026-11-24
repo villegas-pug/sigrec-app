@@ -22,9 +22,6 @@
         <q-select v-model="anio" :options="aniosRevision()" outlined dense label="Año a revisar">
           <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="aniosRevision()" /></template>
         </q-select>
-        <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro">
-          <template #append><boton-dictado v-model="carId" tipo="opcion" :opciones="opcionesCar" emit-value /></template>
-        </q-select>
         <q-select v-model="tipoId" :options="opcionesTipo" emit-value map-options outlined dense label="Tipo de bien">
           <template #append><boton-dictado v-model="tipoId" tipo="opcion" :opciones="opcionesTipo" emit-value /></template>
         </q-select>
@@ -242,7 +239,8 @@ import SimuladorPresupuesto from 'components/necesidades/SimuladorPresupuesto.vu
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
 import { primeraVisita } from 'src/router/retorno'
 import { usePerfil } from 'src/composables/usePerfil'
-import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useCentroCabecera } from 'src/composables/useCentroCabecera'
+import { recargarPantalla } from 'src/services/cargaDatos'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { carPorId, db, etiquetaAmbiente, textoUbicacion, vigentes } from 'src/services/datos'
 import { calcularNecesidades, consolidarPorCar, totalizar } from 'src/services/necesidades'
@@ -264,7 +262,8 @@ const OPCIONES_CLASE = [
 const $q = useQuasar()
 const route = useRoute()
 const { perfil, puedeAcceder, puedeHacer } = usePerfil()
-const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(route.query.car, { todos: true })
+// SPEC 052: el centro viene de los filtros de cabecera; cambiarlo vuelve a pedir los datos.
+const { carId, carIdsVisibles } = useCentroCabecera()
 
 const anio = ref(aniosRevision().find((a) => String(a) === parametro(route.query.anio)) ?? anioRevision())
 const opcionesVista = [{ value: 'todas', label: 'Todas las secciones' }, { value: 'sin_valorar', label: 'Necesidades sin valorar' }, { value: 'infraestructura', label: 'Infraestructura en evaluación' }, { value: 'atendidas', label: 'Atendidas por reposición' }]
@@ -294,12 +293,15 @@ function elegirCentro (id) {
 
 async function volverAlConsolidado () {
   carId.value = TODOS
+  // El consolidado necesita los datos de todos los centros: se espera la recarga antes de bajar a la fila.
+  await recargarPantalla()
   await nextTick()
   mostrarDetalle(document.getElementById(`consolidado-${centroDesdeConsolidado.value}`))
 }
 
-// Al volver con «Atrás» desde un bien o desde el catálogo se conservan año, centro, tipo, clasificación y el centro elegido en el consolidado.
-useEstadoNavegacion('necesidades', { anio, carId, clase, tipoId, centroDesdeConsolidado, vista, registroConsultado })
+// Al volver con «Atrás» desde un bien o desde el catálogo se conservan año, tipo, clasificación y el centro elegido en el consolidado
+// (el centro filtrado es de la cabecera).
+useEstadoNavegacion('necesidades', { anio, clase, tipoId, centroDesdeConsolidado, vista, registroConsultado })
 
 onMounted(() => { if (registroConsultado.value) mostrarDetalle(document.getElementById(`necesidad-${registroConsultado.value}`)) })
 

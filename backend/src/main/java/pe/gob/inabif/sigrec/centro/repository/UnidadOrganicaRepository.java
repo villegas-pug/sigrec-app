@@ -20,15 +20,10 @@ public class UnidadOrganicaRepository {
     private static final int MAXIMO_IN_ORACLE = 1000;
     private static final String COLUMNAS = "u.IDUNIDADORGANICA, u.UORNOMBRE, u.UOR_CODIGO_CENTRO, u.UORDIRECCION";
     private static final String ELEGIBLE = "u.UORESTADO = 1 AND u.UORELIMINADO = 0";
-    // La Ñ sigue siendo una letra distinta. INSTR trata %, _ y los demás caracteres como texto literal.
-    private static final String NOMBRE = sinTildes("u.UORNOMBRE");
+    // INSTR trata %, _ y los demás caracteres como texto literal.
+    private static final String NOMBRE = TextoOracle.sinTildes("u.UORNOMBRE");
     private static final String COINCIDENCIAS = " WHERE " + ELEGIBLE + " AND INSTR(" + NOMBRE
-            + ", " + sinTildes("TO_NCHAR(:q)") + ") > 0";
-
-    private static String sinTildes(String expresion) {
-        return "TRANSLATE(UPPER(COMPOSE(" + expresion + ")), "
-                + "UNISTR('\\00C1\\00C9\\00CD\\00D3\\00DA\\00DC'), N'AEIOUU')";
-    }
+            + ", " + TextoOracle.sinTildes("TO_NCHAR(:q)") + ") > 0";
 
     private static final RowMapper<UnidadOrganicaResponse> UNIDAD = (fila, indice) -> new UnidadOrganicaResponse(
             fila.getLong("IDUNIDADORGANICA"), fila.getNString("UORNOMBRE"), fila.getString("UOR_CODIGO_CENTRO"),
@@ -41,12 +36,8 @@ public class UnidadOrganicaRepository {
     public UnidadOrganicaRepository(NamedParameterJdbcTemplate jdbc,
                                     @Value("${spring.jpa.properties.hibernate.default_schema:}") String esquema) {
         this.jdbc = jdbc;
-        if (!esquema.isEmpty() && !esquema.matches("[A-Za-z][A-Za-z0-9_$#]*")) {
-            throw new IllegalArgumentException("El esquema Oracle de SIGREC no es un identificador válido.");
-        }
-        String prefijo = esquema.isEmpty() ? "" : esquema + ".";
-        tablaUnidades = prefijo + "TGUNIDADORGANICA";
-        tablaCentros = prefijo + "SGR_CENTRO";
+        tablaUnidades = TextoOracle.tabla(esquema, "TGUNIDADORGANICA");
+        tablaCentros = TextoOracle.tabla(esquema, "SGR_CENTRO");
         consultar = "SELECT " + COLUMNAS + ", CASE WHEN " + ELEGIBLE
                 + " THEN 1 ELSE 0 END AS ELEGIBLE FROM " + tablaUnidades + " u";
     }

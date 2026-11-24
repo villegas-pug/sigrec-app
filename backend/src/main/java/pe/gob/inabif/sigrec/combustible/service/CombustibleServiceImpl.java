@@ -1,5 +1,7 @@
 package pe.gob.inabif.sigrec.combustible.service;
 
+import pe.gob.inabif.sigrec.shared.model.FiltroConsulta;
+
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -33,11 +35,12 @@ public class CombustibleServiceImpl implements CombustibleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CombustibleResponse> listar() {
-        var ids = movilidad.listar(RUTA).stream().map(Vehiculo::id).toList();
+    public List<CombustibleResponse> listar(FiltroConsulta filtro) {
+        var ids = movilidad.listar(RUTA).stream().filter(v -> filtro.deCentro(v.getCentro().codigo())).map(Vehiculo::id).toList();
         if (ids.isEmpty()) return List.of();
         var actor = acceso.actor().id();
-        return registros.listarAmbito(ids).stream().map(r -> responseMapper.toResponse(r, actor)).toList();
+        return registros.listarAmbito(ids).stream().filter(r -> filtro.incluye(r.fechaRegistro()))
+                .map(r -> responseMapper.toResponse(r, actor)).toList();
     }
 
     @Override

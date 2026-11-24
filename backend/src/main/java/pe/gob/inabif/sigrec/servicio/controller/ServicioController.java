@@ -1,5 +1,6 @@
 package pe.gob.inabif.sigrec.servicio.controller;
 
+import pe.gob.inabif.sigrec.centro.service.FiltroCentros;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +15,14 @@ import pe.gob.inabif.sigrec.shared.response.ApiResponse;
 @RequiredArgsConstructor
 class ServicioController {
     private final ServicioService servicios;
+    private final FiltroCentros filtros;
 
     @GetMapping
-    ApiResponse<List<ServicioResponse>> listar() { return ApiResponse.ok(servicios.listar()); }
+    /** SPEC 052: filtros de cabecera opcionales. */
+    ApiResponse<List<ServicioResponse>> listar(@RequestParam(required = false) String centro, @RequestParam(required = false) Integer anio,
+                                  @RequestParam(required = false) Integer mes, @RequestParam(required = false) String registro) {
+        return ApiResponse.ok(servicios.listar(filtros.filtro(centro, anio, mes, registro)));
+    }
 
     @PostMapping
     org.springframework.http.ResponseEntity<ApiResponse<ServicioResponse>> crear(@Valid @RequestBody CreateServicioRequest request) {

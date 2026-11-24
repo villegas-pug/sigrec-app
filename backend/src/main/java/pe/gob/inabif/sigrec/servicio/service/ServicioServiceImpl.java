@@ -1,5 +1,7 @@
 package pe.gob.inabif.sigrec.servicio.service;
 
+import pe.gob.inabif.sigrec.shared.model.FiltroConsulta;
+
 import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.DateTimeParseException;
@@ -41,11 +43,12 @@ public class ServicioServiceImpl implements ServicioService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ServicioResponse> listar() {
+    public List<ServicioResponse> listar(FiltroConsulta filtro) {
         var grants = acceso.consultaCentros(RUTA);
         var filas = grants.stream().anyMatch(Acceso.Asignacion::global) ? servicios.findAllByOrderById()
                 : servicios.findByCentroCodigoInOrderById(grants.stream().map(a -> a.centro().codigo()).distinct().toList());
-        return filas.stream().map(this::responder).toList();
+        return filas.stream().filter(s -> filtro.admite(s.getCentro().codigo(), s.fechaRegistro()))
+                .map(this::responder).toList();
     }
 
     @Override

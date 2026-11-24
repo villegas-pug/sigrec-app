@@ -1,5 +1,5 @@
 <template>
-  <q-dialog :model-value="modelValue" position="top" :maximized="$q.screen.lt.sm" @update:model-value="$emit('update:modelValue', $event)" @show="alMostrar">
+  <q-dialog :model-value="modelValue" position="top" :maximized="$q.screen.lt.sm" @update:model-value="$emit('update:modelValue', $event)" @show="alMostrar" @hide="recargarPantalla">
     <q-card class="sg-dialog sg-buscador" style="width: 640px; max-width: 100vw">
       <q-card-section class="q-pb-sm">
         <q-input
@@ -60,7 +60,7 @@ import { useQuasar } from 'quasar'
 import BotonDictado from 'components/common/BotonDictado.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { buscar, indiceDeBusqueda } from 'src/services/busqueda'
-import { asegurarDatos } from 'src/services/cargaDatos'
+import { asegurarDatos, recargarPantalla } from 'src/services/cargaDatos'
 import { MENU } from 'src/config/menu'
 import { anioServicios, hoy } from 'src/config/reglas'
 import { normalizar } from 'src/utils/interpretacionVoz'
@@ -89,7 +89,8 @@ const pantallas = computed(() =>
     .map((e) => ({ clave: `ir-${e.key}`, tipo: 'pantalla', id: e.key, titulo: `Ir a ${e.label}`, detalle: '', icono: e.icon, destino: { name: e.key }, texto: normalizar(e.label) }))
 )
 
-// SPEC 041: el buscador pide sus colecciones al abrirse; con la caché por sesión solo la primera vez cuesta una llamada.
+// SPEC 041: el buscador pide sus colecciones al abrirse. SPEC 052: las pide completas, sin los filtros de cabecera;
+// al cerrarse, la pantalla vuelve a pedir sus datos filtrados (`recargarPantalla`).
 async function alMostrar () {
   consulta.value = ''
   activo.value = 0

@@ -1,5 +1,7 @@
 package pe.gob.inabif.sigrec.foto.service;
 
+import pe.gob.inabif.sigrec.shared.model.FiltroConsulta;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
@@ -41,11 +43,12 @@ public class FotoServiceImpl implements FotoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FotoResponse> listar() {
+    public List<FotoResponse> listar(FiltroConsulta filtro) {
         var grants = acceso.consultaCentros();
         var filas = grants.stream().anyMatch(Acceso.Asignacion::global) ? fotos.findAllByOrderById()
                 : fotos.listarAmbito(grants.stream().map(a -> a.centro().codigo()).distinct().toList());
-        return filas.stream().map(responseMapper::toResponse).toList();
+        return filas.stream().filter(f -> filtro.admite(f.titular().codigo(), f.fechaRegistro()))
+                .map(responseMapper::toResponse).toList();
     }
 
     @Override

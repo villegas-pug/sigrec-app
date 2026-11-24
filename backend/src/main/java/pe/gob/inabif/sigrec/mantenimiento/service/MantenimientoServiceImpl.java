@@ -1,5 +1,7 @@
 package pe.gob.inabif.sigrec.mantenimiento.service;
 
+import pe.gob.inabif.sigrec.shared.model.FiltroConsulta;
+
 import java.time.LocalDate;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
@@ -44,16 +46,20 @@ public class MantenimientoServiceImpl implements MantenimientoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MantenimientoResponse> listar() {
+    public List<MantenimientoResponse> listar(FiltroConsulta filtro) {
         var grants = movilidad.porRuta("centros", "vehiculos");
+        List<Mantenimiento> filas;
         if (grants.stream().anyMatch(a -> a.global() && a.rutas().contains("centros"))) {
-            return mantenimientos.findAllByOrderById().stream().map(responseMapper::toResponse).toList();
+            filas = mantenimientos.findAllByOrderById();
+        } else {
+            var codigos = grants.stream().filter(a -> a.rutas().contains("centros") && "CENTRO".equals(a.alcance()))
+                    .map(a -> a.centro().codigo()).distinct().toList();
+            var ids = movilidad.listar("centros", "vehiculos").stream().map(Vehiculo::id).toList();
+            if (codigos.isEmpty() && ids.isEmpty()) return List.of();
+            filas = mantenimientos.listarAmbito(codigos, ids);
         }
-        var codigos = grants.stream().filter(a -> a.rutas().contains("centros") && "CENTRO".equals(a.alcance()))
-                .map(a -> a.centro().codigo()).distinct().toList();
-        var ids = movilidad.listar("centros", "vehiculos").stream().map(Vehiculo::id).toList();
-        if (codigos.isEmpty() && ids.isEmpty()) return List.of();
-        return mantenimientos.listarAmbito(codigos, ids).stream().map(responseMapper::toResponse).toList();
+        return filas.stream().filter(m -> filtro.admite(m.titular().codigo(), m.fechaRegistro()))
+                .map(responseMapper::toResponse).toList();
     }
 
     @Override

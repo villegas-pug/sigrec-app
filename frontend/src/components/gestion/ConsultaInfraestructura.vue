@@ -1,6 +1,5 @@
 <template>
   <div class="sg-filters">
-    <q-select v-model="carId" :options="opcionesCar" emit-value map-options outlined dense label="Centro" />
     <q-select v-model="consulta" :options="opciones" emit-value map-options outlined dense label="Consulta" />
   </div>
   <lista-trazable :titulo="opciones.find((o) => o.value === consulta).label" :contexto="contexto" :filas="filas" :unidad="consulta === 'elementos_criticos' ? 'elementos' : consulta === 'novedades' ? 'novedades' : 'lugares'" clave="infraestructura" />
@@ -9,7 +8,7 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ListaTrazable from 'components/common/ListaTrazable.vue'
-import { useCentroSeleccionado } from 'src/composables/useCentroSeleccionado'
+import { useCentroCabecera } from 'src/composables/useCentroCabecera'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
 import { ambientesDeCar, carPorId, moduloPorId, modulosDeCar, ordenarPorModulo, textoUbicacion } from 'src/services/datos'
 import { elementosCriticos } from 'src/services/infraestructura'
@@ -20,9 +19,10 @@ import { parametro } from 'src/utils/navegacion'
 const route = useRoute()
 const opciones = [{ value: 'ambientes_criticos', label: 'Módulos y ambientes en mal estado' }, { value: 'elementos_criticos', label: 'Elementos críticos del inmueble, módulos y ambientes' }, { value: 'novedades', label: 'Novedades abiertas' }]
 const consulta = ref(opciones.some((o) => o.value === parametro(route.query.consulta)) ? parametro(route.query.consulta) : 'novedades')
-const { carId, opcionesCar, carIdsVisibles } = useCentroSeleccionado(parametro(route.query.car), { todos: true })
-useEstadoNavegacion('consulta-infraestructura', { carId, consulta })
-const contexto = computed(() => opcionesCar.value.find((o) => o.value === carId.value)?.label ?? '')
+// SPEC 052: el centro viene de los filtros de cabecera.
+const { car, carIdsVisibles } = useCentroCabecera()
+useEstadoNavegacion('consulta-infraestructura', { consulta })
+const contexto = computed(() => car.value?.nombre ?? 'Todos los centros del ámbito')
 const filas = computed(() => carIdsVisibles.value.flatMap((id) => {
   const car = carPorId(id)
   const ambientes = ordenarPorModulo(ambientesDeCar(id))

@@ -11,8 +11,11 @@ import pe.gob.inabif.sigrec.incidencia.mappers.IncidenciaResponseMapper;
 import pe.gob.inabif.sigrec.incidencia.model.*;
 import pe.gob.inabif.sigrec.incidencia.repository.*;
 import pe.gob.inabif.sigrec.security.Acceso;
+import pe.gob.inabif.sigrec.shared.model.FiltroConsulta;
 import pe.gob.inabif.sigrec.shared.model.HechoAuditable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,20 +41,32 @@ public class InventarioConsultaImpl implements InventarioConsulta {
     private final Acceso acceso;
 
     @Override
-    public InventarioResponse consultar() {
+    public InventarioResponse consultar(FiltroConsulta filtro, Registro registro) {
+        // SPEC 052: el periodo acota los hechos (Incidencias) o los bienes con su inventario previo (Necesidades,
+        // Inventario); en ese caso los hechos siguen completos, porque son la historia de los bienes.
+        if (filtro.porPeriodo() && registro == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Indique a qué registro se aplica el periodo.");
+        }
+        var periodoBienes = registro == Registro.BIEN ? filtro : FiltroConsulta.TODO;
+        var periodoHechos = registro == Registro.HECHO ? filtro : FiltroConsulta.TODO;
+        // CENTRO llega ya traducido en centros (FiltroCentros); aquí no se recibe.
         var grants = acceso.concesiones().stream().filter(a -> !"VEHICULO".equals(a.alcance())
                 && a.rutas().stream().anyMatch(RUTAS::contains)).toList();
         if (grants.isEmpty()) throw new AccessDeniedException("Consulta de inventario no autorizada.");
         var ids = grants.stream().anyMatch(Acceso.Asignacion::global)
                 ? centros.findAllByOrderById().stream().map(Centro::codigo).toList()
                 : grants.stream().map(a -> a.centro().codigo()).distinct().toList();
+        // Un centro fuera del ámbito deja la consulta vacía.
+        ids = ids.stream().filter(filtro::deCentro).toList();
         if (ids.isEmpty()) return new InventarioResponse(List.of(), List.of(), List.of());
-        var activos = bienes.findByAmbienteModuloCentroCodigoInOrderById(ids).stream().map(bienesMapper::toResponse).toList();
-        var anteriores = previos.findByCentroCodigoInOrderById(ids).stream().map(bienesMapper::toResponse).toList();
-        return new InventarioResponse(activos, anteriores, hechos(ids));
+        var activos = bienes.findByAmbienteModuloCentroCodigoInOrderById(ids).stream()
+                .filter(b -> periodoBienes.incluye(b.fechaRegistro())).map(bienesMapper::toResponse).toList();
+        var anteriores = previos.findByCentroCodigoInOrderById(ids).stream()
+                .filter(p -> periodoBienes.incluye(p.fechaRegistro())).map(bienesMapper::toResponse).toList();
+        return new InventarioResponse(activos, anteriores, hechos(ids, periodoHechos));
     }
 
-    private List<Map<String,Object>> hechos(List<String> ids) {
+    private List<Map<String,Object>> hechos(List<String> ids, FiltroConsulta filtro) {
         var ordenados = new ArrayList<Vista>();
         var historia = historial.findByBienAmbienteModuloCentroCodigoInOrderById(ids);
         var hijos = historia.stream().filter(h -> h.getTrasladoPrincipal() != null && h.vigente())
@@ -70,6 +85,7 @@ public class InventarioConsultaImpl implements InventarioConsulta {
             ordenados.add(new Vista(r, hechosMapper.toResponse(r, vigentes(implicados.findByReposicionIdOrderById(r.id())))));
         }
         return ordenados.stream()
+                .filter(v -> filtro.incluye(v.hecho().fechaRegistro()))
                 .sorted(Comparator.comparing((Vista v) -> v.hecho().getOrdenImportacion(), Comparator.nullsLast(Integer::compareTo))
                         .thenComparing(v -> v.hecho().fechaRegistro()).thenComparing(v -> v.hecho().getCodigo()))
                 .map(Vista::dto).toList();

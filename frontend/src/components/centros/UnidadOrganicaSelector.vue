@@ -83,8 +83,9 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { ref } from 'vue'
 import { api } from 'src/services/api'
+import { useBusquedaPaginada } from 'src/composables/useBusquedaPaginada'
 
 const props = defineProps({
   modelValue: { type: Object, default: null },
@@ -95,21 +96,17 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'seleccionar'])
 const abierto = ref(false)
-const consulta = ref('')
-const texto = computed(() => consulta.value.trim())
-const textoValido = computed(() => Array.from(texto.value).length >= 3)
-const unidades = ref([])
-const buscando = ref(false)
-const error = ref('')
-const tamano = 5
-const paginacion = ref({ page: 1, rowsPerPage: tamano, rowsNumber: 0 })
+const { consulta, textoValido, filas: unidades, buscando, error, paginacion, buscar } = useBusquedaPaginada(abierto, (q, pagina) => {
+  const params = new URLSearchParams({ q, pagina })
+  if (props.centro) params.set('centro', props.centro)
+  return api(`/centros/unidades-organicas?${params}`)
+})
 const columnas = [
   { name: 'nombre', label: 'Nombre oficial', field: 'nombre', align: 'left' },
   { name: 'codigo', label: 'Código', field: (fila) => fila.codigo || '—', align: 'left' },
   { name: 'direccion', label: 'Dirección', field: (fila) => fila.direccion || '—', align: 'left' },
   { name: 'accion', label: 'Selección', field: 'ocupada', align: 'left' }
 ]
-let solicitud = 0
 
 const validarUnidad = (id) => id != null || 'Seleccione una unidad orgánica.'
 
@@ -123,39 +120,6 @@ function seleccionar ({ id, nombre, codigo, direccion }) {
   emit('update:modelValue', unidad)
   emit('seleccionar', unidad)
   abierto.value = false
-}
-
-// SPEC 045: al cambiar el texto o cerrar, se invalidan inmediatamente las respuestas anteriores.
-watch([abierto, texto], ([visible], _, limpiar) => {
-  unidades.value = []
-  error.value = ''
-  paginacion.value = { page: 1, rowsPerPage: tamano, rowsNumber: 0 }
-  buscando.value = visible && textoValido.value
-  if (!buscando.value) return
-  const espera = setTimeout(() => buscar(1), 400)
-  limpiar(() => { clearTimeout(espera); solicitud += 1 })
-}, { flush: 'sync' })
-
-async function buscar (pagina) {
-  const actual = ++solicitud
-  buscando.value = true
-  error.value = ''
-  unidades.value = []
-  paginacion.value = { ...paginacion.value, page: pagina }
-  const params = new URLSearchParams({ q: texto.value, pagina })
-  if (props.centro) params.set('centro', props.centro)
-  try {
-    const { items, total } = await api(`/centros/unidades-organicas?${params}`)
-    if (actual !== solicitud) return
-    const ultima = Math.max(1, Math.ceil(total / tamano))
-    paginacion.value = { page: Math.min(pagina, ultima), rowsPerPage: tamano, rowsNumber: total }
-    if (total > 0 && pagina > ultima) return buscar(ultima)
-    unidades.value = items
-  } catch (e) {
-    if (actual === solicitud) error.value = e.message
-  } finally {
-    if (actual === solicitud) buscando.value = false
-  }
 }
 </script>
 

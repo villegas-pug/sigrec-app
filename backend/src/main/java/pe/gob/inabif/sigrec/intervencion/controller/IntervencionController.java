@@ -1,5 +1,6 @@
 package pe.gob.inabif.sigrec.intervencion.controller;
 
+import pe.gob.inabif.sigrec.centro.service.FiltroCentros;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,14 @@ import pe.gob.inabif.sigrec.shared.response.ApiResponse;
 @RequiredArgsConstructor
 class IntervencionController {
     private final IntervencionService servicio;
+    private final FiltroCentros filtros;
 
     @GetMapping
-    ApiResponse<List<IntervencionResponse>> listar() { return ApiResponse.ok(servicio.listar()); }
+    /** SPEC 052: filtros de cabecera opcionales. */
+    ApiResponse<List<IntervencionResponse>> listar(@RequestParam(required = false) String centro, @RequestParam(required = false) Integer anio,
+                                  @RequestParam(required = false) Integer mes, @RequestParam(required = false) String registro) {
+        return ApiResponse.ok(servicio.listar(filtros.filtro(centro, anio, mes, registro)));
+    }
 
     @PostMapping
     ResponseEntity<ApiResponse<IntervencionResponse.Cambio>> crear(@Valid @RequestBody CreateIntervencionRequest request) {

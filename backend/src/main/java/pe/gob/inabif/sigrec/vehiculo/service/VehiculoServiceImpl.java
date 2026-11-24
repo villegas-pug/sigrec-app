@@ -1,5 +1,7 @@
 package pe.gob.inabif.sigrec.vehiculo.service;
 
+import pe.gob.inabif.sigrec.shared.model.FiltroConsulta;
+
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,8 +31,10 @@ public class VehiculoServiceImpl implements VehiculoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<VehiculoResponse> listar() {
-        return movilidad.listar("vehiculos", "centros").stream().map(responseMapper::toResponse).toList();
+    public List<VehiculoResponse> listar(FiltroConsulta filtro) {
+        return movilidad.listar("vehiculos", "centros").stream()
+                .filter(v -> filtro.admite(v.getCentro().codigo(), v.fechaRegistro()))
+                .map(responseMapper::toResponse).toList();
     }
 
     @Override
