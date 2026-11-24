@@ -57,7 +57,7 @@ Cada pantalla filtraba a su manera (Centro, Período, Año…) sobre colecciones
 - Se retiran el Centro local de cada pantalla (también en las consultas de infraestructura, alertas de servicios y recorridos) y el Período de Incidencias: los cubre la cabecera.
 - Itinerarios y Combustible conservan el selector de vehículo, que ofrece solo los vehículos del centro filtrado.
 - El explorador de Gestión de centros descuenta la altura de la barra (`--sg-filtros-alto`).
-- Se mantienen «Año a revisar» (Necesidades e Inventario, es un año de proyección) y el Año del calendario de Servicios.
+- Se mantiene «Año a revisar» (Necesidades e Inventario, es un año de proyección). Servicios usa el año de cabecera para el calendario y para filtrar por fecha de registro; con «Todos» muestra los calendarios de los años disponibles y de los períodos registrados.
 
 ## Riesgos aceptados
 - Los registros importados tienen como `FEC_REGISTRA` la fecha de importación: aparecen en el mes en que se migraron.

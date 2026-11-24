@@ -21,14 +21,11 @@
       <p v-if="!car" class="sg-muted q-mb-none" role="status">Seleccione un centro en los filtros de cabecera para ver sus servicios y su calendario de pagos.</p>
 
       <div class="sg-filters">
-        <q-select v-model="anio" :options="aniosServicios()" outlined dense label="Año">
-          <template #append><boton-dictado v-model="anio" tipo="opcion" :opciones="aniosServicios()" /></template>
-        </q-select>
         <div class="row items-center"><filtro-inactivos v-model="mostrarInactivos" /></div>
       </div>
 
 
-      <section-card :titulo="`Períodos de pago · ${anio}`" sin-relleno>
+      <section-card v-for="calendario in calendarios" :key="calendario.anio" :titulo="`Períodos de pago · ${calendario.anio}`" sin-relleno>
         <template #acciones>
           <div class="sg-chips" aria-label="Leyenda">
             <status-chip v-for="(e, clave) in ESTADOS_PERIODO" :key="clave" :tono="e.tono" :label="e.label" />
@@ -46,7 +43,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="fila in filas"
+                v-for="fila in calendario.filas"
                 :key="fila.servicio.id"
                 :class="{ 'sg-row--selected': fila.servicio.id === servicioId }"
                 :aria-current="fila.servicio.id === servicioId ? 'true' : undefined"
@@ -63,7 +60,7 @@
                   <celda-periodo
                     :nombre="TIPOS_SERVICIO[fila.servicio.tipo]"
                     :celda="celda"
-                    @abrir="abrirPeriodo(fila.servicio, celda)"
+                    @abrir="abrirPeriodo(fila.servicio, celda, calendario.anio)"
                   />
                 </td>
               </tr>
@@ -74,7 +71,7 @@
         <!-- Móvil: una tarjeta por servicio con sus períodos. -->
         <div v-else class="column q-gutter-y-md q-px-md q-pb-md">
           <div
-            v-for="fila in filas"
+            v-for="fila in calendario.filas"
             :key="fila.servicio.id"
             class="sg-box"
             :class="{ 'sg-box--resaltada': fila.servicio.id === servicioId }"
@@ -95,19 +92,19 @@
                 :nombre="TIPOS_SERVICIO[fila.servicio.tipo]"
                 :celda="celda"
                 con-etiqueta
-                @abrir="abrirPeriodo(fila.servicio, celda)"
+                @abrir="abrirPeriodo(fila.servicio, celda, calendario.anio)"
               />
             </div>
           </div>
 
         </div>
 
-        <div v-if="!filas.length" class="q-pa-md column q-gutter-y-sm" role="status">
+        <div v-if="!calendario.filas.length" class="q-pa-md column q-gutter-y-sm" role="status">
           <p class="sg-muted q-mb-none">{{ car ? 'No hay servicios registrados para este centro con los filtros seleccionados.' : 'Sin centro seleccionado.' }}</p>
           <q-btn v-if="puedeHacer('servicio.registrar') && car && noRegistrados.length" outline color="secondary" icon="add" label="Registrar servicio" class="self-start" @click="abrirServicio(null)" />
         </div>
 
-        <div v-for="aviso in avisosContinuidad" :key="aviso.servicio.id" class="q-px-md q-pb-md">
+        <div v-for="aviso in calendario.avisosContinuidad" :key="aviso.servicio.id" class="q-px-md q-pb-md">
           <note-banner tono="wa" icono="warning">
             {{ aviso.nombre }}: el último período pagado no demuestra continuidad. {{ aviso.celdas.map((c) => c.etiqueta).join(', ') }} siguen sin información.
           </note-banner>
@@ -120,9 +117,9 @@
             <li v-for="(a, i) in avisos" :key="i" class="sg-timeline__item">
               <div class="column q-gutter-y-xs">
                 <status-chip v-bind="ETIQUETAS_AVISO[a.clase]" />
-                <span><strong>{{ a.nombre }}</strong> · {{ describir(a) }}</span>
+                <span><strong>{{ a.nombre }}</strong><template v-if="a.celdas.length"> · {{ a.anio }}</template> · {{ describir(a) }}</span>
                 <button v-if="!a.celdas.length && a.servicio.id !== servicioId" type="button" class="sg-row-btn self-start" @click="seleccionarServicio(a.servicio.id)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />Ver ficha del servicio</button>
-                <button v-if="a.celdas.length" type="button" class="sg-row-btn self-start" @click="abrirPeriodo(a.servicio, a.celdas[0])"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />Ver detalle del período</button>
+                <button v-if="a.celdas.length" type="button" class="sg-row-btn self-start" @click="abrirPeriodo(a.servicio, a.celdas[0], a.anio)"><q-icon name="visibility" size="16px" aria-hidden="true" class="q-mr-xs" />Ver detalle del período</button>
               </div>
             </li>
             <li v-if="!avisos.length" class="sg-timeline__item sg-muted">Sin pendientes ni problemas informados.</li>
@@ -205,7 +202,7 @@
       :tipo-inicial="dialogoServicio.tipo"
       @hecho="seleccionarServicio"
     />
-    <periodo-dialog v-if="periodo.servicio" v-model="periodo.abierto" :servicio="periodo.servicio" :celda="periodo.celda" :anio="anio" :solo-lectura="!puedeHacer('servicio.periodo') || !!periodo.servicio.anulacion" />
+    <periodo-dialog v-if="periodo.servicio" v-model="periodo.abierto" :servicio="periodo.servicio" :celda="periodo.celda" :anio="periodo.anio" :solo-lectura="!puedeHacer('servicio.periodo') || !!periodo.servicio.anulacion" />
     <hecho-servicio-dialog v-if="servicio" v-model="dialogoHecho.abierto" :servicio="servicio" :hecho="dialogoHecho.hecho" :tipo-inicial="dialogoHecho.tipo" />
     <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
   </q-page>
@@ -213,7 +210,6 @@
 
 <script setup>
 import AlertasServicios from 'components/servicios/AlertasServicios.vue'
-import BotonDictado from 'components/common/BotonDictado.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import PageHeader from 'components/common/PageHeader.vue'
@@ -231,12 +227,14 @@ import HechoServicioDialog from 'components/servicios/HechoServicioDialog.vue'
 import CeldaPeriodo from 'components/servicios/CeldaPeriodo.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useCentroCabecera } from 'src/composables/useCentroCabecera'
+import { useFiltrosCabecera } from 'src/composables/useFiltrosCabecera'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { servicioPorId, vigente } from 'src/services/datos'
 import { antiguedadServicio, avisosDeServicios, celdasDelServicio, estadoRenovacion, interrupcionAbierta, problemasRecurrentes, serviciosDeCar, tiposNoRegistrados } from 'src/services/servicios'
 import { anular } from 'src/services/acciones'
-import { CHIP_ANULADO, ESTADOS_PERIODO, HECHOS_SERVICIO, MESES_CORTOS, PERIODICIDADES, TIPOS_SERVICIO } from 'src/config/catalogos'
-import { aniosServicios, hoy } from 'src/config/reglas'
+import { CHIP_ANULADO, ESTADOS_PERIODO, HECHOS_SERVICIO, MESES_CORTOS, PERIODICIDADES, TIPOS_SERVICIO, TODOS } from 'src/config/catalogos'
+import { hoy } from 'src/config/reglas'
+import { anioActual } from 'src/utils/fechas'
 import { fecha, plural } from 'src/utils/formato'
 import { mostrarDetalle, parametro } from 'src/utils/navegacion'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
@@ -262,7 +260,10 @@ const servicioSolicitado = servicioPedido ? servicioPorId(servicioPedido) : null
 const { carId, car } = useCentroCabecera()
 if (!car.value && servicioSolicitado) carId.value = servicioSolicitado.carId
 
-const anio = ref(aniosServicios().find((a) => String(a) === parametro(route.query.anio)) ?? aniosServicios().at(-1))
+const { filtros, opcionesAnio } = useFiltrosCabecera()
+const anioParametro = Number(parametro(route.query.anio))
+const anioPedido = Number.isInteger(anioParametro) && anioParametro >= 1 && anioParametro <= 9999 ? anioParametro : null
+const anio = computed(() => filtros.anio)
 const mostrarInactivos = ref(!!servicioSolicitado?.anulacion)
 const fichaRef = ref(null)
 
@@ -271,24 +272,20 @@ const servicios = computed(() => (car.value ? serviciosDeCar(carId.value, { inac
 const serviciosVigentes = computed(() => servicios.value.filter(vigente))
 const noRegistrados = computed(() => tiposNoRegistrados(servicios.value))
 
-const filas = computed(() =>
-  servicios.value.map((servicio) => ({
-    servicio,
-    celdas: celdasDelServicio(servicio, anio.value, hoy()),
-    interrupcion: interrupcionAbierta(servicio)
-  }))
-)
-
-const avisos = computed(() => avisosDeServicios(serviciosVigentes.value, anio.value, hoy()))
-
-// Un período pagado posterior a huecos sin información no prueba continuidad (regla provisional 12).
-const avisosContinuidad = computed(() =>
-  avisos.value.filter((a) => {
-    if (a.clase !== 'sin_info') return false
-    const ultimoPagado = Math.max(0, ...(a.servicio.periodos[anio.value]?.pagados ?? []))
-    return a.celdas.some((c) => c.numero < ultimoPagado)
-  })
-)
+const anios = computed(() => anio.value !== TODOS ? [Number(anio.value)] : [...new Set([
+  anioActual(), ...(anioPedido ? [anioPedido] : []), ...opcionesAnio().map((o) => o.value).filter((v) => typeof v === 'number'),
+  ...servicios.value.flatMap((s) => Object.keys(s.periodos ?? {}).map(Number).filter((v) => Number.isInteger(v) && v > 0))
+])].sort((a, b) => b - a))
+const calendarios = computed(() => anios.value.map((ano) => {
+  const avisosAnio = avisosDeServicios(serviciosVigentes.value, ano, hoy()).map((a) => ({ ...a, anio: ano }))
+  return {
+    anio: ano,
+    filas: servicios.value.map((servicio) => ({ servicio, celdas: celdasDelServicio(servicio, ano, hoy()), interrupcion: interrupcionAbierta(servicio) })),
+    avisos: avisosAnio,
+    avisosContinuidad: avisosAnio.filter((a) => a.clase === 'sin_info' && a.celdas.some((c) => c.numero < Math.max(0, ...(a.servicio.periodos?.[ano]?.pagados ?? []))))
+  }
+}))
+const avisos = computed(() => calendarios.value.flatMap((c, i) => c.avisos.filter((a) => a.celdas.length || i === 0)))
 
 function describir (aviso) {
   const celda = aviso.celdas[0]
@@ -308,7 +305,7 @@ watch([carId, anio], () => { servicioNoDisponible.value = false }, { flush: 'syn
 
 // Al volver con «Atrás» o con «Volver a…» se recuperan el año y el servicio elegido (SPEC 011, Ola 4); el centro es de la cabecera.
 const servicioInicial = servicioId.value
-useEstadoNavegacion('servicios', { anio, mostrarInactivos, servicioId })
+useEstadoNavegacion('servicios', { mostrarInactivos, servicioId })
 if (servicioId.value !== servicioInicial) servicioNoDisponible.value = false
 
 watch(servicios, (lista) => {
@@ -326,7 +323,7 @@ const hechosOrdenados = computed(() =>
 )
 
 const dialogoServicio = reactive({ abierto: false, servicio: null, tipo: null })
-const periodo = reactive({ abierto: false, servicio: null, celda: null })
+const periodo = reactive({ abierto: false, servicio: null, celda: null, anio: null })
 const dialogoHecho = reactive({ abierto: false, hecho: null, tipo: 'interrupcion' })
 
 // La fila elegida queda resaltada y, si la ficha no está a la vista, se baja hasta ella.
@@ -336,14 +333,15 @@ const seleccionarServicio = (id) => {
   mostrarDetalle(fichaRef)
 }
 const abrirServicio = (srv, tipo = null) => Object.assign(dialogoServicio, { abierto: true, servicio: srv, tipo })
-const abrirPeriodo = (srv, celda) => Object.assign(periodo, { abierto: true, servicio: srv, celda })
+const abrirPeriodo = (srv, celda, ano) => Object.assign(periodo, { abierto: true, servicio: srv, celda, anio: ano })
 const abrirHecho = (hecho, tipo = 'interrupcion') => Object.assign(dialogoHecho, { abierto: true, hecho, tipo })
 
 // Con ?periodo= se abre el detalle de ese período al entrar, una sola vez: al volver a esta entrada no se reabre (SPEC 011, Ola 5).
 const periodoPedido = Number(parametro(route.query.periodo))
 if (servicio.value && periodoPedido && primeraVisita()) {
-  const celda = celdasDelServicio(servicio.value, anio.value, hoy()).find((c) => c.numero === periodoPedido)
-  if (celda) abrirPeriodo(servicio.value, celda)
+  const ano = anioPedido || (anio.value === TODOS ? anioActual() : Number(anio.value))
+  const celda = celdasDelServicio(servicio.value, ano, hoy()).find((c) => c.numero === periodoPedido)
+  if (celda) abrirPeriodo(servicio.value, celda, ano)
 }
 
 const accionesServicio = computed(() => {
