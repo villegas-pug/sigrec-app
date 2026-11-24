@@ -1,6 +1,7 @@
 <template>
+  <teleport to="#sg-cabecera-pagina" :disabled="!route.meta?.filtros">
   <header>
-    <manual-help class="float-right" />
+    <div class="sg-page-navigation">
     <div class="sg-crumbs-row">
       <!-- Si se llegó por un enlace desde otra pantalla, se ofrece volver a ella (SPEC 011, Ola 4). -->
       <volver-origen />
@@ -16,14 +17,17 @@
         </ol>
       </nav>
     </div>
+    <manual-help />
+    </div>
     <h1 class="sg-page-title">
       {{ titulo || route.meta.titulo }}
       <ayuda-contextual v-if="$slots.ayuda" :etiqueta="etiquetaAyuda"><slot name="ayuda" /></ayuda-contextual>
     </h1>
-    <div v-if="$slots.acciones" class="sg-page-actions">
-      <slot name="acciones" />
-    </div>
   </header>
+  </teleport>
+  <div v-if="$slots.acciones" class="sg-page-actions">
+    <slot name="acciones" />
+  </div>
 </template>
 
 <script setup>
@@ -51,3 +55,7 @@ const migas = computed(() => {
   return lista
 })
 </script>
+
+<style scoped>
+.sg-page-navigation { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+</style>

@@ -1,14 +1,11 @@
 <template>
   <q-page class="sg-page" :class="{ 'sg-page--explorador': !esConsulta }" :style-fn="altoPagina">
     <div class="sg-page__inner">
-      <div class="sg-page-head">
-        <div class="sg-page-head__titulo">
-          <volver-origen />
-          <h1 class="sg-page-title">Gestión de centros</h1>
-          <manual-help />
-        </div>
-        <q-btn v-if="puedeHacer('centro.registrar')" outline color="secondary" icon="add_business" label="Registrar centro" @click="dialogoCentro = true" />
-      </div>
+      <page-header>
+        <template #acciones>
+          <q-btn v-if="puedeHacer('centro.registrar')" outline color="secondary" icon="add_business" label="Registrar centro" @click="dialogoCentro = true" />
+        </template>
+      </page-header>
 
       <consulta-infraestructura v-if="['ambientes_criticos', 'elementos_criticos', 'novedades'].includes(parametro(route.query.consulta))" />
       <template v-else>
@@ -120,7 +117,7 @@
 </template>
 
 <script setup>
-import ManualHelp from 'components/common/ManualHelp.vue'
+import PageHeader from 'components/common/PageHeader.vue'
 import ConsultaInfraestructura from 'components/gestion/ConsultaInfraestructura.vue'
 // «Gestión de centros»: explorador Centro › Módulo › Ambiente › Bien › Componente (SPEC 020). Elegir un nodo muestra su detalle y sus acciones;
 // el registro de bienes se abre en un modal sobre el detalle seleccionado.
@@ -139,7 +136,6 @@ import IncidenteDialog from 'components/bienes/IncidenteDialog.vue'
 import CentroDialog from 'components/centros/CentroDialog.vue'
 import AnularDialog from 'components/common/AnularDialog.vue'
 import RegistroNoDisponible from 'components/common/RegistroNoDisponible.vue'
-import VolverOrigen from 'components/layout/VolverOrigen.vue'
 import { usePerfil } from 'src/composables/usePerfil'
 import { useAnulacion } from 'src/composables/useAnulacion'
 import { useEstadoNavegacion } from 'src/composables/useEstadoNavegacion'
@@ -163,7 +159,7 @@ const movil = computed(() => $q.screen.lt.md)
 
 // En escritorio la página ocupa el alto visible y cada columna se desplaza por separado; en móvil se desplaza la página.
 const esConsulta = ['ambientes_criticos', 'elementos_criticos', 'novedades'].includes(parametro(route.query.consulta))
-// SPEC 052: también se descuenta la barra de filtros de cabecera, que queda encima de la pantalla.
+// SPEC 052: se descuentan el título y la barra de filtros situados sobre la pantalla.
 const altoPagina = (offset) => (movil.value || esConsulta ? {} : { height: `calc(100vh - ${offset}px - var(--sg-filtros-alto, 0px))`, overflow: 'hidden' })
 
 // ---------- Enlaces profundos ----------

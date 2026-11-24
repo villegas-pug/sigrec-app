@@ -30,7 +30,10 @@
       </q-page>
       <template v-else-if="permitido">
         <!-- SPEC 052: fuera del `:key`, para que la barra no se vuelva a montar al cambiar de pantalla. -->
-        <filtros-cabecera v-if="route.meta?.filtros" :recargando="recargando" />
+        <div v-if="route.meta?.filtros" ref="zonaCabecera">
+          <div id="sg-cabecera-pagina" class="sg-page sg-cabecera-pagina" />
+          <filtros-cabecera :recargando="recargando" />
+        </div>
         <q-page v-if="cargandoDatos" class="flex flex-center">
           <q-spinner color="primary" size="3em" aria-label="Cargando datos" />
         </q-page>
@@ -43,7 +46,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeMount, ref, watch } from 'vue'
+import { computed, onBeforeMount, onBeforeUnmount, ref, watch } from 'vue'
 import { Notify } from 'quasar'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from 'components/layout/AppHeader.vue'
@@ -69,6 +72,21 @@ const sesionResuelta = ref(false)
 const cargandoDatos = ref(false)
 // SPEC 052: recarga por cambio de filtros; la pantalla sigue montada y la barra muestra el progreso.
 const recargando = ref(false)
+const zonaCabecera = ref(null)
+let observadorCabecera = null
+watch(zonaCabecera, (elemento) => {
+  observadorCabecera?.disconnect()
+  if (!elemento) {
+    document.documentElement.style.removeProperty('--sg-filtros-alto')
+    return
+  }
+  observadorCabecera = new ResizeObserver(() => document.documentElement.style.setProperty('--sg-filtros-alto', `${Math.ceil(elemento.getBoundingClientRect().height)}px`))
+  observadorCabecera.observe(elemento)
+}, { flush: 'post' })
+onBeforeUnmount(() => {
+  observadorCabecera?.disconnect()
+  document.documentElement.style.removeProperty('--sg-filtros-alto')
+})
 let preparacionActual = 0
 // Filtros con los que se pidieron los datos de la pantalla actual.
 let filtrosCargados = null

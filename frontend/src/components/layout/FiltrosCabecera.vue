@@ -1,6 +1,6 @@
 <template>
   <!-- SPEC 052: filtros de cabecera, con la referencia visual de sigeif-app. Se aplican al instante. -->
-  <section ref="barra" class="sg-page sg-filtros-cabecera" aria-label="Filtros de cabecera">
+  <section class="sg-page sg-filtros-cabecera" aria-label="Filtros de cabecera">
     <div class="sg-page__inner">
       <div class="sg-filtros-cabecera__fila sg-filtros-cabecera__entidad">
         <q-input :model-value="TIPO_ENTIDAD" label="Tipo de Entidad" outlined dense stack-label hide-bottom-space disable bg-color="grey-2" />
@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import CentroBuscadorDialog from 'components/centros/CentroBuscadorDialog.vue'
 import { ENTIDAD, TIPO_ENTIDAD, useFiltrosCabecera } from 'src/composables/useFiltrosCabecera'
 import { TODOS } from 'src/config/catalogos'
@@ -35,19 +35,6 @@ defineProps({ recargando: Boolean })
 
 const { filtros, fijarCentro, fijarAnio, fijarMes, opcionesAnio, OPCIONES_MES } = useFiltrosCabecera()
 const buscador = ref(false)
-const barra = ref(null)
-
-// La altura de la barra se publica en `--sg-filtros-alto` para las pantallas de alto fijo (explorador de Gestión de centros).
-const raiz = document.documentElement.style
-let observador = null
-onMounted(() => {
-  observador = new ResizeObserver(([entrada]) => raiz.setProperty('--sg-filtros-alto', `${Math.ceil(entrada.borderBoxSize?.[0]?.blockSize ?? entrada.target.offsetHeight)}px`))
-  observador.observe(barra.value)
-})
-onBeforeUnmount(() => {
-  observador?.disconnect()
-  raiz.removeProperty('--sg-filtros-alto')
-})
 const anios = opcionesAnio()
 // Un centro llegado por enlace (?car=) aún no trae nombre: se toma de los datos cargados.
 const nombreCentro = computed(() => {

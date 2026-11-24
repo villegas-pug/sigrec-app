@@ -322,7 +322,7 @@ a {
 }
 
 .sg-page-title {
-  margin: 16px 0;
+  margin: 4px 0 0;
   color: var(--sg-ink);
   font-size: 20px;
   font-weight: 700;
@@ -331,6 +331,10 @@ a {
   text-align: center;
   text-transform: uppercase;
   overflow-wrap: anywhere;
+}
+
+.sg-cabecera-pagina {
+  padding-bottom: 0;
 }
 
 .sg-page-actions {
