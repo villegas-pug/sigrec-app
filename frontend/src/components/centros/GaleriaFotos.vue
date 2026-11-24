@@ -8,7 +8,7 @@
       <div v-if="items.length" class="sg-photo-grid">
         <figure v-for="{ foto, i } in items" :key="i" class="sg-photo q-ma-none">
           <button v-if="disponible(foto)" type="button" class="sg-photo__open" :aria-label="`Ampliar fotografía ${foto.titulo}`" @click="abrirVisor(foto, $event)">
-            <img :src="foto.url" :alt="foto.titulo" class="sg-photo__img" @error="marcarError(foto.url)">
+            <img :src="urlApi(foto.url)" :alt="foto.titulo" class="sg-photo__img" @error="marcarError(foto.url)">
           </button>
           <div v-else class="sg-photo__missing">
             <q-icon name="image" size="28px" aria-hidden="true" />
@@ -53,6 +53,7 @@ import { ambientePorId, etiquetaAmbiente, vigente, situacionDe } from 'src/servi
 import { fotosDe } from 'src/services/centros'
 import { anular } from 'src/services/acciones'
 import { CHIP_ANULADO } from 'src/config/catalogos'
+import { urlApi } from 'src/services/api'
 import { fecha } from 'src/utils/formato'
 
 const props = defineProps({
@@ -104,7 +105,7 @@ function restaurarFoco () { if (focoAnterior?.isConnected) focoAnterior.focus() 
 function descargar (foto) {
   if (!disponible(foto)) return
   const enlace = document.createElement('a')
-  enlace.href = foto.url
+  enlace.href = urlApi(foto.url)
   enlace.download = (foto.nombreArchivo || foto.titulo || 'fotografia').replace(/[\\/:*?"<>|\x00-\x1f]/g, '_')
   enlace.click()
 }

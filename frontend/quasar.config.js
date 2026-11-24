@@ -3,9 +3,8 @@
 
 import { defineConfig } from '#q-app/wrappers'
 
-// Backend de la API: en dev lo atiende el proxy de quasar; en build, el servidor de la intranet.
+// Backend de la API en desarrollo. La SPA llama a `/sigrec/api/v1`; el proxy quita `/sigrec` (SPEC 053).
 const API_DEV = 'http://127.0.0.1:4006'
-const API_BUILD = 'http://172.19.0.51:4006'
 
 export default defineConfig((ctx) => {
   return {
@@ -23,8 +22,8 @@ export default defineConfig((ctx) => {
       vueRouterMode: 'hash',
       // SPEC 039: integración con la intranet. Valores por defecto de SIGREC; el entorno puede sobreescribirlos al compilar.
       env: {
-        // Vacío en dev: la SPA usa la ruta relativa /api/v1 y el proxy la reenvía.
-        SIGREC_API_URL: ctx.dev ? '' : (process.env.SIGREC_API_URL ?? API_BUILD),
+        // Vacío: la API va en el mismo origen, en /sigrec/api/v1 (SPEC 053). Solo se rellena para otro origen.
+        SIGREC_API_URL: process.env.SIGREC_API_URL ?? '',
         SIGREC_SRH_URL: process.env.SIGREC_SRH_URL ?? 'https://srvapp01.inabif.gob.pe:8443/SRH',
         SIGREC_SISTEMA_ID: process.env.SIGREC_SISTEMA_ID ?? '345',
         SIGREC_INTRANET_URL: process.env.SIGREC_INTRANET_URL ?? 'https://srvapp01.inabif.gob.pe:8443/intranet/#/',
@@ -44,7 +43,8 @@ export default defineConfig((ctx) => {
       // Falla si el 9000 está ocupado, en lugar de saltar a otro puerto.
       strictPort: true,
       open: false,
-      proxy: { '/api': { target: API_DEV, changeOrigin: true } }
+      // SPEC 053: /sigrec/api/v1 llega al backend como /api/v1.
+      proxy: { '/sigrec/api': { target: API_DEV, changeOrigin: true, rewrite: (ruta) => ruta.replace(/^\/sigrec/, '') } }
     },
 
     framework: {

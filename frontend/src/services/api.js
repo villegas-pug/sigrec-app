@@ -18,6 +18,14 @@ export function despuesDeEscribir (callback) {
 
 const dato = (nombre) => String(LocalStorage.getItem(`${PREFIJO}${nombre}`) ?? '').replace(/^__q_\w+\|/, '')
 
+// SPEC 053: la API vive bajo el mismo origen que la SPA, en `/sigrec/api/v1`. El proxy de la intranet (y el de
+// desarrollo) quita `/sigrec` y entrega `/api/v1` al backend. `SIGREC_API_URL` solo se usa para otro origen.
+const RAIZ = `${process.env.SIGREC_API_URL ?? ''}/sigrec`
+const BASE_API = `${RAIZ}/api/v1`
+
+/** URL absoluta de una ruta que el backend devuelve ya con `/api/v1` (p. ej. el contenido de una foto). */
+export const urlApi = (ruta) => (ruta ? `${RAIZ}${ruta}` : ruta)
+
 export async function api (path, { method = 'GET', body, notificarSesion = true } = {}) {
   const headers = { Accept: 'application/json' }
   const formulario = typeof FormData !== 'undefined' && body instanceof FormData
@@ -30,7 +38,7 @@ export async function api (path, { method = 'GET', body, notificarSesion = true 
 
   let respuesta
   try {
-    respuesta = await fetch(`${process.env.SIGREC_API_URL ?? ''}/api/v1${path}`, {
+    respuesta = await fetch(`${BASE_API}${path}`, {
       method,
       headers,
       body: formulario ? body : JSON.stringify(body),

@@ -11,7 +11,7 @@
       </q-card-section>
       <div class="sg-gallery-viewer__body" @touchstart.passive="iniciarGesto" @touchend.passive="terminarGesto" @touchcancel="toque = null">
         <q-btn unelevated round icon="chevron_left" class="sg-gallery-viewer__nav sg-gallery-viewer__nav--previous" aria-label="Fotografía anterior" :disable="indice <= 0" @click="anterior" />
-        <img :src="foto.url" :alt="foto.titulo" @error="$emit('error-imagen', foto.url)">
+        <img :src="urlApi(foto.url)" :alt="foto.titulo" @error="$emit('error-imagen', foto.url)">
         <q-btn unelevated round icon="chevron_right" class="sg-gallery-viewer__nav sg-gallery-viewer__nav--next" aria-label="Fotografía siguiente" :disable="indice >= fotos.length - 1" @click="siguiente" />
       </div>
       <q-card-actions class="sg-gallery-viewer__footer">
@@ -24,6 +24,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { urlApi } from 'src/services/api'
 import { fecha } from 'src/utils/formato'
 
 const props = defineProps({
