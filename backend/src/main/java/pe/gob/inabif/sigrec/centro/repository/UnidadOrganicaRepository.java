@@ -4,6 +4,8 @@ import pe.gob.inabif.sigrec.centro.dtos.UnidadOrganicaResponse;
 import pe.gob.inabif.sigrec.centro.dtos.UnidadOrganicaResponse.Coincidencia;
 import pe.gob.inabif.sigrec.centro.dtos.UnidadOrganicaResponse.Pagina;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
@@ -67,8 +69,14 @@ public class UnidadOrganicaRepository {
                 + " OFFSET :desde ROWS FETCH NEXT " + TAMANO_PAGINA + " ROWS ONLY", parametros,
                 (fila, indice) -> new Coincidencia(fila.getLong("IDUNIDADORGANICA"), fila.getNString("UORNOMBRE"),
                         fila.getString("UOR_CODIGO_CENTRO"), fila.getString("UORDIRECCION"),
-                        fila.getObject("UOR_UNIDAD_PADRE", Long.class), fila.getInt("OCUPADA") == 1));
+                        padreDe(fila), fila.getInt("OCUPADA") == 1));
         return new Pagina(items, total);
+    }
+
+    /** UOR_UNIDAD_PADRE puede ser nulo; getLong + wasNull evita depender de la conversión por clase del driver. */
+    private static Long padreDe(ResultSet fila) throws SQLException {
+        long padre = fila.getLong("UOR_UNIDAD_PADRE");
+        return fila.wasNull() ? null : padre;
     }
 
     /** Cláusula WHERE compartida por el conteo y la página; enlaza cada palabra como `:palabraN`. */

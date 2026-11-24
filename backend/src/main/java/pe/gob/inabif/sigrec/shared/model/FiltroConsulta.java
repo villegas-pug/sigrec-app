@@ -16,7 +16,7 @@ public record FiltroConsulta(String centro, Integer anio, Integer mes, Set<Strin
 
     public FiltroConsulta {
         centro = centro == null || centro.isBlank() ? null : centro.strip();
-        if ((centro != null && !centro.matches("[A-Z0-9]{3}"))
+        if ((centro != null && !centro.matches("[A-Z0-9]{1,55}"))
                 || (mes != null && (anio == null || mes < 1 || mes > 12))
                 || (anio != null && (anio < 1900 || anio > 9999))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Revise el centro, el año y el mes de los filtros.");
@@ -50,7 +50,9 @@ public record FiltroConsulta(String centro, Integer anio, Integer mes, Set<Strin
 
     /** ¿El registro pertenece a los centros filtrados? Sin centro, siempre. */
     public boolean deCentro(String codigoCentro) {
-        return (centro == null || centro.equals(codigoCentro)) && (centros == null || centros.contains(codigoCentro));
+        // Set.copyOf es inmutable y contains(null) lanza NPE: un registro sin código de centro no pertenece a ninguno.
+        return (centro == null || centro.equals(codigoCentro))
+                && (centros == null || (codigoCentro != null && centros.contains(codigoCentro)));
     }
 
     /** ¿La fecha de registro cae en el periodo? Sin filtro de año, siempre. */

@@ -10,14 +10,15 @@ Cada pantalla filtraba a su manera (Centro, Período, Año…) sobre colecciones
 
 ### Barra de filtros
 - Las migas, el enlace a Inicio y el título centrado aparecen antes de los filtros. Las acciones permanecen debajo; el explorador descuenta la altura del encabezado y los filtros.
-- Tipo de Entidad y Entidad ocupan la primera fila; Centro, Año y Mes ocupan todo el ancho de la segunda, con mayor espacio para Centro. En pantallas estrechas los campos se adaptan al ancho disponible.
+- Tipo de Entidad y Entidad ocupan la primera fila; Línea de intervención, Centro, Año y Mes ocupan todo el ancho de la segunda, con mayor espacio para Línea y Centro (SPEC 055). En pantallas estrechas los campos se adaptan al ancho disponible.
 - Un componente compartido, `components/layout/FiltrosCabecera.vue`, que `MainLayout` muestra sobre la pantalla cuando la ruta declara `meta.filtros`. No aparece en Inicio, Manual, Sin acceso ni la raíz.
 - Campos, en este orden:
   1. **Tipo de Entidad**: fijo, «PÚBLICA» (solo informativo, como en la referencia).
   2. **Entidad**: fija, «PROGRAMA INTEGRAL NACIONAL PARA BIENESTAR FAMILIAR - INABIF».
-  3. **Centro**: campo de solo lectura con lupa (abre el buscador) y `cancel` (vuelve a todos los centros). No existe «Servicio».
-  4. **Año**: «Todos» y los años de 2026 al año actual; la lista crece sola cada año.
-  5. **Mes**: «Todos» y enero–diciembre. Deshabilitado, y en «Todos», mientras Año sea «Todos».
+  3. **Línea de intervención** (SPEC 055): select de solo lectura con la unidad orgánica 73; no filtra datos.
+  4. **Centro de Acogida Residencial** (antes «Centro»; SPEC 055): campo de solo lectura con lupa (abre el buscador) y `cancel` (vuelve a todos los centros). No existe «Servicio».
+  5. **Año**: «Todos» y los años de 2026 al año actual; la lista crece sola cada año.
+  6. **Mes**: «Todos» y enero–diciembre. Deshabilitado, y en «Todos», mientras Año sea «Todos».
 - Valores iniciales: todos los centros del ámbito, Año «Todos», Mes «Todos».
 - Estado global en memoria (`composables/useFiltrosCabecera.js`): se conserva al navegar entre pantallas, se reinicia al cambiar de sesión y se pierde al recargar el navegador. No va en la URL, para no volver a montar la pantalla (`:key="route.fullPath"`).
 - Un enlace profundo con `?car=` fija el centro de la cabecera al entrar en una pantalla con filtros.

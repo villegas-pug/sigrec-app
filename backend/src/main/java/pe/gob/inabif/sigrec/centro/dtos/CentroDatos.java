@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import pe.gob.inabif.sigrec.elemento.dtos.ElementoDatos.Adicional;
 
-public record CentroDatos(@Pattern(regexp = "[A-Z0-9]{3}") String id,
+public record CentroDatos(@Pattern(regexp = "[A-Z0-9]{1,55}") String id,
                        @NotBlank @Size(max = 180) String nombre, @NotNull @Valid InmuebleInput inmueble) {
     public record InmuebleInput(@Size(max = 250) String direccion, @Valid Fundacion fundacion,
                          @NotNull @Pattern(regexp = "propio|alquilado") String condicion,

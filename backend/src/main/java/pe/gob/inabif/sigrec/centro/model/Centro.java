@@ -21,7 +21,7 @@ import org.hibernate.annotations.Check;
 public class Centro extends Auditable {
     @Column(name = "ID_UNIDAD_ORGANICA", precision = 11)
     private Long unidadOrganicaId;
-    @Column(name = "CODIGO", length = 3, nullable = false)
+    @Column(name = "CODIGO", length = 55)
     private String codigo;
     @Column(name = "NOMBRE", length = 180, nullable = false)
     private String nombre;

@@ -51,12 +51,12 @@
         class="col-12 col-sm-4"
         outlined
         dense
-        label="Código *"
-        hint="3 letras o números, único; no se modifica después"
-        maxlength="3"
+        label="Código"
+        hint="Opcional, hasta 55 letras o números, único; no se modifica después"
+        maxlength="55"
         :error="!!errores.id"
         :error-message="errores.id"
-        :rules="[requerido, codigoValido, codigoLibre]"
+        :rules="[codigoValido, codigoLibre]"
         @update:model-value="(v) => (form.id = String(v ?? '').toUpperCase())">
         <template #append><boton-dictado v-model="form.id" /></template>
       </q-input>
@@ -97,8 +97,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'hecho'])
 const $q = useQuasar()
 
-const codigoValido = (v) => /^[A-Z0-9]{3}$/.test(v) || 'Use 3 letras o números'
-const codigoLibre = (v) => !carPorId(v) || 'Ya existe un centro con ese código'
+const codigoValido = (v) => !v || /^[A-Z0-9]{1,55}$/.test(v) || 'Use de 1 a 55 letras o números'
+const codigoLibre = (v) => !v || !carPorId(v) || 'Ya existe un centro con ese código'
 const unidadOrganicaSeleccionada = () => form.unidadOrganica?.id != null || 'Seleccione una unidad orgánica.'
 
 const form = reactive({})

@@ -1226,9 +1226,9 @@
       "columns": [
         {
           "name": "CODIGO",
-          "type": "CHAR(3 CHAR)",
-          "description": "Código del centro de tres letras mayúsculas o números.",
-          "nullable": false
+          "type": "VARCHAR2(55 CHAR)",
+          "description": "Código del centro de 1 a 55 letras mayúsculas o números; opcional.",
+          "nullable": true
         },
         {
           "name": "NOMBRE",

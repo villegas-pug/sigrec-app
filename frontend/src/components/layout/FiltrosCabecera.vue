@@ -7,7 +7,11 @@
         <q-input :model-value="ENTIDAD" label="Entidad" outlined dense stack-label hide-bottom-space disable bg-color="grey-2" :title="ENTIDAD" />
       </div>
       <div class="sg-filtros-cabecera__fila sg-filtros-cabecera__filtros">
-        <q-input :model-value="nombreCentro" label="Centro" outlined dense stack-label readonly placeholder="Todos los centros"
+        <!-- SPEC 055: informativo y de solo lectura; no filtra datos. -->
+        <q-select :model-value="linea?.id ?? null" :options="opcionesLinea" option-value="id" option-label="nombre" emit-value map-options
+                  outlined dense stack-label hide-bottom-space readonly label="Línea de intervención"
+                  :placeholder="cargandoLinea ? 'Cargando…' : errorLinea ? 'No disponible' : ''" :title="linea?.nombre" />
+        <q-input :model-value="nombreCentro" label="Centro de Acogida Residencial" outlined dense stack-label readonly placeholder="Todos los centros"
                  class="cursor-pointer" :title="nombreCentro" @click="buscador = true" @keydown.enter.prevent="buscador = true">
           <template #append>
             <q-btn v-if="filtros.centro" flat round dense icon="cancel" aria-label="Quitar centro (todos los centros)" title="Todos los centros" @click.stop="fijarCentro(null)" />
@@ -30,8 +34,12 @@ import CentroBuscadorDialog from 'components/centros/CentroBuscadorDialog.vue'
 import { ENTIDAD, TIPO_ENTIDAD, useFiltrosCabecera } from 'src/composables/useFiltrosCabecera'
 import { TODOS } from 'src/config/catalogos'
 import { carPorId } from 'src/services/datos'
+import { useLineaIntervencion } from 'src/composables/useLineaIntervencion'
 
 defineProps({ recargando: Boolean })
+
+const { linea, cargando: cargandoLinea, error: errorLinea } = useLineaIntervencion()
+const opcionesLinea = computed(() => (linea.value ? [linea.value] : []))
 
 const { filtros, fijarCentro, fijarAnio, fijarMes, opcionesAnio, OPCIONES_MES } = useFiltrosCabecera()
 const buscador = ref(false)
@@ -49,7 +57,7 @@ const nombreCentro = computed(() => {
 .sg-filtros-cabecera > .sg-page__inner { gap: 8px; }
 .sg-filtros-cabecera__fila { display: grid; gap: 12px; }
 .sg-filtros-cabecera__entidad { grid-template-columns: minmax(140px, 1fr) minmax(0, 5fr); }
-.sg-filtros-cabecera__filtros { grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr); }
+.sg-filtros-cabecera__filtros { grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr); }
 
 @media (max-width: 599.98px) {
   .sg-filtros-cabecera__entidad, .sg-filtros-cabecera__filtros { grid-template-columns: minmax(0, 1fr); }

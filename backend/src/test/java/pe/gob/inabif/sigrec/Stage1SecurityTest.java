@@ -344,6 +344,20 @@ class Stage1SecurityTest {
     }
 
     @Test
+    void consultaUnidadPorIdParaLaCabecera() throws Exception {
+        prepararPerfil("CENTRAL", UsuarioPerfil.Alcance.GLOBAL, null, null);
+        when(unidades.porId(73L)).thenReturn(new UnidadOrganicaResponse(73L, "Línea de intervención", "LI", null, true));
+        var ruta = API + "/centros/unidades-organicas/";
+        mvc.perform(get(ruta + "73").header(USUARIO, "demo"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.nombre").value("Línea de intervención"));
+        mvc.perform(get(ruta + "999").header(USUARIO, "demo")).andExpect(status().isNotFound());
+        mvc.perform(get(ruta + "0").header(USUARIO, "demo")).andExpect(status().isBadRequest());
+        verify(unidades).porId(73L);
+        verify(unidades).porId(999L);
+        verifyNoMoreInteractions(unidades);
+    }
+
+    @Test
     void exigeUnidadEnAltaYConservaHistoricoAlEditar() throws Exception {
         prepararPerfil("CENTRAL", UsuarioPerfil.Alcance.GLOBAL, null, null);
         when(permisosPorPerfil.findByPerfilIdOrderByOrdenAscIdAsc(5L)).thenReturn(List.of(

@@ -10,6 +10,7 @@ import { aplicarTiposBien } from 'src/services/tiposBienRest'
 import { aplicarColeccion } from 'src/services/coleccionRest'
 import { reiniciarResumenInicio } from 'src/services/resumenInicio'
 import { reiniciarFiltros } from 'src/composables/useFiltrosCabecera'
+import { reiniciarLineaIntervencion } from 'src/composables/useLineaIntervencion'
 
 const COLECCIONES = ['servicios', 'vehiculos', 'itinerarios', 'combustible', 'fotos', 'intervenciones', 'mantenimientos']
 // Datos de referencia que cambian poco: se piden una vez por sesión.
@@ -109,6 +110,8 @@ export function reiniciarCargaDatos () {
   recordarConsultaInventario('')
   // SPEC 052: los filtros de cabecera pertenecen a la sesión.
   reiniciarFiltros()
+  // SPEC 055: la línea de intervención de la cabecera también pertenece a la sesión.
+  reiniciarLineaIntervencion()
   // SPEC 044: el resumen de Inicio también pertenece a la sesión.
   reiniciarResumenInicio()
 }

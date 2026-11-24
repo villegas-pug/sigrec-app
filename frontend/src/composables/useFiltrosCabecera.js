@@ -7,6 +7,8 @@ import { anioActual } from 'src/utils/fechas'
 
 export const TIPO_ENTIDAD = 'PÚBLICA'
 export const ENTIDAD = 'PROGRAMA INTEGRAL NACIONAL PARA BIENESTAR FAMILIAR - INABIF'
+// SPEC 055: unidad orgánica que muestra el filtro de solo lectura «Línea de intervención».
+export const LINEA_INTERVENCION_ID = 73
 // Primer año con registros en SIGREC; la lista crece sola con el año actual.
 const ANIO_INICIAL = 2026
 

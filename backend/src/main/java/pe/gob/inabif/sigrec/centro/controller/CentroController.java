@@ -9,6 +9,7 @@ import pe.gob.inabif.sigrec.centro.service.CentroService;
 import pe.gob.inabif.sigrec.shared.response.ApiResponse;
 import pe.gob.inabif.sigrec.centro.service.JerarquiaQueries;
 import pe.gob.inabif.sigrec.centro.dtos.JerarquiaResponse;
+import pe.gob.inabif.sigrec.centro.dtos.UnidadOrganicaResponse;
 import pe.gob.inabif.sigrec.centro.dtos.UnidadOrganicaResponse.Pagina;
 import pe.gob.inabif.sigrec.centro.repository.UnidadOrganicaRepository;
 import pe.gob.inabif.sigrec.centro.dtos.CentroBusquedaResponse;
@@ -62,13 +63,26 @@ public class CentroController {
                                              @RequestParam(required = false) Long padre) {
         String texto = q.strip();
         int longitud = texto.codePointCount(0, texto.length());
-        if (longitud < 3 || longitud > 240 || pagina < 1 || (centro != null && !centro.matches("[A-Z0-9]{3}"))
+        if (longitud < 3 || longitud > 240 || pagina < 1 || (centro != null && !centro.matches("[A-Z0-9]{1,55}"))
                 || (padre != null && padre < 1)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Revise el texto de búsqueda, el centro, la unidad padre y la página.");
         }
         acceso.accionCentro(centro == null ? "centro.registrar" : "centro.actualizar", centro);
         return ApiResponse.ok(unidades.buscar(texto, pagina, centro, padre));
+    }
+
+    /** SPEC 055: una unidad orgánica por id (dato de referencia de la cabecera, p. ej. «Línea de intervención»). */
+    @GetMapping("/unidades-organicas/{id}")
+    public ApiResponse<UnidadOrganicaResponse> unidadPorId(@PathVariable Long id) {
+        if (id < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Revise el id de la unidad orgánica.");
+        }
+        var unidad = unidades.porId(id);
+        if (unidad == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro no disponible.");
+        }
+        return ApiResponse.ok(unidad);
     }
 
     @PostMapping

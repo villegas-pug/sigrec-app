@@ -1,5 +1,6 @@
 package pe.gob.inabif.sigrec.centro.service;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ public class FiltroCentros {
         var filtro = new FiltroConsulta(centro, anio, mes);
         if (!REGISTRO_CENTRO.equals(registro) || !filtro.porPeriodo()) return filtro;
         return filtro.soloCentros(centros.findAllByOrderById().stream()
-                .filter(c -> filtro.incluye(c.fechaRegistro())).map(Centro::codigo).collect(Collectors.toSet()));
+                .filter(c -> filtro.incluye(c.fechaRegistro())).map(Centro::codigo).filter(Objects::nonNull)
+                .collect(Collectors.toSet()));
     }
 }
