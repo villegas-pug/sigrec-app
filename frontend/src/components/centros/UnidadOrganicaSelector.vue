@@ -1,6 +1,14 @@
 <template>
-  <div>
+  <div :class="{ 'unidad-organica-selector--activador': $slots.activador }">
+    <slot
+      v-if="$slots.activador"
+      name="activador"
+      :abrir="abrir"
+      :deshabilitado="deshabilitado"
+      :seleccionada="!!modelValue"
+    />
     <q-field
+      v-else
       :model-value="modelValue?.id ?? null"
       :rules="obligatoria ? [validarUnidad] : undefined"
       :label="obligatoria ? 'Unidad orgánica *' : 'Unidad orgánica'"
@@ -23,11 +31,11 @@
         />
       </template>
     </q-field>
-    <div v-if="modelValue?.codigo || modelValue?.direccion" class="sg-muted q-mt-xs text-caption">
+    <div v-if="!$slots.activador && (modelValue?.codigo || modelValue?.direccion)" class="sg-muted q-mt-xs text-caption">
       <div v-if="modelValue.codigo">Código: {{ modelValue.codigo }}</div>
       <div v-if="modelValue.direccion">Dirección: {{ modelValue.direccion }}</div>
     </div>
-    <p v-if="modelValue?.elegible === false" class="q-mt-sm q-mb-none" role="status">
+    <p v-if="!$slots.activador && modelValue?.elegible === false" class="q-mt-sm q-mb-none" role="status">
       <q-icon name="warning_amber" />
       La unidad vinculada ya no está activa o fue eliminada. Puede conservarla o elegir otra.
     </p>
@@ -81,10 +89,11 @@ import { api } from 'src/services/api'
 const props = defineProps({
   modelValue: { type: Object, default: null },
   centro: { type: String, default: null },
+  busquedaInicial: { type: String, default: '' },
   obligatoria: Boolean,
   deshabilitado: Boolean
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'seleccionar'])
 const abierto = ref(false)
 const consulta = ref('')
 const texto = computed(() => consulta.value.trim())
@@ -105,12 +114,14 @@ let solicitud = 0
 const validarUnidad = (id) => id != null || 'Seleccione una unidad orgánica.'
 
 function abrir () {
-  consulta.value = ''
+  consulta.value = props.busquedaInicial.trim()
   abierto.value = true
 }
 
 function seleccionar ({ id, nombre, codigo, direccion }) {
-  emit('update:modelValue', { id, nombre, codigo, direccion, elegible: true })
+  const unidad = { id, nombre, codigo, direccion, elegible: true }
+  emit('update:modelValue', unidad)
+  emit('seleccionar', unidad)
   abierto.value = false
 }
 
@@ -147,3 +158,10 @@ async function buscar (pagina) {
   }
 }
 </script>
+
+<style scoped>
+.unidad-organica-selector--activador {
+  display: inline-flex;
+  align-items: center;
+}
+</style>

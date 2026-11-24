@@ -12,8 +12,33 @@
     @enviar="guardar"
   >
     <div class="row q-col-gutter-md">
-      <q-input v-model="form.nombre" class="col-12 col-sm-8" outlined dense label="Nombre del centro *" :rules="[requerido]">
-        <template #append><boton-dictado v-model="form.nombre" /></template>
+      <q-input v-model="form.nombre" class="col-12 col-sm-8" outlined dense label="Nombre del centro *" :rules="[requerido, unidadOrganicaSeleccionada]">
+        <template #append>
+          <boton-dictado v-model="form.nombre" />
+          <unidad-organica-selector
+            v-model="form.unidadOrganica"
+            :busqueda-inicial="form.nombre"
+            obligatoria
+            :deshabilitado="guardando"
+            @seleccionar="completarDesdeUnidad"
+          >
+            <template #activador="{ abrir, deshabilitado, seleccionada }">
+              <q-btn
+                type="button"
+                flat
+                round
+                dense
+                color="primary"
+                icon="search"
+                :disable="deshabilitado"
+                :aria-label="seleccionada ? 'Cambiar unidad orgánica' : 'Buscar unidad orgánica'"
+                @click="abrir"
+              >
+                <q-tooltip>{{ seleccionada ? 'Cambiar unidad orgánica' : 'Buscar unidad orgánica' }}</q-tooltip>
+              </q-btn>
+            </template>
+          </unidad-organica-selector>
+        </template>
       </q-input>
       <q-input
         v-model="form.id"
@@ -28,7 +53,6 @@
         <template #append><boton-dictado v-model="form.id" /></template>
       </q-input>
     </div>
-    <unidad-organica-selector v-model="form.unidadOrganica" obligatoria :deshabilitado="guardando" />
     <div class="sg-kv__label">Inmueble donde funciona</div>
     <q-input v-model="form.direccion" outlined dense label="Dirección *" :rules="[requerido]">
       <template #append><boton-dictado v-model="form.direccion" /></template>
@@ -67,9 +91,16 @@ const $q = useQuasar()
 
 const codigoValido = (v) => /^[A-Z]{3}$/.test(v) || 'Use 3 letras'
 const codigoLibre = (v) => !carPorId(v) || 'Ya existe un centro con ese código'
+const unidadOrganicaSeleccionada = () => form.unidadOrganica?.id != null || 'Seleccione una unidad orgánica.'
 
 const form = reactive({})
 const { modificado, fijar } = useBorrador(form)
+
+function completarDesdeUnidad (unidad) {
+  form.nombre = unidad.nombre ?? ''
+  form.id = String(unidad.codigo ?? '').trim().toUpperCase()
+  form.direccion = unidad.direccion ?? ''
+}
 
 watch(() => props.modelValue, (abierto) => {
   if (!abierto) return

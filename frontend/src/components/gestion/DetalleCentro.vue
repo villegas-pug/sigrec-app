@@ -8,8 +8,8 @@
     </template>
     <template #acciones>
       <q-btn v-if="puedeHacer('modulo.registrar')" unelevated color="primary" icon="add_home_work" label="Registrar módulo" :disable="!activo" @click="dialogos.modulo = true" />
+      <q-btn v-if="puedeHacer('centro.actualizar')" outline color="secondary" icon="edit" label="Actualizar ficha" :disable="!activo" @click="dialogos.ficha = true" />
       <q-btn v-if="puedeHacer('centro.incidente')" outline color="secondary" icon="report" label="Registrar incidente" :disable="!activo" @click="incidenteAbierto = true" />
-      <menu-acciones con-etiqueta :items="accionesCentro" :etiqueta="`Acciones de ${centro.nombre}`" />
     </template>
 
     <template #ficha>
@@ -96,7 +96,6 @@
   <centro-ficha-dialog v-model="dialogos.ficha" :centro="centro" />
   <modulo-dialog v-model="dialogos.modulo" :centro="centro" @hecho="(id) => $emit('seleccionar', nodoModuloId(id))" />
   <ambiente-dialog v-model="dialogos.ambiente" :centro="centro" :modulo="moduloParaAmbiente" @hecho="(id) => $emit('seleccionar', nodoAmbienteId(id))" />
-  <anular-dialog v-model="anulacion.abierto" v-bind="anulacion.datos" @confirmar="confirmarAnulacion" />
 </template>
 
 <script setup>
@@ -108,8 +107,6 @@ import SectionCard from 'components/common/SectionCard.vue'
 import StatusChip from 'components/common/StatusChip.vue'
 import NoteBanner from 'components/common/NoteBanner.vue'
 import KeyValue from 'components/common/KeyValue.vue'
-import MenuAcciones from 'components/common/MenuAcciones.vue'
-import AnularDialog from 'components/common/AnularDialog.vue'
 import CentroFichaDialog from 'components/centros/CentroFichaDialog.vue'
 import AmbienteDialog from 'components/centros/AmbienteDialog.vue'
 import ModuloDialog from 'components/centros/ModuloDialog.vue'
@@ -119,10 +116,8 @@ import GaleriaFotos from 'components/centros/GaleriaFotos.vue'
 import ControlPreventivo from 'components/centros/ControlPreventivo.vue'
 import EstadoElementos from 'components/common/EstadoElementos.vue'
 import { usePerfil } from 'src/composables/usePerfil'
-import { useAnulacion } from 'src/composables/useAnulacion'
 import { ambientesDeCar, modulosDeCar, vigente } from 'src/services/datos'
 import { nodoAmbienteId, nodoModuloId } from 'src/services/bienes'
-import { anular, dependenciasDeCentro } from 'src/services/acciones'
 import { cantidadEvaluados, elementosDe } from 'src/services/infraestructura'
 import { elementosAdicionalesDe, estadoElementosDe } from 'src/services/centros'
 import { controlesPendientes, resumirControles } from 'src/services/mantenimientos'
@@ -144,7 +139,6 @@ const props = defineProps({
 defineEmits(['seleccionar', 'volver', 'registrar-bien', 'hecho'])
 
 const { puedeHacer } = usePerfil()
-const { anulacion, pedirAnulacion, confirmarAnulacion, pedirReactivacion } = useAnulacion()
 
 const incidenteAbierto = ref(false)
 const dialogos = reactive({ ficha: false, modulo: false, ambiente: false })
@@ -193,32 +187,6 @@ const camposConstruccion = computed(() => {
   ]
 })
 
-const accionesCentro = computed(() => {
-  const c = props.centro
-  return [
-    { label: 'Actualizar ficha', icono: 'edit', visible: puedeHacer('centro.actualizar'), disable: !activo.value, accion: () => { dialogos.ficha = true } },
-    {
-      label: 'Anular centro',
-      icono: 'block',
-      peligro: true,
-      visible: puedeHacer('centro.anular') && vigente(c),
-      accion: () => pedirAnulacion({
-        titulo: 'Anular centro',
-        subtitulo: `${c.nombre} · ${c.id}`,
-        dependencias: dependenciasDeCentro(c),
-        mensaje: 'Centro anulado.',
-        ejecutar: (datos) => anular(c, datos),
-      registro: c
-      })
-    },
-    {
-      label: 'Reactivar centro',
-      icono: 'restore',
-      visible: puedeHacer('centro.anular') && !vigente(c),
-      accion: () => pedirReactivacion({ entidad: 'centro', registro: c, nombre: 'Centro' })
-    }
-  ]
-})
 </script>
 
 <style scoped>
