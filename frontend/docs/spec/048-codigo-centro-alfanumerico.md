@@ -8,7 +8,7 @@ Complementa las SPECS 045 y 047. Reemplaza la regla de tres letras por exactamen
 - El formulario convierte la entrada a mayúsculas y mantiene la longitud de tres caracteres y la unicidad.
 - La API valida el mismo formato al registrar, al recibir un código en los datos del centro y al excluir el centro actual de la búsqueda de unidades orgánicas. El código sigue siendo inmutable al editar la ficha.
 - `SGR_CENTRO.CODIGO` conserva su tipo `CHAR(3 CHAR)`. La restricción Oracle se reemplaza por una que acepte letras y dígitos.
-- La migración versionada agrega primero la nueva restricción y luego elimina la anterior. Debe aplicarla el responsable de Oracle antes de desplegar el backend; no se ejecuta desde la aplicación.
+- La migración versionada agrega o valida primero la nueva restricción y después elimina la anterior si existe. Debe aplicarla el responsable de Oracle antes de desplegar el backend; no se ejecuta desde la aplicación.
 - No cambian las rutas, el payload ni la regla de unicidad del código.
 
 ## Criterios de aceptación

@@ -22,6 +22,7 @@
           :nodos="arbol"
           :seleccionado="seleccion"
           :nuevos="nuevos"
+          @expandir="actualizarExpandidos"
           @seleccionar="seleccionarDesdeArbol"
         />
 
@@ -264,22 +265,49 @@ const arbol = computed(() => arbolDeCentros(
   { texto: texto.value ?? '', situacion: situacion.value, inactivos: inactivos.value }
 ))
 
-// Con búsqueda se expande todo; si no, se conserva lo abierto y se suman los centros, sus módulos (para ver los ambientes como
-// antes de SPEC 020) y la ruta del nodo seleccionado.
+// SPEC 054: al entrar solo los enlaces directos y selecciones restauradas abren su ruta.
 const expandidos = ref([])
+let inicializadoArbol = false
+let buscandoArbol = false
+const raizDe = (id, nodos = arbol.value) => {
+  const ruta = rutaHasta(nodos, id)
+  return ruta === null ? null : (ruta[0] ?? id)
+}
 watch(arbol, (nodos) => {
   if (texto.value) {
     expandidos.value = idsExpandibles(nodos)
+    buscandoArbol = true
+    inicializadoArbol = true
     return
   }
-  const ruta = seleccion.value ? rutaHasta(nodos, seleccion.value) ?? antecesoresDeNodo(seleccion.value) : []
-  expandidos.value = [...new Set([...expandidos.value, ...nodos.flatMap((n) => [n.id, ...(n.children ?? []).map((m) => m.id)]), ...ruta])]
+  if (!inicializadoArbol) {
+    const enlace = !!(hechoPedido || mantenimientoPedido || bienPedido || novedadPedida || ambientePedido || moduloPedido || carPedido || seleccionRestaurada)
+    expandidos.value = enlace && seleccion.value ? rutaHasta(nodos, seleccion.value) ?? [] : []
+  } else if (buscandoArbol) {
+    const raiz = seleccion.value && raizDe(seleccion.value, nodos)
+    expandidos.value = raiz ? [raiz] : []
+  } else {
+    const disponibles = new Set(idsExpandibles(nodos))
+    expandidos.value = expandidos.value.filter((id) => disponibles.has(id))
+  }
+  buscandoArbol = false
+  inicializadoArbol = true
 }, { immediate: true })
+
+function actualizarExpandidos (siguientes) {
+  if (texto.value) { expandidos.value = siguientes; return }
+  const raices = new Set(arbol.value.map((n) => n.id))
+  const abierta = siguientes.find((id) => raices.has(id) && !expandidos.value.includes(id))
+    ?? siguientes.find((id) => raices.has(id))
+  expandidos.value = abierta ? siguientes.filter((id) => raizDe(id) === abierta) : []
+}
 
 // Abre los antecesores del nodo; con `incluirNodo`, también el propio nodo (al elegir un centro, módulo o ambiente se ven sus hijos).
 function expandirHasta (id, { incluirNodo = false } = {}) {
   const ruta = rutaHasta(arbol.value, id) ?? antecesoresDeNodo(id)
-  expandidos.value = [...new Set([...expandidos.value, ...ruta, ...(incluirNodo ? [id] : [])])]
+  const raiz = ruta[0] ?? id
+  const previos = texto.value ? expandidos.value : expandidos.value.filter((actual) => raizDe(actual) === raiz)
+  expandidos.value = [...new Set([...previos, ...ruta, ...(incluirNodo ? [id] : [])])]
 }
 
 // ---------- Selección ----------
@@ -323,7 +351,8 @@ async function seleccionar (id, { apilar = false, vaciar = false } = {}) {
   pedidoNoDisponible.value = null
   modo.value = 'detalle'
   seleccion.value = id
-  expandirHasta(id, { incluirNodo: true })
+  if (!texto.value && resolverNodo(id)?.tipo === 'centro') expandidos.value = [id]
+  else expandirHasta(id, { incluirNodo: true })
   vista.value = 'detalle'
   return true
 }

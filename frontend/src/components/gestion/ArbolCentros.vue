@@ -18,17 +18,18 @@
       <q-tree
         v-if="nodos.length"
         :selected="seleccionado"
-        v-model:expanded="expandidos"
+        :expanded="expandidos"
         :nodes="nodos"
         node-key="id"
         label-key="label"
         children-key="children"
         selected-color="secondary"
         no-selection-unset
+        @update:expanded="$emit('expandir', $event)"
         @update:selected="(id) => id && $emit('seleccionar', id)"
       >
         <template #default-header="{ node }">
-          <div :data-nodo-id="node.id" class="row items-center q-gutter-x-sm q-gutter-y-xs">
+          <div :data-nodo-id="node.id" class="row items-center q-gutter-x-sm q-gutter-y-xs" @click="node.tipo === 'centro' && node.id === seleccionado && $emit('seleccionar', node.id)">
             <q-icon :name="node.icono" size="18px" aria-hidden="true" />
             <span :class="{ 'text-weight-bold': node.id === seleccionado || node.tipo === 'centro' }">{{ node.label }}</span>
             <span v-if="node.codigo" class="sg-muted">{{ node.codigo }}</span>
@@ -62,7 +63,7 @@ defineProps({
   nuevos: { type: Array, default: () => [] }
 })
 
-defineEmits(['seleccionar'])
+defineEmits(['seleccionar', 'expandir'])
 
 const contenedor = ref(null)
 async function mostrar (id) {

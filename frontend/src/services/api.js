@@ -52,6 +52,7 @@ export async function api (path, { method = 'GET', body, notificarSesion = true 
   if (!respuesta.ok || !resultado) {
     const error = new Error(resultado?.message ?? 'No se pudo completar la solicitud. Intente nuevamente.')
     error.status = respuesta.status
+    error.campos = respuesta.status === 400 && resultado?.data && !Array.isArray(resultado.data) && typeof resultado.data === 'object' ? resultado.data : null
     throw error
   }
   if (method !== 'GET') alEscribir.forEach((callback) => callback())
